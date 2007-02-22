@@ -94,7 +94,7 @@ static VALUE rubydbus_message_new(VALUE class, VALUE msg_type)
 	return ret;
 }
 
-VALUE rubydbus_message_new_method_call(VALUE class, VALUE rdestination,
+static VALUE rubydbus_message_new_method_call(VALUE class, VALUE rdestination,
 		VALUE rpath, VALUE rinterface, VALUE rmethod)
 {
 	DBusMessage *message;
@@ -109,7 +109,7 @@ VALUE rubydbus_message_new_method_call(VALUE class, VALUE rdestination,
 	return ret;
 }
 
-VALUE rubydbus_message_new_method_return(VALUE self)
+static VALUE rubydbus_message_new_method_return(VALUE self)
 {
 	DBusMessage *message, *method_return;
 	VALUE ret;
@@ -123,8 +123,8 @@ VALUE rubydbus_message_new_method_return(VALUE self)
 	return ret;
 }
 
-VALUE rubydbus_message_new_signal(VALUE class, VALUE rpath, VALUE rinterface,
-		VALUE rname)
+static VALUE rubydbus_message_new_signal(VALUE class, VALUE rpath,
+		VALUE rinterface, VALUE rname)
 {
 	DBusMessage *message;
 	VALUE ret;
@@ -136,7 +136,7 @@ VALUE rubydbus_message_new_signal(VALUE class, VALUE rpath, VALUE rinterface,
 	return ret;
 }
 
-VALUE rubydbus_message_new_error(VALUE self, VALUE rerror_name,
+static VALUE rubydbus_message_new_error(VALUE self, VALUE rerror_name,
 		VALUE rerror_message)
 {
 	DBusMessage *message;
