@@ -22,6 +22,8 @@ static VALUE rubydbus_bus_get(VALUE module, VALUE type)
 	DBusError error;
 	VALUE rconnection;
 
+	dbus_error_init(&error);
+
 	connection = dbus_bus_get(NUM2INT(type), &error);
 	if (connection == NULL || dbus_error_is_set(&error))
 		rubydbus_exception(&error);
