@@ -1,0 +1,32 @@
+= Ruby D-Bus bindings README
+
+Ruby D-Bus providings bindings for the D-Bus system and library for
+the Ruby programming language.
+
+== Requirements
+
+ * D-Bus >= 1.0.0 (http://dbus.freedesktop.org/)
+
+== Installation
+
+ 1. Decompress the Ruby D-Bus tarball (ruby-dbus-<version>.tar.gz).
+ 2. Move to top-level directory and type:
+
+      $ ruby setup.rb config
+      $ ruby setup.rb setup
+     ($ su)
+      # ruby setup.rb install
+
+    You can also install files in your favorite directory by
+    supplying setup.rb some options. Try "ruby setup.rb --help".
+
+== Usage
+
+ See some of the examples in the examples/ subdirectory of the tarball.
+
+== License
+
+ Ruby D-Bus is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the
+ Free Software Foundation; either version 2 of the License, or (at
+ your option) any later version.
