@@ -8,10 +8,10 @@
 #include <ruby.h>
 #include <dbus/dbus.h>
 
-VALUE mDBus;
-VALUE cDBusConnection;
-VALUE eDBusException;
-VALUE cDBusMessage;
+extern VALUE mDBus;
+extern VALUE cDBusConnection;
+extern VALUE eDBusException;
+extern VALUE cDBusMessage;
 VALUE mDBusBus;
 
 void rubydbus_exception(DBusError *error);
