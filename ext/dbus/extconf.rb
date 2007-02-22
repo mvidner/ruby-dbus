@@ -6,4 +6,4 @@ unless PKGConfig.have_package("dbus-1", 1, 0, 0) or exit 1
   exit 1
 end
 
-create_makefile "dbus-glue"
+create_makefile "dbusglue"
