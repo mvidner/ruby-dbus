@@ -9,12 +9,14 @@
 #include <dbus/dbus.h>
 #include <alloca.h>
 
-static VALUE mDBUS;
-static VALUE cDBUSConnection;
-static VALUE eDBUSException;
-static VALUE cDBUSMessage;
+void Init_dbus_bus(void);
 
-static void rubydbus_exception(DBusError *error)
+VALUE mDBus;
+VALUE cDBusConnection;
+VALUE eDBusException;
+VALUE cDBusMessage;
+
+void rubydbus_exception(DBusError *error)
 {
 	char *rubymessage;
 	/* not leaking when using exception hurts the head */
@@ -27,7 +29,7 @@ static void rubydbus_exception(DBusError *error)
 
 	dbus_error_free(error);
 
-	rb_raise(eDBUSException, error->message);
+	rb_raise(eDBusException, error->message);
 }
 
 static VALUE rubydbus_connection_new(VALUE class, VALUE address)
@@ -40,7 +42,7 @@ static VALUE rubydbus_connection_new(VALUE class, VALUE address)
 	if (connection == NULL)
 		rubydbus_exception(&error);
 
-	rconnection = Data_Wrap_Struct(cDBUSConnection, 0,
+	rconnection = Data_Wrap_Struct(cDBusConnection, 0,
 			dbus_connection_unref, connection);
 	rb_obj_call_init(rconnection, 0, 0);
 	return rconnection;
@@ -57,7 +59,7 @@ static VALUE rubydbus_connection_new_private(VALUE class, VALUE address)
 	if (connection == NULL)
 		rubydbus_exception(&error);
 
-	rconnection = Data_Wrap_Struct(cDBUSConnection, 0,
+	rconnection = Data_Wrap_Struct(cDBusConnection, 0,
 			dbus_connection_unref, connection);
 	rb_obj_call_init(rconnection, 0, 0);
 	return rconnection;
@@ -70,7 +72,7 @@ static VALUE rubydbus_connection_pop_message(VALUE self)
 	Data_Get_Struct(self, DBusConnection, connection);
 
 	message = dbus_connection_pop_message(connection);
-	return Data_Wrap_Struct(cDBUSMessage, 0, dbus_message_unref, message);
+	return Data_Wrap_Struct(cDBusMessage, 0, dbus_message_unref, message);
 }
 
 static VALUE rubydbus_connection_close(VALUE self)
@@ -89,48 +91,49 @@ static VALUE rubydbus_message_new(VALUE class, VALUE msg_type)
 
 	message = dbus_message_new(NUM2INT(msg_type));
 
-	ret = Data_Wrap_Struct(cDBUSMessage, 0,
+	ret = Data_Wrap_Struct(cDBusMessage, 0,
 			dbus_message_unref, message);
 	return ret;
 }
 
 void Init_dbusglue(void)
 {
-	mDBUS = rb_define_module("DBUS");
+	mDBus = rb_define_module("DBus");
 
-	eDBUSException = rb_define_class_under(mDBUS, "Exception",
+	eDBusException = rb_define_class_under(mDBus, "Exception",
 			rb_eException);
 
-	cDBUSConnection = rb_define_class_under(mDBUS, "Connection",
+	cDBusConnection = rb_define_class_under(mDBus, "Connection",
 			rb_cObject);
-	rb_define_singleton_method(cDBUSConnection, "new",
+	rb_define_singleton_method(cDBusConnection, "new",
 			rubydbus_connection_new, 1);
 	/* maybe use a ruby alias */
-	rb_define_singleton_method(cDBUSConnection, "open",
+	rb_define_singleton_method(cDBusConnection, "open",
 			rubydbus_connection_new, 1);
-	rb_define_singleton_method(cDBUSConnection, "new_private",
+	rb_define_singleton_method(cDBusConnection, "new_private",
 			rubydbus_connection_new_private, 1);
-	rb_define_singleton_method(cDBUSConnection, "open_private",
+	rb_define_singleton_method(cDBusConnection, "open_private",
 			rubydbus_connection_new_private, 1);
 
-	rb_define_method(cDBUSConnection, "pop_message",
+	rb_define_method(cDBusConnection, "pop_message",
 			rubydbus_connection_pop_message, 0);
-	rb_define_method(cDBUSConnection, "close",
+	rb_define_method(cDBusConnection, "close",
 			rubydbus_connection_close, 0);
 
-	cDBUSMessage = rb_define_class_under(mDBUS, "Message",
+	cDBusMessage = rb_define_class_under(mDBus, "Message",
 			rb_cObject);
-	rb_define_const(cDBUSMessage, "TYPE_INVALID",
+	rb_define_const(cDBusMessage, "TYPE_INVALID",
 			INT2NUM(DBUS_MESSAGE_TYPE_INVALID));
-	rb_define_const(cDBUSMessage, "TYPE_METHOD_CALL",
+	rb_define_const(cDBusMessage, "TYPE_METHOD_CALL",
 			INT2NUM(DBUS_MESSAGE_TYPE_METHOD_CALL));
-	rb_define_const(cDBUSMessage, "TYPE_METHOD_RETURN",
+	rb_define_const(cDBusMessage, "TYPE_METHOD_RETURN",
 			INT2NUM(DBUS_MESSAGE_TYPE_METHOD_RETURN));
-	rb_define_const(cDBUSMessage, "TYPE_ERROR",
+	rb_define_const(cDBusMessage, "TYPE_ERROR",
 			INT2NUM(DBUS_MESSAGE_TYPE_ERROR));
-	rb_define_const(cDBUSMessage, "TYPE_SIGNAL",
+	rb_define_const(cDBusMessage, "TYPE_SIGNAL",
 			INT2NUM(DBUS_MESSAGE_TYPE_SIGNAL));
-	rb_define_singleton_method(cDBUSConnection, "new",
+	rb_define_singleton_method(cDBusConnection, "new",
 			rubydbus_message_new, 1);
+	Init_dbus_bus();
 }
 
