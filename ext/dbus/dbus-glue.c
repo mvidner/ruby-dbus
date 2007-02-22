@@ -34,7 +34,7 @@ static VALUE rubydbus_connection_new(VALUE class, VALUE address)
 {
 	DBusConnection *connection;
 	DBusError error;
-	VALUE rinstance;
+	VALUE rconnection;
 
 	connection = dbus_connection_open(StringValuePtr(address), &error);
 	if (connection == NULL)
@@ -50,7 +50,7 @@ static VALUE rubydbus_connection_new_private(VALUE class, VALUE address)
 {
 	DBusConnection *connection;
 	DBusError error;
-	VALUE rinstance;
+	VALUE rconnection;
 
 	connection = dbus_connection_open_private(StringValuePtr(address),
 			&error);
@@ -76,11 +76,10 @@ static VALUE rubydbus_connection_pop_message(VALUE self)
 static VALUE rubydbus_connection_close(VALUE self)
 {
 	DBusConnection *connection;
-	DBusMessage *message;
 
 	Data_Get_Struct(self, DBusConnection, connection);
 	dbus_connection_close(connection);
-	return self
+	return self;
 }
 
 static VALUE rubydbus_message_new(VALUE class, VALUE msg_type)
@@ -127,10 +126,10 @@ void Init_dbusglue(void)
 			INT2NUM(DBUS_MESSAGE_TYPE_METHOD_CALL));
 	rb_define_const(cDBUSMessage, "TYPE_METHOD_RETURN",
 			INT2NUM(DBUS_MESSAGE_TYPE_METHOD_RETURN));
-	rb_define_const(cDBUSMessage, "TYPE_METHOD_ERROR",
-			INT2NUM(DBUS_MESSAGE_TYPE_METHOD_ERROR));
-	rb_define_const(cDBUSMessage, "TYPE_METHOD_SIGNAL",
-			INT2NUM(DBUS_MESSAGE_TYPE_METHOD_SIGNAL));
+	rb_define_const(cDBUSMessage, "TYPE_ERROR",
+			INT2NUM(DBUS_MESSAGE_TYPE_ERROR));
+	rb_define_const(cDBUSMessage, "TYPE_SIGNAL",
+			INT2NUM(DBUS_MESSAGE_TYPE_SIGNAL));
 	rb_define_singleton_method(cDBUSConnection, "new",
 			rubydbus_message_new, 1);
 }
