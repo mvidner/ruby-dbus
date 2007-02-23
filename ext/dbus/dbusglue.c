@@ -110,6 +110,24 @@ static VALUE rubydbus_connection_flush(VALUE self)
 	return self;
 }
 
+static VALUE rubydbus_connection_request_name(VALUE self, VALUE rname,
+		VALUE rflags)
+{
+	DBusConnection *bus;
+	DBusError error;
+	int ret;
+
+	dbus_error_init(&error);
+	Data_Get_Struct(self, DBusConnection, bus);
+
+	ret = dbus_bus_request_name(bus, StringValuePtr(rname), 
+			NUM2INT(rflags), &err);
+	if (dbus_error_is_set(&err))
+		rubydbus_exception(&error);
+	return INT2NUM(ret);
+}
+
+
 void Init_dbus_bus(void);
 void Init_dbus_message(void);
 
@@ -140,6 +158,24 @@ void Init_dbusglue(void)
 			rubydbus_connection_send, 2);
 	rb_define_method(cDBusConnection, "flush",
 			rubydbus_connection_flush, 0);
+	rb_define_method(cDBusConnection, "request_name",
+			rubydbus_connection_request_name, 2);
+
+	rb_define_const(cDBusConnection, "REQUEST_NAME_PRIMARY_OWNER",
+			INT2NUM(DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER));
+	rb_define_const(cDBusConnection, "REQUEST_NAME_REPLY_IN_QUEUE",
+			INT2NUM(DBUS_REQUEST_NAME_REPLY_IN_QUEUE));
+	rb_define_const(cDBusConnection, "REQUEST_NAME_REPLY_EXISTS",
+			INT2NUM(DBUS_REQUEST_NAME_REPLY_EXISTS));
+	rb_define_const(cDBusConnection, "REQUEST_NAME_REPLY_ALREADY_OWNER",
+			INT2NUM(DBUS_REQUEST_NAME_REPLY_ALREADY_OWNER));
+
+	rb_define_const(cDBusConnection, "NAME_FLAG_ALLOW_REPLACEMENT",
+			INT2NUM(DBUS_NAME_FLAG_ALLOW_REPLACEMENT));
+	rb_define_const(cDBusConnection, "NAME_FLAG_REPLACE_EXISTING",
+			INT2NUM(DBUS_NAME_FLAG_REPLACE_EXISTING));
+	rb_define_const(cDBusConnection, "NAME_FLAG_DO_NOT_QUEUE",
+			INT2NUM(DBUS_NAME_FLAG_DO_NOT_QUEUE));
 
 	Init_dbus_bus();
 	Init_dbus_message();
