@@ -4,7 +4,8 @@ require 'dbusglue'
 
 bus = DBus::Bus::get(DBus::Bus::SESSION)
 
-bus.request_name("test.signal.source", DBUS_NAME_FLAG_REPLACE_EXISTING)
+bus.request_name("test.signal.source",
+	DBus::Connection::NAME_FLAG_REPLACE_EXISTING)
 
 signal = DBus::Message.new_signal("/test/signal/Object", "test.signal.Type", "Test")
 
