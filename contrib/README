@@ -1,0 +1,13 @@
+Here is the patch i use to allow ruby to open abstract sockets.
+
+Install method:
+
+apt-get build-dep ruby1.8
+apt-get source ruby1.8
+cp 903_abstract_unix_socket.patch ruby1.8-1.8.5/debian/patches/
+cd ruby1.8-1.8.5
+dpkg-buildpackage -uc -us -rfakeroot
+dpkg -i ../libruby1.8*.deb
+
+The patch is certainly unclean but it works for dbus.
+
