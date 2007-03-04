@@ -191,6 +191,8 @@ module DBus
   end
 
   class Message
+    MESSAGE_SIGNATURE = "yyyyuua(yyv)"
+
     INVALID = 0
     METHOD_CALL = 1
     METHOD_RETURN = 2
@@ -210,7 +212,6 @@ module DBus
       @protocol = 1
       @body_length = 0
       @serial = nil
-      @headers = Array.new
     end
 
     PATH = 1
@@ -265,6 +266,38 @@ module DBus
         end
       end
       marshaller.packet
+    end
+
+    def unmarshall(buf)
+      if buf[0] == ?l
+        endianness = LIL_END
+      else
+        endianness = BIG_END
+      end
+      pu = PacketUnmarshaller.new(MESSAGE_SIGNATURE, buf, endianness)
+      dummy, @message_type, @flags, @protocol, @body_length, @serial,
+        headers = pu.parse
+      headers.each do |struct|
+        case struct[0]
+        when PATH
+          @path = struct[2]
+        when INTERFACE
+          @interface = struct[2]
+        when MEMBER
+          @member = struct[2]
+        when ERROR_NAME
+          @error_name = struct[2]
+        when REPLY_SERIAL
+          @reply_serial = struct[2]
+        when DESTINATION
+          @destination = struct[2]
+        when SENDER
+          @sender = struct[2]
+        when SIGNATURE
+          @signature = struct[2]
+        end
+      end
+      self
     end
   end
 

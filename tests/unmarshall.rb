@@ -14,3 +14,6 @@ p DBus::PacketUnmarshaller.new(testsig, tests, DBus::LIL_END).parse
 
 tests = "l\4\1\1\n\0\0\0\2\0\0\0\215\0\0\0\1\1o\0\25\0\0\0/org/freedesktop/DBus\0\0\0\2\1s\0\24\0\0\0org.freedesktop.DBus\0\0\0\0\3\1s\0\f\0\0\0NameAcquired\0\0\0\0\6\1s\0\5\0\0\0:1.11\0\0\0\10\1g\0\1s\0\0\7\1s\0\24\0\0\0org.freedesktop.DBus\0\0\0\0\5\0\0\0:1.11\0"
 p DBus::PacketUnmarshaller.new(testsig, tests, DBus::LIL_END).parse
+
+m = DBus::Message.new.unmarshall(tests)
+p m
