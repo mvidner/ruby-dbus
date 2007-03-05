@@ -1,21 +1,19 @@
 #!/usr/bin/ruby
 
-
 require 'dbus/type'
 
 require 'socket'
+require 'thread'
 
 module DBus
 
-  BIG_END = :BigEndian
-  LIL_END = :LittleEndian
+  BIG_END = ?B
+  LIL_END = ?l
 
   if [0x01020304].pack("L").unpack("V")[0] == 0x01020304
     HOST_END = LIL_END
-    HOST_END_CHAR = ?l
   else
     HOST_END = BIG_END
-    HOST_END_CHAR = ?B
   end
 
   class InvalidPacketException < Exception
@@ -25,8 +23,8 @@ module DBus
   end
 
   class PacketUnmarshaller
-    def initialize(signature, buffer, endianness)
-      @signature, @buffer, @endianness = signature, buffer, endianness
+    def initialize(buffer, endianness)
+      @buffy, @endianness = buffer.dup, endianness
       if @endianness == BIG_END
         @uint32 = "N"
       elsif @endianness == LIL_END
@@ -34,17 +32,25 @@ module DBus
       else
         raise Exception, "Incorrect endianneess"
       end
+      @idx = 0
     end
 
-    def parse
-      sigtree = Type::Parser.new(@signature).parse
+    def unmarshall(signature, len = nil)
+      if len != nil
+        if not @buffy.size >= @idx + len
+          raise Exception
+        end
+      end
+      sigtree = Type::Parser.new(signature).parse
       ret = Array.new
-      @buffy = @buffer.dup
-      @idx = 0
       sigtree.each do |elem|
         ret << do_parse(elem)
       end
       ret
+    end
+
+    def align8
+      @idx = @idx + 7 & ~7
     end
 
     private
@@ -60,10 +66,6 @@ module DBus
       str = $1
       @idx += str.size + 1
       str
-    end
-
-    def align8
-      @idx = @idx + 7 & ~7
     end
 
     def getstring
@@ -155,6 +157,13 @@ module DBus
       ret
     end
 
+    def setsignature(str)
+      ret = ""
+      ret += str.length.chr
+      ret += str + "\0"
+      ret
+    end
+
     def array
       sizeidx = @packet.size
       @packet += "ABCD"
@@ -184,6 +193,8 @@ module DBus
         @packet += setstring(val)
       when Type::STRING
         @packet += setstring(val)
+      when Type::SIGNATURE
+        @packet += setsignature(val)
       else
         raise Exception, "not implemented"
       end
@@ -191,6 +202,8 @@ module DBus
   end
 
   class Message
+    @@serial = 0
+    @@serial_mutex = Mutex.new
     MESSAGE_SIGNATURE = "yyyyuua(yyv)"
 
     INVALID = 0
@@ -202,16 +215,27 @@ module DBus
     NO_REPLY_EXPECTED = 0x1
     NO_AUTO_START = 0x2
 
-    attr_writer :message_type, :serial
-    attr_writer :path, :interface, :member, :error_name, :destination, :sender,
-      :signature
+    attr_accessor :message_type, :serial
+    attr_accessor :path, :interface, :member, :error_name, :destination,
+      :sender, :signature
+    attr_reader :protocol
 
     def initialize
       @message_type = 0
       @flags = 0
       @protocol = 1
       @body_length = 0
-      @serial = nil
+      @signature = ""
+      @@serial_mutex.synchronize do
+        @serial = @@serial
+        @@serial += 1
+      end
+      @params = Array.new
+    end
+
+    def add_param(type, val)
+      @signature += type.chr
+      @params << [type, val]
     end
 
     PATH = 1
@@ -224,14 +248,27 @@ module DBus
     SIGNATURE = 8
 
     def marshall
+      params = PacketMarshaller.new
+      @params.each do |param|
+        params.append(param[0], param[1])
+      end
+      @body_length = params.packet.length
+
       marshaller = PacketMarshaller.new
-      marshaller.append(Type::BYTE, HOST_END_CHAR)
+      marshaller.append(Type::BYTE, HOST_END)
       marshaller.append(Type::BYTE, @message_type)
       marshaller.append(Type::BYTE, @flags)
       marshaller.append(Type::BYTE, @protocol)
       marshaller.append(Type::UINT32, @body_length)
       marshaller.append(Type::UINT32, @serial)
       marshaller.array do
+        if @signature != ""
+          marshaller.struct do
+            marshaller.append(Type::BYTE, Type::SIGNATURE)
+            marshaller.append_string("g")
+            marshaller.append(Type::SIGNATURE, @signature)
+          end
+        end
         if @path
           marshaller.struct do
             marshaller.append(Type::BYTE, PATH)
@@ -265,7 +302,11 @@ module DBus
           end
         end
       end
-      marshaller.packet
+      marshaller.align8
+      @params.each do |param|
+        marshaller.append(param[0], param[1])
+      end
+      marshaller.packet + params.packet
     end
 
     def unmarshall(buf)
@@ -274,9 +315,9 @@ module DBus
       else
         endianness = BIG_END
       end
-      pu = PacketUnmarshaller.new(MESSAGE_SIGNATURE, buf, endianness)
+      pu = PacketUnmarshaller.new(buf, endianness)
       dummy, @message_type, @flags, @protocol, @body_length, @serial,
-        headers = pu.parse
+        headers = pu.unmarshall(MESSAGE_SIGNATURE)
       headers.each do |struct|
         case struct[0]
         when PATH
@@ -297,6 +338,10 @@ module DBus
           @signature = struct[2]
         end
       end
+      pu.align8
+      if @body_length > 0 and @signature
+        pu.unmarshall(@signature, @body_length)
+      end
       self
     end
   end
@@ -314,6 +359,7 @@ module DBus
       sockaddr = Socket.pack_sockaddr_un("\0" + @unix_abstract)
       @socket.connect(sockaddr)
       init_connection
+      send_hello
     end
 
     def writel(s)
@@ -324,15 +370,84 @@ module DBus
       @socket.write(buf)
     end
 
-    def read(i)
-      @socket.read(i)
+    def read
+      a = 0
+      begin
+        @socket.read_nonblock(2048)
+      rescue Errno::EAGAIN
+        if a == 3
+          return
+        else
+          a += 1
+        end
+        retry
+      end
     end
 
     def readl
       @socket.readline.chomp
     end
 
+    NAME_FLAG_ALLOW_REPLACEMENT = 0x1
+    NAME_FLAG_REPLACE_EXISTING = 0x2
+    NAME_FLAG_DO_NOT_QUEUE = 0x4
+
+    REQUEST_NAME_REPLY_PRIMARY_OWNER = 0x1
+    REQUEST_NAME_REPLY_IN_QUEUE = 0x2
+    REQUEST_NAME_REPLY_EXISTS = 0x3
+    REQUEST_NAME_REPLY_ALREADY_OWNER = 0x4
+
+    def request_name(name, flags)
+      m = Message.new
+      m.message_type = DBus::Message::METHOD_CALL
+      m.serial = 1
+      m.path = "/org/freedesktop/DBus"
+      m.destination = "org.freedesktop.DBus"
+      m.interface = "org.freedesktop.DBus"
+      m.member = "RequestName"
+      m.add_param(Type::STRING, name)
+      m.add_param(Type::UINT32, flags)
+      s = m.marshall
+      p s
+      send(s)
+      r, d, d = IO.select([@socket])
+      if r and r[0] == @socket
+        m = read
+      end
+      ret = Message.new.unmarshall(m)
+      if ret.serial == m.serial and
+        ret.message_type == Message::METHOD_RETURN and
+        ret.sender == "org.freedesktop.DBus" and ret.protocol == 1
+        # this is our unique name
+        @unique_name = ret.destination
+        puts "Got hello reply. Our unique_name is #{@unique_name}"
+      end
+    end
+
     private
+    def send_hello
+      m = Message.new
+      m.message_type = DBus::Message::METHOD_CALL
+      m.serial = 1
+      m.path = "/org/freedesktop/DBus"
+      m.destination = "org.freedesktop.DBus"
+      m.interface = "org.freedesktop.DBus"
+      m.member = "Hello"
+      send(m.marshall)
+      r, d, d = IO.select([@socket])
+      if r and r[0] == @socket
+        buf = read
+      end
+      ret = Message.new.unmarshall(buf)
+      if ret.serial == m.serial and
+        ret.message_type == Message::METHOD_RETURN and
+        ret.sender == "org.freedesktop.DBus" and ret.protocol == 1
+        # this is our unique name
+        @unique_name = ret.destination
+        puts "Got hello reply. Our unique_name is #{@unique_name}"
+      end
+    end
+
     def parse_session_string
       @path.split(",").each do |eqstr|
         idx, val = eqstr.split("=")
@@ -356,3 +471,4 @@ module DBus
     end
   end
 end # module DBus
+

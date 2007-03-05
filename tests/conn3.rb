@@ -19,3 +19,15 @@ s = d.read(90) # knowing 90 is cheating
 
 p s
 
+message = DBus::Message.new
+message.message_type = DBus::Message::METHOD_CALL
+message.serial = 1
+message.path = "/org/freedesktop/DBus"
+message.interface = "org.freedesktop.DBus.Peer"
+message.member = "Ping"
+
+d.send(message.marshall)
+
+while c = d.read(10)
+  p c
+end
