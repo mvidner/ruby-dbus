@@ -49,6 +49,10 @@ module DBus
       ret
     end
 
+    def align4
+      @idx = @idx + 3 & ~3
+    end
+
     def align8
       @idx = @idx + 7 & ~7
     end
@@ -96,6 +100,7 @@ module DBus
       when Type::BYTE
         packet = get(1).unpack("C")[0]
       when Type::UINT32
+        align4
         packet = get(4).unpack(@uint32)[0]
       when Type::ARRAY
         # checks please
@@ -140,6 +145,10 @@ module DBus
     attr_reader :packet
     def initialize
       @packet = ""
+    end
+
+    def align4
+      @packet = @packet.ljust(@packet.length + 3 & ~3, 0.chr)
     end
 
     def align8
@@ -188,6 +197,7 @@ module DBus
       when Type::BYTE
         @packet += val.chr
       when Type::UINT32
+        align4
         @packet += [val].pack("L")
       when Type::OBJECT_PATH
         @packet += setstring(val)
@@ -202,7 +212,7 @@ module DBus
   end
 
   class Message
-    @@serial = 0
+    @@serial = 1
     @@serial_mutex = Mutex.new
     MESSAGE_SIGNATURE = "yyyyuua(yyv)"
 
@@ -215,10 +225,10 @@ module DBus
     NO_REPLY_EXPECTED = 0x1
     NO_AUTO_START = 0x2
 
-    attr_accessor :message_type, :serial
+    attr_accessor :message_type
     attr_accessor :path, :interface, :member, :error_name, :destination,
       :sender, :signature
-    attr_reader :protocol
+    attr_reader :protocol, :serial
 
     def initialize
       @message_type = 0
@@ -262,13 +272,6 @@ module DBus
       marshaller.append(Type::UINT32, @body_length)
       marshaller.append(Type::UINT32, @serial)
       marshaller.array do
-        if @signature != ""
-          marshaller.struct do
-            marshaller.append(Type::BYTE, Type::SIGNATURE)
-            marshaller.append_string("g")
-            marshaller.append(Type::SIGNATURE, @signature)
-          end
-        end
         if @path
           marshaller.struct do
             marshaller.append(Type::BYTE, PATH)
@@ -301,12 +304,20 @@ module DBus
             marshaller.append(Type::STRING, @member)
           end
         end
+        if @signature != ""
+          marshaller.struct do
+            marshaller.append(Type::BYTE, SIGNATURE)
+            marshaller.append(Type::BYTE, 1)
+            marshaller.append_string("g")
+            marshaller.append(Type::SIGNATURE, @signature)
+          end
+        end
       end
       marshaller.align8
       @params.each do |param|
         marshaller.append(param[0], param[1])
       end
-      marshaller.packet + params.packet
+      marshaller.packet
     end
 
     def unmarshall(buf)
@@ -340,7 +351,7 @@ module DBus
       end
       pu.align8
       if @body_length > 0 and @signature
-        pu.unmarshall(@signature, @body_length)
+        @params = pu.unmarshall(@signature, @body_length)
       end
       self
     end
@@ -400,7 +411,6 @@ module DBus
     def request_name(name, flags)
       m = Message.new
       m.message_type = DBus::Message::METHOD_CALL
-      m.serial = 1
       m.path = "/org/freedesktop/DBus"
       m.destination = "org.freedesktop.DBus"
       m.interface = "org.freedesktop.DBus"
@@ -408,27 +418,13 @@ module DBus
       m.add_param(Type::STRING, name)
       m.add_param(Type::UINT32, flags)
       s = m.marshall
-      p s
       send(s)
-      r, d, d = IO.select([@socket])
-      if r and r[0] == @socket
-        m = read
-      end
-      ret = Message.new.unmarshall(m)
-      if ret.serial == m.serial and
-        ret.message_type == Message::METHOD_RETURN and
-        ret.sender == "org.freedesktop.DBus" and ret.protocol == 1
-        # this is our unique name
-        @unique_name = ret.destination
-        puts "Got hello reply. Our unique_name is #{@unique_name}"
-      end
     end
 
     private
     def send_hello
       m = Message.new
       m.message_type = DBus::Message::METHOD_CALL
-      m.serial = 1
       m.path = "/org/freedesktop/DBus"
       m.destination = "org.freedesktop.DBus"
       m.interface = "org.freedesktop.DBus"
