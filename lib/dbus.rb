@@ -23,6 +23,8 @@ module DBus
   end
 
   class PacketUnmarshaller
+    attr_reader :idx
+
     def initialize(buffer, endianness)
       @buffy, @endianness = buffer.dup, endianness
       if @endianness == BIG_END
@@ -38,7 +40,7 @@ module DBus
     def unmarshall(signature, len = nil)
       if len != nil
         if not @buffy.size >= @idx + len
-          raise Exception
+          raise IncompleteBufferException
         end
       end
       sigtree = Type::Parser.new(signature).parse
@@ -51,10 +53,12 @@ module DBus
 
     def align4
       @idx = @idx + 3 & ~3
+      raise IncompleteBufferException if @idx >= @buffy.size
     end
 
     def align8
       @idx = @idx + 7 & ~7
+      raise IncompleteBufferException if @idx >= @buffy.size
     end
 
     private
@@ -62,13 +66,17 @@ module DBus
     def get(nbytes)
       ret = @buffy.slice(@idx, nbytes)
       @idx += nbytes
+      raise IncompleteBufferException if @idx >= @buffy.size
       ret
     end
 
     def get_nul_terminated
-      @buffy[@idx..-1] =~ /^([^\0]*)/
+      if not @buffy[@idx..-1] =~ /^([^\0]*)\0/
+        raise InvalidPacketException
+      end
       str = $1
       @idx += str.size + 1
+      raise IncompleteBufferException if @idx >= @buffy.size
       str
     end
 
@@ -76,10 +84,12 @@ module DBus
       str_sz = get(4).unpack(@uint32)[0]
       ret = @buffy.slice(@idx, str_sz)
       @idx += str_sz
+      raise IncompleteBufferException if @idx + 1 >= @buffy.size
       if @buffy[@idx] != 0
         raise InvalidPacketException, "String is not nul-terminated"
       end
       @idx += 1
+      # no exception, see check above
       ret
     end
 
@@ -87,10 +97,12 @@ module DBus
       str_sz = get(1).unpack('C')[0]
       ret = @buffy.slice(@idx, str_sz)
       @idx += str_sz
+      raise IncompleteBufferException if @idx + 1 >= @buffy.size
       if @buffy[@idx] != 0
         raise InvalidPacketException, "Type is not nul-terminated"
       end
       @idx += 1
+      # no exception, see check above
       ret
     end
 
@@ -109,9 +121,7 @@ module DBus
         packet = Array.new
         align8
         arraydata = @buffy[@idx, array_sz]
-        if arraydata.size != array_sz
-          raise Exception, "blah"
-        end
+        raise IncompleteBufferException if arraydata.size != array_sz
         start_idx = @idx
         while @idx - start_idx < array_sz
           packet << do_parse(signature.child)
@@ -230,8 +240,8 @@ module DBus
       :sender, :signature
     attr_reader :protocol, :serial
 
-    def initialize
-      @message_type = 0
+    def initialize(mtype = INVALID)
+      @message_type = mtype
       @flags = 0
       @protocol = 1
       @body_length = 0
@@ -320,7 +330,8 @@ module DBus
       marshaller.packet
     end
 
-    def unmarshall(buf)
+    def unmarshall_buffer(buf)
+      buf = buf.dup
       if buf[0] == ?l
         endianness = LIL_END
       else
@@ -353,13 +364,24 @@ module DBus
       if @body_length > 0 and @signature
         @params = pu.unmarshall(@signature, @body_length)
       end
-      self
+      [self, pu.idx]
+    end
+
+    def unmarshall(buf)
+      ret, size = unmarshall_buffer(buf)
+      ret
     end
   end
 
+  class IncompleteBufferException < Exception
+  end
+
   class Connection
+    attr_reader :unique_name
     def initialize(path)
       @path = path
+      @unique_name = nil
+      @buffer = ""
     end
 
     # You need a patched libruby for this to connect
@@ -379,20 +401,6 @@ module DBus
 
     def send(buf)
       @socket.write(buf)
-    end
-
-    def read
-      a = 0
-      begin
-        @socket.read_nonblock(2048)
-      rescue Errno::EAGAIN
-        if a == 3
-          return
-        else
-          a += 1
-        end
-        retry
-      end
     end
 
     def readl
@@ -419,9 +427,49 @@ module DBus
       m.add_param(Type::UINT32, flags)
       s = m.marshall
       send(s)
+      m.serial
     end
 
+    # not working
+    def ping
+      m = Message.new
+      m.message_type = DBus::Message::METHOD_CALL
+      m.path = "/org/freedesktop/DBus"
+      m.destination = "org.freedesktop.DBus"
+      m.interface = "org.freedesktop.DBus.Peer"
+      m.member = "Ping"
+      s = m.marshall
+      send(s)
+    end
+
+    def poll_message
+      ret = nil
+      size = nil
+      r, d, d = IO.select([@socket], nil, nil, 0)
+      if @buffer.size > 0 or (r and r.size > 0)
+        @buffer += @socket.read_nonblock(4096)
+        begin
+          ret, size = Message.new.unmarshall_buffer(@buffer)
+          @buffer.slice!(0, size)
+        rescue IncompleteBufferException
+          puts "Got IncompleteBufferException with #{@buffer.inspect}"
+        end
+      end
+      ret
+    end
+
+    def wait_for_msg
+      ret = poll_message
+      while ret == nil
+        r, d, d = IO.select([@socket])
+        if r and r[0] == @socket
+          ret = poll_message
+        end
+      end
+      ret
+    end
     private
+
     def send_hello
       m = Message.new
       m.message_type = DBus::Message::METHOD_CALL
@@ -430,11 +478,7 @@ module DBus
       m.interface = "org.freedesktop.DBus"
       m.member = "Hello"
       send(m.marshall)
-      r, d, d = IO.select([@socket])
-      if r and r[0] == @socket
-        buf = read
-      end
-      ret = Message.new.unmarshall(buf)
+      ret = wait_for_msg
       if ret.serial == m.serial and
         ret.message_type == Message::METHOD_RETURN and
         ret.sender == "org.freedesktop.DBus" and ret.protocol == 1
@@ -462,7 +506,7 @@ module DBus
       writel("AUTH EXTERNAL 31303030")
       s = readl
       p s
-      # parse ?
+      # parse OK ?
       writel("BEGIN")
     end
   end
