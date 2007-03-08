@@ -1,7 +1,7 @@
-= Ruby D-Bus bindings README
+= Ruby D-Bus README
 
-Ruby D-Bus providings bindings for the D-Bus system and library for
-the Ruby programming language.
+Ruby D-Bus provides an implementation of the D-Bus protocol such that the
+D-Bus system can be used in the Ruby programming language.
 
 == Requirements
 
