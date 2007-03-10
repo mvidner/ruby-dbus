@@ -52,7 +52,7 @@ module Type
 
     def <<(a)
       raise SignatureException if not [STRUCT, ARRAY].member?(@sigtype)
-      raise SignatureException if @sigtype == Array and @members.size > 0
+      raise SignatureException if @sigtype == ARRAY and @members.size > 0
       @members << a
     end
 
