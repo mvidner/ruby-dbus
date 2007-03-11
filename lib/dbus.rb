@@ -81,6 +81,7 @@ module DBus
     end
 
     def getstring
+      align4
       str_sz = get(4).unpack(@uint32)[0]
       ret = @buffy.slice(@idx, str_sz)
       raise IncompleteBufferException if @idx + str_sz + 1 > @buffy.size
@@ -121,13 +122,17 @@ module DBus
         raise InvalidPacketException if not [0, 1].member?(v)
         packet = (v == 1)
       when Type::ARRAY
+        align4
         # checks please
         array_sz = get(4).unpack(@uint32)[0]
         raise InvalidPacketException if array_sz > 67108864
         packet = Array.new
-        align8
-        arraydata = @buffy[@idx, array_sz]
-        raise IncompleteBufferException if arraydata.size != array_sz
+        #align8
+        # We should move to the alignement of the subtype, and THEN check for
+        # the correcness of the size. Annoying.
+        #arraydata = @buffy[@idx, array_sz]
+        #puts "#{arraydata.size} #{array_sz}"
+        #raise IncompleteBufferException if arraydata.size != array_sz
         start_idx = @idx
         while @idx - start_idx < array_sz
           packet << do_parse(signature.child)
@@ -251,7 +256,7 @@ module DBus
     attr_accessor :message_type
     attr_accessor :path, :interface, :member, :error_name, :destination,
       :sender, :signature
-    attr_reader :protocol, :serial
+    attr_reader :protocol, :serial, :params
 
     def initialize(mtype = INVALID)
       @message_type = mtype
@@ -466,7 +471,8 @@ module DBus
         begin
           ret, size = Message.new.unmarshall_buffer(@buffer)
           @buffer.slice!(0, size)
-        rescue IncompleteBufferException
+        rescue IncompleteBufferException => e
+          puts e.backtrace
           puts "Got IncompleteBufferException with #{@buffer.inspect}"
         end
       end
