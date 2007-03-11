@@ -39,7 +39,7 @@ module DBus
 
     def unmarshall(signature, len = nil)
       if len != nil
-        if not @buffy.size >= @idx + len
+        if @buffy.size < @idx + len
           raise IncompleteBufferException
         end
       end
@@ -53,20 +53,20 @@ module DBus
 
     def align4
       @idx = @idx + 3 & ~3
-      raise IncompleteBufferException if @idx >= @buffy.size
+      raise IncompleteBufferException if @idx > @buffy.size
     end
 
     def align8
       @idx = @idx + 7 & ~7
-      raise IncompleteBufferException if @idx >= @buffy.size
+      raise IncompleteBufferException if @idx > @buffy.size
     end
 
     private
 
     def get(nbytes)
+      raise IncompleteBufferException if @idx + nbytes > @buffy.size
       ret = @buffy.slice(@idx, nbytes)
       @idx += nbytes
-      raise IncompleteBufferException if @idx >= @buffy.size
       ret
     end
 
@@ -75,16 +75,16 @@ module DBus
         raise InvalidPacketException
       end
       str = $1
+      raise IncompleteBufferException if @idx + str.size + 1 > @buffy.size
       @idx += str.size + 1
-      raise IncompleteBufferException if @idx >= @buffy.size
       str
     end
 
     def getstring
       str_sz = get(4).unpack(@uint32)[0]
       ret = @buffy.slice(@idx, str_sz)
+      raise IncompleteBufferException if @idx + str_sz + 1 > @buffy.size
       @idx += str_sz
-      raise IncompleteBufferException if @idx + 1 >= @buffy.size
       if @buffy[@idx] != 0
         raise InvalidPacketException, "String is not nul-terminated"
       end
@@ -96,8 +96,8 @@ module DBus
     def getsignature
       str_sz = get(1).unpack('C')[0]
       ret = @buffy.slice(@idx, str_sz)
+      raise IncompleteBufferException if @idx + str_sz + 1 >= @buffy.size
       @idx += str_sz
-      raise IncompleteBufferException if @idx + 1 >= @buffy.size
       if @buffy[@idx] != 0
         raise InvalidPacketException, "Type is not nul-terminated"
       end
@@ -114,6 +114,12 @@ module DBus
       when Type::UINT32
         align4
         packet = get(4).unpack(@uint32)[0]
+      when Type::BOOLEAN
+        align4
+        v = get(4).unpack(@uint32)[0]
+        p v
+        raise InvalidPacketException if not [0, 1].member?(v)
+        packet = (v == 1)
       when Type::ARRAY
         # checks please
         array_sz = get(4).unpack(@uint32)[0]
@@ -209,6 +215,13 @@ module DBus
       when Type::UINT32
         align4
         @packet += [val].pack("L")
+      when Type::BOOLEAN
+        align4
+        if val
+          @packet += [1].pack("L")
+        else
+          @packet += [0].pack("L")
+        end
       when Type::OBJECT_PATH
         @packet += setstring(val)
       when Type::STRING
@@ -216,7 +229,7 @@ module DBus
       when Type::SIGNATURE
         @packet += setsignature(val)
       else
-        raise Exception, "not implemented"
+        raise NotImplementedException
       end
     end
   end
@@ -447,7 +460,9 @@ module DBus
       size = nil
       r, d, d = IO.select([@socket], nil, nil, 0)
       if @buffer.size > 0 or (r and r.size > 0)
-        @buffer += @socket.read_nonblock(4096)
+        if r and r.size > 0
+          @buffer += @socket.read_nonblock(4096)
+        end
         begin
           ret, size = Message.new.unmarshall_buffer(@buffer)
           @buffer.slice!(0, size)
