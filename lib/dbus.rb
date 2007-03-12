@@ -118,7 +118,6 @@ module DBus
       when Type::BOOLEAN
         align4
         v = get(4).unpack(@uint32)[0]
-        p v
         raise InvalidPacketException if not [0, 1].member?(v)
         packet = (v == 1)
       when Type::ARRAY
@@ -255,7 +254,7 @@ module DBus
 
     attr_accessor :message_type
     attr_accessor :path, :interface, :member, :error_name, :destination,
-      :sender, :signature
+      :sender, :signature, :reply_serial
     attr_reader :protocol, :serial, :params
 
     def initialize(mtype = INVALID)
@@ -400,6 +399,8 @@ module DBus
       @path = path
       @unique_name = nil
       @buffer = ""
+      @method_call_replies = Hash.new
+      @method_call_msgs = Hash.new
     end
 
     # You need a patched libruby for this to connect
@@ -489,6 +490,29 @@ module DBus
       end
       ret
     end
+
+    def on_return(m, &retc)
+      # for debug
+      @method_call_msgs[m.serial] = m
+      @method_call_replies[m.serial] = retc
+    end
+
+    def process(m)
+      case m.message_type
+      when DBus::Message::METHOD_RETURN
+        raise InvalidPacketException if m.reply_serial == nil
+        mcs = @method_call_replies[m.reply_serial]
+        if not mcs
+          puts "no return code for #{mcs.inspect} (#{m.inspect})"
+        else
+          mcs.call(m, *m.params)
+          @method_call_replies.delete(m.reply_serial)
+          @method_call_msgs.delete(m.reply_serial)
+        end
+      end
+    end
+
+    ############################################################################
     private
 
     def send_hello
@@ -498,15 +522,11 @@ module DBus
       m.destination = "org.freedesktop.DBus"
       m.interface = "org.freedesktop.DBus"
       m.member = "Hello"
-      send(m.marshall)
-      ret = wait_for_msg
-      if ret.serial == m.serial and
-        ret.message_type == Message::METHOD_RETURN and
-        ret.sender == "org.freedesktop.DBus" and ret.protocol == 1
-        # this is our unique name
-        @unique_name = ret.destination
+      on_return(m) do |rmsg, weird_integer|
+        @unique_name = rmsg.destination
         puts "Got hello reply. Our unique_name is #{@unique_name}"
       end
+      send(m.marshall)
     end
 
     def parse_session_string
@@ -526,7 +546,6 @@ module DBus
       # TODO: code some real stuff here
       writel("AUTH EXTERNAL 31303030")
       s = readl
-      p s
       # parse OK ?
       writel("BEGIN")
     end
