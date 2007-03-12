@@ -1,6 +1,7 @@
 #!/usr/bin/ruby
 
 require 'dbus/type'
+require 'dbus/introspect'
 
 require 'socket'
 require 'thread'
