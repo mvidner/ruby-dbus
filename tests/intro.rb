@@ -78,7 +78,23 @@ s = '<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//
   </interface>
 </node>
 '
+bus = DBus::Connection.new(ENV["DBUS_SESSION_BUS_ADDRESS"])
+bus.connect
+Thread.abort_on_exception = true
+Thread.new { loop { bus.process(bus.wait_for_msg) } }
 
-x = DBus::XMLParser.new(s)
-p x.parse
+path = "/org/freedesktop/DBus"
+dest = "org.freedesktop.DBus"
+pof = DBus::ProxyObjectFactory.new
+proxy = pof.create(s, bus, path, dest)["org.freedesktop.DBus"]
 
+call = proxy.RequestName("dbus.ruby.test", DBus::Connection::NAME_FLAG_REPLACE_EXISTING)
+bus.on_return(call) { |rmsg, ret|
+  puts "RequestName return code: #{ret}"
+  bus.on_return(proxy.ListNames) { |rmsg, names|
+    puts names.join("\n")
+    exit
+  }
+}
+
+$stdin.gets

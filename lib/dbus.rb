@@ -20,6 +20,9 @@ module DBus
   class InvalidPacketException < Exception
   end
 
+  class TypeException < Exception
+  end
+
   class NotImplementedException < Exception
   end
 
@@ -214,6 +217,7 @@ module DBus
     end
 
     def append(type, val)
+      type = Type::Parser.new(type).parse if type.class == String
       case type
       when Type::BYTE
         @packet += val.chr
@@ -233,10 +237,30 @@ module DBus
         @packet += setstring(val)
       when Type::SIGNATURE
         @packet += setsignature(val)
+      when ARRAY
+        raise TypeException if val.class != Array
+        array do
+          val.each do |elem|
+            append(type.child, elem)
+          end
+        end
+      when STRUCT
+        raise TypeException if val.class != Array
+        struct do
+          idx = 0
+          while val[idx] != nil
+            type.members.each do |subtype|
+              raise TypeException if data[idx] == nil
+              append_sig(subtype, data[idx])
+              idx += 1
+            end
+          end
+        end
       else
         raise NotImplementedException
       end
     end
+
   end
 
   class Message

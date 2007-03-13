@@ -47,8 +47,8 @@ d.on_return(m) do |rmsg, ret|
       end
     end
   end
+  exit
 end
 
-puts "Return to quit."
 $stdin.gets
 

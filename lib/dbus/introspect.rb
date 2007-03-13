@@ -2,6 +2,7 @@ require 'rexml/document'
 
 module DBus
   class Interface
+    attr_reader :methods, :name
     def initialize(name)
       @name = name
       @methods, @signals = Hash.new, Hash.new
@@ -18,10 +19,11 @@ module DBus
 
   # give me a better name please
   class MethSig
-    attr_reader :name
+    attr_reader :name, :param
 
     def initialize(name)
       @name = name
+      @param, @ret = Array.new, Array.new
     end
 
     def add_param(sig)
@@ -46,7 +48,7 @@ module DBus
 
     private
     def parse_methsig(e, m)
-      e.root.elements.each("*/arg") do |ae|
+      e.elements.each("arg") do |ae|
         dir = ae.attributes["direction"]
         sig = ae.attributes["type"]
         case dir
@@ -54,8 +56,11 @@ module DBus
           m.add_param(sig)
         when "out"
           m.add_return(sig)
+        when nil # It's a signal, no direction
+          m.add_param(sig)
         else
-          raise Exception
+          puts dir
+          raise NotImplementedException, dir
         end
       end
     end
@@ -79,6 +84,60 @@ module DBus
         ret << i
       end
       ret
+    end
+  end
+
+  class ProxyObject
+    def initialize(bus, path, dest)
+      @bus, @path, @destination = bus, path, dest
+    end
+
+    def singleton_class
+      (class << self ; self ; end)
+    end
+  end
+
+  class ProxyObjectFactory
+    def create(xml, bus, path, dest)
+      intfs = XMLParser.new(xml).parse
+      pos = Hash.new
+      intfs.each do |i|
+        po = ProxyObject.new(bus, path, dest)
+        i.methods.each_value do |m|
+          methdef = "def #{m.name}("
+          methdef += (0..(m.param.size - 1)).to_a.collect { |n|
+            "arg#{n}"
+          }.join(", ")
+          methdef += %{)
+            msg = Message.new(Message::METHOD_CALL)
+            msg.path = @path
+            msg.interface = "#{i.name}"
+            msg.destination = @destination
+            msg.member = "#{m.name}"
+            msg.sender = @bus.unique_name
+          }
+          idx = 0
+          m.param.each do |p|
+            raise NotImplementedException, "sig: #{p}" if p.size > 1
+
+            # There we must check for complex signature and parse accordingly
+            # build array and stuff.
+            methdef += %{
+              msg.add_param(#{p[0]}, arg#{idx})
+            }
+            idx += 1
+          end
+          methdef += "
+            @bus.send(msg.marshall)
+            msg
+          end
+          "
+          po.singleton_class.class_eval(methdef)
+          po
+        end
+        pos[i.name] = po
+      end
+      pos
     end
   end
 end

@@ -50,6 +50,20 @@ module Type
       @members = Array.new
     end
 
+    def to_s
+      case @sigtype
+      when STRUCT
+        "(" + @members.collect { |t| t.to_s }.join + ")"
+      when ARRAY
+        "a" + @members.collect { |t| t.to_s }
+      else
+        if not TypeName.keys.member?(@sigtype)
+          raise NotImplementedException
+        end
+        @sigtype.chr
+      end
+    end
+
     def <<(a)
       raise SignatureException if not [STRUCT, ARRAY].member?(@sigtype)
       raise SignatureException if @sigtype == ARRAY and @members.size > 0
