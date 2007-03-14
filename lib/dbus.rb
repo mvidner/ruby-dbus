@@ -33,8 +33,10 @@ module DBus
       @buffy, @endianness = buffer.dup, endianness
       if @endianness == BIG_END
         @uint32 = "N"
+        @uint16 = "n"
       elsif @endianness == LIL_END
         @uint32 = "V"
+        @uint16 = "v"
       else
         raise Exception, "Incorrect endianneess"
       end
@@ -53,6 +55,11 @@ module DBus
         ret << do_parse(elem)
       end
       ret
+    end
+
+    def align2
+      @idx = @idx + 1 & ~1
+      raise IncompleteBufferException if @idx > @buffy.size
     end
 
     def align4
@@ -116,6 +123,9 @@ module DBus
       case signature.sigtype
       when Type::BYTE
         packet = get(1).unpack("C")[0]
+      when Type::UINT16
+        align2
+        packet = get(2).unpack(@uint16)[0]
       when Type::UINT32
         align4
         packet = get(4).unpack(@uint32)[0]
@@ -433,7 +443,11 @@ module DBus
       parse_session_string
       @socket = Socket.new(Socket::Constants::PF_UNIX,
                            Socket::Constants::SOCK_STREAM, 0)
-      sockaddr = Socket.pack_sockaddr_un("\0" + @unix_abstract)
+      if @type == "unix:abstract"
+        sockaddr = Socket.pack_sockaddr_un("\0" + @unix_abstract)
+      elsif @type == "unix"
+        sockaddr = Socket.pack_sockaddr_un(@unix)
+      end
       @socket.connect(sockaddr)
       init_connection
       send_hello
@@ -558,7 +572,11 @@ module DBus
       @path.split(",").each do |eqstr|
         idx, val = eqstr.split("=")
         case idx
+        when "unix"
+          @type = idx
+          @unix = val
         when "unix:abstract"
+          @type = idx
           @unix_abstract = val
         when "guid"
           @guid = val

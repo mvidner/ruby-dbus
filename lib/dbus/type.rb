@@ -7,17 +7,16 @@ module Type
   UINT16 = ?q
   INT32 = ?i
   UINT32 = ?u
+  INT64 = ?x
+  UINT64 = ?t
+  DOUBLE = ?d
   STRUCT = ?r
   ARRAY = ?a
   VARIANT = ?v
   OBJECT_PATH = ?o
   STRING = ?s
   SIGNATURE = ?g
-
-#INT64 120 (ASCII 'x')ASCII64-bit signed integer
-#UINT64 116 (ASCII 't')ASCII64-bit unsigned integer
-#DOUBLE 100 (ASCII 'd')ASCIIIEEE 754 double
-#DICT_ENTRY 101 (ASCII 'e'), 123 (ASCII '{'), 125 (ASCII '}') ASCIIEntry in a dict or map (array of key-value pairs)
+  DICT_ENTRY = ?e
 
   TypeName = {
     INVALID => "INVALID",
@@ -27,16 +26,18 @@ module Type
     UINT16 => "UINT16",
     INT32 => "INT32",
     UINT32 => "UINT32",
+    INT64 => "INT64",
+    UINT64 => "UINT64",
+    DOUBLE => "DOUBLE",
     STRUCT => "STRUCT",
     ARRAY => "ARRAY",
     VARIANT => "VARIANT",
     OBJECT_PATH => "OBJECT_PATH",
     STRING => "STRING",
     SIGNATURE => "SIGNATURE",
+    DICT_ENTRY => "DICT_ENTRY"
   }
 
-  class InvalidSigException < Exception
-  end
   class SignatureException < Exception
   end
 
@@ -56,6 +57,8 @@ module Type
         "(" + @members.collect { |t| t.to_s }.join + ")"
       when ARRAY
         "a" + @members.collect { |t| t.to_s }
+      when DICT_ENTRY
+        "{" + @members.collect { |t| t.to_s }.join + "}"
       else
         if not TypeName.keys.member?(@sigtype)
           raise NotImplementedException
@@ -65,8 +68,20 @@ module Type
     end
 
     def <<(a)
-      raise SignatureException if not [STRUCT, ARRAY].member?(@sigtype)
+      if not [STRUCT, ARRAY, DICT_ENTRY].member?(@sigtype)
+        raise SignatureException 
+      end
       raise SignatureException if @sigtype == ARRAY and @members.size > 0
+      if @sigtype == DICT_ENTRY
+        if @members.size == 2
+          raise SignatureException, "Dict entries have exactly two members"
+        end
+        if @members.size == 0
+          if [STRUCT, ARRAY, DICT_ENTRY].member?(a.sigtype)
+            raise SignatureException, "Dict entry keys must be basic types"
+          end
+        end
+      end
       @members << a
     end
 
@@ -104,9 +119,16 @@ module Type
         res << child
       when ?(
         res = Type.new(STRUCT)
-        while (c = nextchar) != ?)
+        while (c = nextchar) != nil and c != ?)
           res << parse_one(c)
         end
+        raise SignatureException, "Parse error in #{@signature}" if c == nil
+      when ?{
+        res = Type.new(DICT_ENTRY)
+        while (c = nextchar) != nil and c != ?}
+          res << parse_one(c)
+        end
+        raise SignatureException, "Parse error in #{@signature}" if c == nil
       else
         res = Type.new(c)
       end

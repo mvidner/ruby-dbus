@@ -3,12 +3,20 @@
 require 'dbus'
 
 $introspect = false
+$system = false
 if ARGV.member?("--introspect")
   $introspect = true
 end
+if ARGV.member?("--system")
+  $system = true
+end
 Thread.abort_on_exception = true
-
+d = nil
+if $system
+d = DBus::Connection.new("unix=/var/run/dbus/system_bus_socket")
+else
 d = DBus::Connection.new(ENV["DBUS_SESSION_BUS_ADDRESS"])
+end
 d.connect
 Thread.new do
   loop do 
@@ -33,9 +41,10 @@ d.on_return(m) do |rmsg, ret|
   ret.each do |el|
     puts "\t#{el}"
     next if el == d.unique_name
-    if $introspect
+    # A way to guess object path cleanly ?
+    if $introspect and not el =~ /^:/
       m = DBus::Message.new(DBus::Message::METHOD_CALL)
-      m.path = "/org/freedesktop/DBus"
+      m.path = "/" + el.gsub(".", "/")
       m.interface = "org.freedesktop.DBus.Introspectable"
       m.destination = el
       m.member = "Introspect"
@@ -47,7 +56,6 @@ d.on_return(m) do |rmsg, ret|
       end
     end
   end
-  exit
 end
 
 $stdin.gets
