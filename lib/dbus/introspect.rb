@@ -71,12 +71,12 @@ module DBus
       d = REXML::Document.new(@xml)
       d.elements.each("node/interface") do |e|
         i = Interface.new(e.attributes["name"])
-        e.root.elements.each("*/method") do |me|
+        e.elements.each("method") do |me|
           m = Method.new(me.attributes["name"])
           parse_methsig(me, m)
           i << m
         end
-        e.root.elements.each("*/signal") do |se|
+        e.elements.each("signal") do |se|
           s = Signal.new(se.attributes["name"])
           parse_methsig(se, s)
           i << s
@@ -88,8 +88,9 @@ module DBus
   end
 
   class ProxyObject
-    def initialize(bus, path, dest)
-      @bus, @path, @destination = bus, path, dest
+    attr_reader :interface
+    def initialize(intf, bus, path, dest)
+      @interface, @bus, @path, @destination = intf, bus, path, dest
     end
 
     def singleton_class
@@ -102,7 +103,8 @@ module DBus
       intfs = XMLParser.new(xml).parse
       pos = Hash.new
       intfs.each do |i|
-        po = ProxyObject.new(bus, path, dest)
+        po = ProxyObject.new(i, bus, path, dest)
+        p po.interface.methods.keys
         i.methods.each_value do |m|
           methdef = "def #{m.name}("
           methdef += (0..(m.param.size - 1)).to_a.collect { |n|
@@ -118,12 +120,12 @@ module DBus
           }
           idx = 0
           m.param.each do |p|
-            raise NotImplementedException, "sig: #{p}" if p.size > 1
+            #raise NotImplementedException, "sig: #{p}" if p.size > 1
 
             # There we must check for complex signature and parse accordingly
             # build array and stuff.
             methdef += %{
-              msg.add_param(#{p[0]}, arg#{idx})
+              msg.add_param(p, arg#{idx})
             }
             idx += 1
           end

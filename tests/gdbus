@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+
+require 'dbus'
+require 'gtk2'
+
+class DBusUI
+  def initialize
+    window = Gtk::Window.new("GD-Bus")
+
+    vbox = Gtk::VBox.new
+
+    sw = Gtk::ScrolledWindow.new(nil, nil)
+    sw.shadow_type = Gtk::SHADOW_ETCHED_IN
+    sw.set_policy(Gtk::POLICY_AUTOMATIC,
+                  Gtk::POLICY_AUTOMATIC)
+    vbox.pack_start(sw, true, true, 0)
+
+    model = create_model
+
+    treeview = Gtk::TreeView.new(model)
+    treeview.rules_hint = true
+    treeview.selection.mode = Gtk::SELECTION_MULTIPLE
+
+    finish_treeview(treeview)
+
+    sw.add(treeview)
+    treeview.signal_connect('realize') { treeview.expand_all }
+    
+    window.set_default_size(400, 500)
+    window.add(vbox)
+    window.show_all
+  end
+
+  def create_model
+    @bus = DBus::Connection.new(ENV["DBUS_SESSION_BUS_ADDRESS"])
+    @bus.connect
+    @names = nil
+
+    # The ugliest synchronous call ever
+    @bus.sync_return(@bus.proxy.ListNames) { |msg, array|
+      @names = array
+    }
+
+    model = Gtk::TreeStore.new(String)
+    @names.each do |el|
+      iter = model.append(nil)
+      iter[0] = el
+
+      if not el =~ /^:/
+        proxy = @bus.introspect(el, "/" + el.gsub(".", "/"))
+        proxy.each_pair do |k, v|
+          subiter = model.append(iter)
+          subiter[0] = k
+          puts "#{k}: #{v.interface.methods.keys.join(",")}"
+          v.interface.methods.keys.each do |m|
+            subsubiter = model.append(subiter)
+            subsubiter[0] = m
+          end
+        end
+      end
+    end
+    model
+  end
+
+  def finish_treeview(treeview)
+    renderer = Gtk::CellRendererText.new
+    col_offset = treeview.insert_column(-1, 'D-Bus Objects',
+                                        renderer,
+                                        'text' => 0)
+    column = treeview.get_column(col_offset - 1)
+    column.clickable = true
+  end
+
+  def main
+    Gtk.main
+  end
+end
+
+DBusUI.new.main

@@ -436,6 +436,7 @@ module DBus
       @buffer = ""
       @method_call_replies = Hash.new
       @method_call_msgs = Hash.new
+      @proxy = nil
     end
 
     # You need a patched libruby for this to connect
@@ -474,30 +475,124 @@ module DBus
     REQUEST_NAME_REPLY_EXISTS = 0x3
     REQUEST_NAME_REPLY_ALREADY_OWNER = 0x4
 
-    def request_name(name, flags)
-      m = Message.new
-      m.message_type = DBus::Message::METHOD_CALL
-      m.path = "/org/freedesktop/DBus"
-      m.destination = "org.freedesktop.DBus"
-      m.interface = "org.freedesktop.DBus"
-      m.member = "RequestName"
-      m.add_param(Type::STRING, name)
-      m.add_param(Type::UINT32, flags)
-      s = m.marshall
-      send(s)
-      m.serial
+#    def request_name(name, flags)
+#      m = Message.new
+#      m.message_type = DBus::Message::METHOD_CALL
+#      m.path = "/org/freedesktop/DBus"
+#      m.destination = "org.freedesktop.DBus"
+#      m.interface = "org.freedesktop.DBus"
+#      m.member = "RequestName"
+#      m.add_param(Type::STRING, name)
+#      m.add_param(Type::UINT32, flags)
+#      s = m.marshall
+#      send(s)
+#      m.serial
+#    end
+
+    DBUSXMLINTRO = '<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg name="data" direction="out" type="s"/>
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus">
+    <method name="RequestName">
+      <arg direction="in" type="s"/>
+      <arg direction="in" type="u"/>
+      <arg direction="out" type="u"/>
+    </method>
+    <method name="ReleaseName">
+      <arg direction="in" type="s"/>
+      <arg direction="out" type="u"/>
+    </method>
+    <method name="StartServiceByName">
+      <arg direction="in" type="s"/>
+      <arg direction="in" type="u"/>
+      <arg direction="out" type="u"/>
+    </method>
+    <method name="Hello">
+      <arg direction="out" type="s"/>
+    </method>
+    <method name="NameHasOwner">
+      <arg direction="in" type="s"/>
+      <arg direction="out" type="b"/>
+    </method>
+    <method name="ListNames">
+      <arg direction="out" type="as"/>
+    </method>
+    <method name="ListActivatableNames">
+      <arg direction="out" type="as"/>
+    </method>
+    <method name="AddMatch">
+      <arg direction="in" type="s"/>
+    </method>
+    <method name="RemoveMatch">
+      <arg direction="in" type="s"/>
+    </method>
+    <method name="GetNameOwner">
+      <arg direction="in" type="s"/>
+      <arg direction="out" type="s"/>
+    </method>
+    <method name="ListQueuedOwners">
+      <arg direction="in" type="s"/>
+      <arg direction="out" type="as"/>
+    </method>
+    <method name="GetConnectionUnixUser">
+      <arg direction="in" type="s"/>
+      <arg direction="out" type="u"/>
+    </method>
+    <method name="GetConnectionUnixProcessID">
+      <arg direction="in" type="s"/>
+      <arg direction="out" type="u"/>
+    </method>
+    <method name="GetConnectionSELinuxSecurityContext">
+      <arg direction="in" type="s"/>
+      <arg direction="out" type="ay"/>
+    </method>
+    <method name="ReloadConfig">
+    </method>
+    <signal name="NameOwnerChanged">
+      <arg type="s"/>
+      <arg type="s"/>
+      <arg type="s"/>
+    </signal>
+    <signal name="NameLost">
+      <arg type="s"/>
+    </signal>
+    <signal name="NameAcquired">
+      <arg type="s"/>
+    </signal>
+  </interface>
+</node>
+'
+    def introspect(dest, path)
+      puts "introspect #{dest} #{path}"
+      m = DBus::Message.new(DBus::Message::METHOD_CALL)
+      m.path = path
+      m.interface = "org.freedesktop.DBus.Introspectable"
+      m.destination = dest
+      m.member = "Introspect"
+      m.sender = unique_name
+      send(m.marshall)
+      ret = nil
+      sync_return(m) do |rmsg, inret|
+        puts inret
+        pof = DBus::ProxyObjectFactory.new
+        ret = pof.create(inret, self, path, dest)
+      end
+      ret
     end
 
-    # not working
-    def ping
-      m = Message.new
-      m.message_type = DBus::Message::METHOD_CALL
-      m.path = "/org/freedesktop/DBus"
-      m.destination = "org.freedesktop.DBus"
-      m.interface = "org.freedesktop.DBus.Peer"
-      m.member = "Ping"
-      s = m.marshall
-      send(s)
+    def proxy
+      if @proxy == nil
+        path = "/org/freedesktop/DBus"
+        dest = "org.freedesktop.DBus"
+        pof = DBus::ProxyObjectFactory.new
+        @proxy = pof.create(DBUSXMLINTRO, self, path, dest)["org.freedesktop.DBus"]
+      end
+      @proxy
     end
 
     def poll_message
@@ -528,6 +623,18 @@ module DBus
         end
       end
       ret
+    end
+
+    def sync_return(m, &retc)
+      @method_call_msgs[m.serial] = m
+      @method_call_replies[m.serial] = retc
+
+      retm = wait_for_msg
+      until retm.message_type == DBus::Message::METHOD_RETURN and
+          retm.reply_serial == m.serial
+        retm = wait_for_msg
+      end
+      process(retm)
     end
 
     def on_return(m, &retc)
