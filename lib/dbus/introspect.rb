@@ -34,7 +34,6 @@ module DBus
     end
   end
 
-
   # give me a better name please
   class MethSig
     attr_reader :name, :param
@@ -128,7 +127,6 @@ module DBus
       pos = Hash.new
       intfs.each do |i|
         po = ProxyObject.new(i, bus, path, dest)
-        p po.interface.methods.keys
         i.methods.each_value do |m|
           methdef = "def #{m.name}("
           methdef += (0..(m.param.size - 1)).to_a.collect { |n|

@@ -8,30 +8,41 @@ class DBusUI
     @glade = GladeXML.new("gdbus.glade") { |h| method(h) } # This block is like
                                                            # black magic :)
     @systemtreeview = @glade.get_widget("systemtreeview")
+    setup_treeview_renderer(@systemtreeview, 'D-Bus Clients')
     @sessiontreeview = @glade.get_widget("sessiontreeview")
-    finish_treeview(@sessiontreeview)
-    finish_treeview(@systemtreeview)
+    setup_treeview_renderer(@sessiontreeview, 'D-Bus Clients')
 
     @methsigtreeview = @glade.get_widget("methsigtreeview")
+    # ierk
+    setup_treeview_renderer(@methsigtreeview, 'Methods')
     @window = @glade.get_widget("window1")
 
-    @sessiontreeview.signal_connect('realize') { @sessiontreeview.expand_all }
-    
-    @window.set_default_size(400, 500)
     @window.show_all
-
     start_buses
   end
 
   def on_sessiontreeview_row_activated(view, path, column)
-    puts "#{view.inspect} #{path.inspect} #{column.inspect}"
+    name = view.model.get_iter(path)[0]
+    puts "Clicked on: #{name.inspect}"
+    if not name =~ /^:/
+      model = Gtk::TreeStore.new(String)
+      @methsigtreeview.model = model
+      @sessionbus.introspect(name, "/" + name.gsub(".", "/")) do |proxy|
+        proxy.each_pair do |k, v|
+          iter = model.append(nil)
+          iter[0] = k
+          v.interface.methods.keys.each do |m|
+            subiter = model.append(iter)
+            subiter[0] = m
+          end
+        end
+      end
+    end
   end
 
-  def finish_treeview(treeview)
+  def setup_treeview_renderer(treeview, str)
     renderer = Gtk::CellRendererText.new
-    col_offset = treeview.insert_column(-1, 'D-Bus Objects',
-                                        renderer,
-                                        'text' => 0)
+    col_offset = treeview.insert_column(-1, str, renderer, 'text' => 0)
     column = treeview.get_column(col_offset - 1)
     column.clickable = true
   end
@@ -48,10 +59,18 @@ class DBusUI
     @systembus = DBus::Connection.new(DBus::SystemSocketName)
     @systembus.connect
 
+    # This is how we install a glib main loop listener.
+    # Soooo trivial after all.
     gio = GLib::IOChannel.new(@sessionbus.socket.fileno)
-    gio.add_watch(GLib::IOChannel::IN) { |c, ch| process_input(@sessionbus) }
+    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
+      process_input(@sessionbus)
+      true
+    }
     gio = GLib::IOChannel.new(@systembus.socket.fileno)
-    gio.add_watch(GLib::IOChannel::IN) { |c, ch| process_input(@systembus) }
+    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
+      process_input(@systembus)
+      true
+    }
 
     @sessionbus.on_return(@sessionbus.proxy.ListNames) do |msg, array|
       model = Gtk::TreeStore.new(String)
@@ -59,23 +78,18 @@ class DBusUI
         iter = model.append(nil)
         iter[0] = el
       end
-#      iter = model.append(nil)
-#      iter[0] = el
-#
-#      if not el =~ /^:/
-#        proxy = @bus.introspect(el, "/" + el.gsub(".", "/"))
-#        proxy.each_pair do |k, v|
-#          subiter = model.append(iter)
-#          subiter[0] = k
-#          puts "#{k}: #{v.interface.methods.keys.join(",")}"
-#          v.interface.methods.keys.each do |m|
-#            subsubiter = model.append(subiter)
-#            subsubiter[0] = m
-#          end
-#        end
-#      end
       @sessiontreeview.model = model
     end
+
+#    @systembus.on_return(@systembus.proxy.ListNames) do |msg, array|
+#      puts "high"
+#      model = Gtk::TreeStore.new(String)
+#      array.each do |el|
+#        iter = model.append(nil)
+#        iter[0] = el
+#      end
+#      @systemtreeview.model = model
+#    end
   end
 
   def main

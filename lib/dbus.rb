@@ -190,10 +190,6 @@ module DBus
       @packet = @packet.ljust(@packet.length + 7 & ~7, 0.chr)
     end
 
-    def dump
-      p @packet
-    end
-
     def setstring(str)
       ret = ""
       ret += [str.length].pack("L")
@@ -575,10 +571,11 @@ module DBus
       m.member = "Introspect"
       m.sender = unique_name
       ret = nil
-      send_sync(m) do |rmsg, inret|
-        puts inret
+      send(m.marshall)
+      on_return(m) do |rmsg, inret|
         pof = DBus::ProxyObjectFactory.new
         ret = pof.create(inret, self, path, dest)
+        yield(ret)
       end
       ret
     end
@@ -643,7 +640,6 @@ module DBus
     end
 
     def process(m)
-      p m
       case m.message_type
       when DBus::Message::METHOD_RETURN
         raise InvalidPacketException if m.reply_serial == nil
