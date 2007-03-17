@@ -568,16 +568,14 @@ module DBus
 </node>
 '
     def introspect(dest, path)
-      puts "introspect #{dest} #{path}"
       m = DBus::Message.new(DBus::Message::METHOD_CALL)
       m.path = path
       m.interface = "org.freedesktop.DBus.Introspectable"
       m.destination = dest
       m.member = "Introspect"
       m.sender = unique_name
-      send(m.marshall)
       ret = nil
-      sync_return(m) do |rmsg, inret|
+      send_sync(m) do |rmsg, inret|
         puts inret
         pof = DBus::ProxyObjectFactory.new
         ret = pof.create(inret, self, path, dest)
@@ -625,7 +623,8 @@ module DBus
       ret
     end
 
-    def sync_return(m, &retc)
+    def send_sync(m, &retc)
+      send(m.marshall)
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
 
@@ -644,6 +643,7 @@ module DBus
     end
 
     def process(m)
+      p m
       case m.message_type
       when DBus::Message::METHOD_RETURN
         raise InvalidPacketException if m.reply_serial == nil
@@ -668,11 +668,10 @@ module DBus
       m.destination = "org.freedesktop.DBus"
       m.interface = "org.freedesktop.DBus"
       m.member = "Hello"
-      on_return(m) do |rmsg, weird_integer|
+      send_sync(m) do |rmsg, weird_integer|
         @unique_name = rmsg.destination
         puts "Got hello reply. Our unique_name is #{@unique_name}"
       end
-      send(m.marshall)
     end
 
     def parse_session_string

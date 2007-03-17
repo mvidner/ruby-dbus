@@ -37,7 +37,7 @@ class DBusUI
     @names = nil
 
     # The ugliest synchronous call ever
-    @bus.sync_return(@bus.proxy.ListNames) { |msg, array|
+    @bus.send_sync(@bus.proxy.ListNames) { |msg, array|
       @names = array
     }
 
