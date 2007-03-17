@@ -79,6 +79,9 @@ class DBusUI
     @sessionbus.on_return(@sessionbus.proxy.ListNames) do |msg, array|
       model = Gtk::TreeStore.new(String)
       array.each do |el|
+        @sessionbus.on_return(@sessionbus.proxy.GetNameOwner(el)) do |rmsg, r|
+          puts "#{el}: #{r}"
+        end
         iter = model.append(nil)
         iter[0] = el
       end

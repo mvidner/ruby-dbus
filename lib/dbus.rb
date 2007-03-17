@@ -224,8 +224,9 @@ module DBus
     end
 
     def append(type, val)
-      type = Type::Parser.new(type).parse if type.class == String
-      case type
+      type = type.chr if type.class == Fixnum
+      type = Type::Parser.new(type).parse[0] if type.class == String
+      case type.sigtype
       when Type::BYTE
         @packet += val.chr
       when Type::UINT32
@@ -244,14 +245,14 @@ module DBus
         @packet += setstring(val)
       when Type::SIGNATURE
         @packet += setsignature(val)
-      when ARRAY
+      when Type::ARRAY
         raise TypeException if val.class != Array
         array do
           val.each do |elem|
             append(type.child, elem)
           end
         end
-      when STRUCT
+      when Type::STRUCT
         raise TypeException if val.class != Array
         struct do
           idx = 0
@@ -303,7 +304,7 @@ module DBus
     end
 
     def add_param(type, val)
-      @signature += type.chr
+      @signature += type.to_s
       @params << [type, val]
     end
 
@@ -319,6 +320,7 @@ module DBus
     def marshall
       params = PacketMarshaller.new
       @params.each do |param|
+        p param
         params.append(param[0], param[1])
       end
       @body_length = params.packet.length

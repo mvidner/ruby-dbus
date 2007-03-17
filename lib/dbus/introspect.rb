@@ -141,13 +141,16 @@ module DBus
             msg.sender = @bus.unique_name
           }
           idx = 0
-          m.param.each do |p|
+          m.param.each do |par|
             #raise NotImplementedException, "sig: #{p}" if p.size > 1
 
             # There we must check for complex signature and parse accordingly
             # build array and stuff.
+
+            Type::Parser.new(par).parse
+
             methdef += %{
-              msg.add_param(p, arg#{idx})
+              msg.add_param("#{par}", arg#{idx})
             }
             idx += 1
           end
