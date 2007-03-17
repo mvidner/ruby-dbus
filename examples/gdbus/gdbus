@@ -40,6 +40,10 @@ class DBusUI
     end
   end
 
+  def on_window_delete_event(window, event)
+    Gtk.main_quit
+  end
+
   def setup_treeview_renderer(treeview, str)
     renderer = Gtk::CellRendererText.new
     col_offset = treeview.insert_column(-1, str, renderer, 'text' => 0)
