@@ -445,7 +445,7 @@ module DBus
       @socket = Socket.new(Socket::Constants::PF_UNIX,
                            Socket::Constants::SOCK_STREAM, 0)
       if @type == "unix:abstract"
-        sockaddr = Socket.pack_sockaddr_un("\0" + @unix_abstract)
+        sockaddr = "\1\0\0#{@unix_abstract}"
       elsif @type == "unix"
         sockaddr = Socket.pack_sockaddr_un(@unix)
       end
