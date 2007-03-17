@@ -1,9 +1,26 @@
 require 'rexml/document'
 
 module DBus
+  MethodSignalRE = /^[A-Za-z][A-Za-z0-9_]*$/
+  InterfaceElementRE = /^[A-Za-z][A-Za-z0-9_]*$/
+
+  class InvalidIntrospectionData < Exception
+  end
+
   class Interface
     attr_reader :methods, :name
+    def validate_name(name)
+      raise InvalidIntrospectionData if name.size > 255
+      raise InvalidIntrospectionData if name =~ /^\./ or name =~ /\.$/
+      raise InvalidIntrospectionData if name =~ /\.\./
+      raise InvalidIntrospectionData if not name =~ /\./
+      name.split(".").each do |element|
+        raise InvalidIntrospectionData if not element =~ InterfaceElementRE
+      end
+    end
+
     def initialize(name)
+      validate_name(name)
       @name = name
       @methods, @signals = Hash.new, Hash.new
     end
@@ -17,11 +34,18 @@ module DBus
     end
   end
 
+
   # give me a better name please
   class MethSig
     attr_reader :name, :param
+    def validate_name(name)
+      if (not name =~ MethodSignalRE) or (name.size > 255)
+        raise InvalidIntrospectionData
+      end
+    end
 
     def initialize(name)
+      validate_name(name)
       @name = name
       @param, @ret = Array.new, Array.new
     end
