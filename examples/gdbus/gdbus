@@ -1,0 +1,86 @@
+#!/usr/bin/env ruby
+
+require 'dbus'
+require 'libglade2'
+
+class DBusUI
+  def initialize
+    @glade = GladeXML.new("gdbus.glade") { |h| method(h) } # This block is like
+                                                           # black magic :)
+    @systemtreeview = @glade.get_widget("systemtreeview")
+    @sessiontreeview = @glade.get_widget("sessiontreeview")
+    finish_treeview(@sessiontreeview)
+    finish_treeview(@systemtreeview)
+
+    @methsigtreeview = @glade.get_widget("methsigtreeview")
+    @window = @glade.get_widget("window1")
+
+    @sessiontreeview.signal_connect('realize') { @sessiontreeview.expand_all }
+    
+    @window.set_default_size(400, 500)
+    @window.show_all
+
+    start_buses
+  end
+
+  def on_sessiontreeview_row_activated(view, path, column)
+    puts "#{view.inspect} #{path.inspect} #{column.inspect}"
+  end
+
+  def finish_treeview(treeview)
+    renderer = Gtk::CellRendererText.new
+    col_offset = treeview.insert_column(-1, 'D-Bus Objects',
+                                        renderer,
+                                        'text' => 0)
+    column = treeview.get_column(col_offset - 1)
+    column.clickable = true
+  end
+
+  def process_input(bus)
+    while ret = bus.poll_message
+      bus.process(ret)
+    end
+  end
+
+  def start_buses
+    @sessionbus = DBus::Connection.new(ENV["DBUS_SESSION_BUS_ADDRESS"])
+    @sessionbus.connect
+    @systembus = DBus::Connection.new(DBus::SystemSocketName)
+    @systembus.connect
+
+    gio = GLib::IOChannel.new(@sessionbus.socket.fileno)
+    gio.add_watch(GLib::IOChannel::IN) { |c, ch| process_input(@sessionbus) }
+    gio = GLib::IOChannel.new(@systembus.socket.fileno)
+    gio.add_watch(GLib::IOChannel::IN) { |c, ch| process_input(@systembus) }
+
+    @sessionbus.on_return(@sessionbus.proxy.ListNames) do |msg, array|
+      model = Gtk::TreeStore.new(String)
+      array.each do |el|
+        iter = model.append(nil)
+        iter[0] = el
+      end
+#      iter = model.append(nil)
+#      iter[0] = el
+#
+#      if not el =~ /^:/
+#        proxy = @bus.introspect(el, "/" + el.gsub(".", "/"))
+#        proxy.each_pair do |k, v|
+#          subiter = model.append(iter)
+#          subiter[0] = k
+#          puts "#{k}: #{v.interface.methods.keys.join(",")}"
+#          v.interface.methods.keys.each do |m|
+#            subsubiter = model.append(subiter)
+#            subsubiter[0] = m
+#          end
+#        end
+#      end
+      @sessiontreeview.model = model
+    end
+  end
+
+  def main
+    Gtk.main
+  end
+end
+
+DBusUI.new.main

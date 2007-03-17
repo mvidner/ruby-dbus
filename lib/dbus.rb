@@ -7,6 +7,7 @@ require 'socket'
 require 'thread'
 
 module DBus
+  SystemSocketName = "unix=/var/run/dbus/system_bus_socket"
 
   BIG_END = ?B
   LIL_END = ?l
@@ -429,7 +430,7 @@ module DBus
   end
 
   class Connection
-    attr_reader :unique_name
+    attr_reader :unique_name, :socket
     def initialize(path)
       @path = path
       @unique_name = nil
@@ -437,13 +438,12 @@ module DBus
       @method_call_replies = Hash.new
       @method_call_msgs = Hash.new
       @proxy = nil
-    end
-
-    # You need a patched libruby for this to connect
-    def connect
-      parse_session_string
       @socket = Socket.new(Socket::Constants::PF_UNIX,
                            Socket::Constants::SOCK_STREAM, 0)
+    end
+
+    def connect
+      parse_session_string
       if @type == "unix:abstract"
         sockaddr = "\1\0\0#{@unix_abstract}"
       elsif @type == "unix"
