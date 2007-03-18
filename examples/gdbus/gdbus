@@ -7,23 +7,52 @@ class DBusUI
   def initialize
     @glade = GladeXML.new("gdbus.glade") { |h| method(h) } # This block is like
                                                            # black magic :)
-#    @systemtreeview = @glade.get_widget("systemtreeview")
-#    setup_treeview_renderer(@systemtreeview, 'D-Bus Clients')
     @sessiontreeview = @glade.get_widget("sessiontreeview")
-    setup_treeview_renderer(@sessiontreeview, 'D-Bus Clients')
+    setup_treeview_renderer(@sessiontreeview, 'D-Bus Objects')
+    @sessiontreeview.selection.signal_connect("changed") do |selection|
+      on_sessiontreeview_selection_changed(selection)
+    end
 
-#    @methsigtreeview = @glade.get_widget("methsigtreeview")
+
+    @methsigtreeview = @glade.get_widget("methsigtreeview")
     # ierk
-#    setup_treeview_renderer(@methsigtreeview, 'Methods')
-    @window = @glade.get_widget("window1")
+    setup_treeview_renderer(@methsigtreeview, 'Methods')
 
+    @window = @glade.get_widget("window1")
     @window.show_all
     start_buses
+  end
+
+  def beautify_method(meth)
+    s = meth.name + "("
+    s += (meth.params.collect { |a| "in " + a } +
+          meth.rets.collect { |a| "out " + a }).join(", ")
+    s += ")"
+    s
+  end
+
+  def on_sessiontreeview_selection_changed(selection)
+    selected = selection.selected
+    if selected
+      if intf = selected[1]
+        model = Gtk::ListStore.new(String)
+        @methsigtreeview.model = model
+        
+        intf.methods.keys.sort.each do |mi|
+          m = intf.methods[mi]
+          subiter = model.append
+          subiter[0] = beautify_method(m)
+        end
+      end
+    end
   end
 
   def on_sessiontreeview_row_activated(view, path, column)
     name = view.model.get_iter(path)[0]
     puts "Clicked on: #{name.inspect}"
+    intf = view.model.get_iter(path)[1]
+    if intf
+    end
 #    if not name =~ /^:/
 #      model = Gtk::TreeStore.new(String)
 #      @methsigtreeview.model = model
@@ -58,6 +87,29 @@ class DBusUI
     end
   end
 
+  def introspect_path(model, parent, el, path)
+    proxy = @sessionbus.introspect(el, path)
+    proxy.subnodes.each do |node|
+      if path == "/"
+        npath = "/" +  node
+      else
+        npath = path + "/" + node
+      end
+      iter = model.append(parent)
+      iter[0] = node
+      Gtk.idle_add do
+        introspect_path(model, iter, el, npath)
+        false
+      end
+    end
+    proxy.interfaces.each do |intfname|
+      iter = model.append(parent)
+      iter[0] = intfname
+      iter[1] = proxy[intfname]
+      #iter[0] = intfname
+    end
+  end
+
   def start_buses
     @sessionbus = DBus::Connection.new(ENV["DBUS_SESSION_BUS_ADDRESS"])
     @sessionbus.connect
@@ -78,28 +130,18 @@ class DBusUI
     }
 
     @sessionbus.on_return(@sessionbus.proxy.ListNames) do |msg, array|
-      model = Gtk::TreeStore.new(String)
+      model = Gtk::TreeStore.new(String, DBus::ProxyObjectInterface)
+      @sessiontreeview.model = model
       array.sort.each do |el|
-        if not el =~ /^:/ and not el == "org.freedesktop.DBus" and not el =~ /gaim/
+        if not el =~ /^:/
+          iter = model.append(nil)
+          iter[0] = el
           Gtk.idle_add do
-            puts el
-            puts "introspect #{el}"
-            proxy = @sessionbus.introspect(el)
-            puts "out introspect #{el}"
-            proxy.keys.sort.each do |path|
-              intfs = proxy[path]
-              iter = model.append(nil)
-              iter[0] = path
-              intfs.keys.sort.each do |k|
-                subiter = model.append(iter)
-                subiter[0] = k
-              end
-            end
+            introspect_path(model, iter, el, "/")
             false
           end
         end
       end
-      @sessiontreeview.model = model
     end
 
 #    @systembus.on_return(@systembus.proxy.ListNames) do |msg, array|
@@ -119,3 +161,4 @@ class DBusUI
 end
 
 DBusUI.new.main
+

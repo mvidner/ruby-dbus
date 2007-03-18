@@ -36,7 +36,7 @@ module DBus
 
   # give me a better name please
   class MethSig
-    attr_reader :name, :param
+    attr_reader :name, :params, :rets
     def validate_name(name)
       if (not name =~ MethodSignalRE) or (name.size > 255)
         raise InvalidIntrospectionData
@@ -46,15 +46,15 @@ module DBus
     def initialize(name)
       validate_name(name)
       @name = name
-      @param, @ret = Array.new, Array.new
+      @params, @rets = Array.new, Array.new
     end
 
     def add_param(sig)
-      @param << sig
+      @params << sig
     end
 
     def add_return(sig)
-      @ret << sig
+      @rets << sig
     end
   end
 
@@ -114,10 +114,16 @@ module DBus
     end
   end
 
-  class ProxyObject
-    attr_reader :interface
-    def initialize(intf, bus, path, dest)
-      @interface, @bus, @path, @destination = intf, bus, path, dest
+  class ProxyObjectInterface
+    attr_accessor :methods
+
+    def initialize(object, name)
+      @object, @name = object, name
+      @methods = Hash.new
+    end
+
+    def to_str
+      @name
     end
 
     def singleton_class
@@ -125,33 +131,55 @@ module DBus
     end
   end
 
+  class ProxyObject
+    attr_accessor :subnodes
+    attr_reader :destination, :path, :bus
+
+    def initialize(bus, dest, path)
+      @bus, @destination, @path = bus, dest, path
+      @interfaces = Hash.new
+      @subnodes = Array.new
+    end
+
+    def interfaces
+      @interfaces.keys
+    end
+
+    def [](intfname)
+      @interfaces[intfname]
+    end
+
+    def []=(intfname, intf)
+      @interfaces[intfname] = intf
+    end
+  end
+
   class ProxyObjectFactory
-    attr_reader :subnodes
-    def initialize(xml, bus, path, dest)
-      @bus, @path, @dest = bus, path, dest
-      @intfs, @subnodes = XMLParser.new(xml).parse
+    def initialize(xml, bus, dest, path)
+      @xml, @bus, @path, @dest = xml, bus, path, dest
     end
 
     def build
-      bus, path, dest = @bus, @path, @dest
-      pos = Hash.new
-      @intfs.each do |i|
-        po = ProxyObject.new(i, bus, path, dest)
+      po = ProxyObject.new(@bus, @dest, @path)
+
+      intfs, po.subnodes = XMLParser.new(@xml).parse
+      intfs.each do |i|
+        poi = ProxyObjectInterface.new(po, i.name)
         i.methods.each_value do |m|
           methdef = "def #{m.name}("
-          methdef += (0..(m.param.size - 1)).to_a.collect { |n|
+          methdef += (0..(m.params.size - 1)).to_a.collect { |n|
             "arg#{n}"
           }.join(", ")
           methdef += %{)
             msg = Message.new(Message::METHOD_CALL)
-            msg.path = @path
+            msg.path = @object.path
             msg.interface = "#{i.name}"
-            msg.destination = @destination
+            msg.destination = @object.destination
             msg.member = "#{m.name}"
-            msg.sender = @bus.unique_name
+            msg.sender = @object.bus.unique_name
           }
           idx = 0
-          m.param.each do |par|
+          m.params.each do |par|
             #raise NotImplementedException, "sig: #{p}" if p.size > 1
 
             # There we must check for complex signature and parse accordingly
@@ -165,16 +193,16 @@ module DBus
             idx += 1
           end
           methdef += "
-            @bus.send(msg.marshall)
+            @object.bus.send(msg.marshall)
             msg
           end
           "
-          po.singleton_class.class_eval(methdef)
-          po
+          poi.singleton_class.class_eval(methdef)
+          poi.methods[m.name] = m
         end
-        pos[i.name] = po
+        po[i.name] = poi
       end
-      pos
+      po
     end
   end
 end

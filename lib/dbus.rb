@@ -564,8 +564,8 @@ module DBus
   </interface>
 </node>
 '
-    def introspect_path(result, dest, path)
-      puts "introspect_path #{path}"
+
+    def introspect(dest, path)
       m = DBus::Message.new(DBus::Message::METHOD_CALL)
       m.path = path
       m.interface = "org.freedesktop.DBus.Introspectable"
@@ -576,54 +576,40 @@ module DBus
       # introspect in synchronous !
       send_sync(m) do |rmsg, inret|
         pof = DBus::ProxyObjectFactory.new(inret, self, path, dest)
-        intfs = pof.build
-        if intfs.size > 0
-          result[path] = intfs
-        end
-
-        pof.subnodes.each do |subnode|
-          spath = nil
-          if path == "/"
-            spath = "/" + subnode
-          else
-            spath = path + "/" + subnode
-          end
-          introspect_path(result, dest, spath)
-        end
+        return pof.build
       end
-      result
-    end
-
-    def introspect(dest)
-      result = Hash.new
-      introspect_path(result, dest, "/")
-      result
     end
 
     def proxy
       if @proxy == nil
         path = "/org/freedesktop/DBus"
         dest = "org.freedesktop.DBus"
-        pof = DBus::ProxyObjectFactory.new(DBUSXMLINTRO, self, path, dest)
+        pof = DBus::ProxyObjectFactory.new(DBUSXMLINTRO, self, dest, path)
         @proxy = pof.build["org.freedesktop.DBus"]
       end
       @proxy
     end
 
+    MSG_BUF_SIZE = 4096
     def poll_message
       ret = nil
       size = nil
       r, d, d = IO.select([@socket], nil, nil, 0)
       if @buffer.size > 0 or (r and r.size > 0)
         if r and r.size > 0
-          @buffer += @socket.read_nonblock(4096)
+          @buffer += @socket.read_nonblock(MSG_BUF_SIZE)
         end
         begin
           ret, size = Message.new.unmarshall_buffer(@buffer)
           @buffer.slice!(0, size)
         rescue IncompleteBufferException => e
+          morebuf = @socket.read_nonblock(MSG_BUF_SIZE)
+          if morebuf
+            @buffer += morebuf
+            retry
+          end
           puts e.backtrace
-          puts "Got IncompleteBufferException with #{@buffer.inspect}"
+          puts "Warning: IncompleteBufferException in poll_message..."
         end
       end
       ret
