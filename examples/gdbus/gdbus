@@ -7,14 +7,14 @@ class DBusUI
   def initialize
     @glade = GladeXML.new("gdbus.glade") { |h| method(h) } # This block is like
                                                            # black magic :)
-    @systemtreeview = @glade.get_widget("systemtreeview")
-    setup_treeview_renderer(@systemtreeview, 'D-Bus Clients')
+#    @systemtreeview = @glade.get_widget("systemtreeview")
+#    setup_treeview_renderer(@systemtreeview, 'D-Bus Clients')
     @sessiontreeview = @glade.get_widget("sessiontreeview")
     setup_treeview_renderer(@sessiontreeview, 'D-Bus Clients')
 
-    @methsigtreeview = @glade.get_widget("methsigtreeview")
+#    @methsigtreeview = @glade.get_widget("methsigtreeview")
     # ierk
-    setup_treeview_renderer(@methsigtreeview, 'Methods')
+#    setup_treeview_renderer(@methsigtreeview, 'Methods')
     @window = @glade.get_widget("window1")
 
     @window.show_all
