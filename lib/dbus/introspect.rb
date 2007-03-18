@@ -91,7 +91,11 @@ module DBus
     public
     def parse
       ret = Array.new
+      subnodes = Array.new
       d = REXML::Document.new(@xml)
+      d.elements.each("node/node") do |e|
+        subnodes << e.attributes["name"]
+      end
       d.elements.each("node/interface") do |e|
         i = Interface.new(e.attributes["name"])
         e.elements.each("method") do |me|
@@ -106,7 +110,7 @@ module DBus
         end
         ret << i
       end
-      ret
+      [ret, subnodes]
     end
   end
 
@@ -122,10 +126,16 @@ module DBus
   end
 
   class ProxyObjectFactory
-    def create(xml, bus, path, dest)
-      intfs = XMLParser.new(xml).parse
+    attr_reader :subnodes
+    def initialize(xml, bus, path, dest)
+      @bus, @path, @dest = bus, path, dest
+      @intfs, @subnodes = XMLParser.new(xml).parse
+    end
+
+    def build
+      bus, path, dest = @bus, @path, @dest
       pos = Hash.new
-      intfs.each do |i|
+      @intfs.each do |i|
         po = ProxyObject.new(i, bus, path, dest)
         i.methods.each_value do |m|
           methdef = "def #{m.name}("

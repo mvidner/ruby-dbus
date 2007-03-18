@@ -24,20 +24,21 @@ class DBusUI
   def on_sessiontreeview_row_activated(view, path, column)
     name = view.model.get_iter(path)[0]
     puts "Clicked on: #{name.inspect}"
-    if not name =~ /^:/
-      model = Gtk::TreeStore.new(String)
-      @methsigtreeview.model = model
-      @sessionbus.introspect(name, "/" + name.gsub(".", "/")) do |proxy|
-        proxy.each_pair do |k, v|
-          iter = model.append(nil)
-          iter[0] = k
-          v.interface.methods.keys.each do |m|
-            subiter = model.append(iter)
-            subiter[0] = m
-          end
-        end
-      end
-    end
+#    if not name =~ /^:/
+#      model = Gtk::TreeStore.new(String)
+#      @methsigtreeview.model = model
+#      proxy = @sessionbus.introspect(name)
+#      proxy.each_pair do |path, intfs|
+#        intfs.each_pair do |k, v|
+#          iter = model.append(nil)
+#          iter[0] = k
+#          v.interface.methods.keys.each do |m|
+#            subiter = model.append(iter)
+#            subiter[0] = m
+#          end
+#        end
+#      end
+#    end
   end
 
   def on_window_delete_event(window, event)
@@ -78,12 +79,25 @@ class DBusUI
 
     @sessionbus.on_return(@sessionbus.proxy.ListNames) do |msg, array|
       model = Gtk::TreeStore.new(String)
-      array.each do |el|
-        @sessionbus.on_return(@sessionbus.proxy.GetNameOwner(el)) do |rmsg, r|
-          puts "#{el}: #{r}"
+      array.sort.each do |el|
+        if not el =~ /^:/ and not el == "org.freedesktop.DBus" and not el =~ /gaim/
+          Gtk.idle_add do
+            puts el
+            puts "introspect #{el}"
+            proxy = @sessionbus.introspect(el)
+            puts "out introspect #{el}"
+            proxy.keys.sort.each do |path|
+              intfs = proxy[path]
+              iter = model.append(nil)
+              iter[0] = path
+              intfs.keys.sort.each do |k|
+                subiter = model.append(iter)
+                subiter[0] = k
+              end
+            end
+            false
+          end
         end
-        iter = model.append(nil)
-        iter[0] = el
       end
       @sessiontreeview.model = model
     end

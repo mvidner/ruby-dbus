@@ -320,7 +320,6 @@ module DBus
     def marshall
       params = PacketMarshaller.new
       @params.each do |param|
-        p param
         params.append(param[0], param[1])
       end
       @body_length = params.packet.length
@@ -565,7 +564,8 @@ module DBus
   </interface>
 </node>
 '
-    def introspect(dest, path)
+    def introspect_path(result, dest, path)
+      puts "introspect_path #{path}"
       m = DBus::Message.new(DBus::Message::METHOD_CALL)
       m.path = path
       m.interface = "org.freedesktop.DBus.Introspectable"
@@ -573,21 +573,39 @@ module DBus
       m.member = "Introspect"
       m.sender = unique_name
       ret = nil
-      send(m.marshall)
-      on_return(m) do |rmsg, inret|
-        pof = DBus::ProxyObjectFactory.new
-        ret = pof.create(inret, self, path, dest)
-        yield(ret)
+      # introspect in synchronous !
+      send_sync(m) do |rmsg, inret|
+        pof = DBus::ProxyObjectFactory.new(inret, self, path, dest)
+        intfs = pof.build
+        if intfs.size > 0
+          result[path] = intfs
+        end
+
+        pof.subnodes.each do |subnode|
+          spath = nil
+          if path == "/"
+            spath = "/" + subnode
+          else
+            spath = path + "/" + subnode
+          end
+          introspect_path(result, dest, spath)
+        end
       end
-      ret
+      result
+    end
+
+    def introspect(dest)
+      result = Hash.new
+      introspect_path(result, dest, "/")
+      result
     end
 
     def proxy
       if @proxy == nil
         path = "/org/freedesktop/DBus"
         dest = "org.freedesktop.DBus"
-        pof = DBus::ProxyObjectFactory.new
-        @proxy = pof.create(DBUSXMLINTRO, self, path, dest)["org.freedesktop.DBus"]
+        pof = DBus::ProxyObjectFactory.new(DBUSXMLINTRO, self, path, dest)
+        @proxy = pof.build["org.freedesktop.DBus"]
       end
       @proxy
     end
