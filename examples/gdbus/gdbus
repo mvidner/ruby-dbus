@@ -10,7 +10,13 @@ class DBusUI
     @sessiontreeview = @glade.get_widget("sessiontreeview")
     setup_treeview_renderer(@sessiontreeview, 'D-Bus Objects')
     @sessiontreeview.selection.signal_connect("changed") do |selection|
-      on_sessiontreeview_selection_changed(selection)
+      on_treeview_selection_changed(selection)
+    end
+
+    @systemtreeview = @glade.get_widget("systemtreeview")
+    setup_treeview_renderer(@systemtreeview, 'D-Bus Objects')
+    @systemtreeview.selection.signal_connect("changed") do |selection|
+      on_treeview_selection_changed(selection)
     end
 
 
@@ -31,7 +37,7 @@ class DBusUI
     s
   end
 
-  def on_sessiontreeview_selection_changed(selection)
+  def on_treeview_selection_changed(selection)
     selected = selection.selected
     if selected
       if intf = selected[1]
@@ -87,35 +93,37 @@ class DBusUI
     end
   end
 
-  def introspect_path(model, parent, el, path)
-    proxy = @sessionbus.introspect(el, path)
-    proxy.subnodes.each do |node|
-      if path == "/"
-        npath = "/" +  node
-      else
-        npath = path + "/" + node
+  def introspect_path(bus, model, parent, el, path)
+    puts "introspect (#{el}, #{path})"
+    bus.introspect(el, path) do |proxy|
+      puts "reply introspect (#{el}, #{path})"
+      proxy.subnodes.each do |node|
+        if path == "/"
+          npath = "/" +  node
+        else
+          npath = path + "/" + node
+        end
+        iter = model.append(parent)
+        iter[0] = node
+        #Gtk.idle_add do
+          introspect_path(bus, model, iter, el, npath)
+          false
+        #end
       end
-      iter = model.append(parent)
-      iter[0] = node
-      Gtk.idle_add do
-        introspect_path(model, iter, el, npath)
-        false
+      proxy.interfaces.each do |intfname|
+        iter = model.append(parent)
+        iter[0] = intfname
+        iter[1] = proxy[intfname]
       end
-    end
-    proxy.interfaces.each do |intfname|
-      iter = model.append(parent)
-      iter[0] = intfname
-      iter[1] = proxy[intfname]
-      #iter[0] = intfname
     end
   end
 
   def start_buses
     @sessionbus = DBus::Connection.new(ENV["DBUS_SESSION_BUS_ADDRESS"])
     @sessionbus.connect
-    @systembus = DBus::Connection.new(DBus::SystemSocketName)
-    @systembus.connect
-
+    #@systembus = DBus::Connection.new(DBus::SystemSocketName)
+    #@systembus.connect
+    
     # This is how we install a glib main loop listener.
     # Soooo trivial after all.
     gio = GLib::IOChannel.new(@sessionbus.socket.fileno)
@@ -123,36 +131,33 @@ class DBusUI
       process_input(@sessionbus)
       true
     }
-    gio = GLib::IOChannel.new(@systembus.socket.fileno)
-    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
-      process_input(@systembus)
-      true
-    }
+#    gio = GLib::IOChannel.new(@systembus.socket.fileno)
+#    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
+#      process_input(@systembus)
+#      true
+#    }
 
     @sessionbus.on_return(@sessionbus.proxy.ListNames) do |msg, array|
-      model = Gtk::TreeStore.new(String, DBus::ProxyObjectInterface)
-      @sessiontreeview.model = model
-      array.sort.each do |el|
-        if not el =~ /^:/
-          iter = model.append(nil)
-          iter[0] = el
-          Gtk.idle_add do
-            introspect_path(model, iter, el, "/")
-            false
-          end
+      fill_treeview(@sessionbus, @sessiontreeview, array)
+    end
+#    @systembus.on_return(@systembus.proxy.ListNames) do |msg, array|
+#      fill_treeview(@systembus, @systemtreeview, array)
+#    end
+  end
+
+  def fill_treeview(bus, treeview, array)
+    model = Gtk::TreeStore.new(String, DBus::ProxyObjectInterface)
+    treeview.model = model
+    array.sort.each do |el|
+      if not el =~ /^:/
+        iter = model.append(nil)
+        iter[0] = el
+        Gtk.idle_add do
+          introspect_path(bus, model, iter, el, "/")
+          false
         end
       end
     end
-
-#    @systembus.on_return(@systembus.proxy.ListNames) do |msg, array|
-#      puts "high"
-#      model = Gtk::TreeStore.new(String)
-#      array.each do |el|
-#        iter = model.append(nil)
-#        iter[0] = el
-#      end
-#      @systemtreeview.model = model
-#    end
   end
 
   def main

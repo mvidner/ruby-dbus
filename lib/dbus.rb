@@ -285,13 +285,15 @@ module DBus
     NO_REPLY_EXPECTED = 0x1
     NO_AUTO_START = 0x2
 
-    attr_accessor :message_type
+    attr_reader :message_type
     attr_accessor :path, :interface, :member, :error_name, :destination,
       :sender, :signature, :reply_serial
     attr_reader :protocol, :serial, :params
 
     def initialize(mtype = INVALID)
       @message_type = mtype
+      message_type = mtype
+
       @flags = 0
       @protocol = 1
       @body_length = 0
@@ -301,6 +303,11 @@ module DBus
         @@serial += 1
       end
       @params = Array.new
+    end
+
+    def message_type=(mt)
+      @message_type = mt
+      @mt = ["INVALID", "METHOD_CALL", "METHOD_RETURN", "ERROR", "SIGNAL"][mt]
     end
 
     def add_param(type, val)
@@ -442,7 +449,11 @@ module DBus
     def connect
       parse_session_string
       if @type == "unix:abstract"
-        sockaddr = "\1\0\0#{@unix_abstract}"
+        if HOST_END == LIL_END
+          sockaddr = "\1\0\0#{@unix_abstract}"
+        else
+          sockaddr = "\0\1\0#{@unix_abstract}"
+        end
       elsif @type == "unix"
         sockaddr = Socket.pack_sockaddr_un(@unix)
       end
@@ -471,20 +482,6 @@ module DBus
     REQUEST_NAME_REPLY_IN_QUEUE = 0x2
     REQUEST_NAME_REPLY_EXISTS = 0x3
     REQUEST_NAME_REPLY_ALREADY_OWNER = 0x4
-
-#    def request_name(name, flags)
-#      m = Message.new
-#      m.message_type = DBus::Message::METHOD_CALL
-#      m.path = "/org/freedesktop/DBus"
-#      m.destination = "org.freedesktop.DBus"
-#      m.interface = "org.freedesktop.DBus"
-#      m.member = "RequestName"
-#      m.add_param(Type::STRING, name)
-#      m.add_param(Type::UINT32, flags)
-#      s = m.marshall
-#      send(s)
-#      m.serial
-#    end
 
     DBUSXMLINTRO = '<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
@@ -573,10 +570,18 @@ module DBus
       m.member = "Introspect"
       m.sender = unique_name
       ret = nil
-      # introspect in synchronous !
-      send_sync(m) do |rmsg, inret|
-        pof = DBus::ProxyObjectFactory.new(inret, self, path, dest)
-        return pof.build
+      if not block_given?
+        # introspect in synchronous !
+        send_sync(m) do |rmsg, inret|
+          pof = DBus::ProxyObjectFactory.new(inret, self, dest, path)
+          return pof.build
+        end
+      else
+        send(m.marshall)
+        on_return(m) do |rmsg, inret|
+          puts "parsing..."
+          yield(DBus::ProxyObjectFactory.new(inret, self, dest, path).build)
+        end
       end
     end
 
@@ -657,10 +662,15 @@ module DBus
           @method_call_replies.delete(m.reply_serial)
           @method_call_msgs.delete(m.reply_serial)
         end
+      when DBus::Message::METHOD_CALL
+        puts "methcall"
+        p m
+      else
+        p m
       end
     end
 
-    ############################################################################
+################################################################################
     private
 
     def send_hello

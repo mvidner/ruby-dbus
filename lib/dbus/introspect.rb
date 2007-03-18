@@ -64,7 +64,7 @@ module DBus
   class Signal < MethSig
   end
 
-  class XMLParser
+  class IntrospectXMLParser
     def initialize(xml)
       @xml = xml
     end
@@ -72,6 +72,7 @@ module DBus
     private
     def parse_methsig(e, m)
       e.elements.each("arg") do |ae|
+        name = ae.attributes["name"]
         dir = ae.attributes["direction"]
         sig = ae.attributes["type"]
         case dir
@@ -92,6 +93,7 @@ module DBus
     def parse
       ret = Array.new
       subnodes = Array.new
+      t = Time.now
       d = REXML::Document.new(@xml)
       d.elements.each("node/node") do |e|
         subnodes << e.attributes["name"]
@@ -109,6 +111,11 @@ module DBus
           i << s
         end
         ret << i
+      end
+      d = Time.now - t
+      p d
+      if d > 2
+        puts @xml
       end
       [ret, subnodes]
     end
@@ -162,7 +169,7 @@ module DBus
     def build
       po = ProxyObject.new(@bus, @dest, @path)
 
-      intfs, po.subnodes = XMLParser.new(@xml).parse
+      intfs, po.subnodes = IntrospectXMLParser.new(@xml).parse
       intfs.each do |i|
         poi = ProxyObjectInterface.new(po, i.name)
         i.methods.each_value do |m|
