@@ -579,7 +579,6 @@ module DBus
       else
         send(m.marshall)
         on_return(m) do |rmsg|
-          puts "parsing..."
           inret = rmsg.params[0]
           yield(DBus::ProxyObjectFactory.new(inret, self, dest, path).build)
         end

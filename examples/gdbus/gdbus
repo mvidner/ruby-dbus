@@ -69,6 +69,9 @@ class DBusUI
   end
 
   def process_input(bus)
+    # THIS is the bad ass loop
+    # we should return to the glib main loop from time to time. Anyone with a
+    # proper way to handle it ?
     while ret = bus.poll_message
       bus.process(ret)
     end
