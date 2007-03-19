@@ -19,7 +19,6 @@ class DBusUI
       on_treeview_selection_changed(selection)
     end
 
-
     @methsigtreeview = @glade.get_widget("methsigtreeview")
     # ierk
     setup_treeview_renderer(@methsigtreeview, 'Methods')
@@ -98,6 +97,7 @@ class DBusUI
   end
 
   def start_buses
+    @channels = []
     @sessionbus = DBus::Connection.new(ENV["DBUS_SESSION_BUS_ADDRESS"])
     @sessionbus.connect
     @systembus = DBus::Connection.new(DBus::SystemSocketName)
@@ -106,22 +106,23 @@ class DBusUI
     # This is how we install a glib main loop listener.
     # Soooo trivial after all.
     gio = GLib::IOChannel.new(@sessionbus.socket.fileno)
+    @channels << gio
     gio.add_watch(GLib::IOChannel::IN) { |c, ch|
       process_input(@sessionbus)
       true
     }
-    # Why in hell does this segv
-#    gio = GLib::IOChannel.new(@systembus.socket.fileno)
-#    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
-#      process_input(@systembus)
-#      true
-#    }
+    gio = GLib::IOChannel.new(@systembus.socket.fileno)
+    @channels << gio
+    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
+      process_input(@systembus)
+      true
+    }
 
     @sessionbus.proxy.ListNames do |msg, names|
       fill_treeview(@sessionbus, @sessiontreeview, names)
     end
     @systembus.proxy.ListNames do |msg, names|
-      fill_treeview(@systembus, @systemtreeview, array)
+      fill_treeview(@systembus, @systemtreeview, names)
     end
   end
 
@@ -146,4 +147,3 @@ class DBusUI
 end
 
 DBusUI.new.main
-
