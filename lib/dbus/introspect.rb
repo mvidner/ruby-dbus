@@ -49,12 +49,12 @@ module DBus
       @params, @rets = Array.new, Array.new
     end
 
-    def add_param(sig)
-      @params << sig
+    def add_param(param)
+      @params << param
     end
 
-    def add_return(sig)
-      @rets << sig
+    def add_return(ret)
+      @rets << ret
     end
   end
 
@@ -77,9 +77,9 @@ module DBus
         sig = ae.attributes["type"]
         case dir
         when "in"
-          m.add_param(sig)
+          m.add_param([name, sig])
         when "out"
-          m.add_return(sig)
+          m.add_return([name, sig])
         when nil # It's a signal, no direction
           m.add_param(sig)
         else
@@ -186,12 +186,10 @@ module DBus
             msg.sender = @object.bus.unique_name
           }
           idx = 0
-          m.params.each do |par|
-            #raise NotImplementedException, "sig: #{p}" if p.size > 1
+          m.params.each do |npar|
+            paramname, par = npar
 
-            # There we must check for complex signature and parse accordingly
-            # build array and stuff.
-
+            # This is the signature validity check
             Type::Parser.new(par).parse
 
             methdef += %{

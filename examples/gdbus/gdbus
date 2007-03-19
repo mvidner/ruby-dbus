@@ -31,8 +31,8 @@ class DBusUI
 
   def beautify_method(meth)
     s = meth.name + "("
-    s += (meth.params.collect { |a| "in " + a } +
-          meth.rets.collect { |a| "out " + a }).join(", ")
+    s += (meth.params.collect { |a| "in #{a[0]}:#{a[1]}" } +
+          meth.rets.collect { |a| "out #{a[0]}:#{a[1]}" }).join(", ")
     s += ")"
     s
   end
@@ -43,7 +43,6 @@ class DBusUI
     @methsigtreeview.model = model
     if selected
       if intf = selected[1]
-        
         intf.methods.keys.sort.each do |mi|
           m = intf.methods[mi]
           subiter = model.append
@@ -57,23 +56,6 @@ class DBusUI
     name = view.model.get_iter(path)[0]
     puts "Clicked on: #{name.inspect}"
     intf = view.model.get_iter(path)[1]
-    if intf
-    end
-#    if not name =~ /^:/
-#      model = Gtk::TreeStore.new(String)
-#      @methsigtreeview.model = model
-#      proxy = @sessionbus.introspect(name)
-#      proxy.each_pair do |path, intfs|
-#        intfs.each_pair do |k, v|
-#          iter = model.append(nil)
-#          iter[0] = k
-#          v.interface.methods.keys.each do |m|
-#            subiter = model.append(iter)
-#            subiter[0] = m
-#          end
-#        end
-#      end
-#    end
   end
 
   def on_window_delete_event(window, event)
@@ -105,10 +87,7 @@ class DBusUI
         end
         iter = model.append(parent)
         iter[0] = node
-        #Gtk.idle_add do
-          introspect_path(bus, model, iter, el, npath)
-          false
-        #end
+        introspect_path(bus, model, iter, el, npath)
       end
       proxy.interfaces.sort.each do |intfname|
         iter = model.append(parent)
@@ -121,8 +100,8 @@ class DBusUI
   def start_buses
     @sessionbus = DBus::Connection.new(ENV["DBUS_SESSION_BUS_ADDRESS"])
     @sessionbus.connect
-    #@systembus = DBus::Connection.new(DBus::SystemSocketName)
-    #@systembus.connect
+    @systembus = DBus::Connection.new(DBus::SystemSocketName)
+    @systembus.connect
     
     # This is how we install a glib main loop listener.
     # Soooo trivial after all.
@@ -131,6 +110,7 @@ class DBusUI
       process_input(@sessionbus)
       true
     }
+    # Why in hell does this segv
 #    gio = GLib::IOChannel.new(@systembus.socket.fileno)
 #    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
 #      process_input(@systembus)
@@ -140,9 +120,9 @@ class DBusUI
     @sessionbus.on_return(@sessionbus.proxy.ListNames) do |msg, array|
       fill_treeview(@sessionbus, @sessiontreeview, array)
     end
-#    @systembus.on_return(@systembus.proxy.ListNames) do |msg, array|
-#      fill_treeview(@systembus, @systemtreeview, array)
-#    end
+    @systembus.on_return(@systembus.proxy.ListNames) do |msg, array|
+      fill_treeview(@systembus, @systemtreeview, array)
+    end
   end
 
   def fill_treeview(bus, treeview, array)
