@@ -572,14 +572,15 @@ module DBus
       ret = nil
       if not block_given?
         # introspect in synchronous !
-        send_sync(m) do |rmsg, inret|
-          pof = DBus::ProxyObjectFactory.new(inret, self, dest, path)
+        send_sync(m) do |rmsg|
+          pof = DBus::ProxyObjectFactory.new(rmsg.params[0], self, dest, path)
           return pof.build
         end
       else
         send(m.marshall)
-        on_return(m) do |rmsg, inret|
+        on_return(m) do |rmsg|
           puts "parsing..."
+          inret = rmsg.params[0]
           yield(DBus::ProxyObjectFactory.new(inret, self, dest, path).build)
         end
       end
@@ -658,7 +659,7 @@ module DBus
         if not mcs
           puts "no return code for #{mcs.inspect} (#{m.inspect})"
         else
-          mcs.call(m, *m.params)
+          mcs.call(m)
           @method_call_replies.delete(m.reply_serial)
           @method_call_msgs.delete(m.reply_serial)
         end
@@ -680,7 +681,7 @@ module DBus
       m.destination = "org.freedesktop.DBus"
       m.interface = "org.freedesktop.DBus"
       m.member = "Hello"
-      send_sync(m) do |rmsg, weird_integer|
+      send_sync(m) do |rmsg|
         @unique_name = rmsg.destination
         puts "Got hello reply. Our unique_name is #{@unique_name}"
       end

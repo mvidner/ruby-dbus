@@ -198,8 +198,18 @@ module DBus
             idx += 1
           end
           methdef += "
-            @object.bus.send(msg.marshall)
-            msg
+            ret = nil
+            if block_given?
+              @object.bus.on_return(msg) do |rmsg|
+                yield(rmsg, *rmsg.params)
+              end
+              @object.bus.send(msg.marshall)
+            else
+              @object.bus.send_sync(msg) do |rmsg|
+                ret = rmsg.params
+              end
+            end
+            ret
           end
           "
           poi.singleton_class.class_eval(methdef)

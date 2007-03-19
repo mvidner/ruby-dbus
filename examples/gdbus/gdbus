@@ -117,10 +117,10 @@ class DBusUI
 #      true
 #    }
 
-    @sessionbus.on_return(@sessionbus.proxy.ListNames) do |msg, array|
-      fill_treeview(@sessionbus, @sessiontreeview, array)
+    @sessionbus.proxy.ListNames do |msg, names|
+      fill_treeview(@sessionbus, @sessiontreeview, names)
     end
-    @systembus.on_return(@systembus.proxy.ListNames) do |msg, array|
+    @systembus.proxy.ListNames do |msg, names|
       fill_treeview(@systembus, @systemtreeview, array)
     end
   end
