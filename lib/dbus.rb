@@ -309,6 +309,7 @@ module DBus
     end
 
     def add_param(type, val)
+      type = type.chr if type.class == Fixnum
       @signature += type.to_s
       @params << [type, val]
     end
