@@ -593,38 +593,50 @@ module DBus
       @proxy
     end
 
-    MSG_BUF_SIZE = 1024
-    def poll_message_once
+    def update_buffer
+      @buffer += @socket.read_nonblock(MSG_BUF_SIZE)
+    end
+
+    # gets one message and remove it from buffer
+    def pop_message
       ret = nil
       begin
         ret, size = Message.new.unmarshall_buffer(@buffer)
         @buffer.slice!(0, size)
-        # If we have valid data, don't poll yet...
-        return ret
       rescue IncompleteBufferException => e
-        # fall through
-      end
-
-      # buffer is incomplete, refill please
-      r, d, d = IO.select([@socket], nil, nil, 0)
-      if r and r.size > 0
-        @buffer += @socket.read_nonblock(MSG_BUF_SIZE)
-        begin
-          ret, size = Message.new.unmarshall_buffer(@buffer)
-          @buffer.slice!(0, size)
-        rescue IncompleteBufferException => e
-          # fall through, let ret be null
-        end
+        # fall through, let ret be null
       end
       ret
     end
 
-    def wait_for_msg
-      ret = poll_message
+    # gets all messages currently on buffer
+    def messages
+      ret = Array.new
+      while msg = pop_message
+        ret << msg
+      end
+      ret
+    end
+
+    MSG_BUF_SIZE = 4096
+
+    # updates buffer and get all message on buffer
+    def poll_messages
+      ret = nil
+      r, d, d = IO.select([@socket], nil, nil, 0)
+      if r and r.size > 0
+        update_buffer
+      end
+      messages
+    end
+
+    def wait_for_message
+      ret = pop_message
       while ret == nil
         r, d, d = IO.select([@socket])
         if r and r[0] == @socket
-          ret = poll_message
+          update_buffer
+          ret = pop_message
         end
       end
       ret
@@ -635,7 +647,7 @@ module DBus
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
 
-      retm = wait_for_msg
+      retm = wait_for_message
       until retm.message_type == DBus::Message::METHOD_RETURN and
           retm.reply_serial == m.serial
         retm = wait_for_msg
