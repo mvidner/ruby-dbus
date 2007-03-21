@@ -650,7 +650,7 @@ module DBus
       retm = wait_for_message
       until retm.message_type == DBus::Message::METHOD_RETURN and
           retm.reply_serial == m.serial
-        retm = wait_for_msg
+        retm = wait_for_message
       end
       process(retm)
     end
