@@ -83,9 +83,7 @@ module DBus
     end
 
     def get_nul_terminated
-      if not @buffy[@idx..-1] =~ /^([^\0]*)\0/
-        raise InvalidPacketException
-      end
+      raise IncompleteBufferException if not @buffy[@idx..-1] =~ /^([^\0]*)\0/
       str = $1
       raise IncompleteBufferException if @idx + str.size + 1 > @buffy.size
       @idx += str.size + 1
@@ -595,26 +593,27 @@ module DBus
       @proxy
     end
 
-    MSG_BUF_SIZE = 4096
-    def poll_message
+    MSG_BUF_SIZE = 1024
+    def poll_message_once
       ret = nil
-      size = nil
+      begin
+        ret, size = Message.new.unmarshall_buffer(@buffer)
+        @buffer.slice!(0, size)
+        # If we have valid data, don't poll yet...
+        return ret
+      rescue IncompleteBufferException => e
+        # fall through
+      end
+
+      # buffer is incomplete, refill please
       r, d, d = IO.select([@socket], nil, nil, 0)
-      if @buffer.size > 0 or (r and r.size > 0)
-        if r and r.size > 0
-          @buffer += @socket.read_nonblock(MSG_BUF_SIZE)
-        end
+      if r and r.size > 0
+        @buffer += @socket.read_nonblock(MSG_BUF_SIZE)
         begin
           ret, size = Message.new.unmarshall_buffer(@buffer)
           @buffer.slice!(0, size)
         rescue IncompleteBufferException => e
-          morebuf = @socket.read_nonblock(MSG_BUF_SIZE)
-          if morebuf
-            @buffer += morebuf
-            retry
-          end
-          puts e.backtrace
-          puts "Warning: IncompleteBufferException in poll_message..."
+          # fall through, let ret be null
         end
       end
       ret

@@ -96,6 +96,7 @@ class DBusUI
         iter[0] = intfname
         iter[1] = proxy[intfname]
       end
+      yield if block_given?
     end
   end
 
@@ -111,12 +112,14 @@ class DBusUI
     gio = GLib::IOChannel.new(@sessionbus.socket.fileno)
     @channels << gio
     gio.add_watch(GLib::IOChannel::IN) { |c, ch|
+      puts "main"
       process_input(@sessionbus)
       true
     }
     gio = GLib::IOChannel.new(@systembus.socket.fileno)
     @channels << gio
     gio.add_watch(GLib::IOChannel::IN) { |c, ch|
+      puts "main"
       process_input(@systembus)
       true
     }
@@ -129,19 +132,31 @@ class DBusUI
     end
   end
 
+  # The wierdest thing ever, waits for replys of introspect_path(/) before
+  # starting a new one, not to hog the cpu too much
+  def introspect_array(a, idx)
+    return if idx >= a.size
+
+    el = a[idx]
+    if not el =~ /^:/
+      iter = model.append(nil)
+      iter[0] = el
+      introspect_path(bus, model, iter, el, "/") do
+        GLib::idle_add do
+          introspect_array(a, idx + 1)
+        end
+      end
+    else
+      GLib::idle_add do
+        introspect_array(a, idx + 1)
+      end
+    end
+  end
+
   def fill_treeview(bus, treeview, array)
     model = Gtk::TreeStore.new(String, DBus::ProxyObjectInterface)
     treeview.model = model
-    array.sort.each do |el|
-      if not el =~ /^:/
-        iter = model.append(nil)
-        iter[0] = el
-        Gtk.idle_add do
-          introspect_path(bus, model, iter, el, "/")
-          false
-        end
-      end
-    end
+    introspect_array(array.sort, 0)
   end
 
   def main
