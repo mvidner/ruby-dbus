@@ -168,6 +168,7 @@
 	      <property name="fixed_height_mode">False</property>
 	      <property name="hover_selection">False</property>
 	      <property name="hover_expand">False</property>
+              <signal name="row_activated" handler="on_method_activated" last_modification_time="Sat, 17 Mar 2007 14:49:13 GMT"/>
 	    </widget>
 	  </child>
 	</widget>

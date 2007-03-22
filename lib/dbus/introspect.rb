@@ -123,6 +123,7 @@ module DBus
 
   class ProxyObjectInterface
     attr_accessor :methods
+    attr_reader :object, :name
 
     def initialize(object, name)
       @object, @name = object, name

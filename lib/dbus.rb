@@ -73,6 +73,20 @@ module DBus
       raise IncompleteBufferException if @idx > @buffy.size
     end
 
+    def align(a)
+      case a
+      when 1
+      when 2
+        align2
+      when 4
+        align4
+      when 8
+        align8
+      else
+        raise "Unsupported alignment #{a}"
+      end
+    end
+
     private
 
     def get(nbytes)
@@ -138,13 +152,11 @@ module DBus
         # checks please
         array_sz = get(4).unpack(@uint32)[0]
         raise InvalidPacketException if array_sz > 67108864
+        
+        align(signature.child.alignment)
+        raise IncompleteBufferException if @idx + array_sz > @buffy.size
+
         packet = Array.new
-        #align8
-        # We should move to the alignement of the subtype, and THEN check for
-        # the correcness of the size. Annoying.
-        #arraydata = @buffy[@idx, array_sz]
-        #puts "#{arraydata.size} #{array_sz}"
-        #raise IncompleteBufferException if arraydata.size != array_sz
         start_idx = @idx
         while @idx - start_idx < array_sz
           packet << do_parse(signature.child)
@@ -179,6 +191,9 @@ module DBus
     def initialize
       @packet = ""
     end
+    def align2
+      @packet = @packet.ljust(@packet.length + 1 & ~1, 0.chr)
+    end
 
     def align4
       @packet = @packet.ljust(@packet.length + 3 & ~3, 0.chr)
@@ -188,26 +203,36 @@ module DBus
       @packet = @packet.ljust(@packet.length + 7 & ~7, 0.chr)
     end
 
+    def align(a)
+      case a
+      when 1
+      when 2
+        align2
+      when 4
+        align4
+      when 8
+        align8
+      else
+        raise "Unsupported alignment"
+      end
+    end
+
     def setstring(str)
-      ret = ""
-      ret += [str.length].pack("L")
-      ret += str + "\0"
-      ret
+      align4
+      @packet += [str.length].pack("L") + str + "\0"
     end
 
     def setsignature(str)
-      ret = ""
-      ret += str.length.chr
-      ret += str + "\0"
-      ret
+      @packet += str.length.chr + str + "\0"
     end
 
-    def array
+    def array(type)
       sizeidx = @packet.size
       @packet += "ABCD"
-      align8
+      align(type.alignment)
+      contentidx = @packet.size
       yield
-      sz = @packet.size - sizeidx - 4
+      sz = @packet.size - contentidx
       raise InvalidPacketException if sz > 67108864
       @packet[sizeidx...sizeidx + 4] = [sz].pack("L")
     end
@@ -238,14 +263,14 @@ module DBus
           @packet += [0].pack("L")
         end
       when Type::OBJECT_PATH
-        @packet += setstring(val)
+        setstring(val)
       when Type::STRING
-        @packet += setstring(val)
+        setstring(val)
       when Type::SIGNATURE
-        @packet += setsignature(val)
+        setsignature(val)
       when Type::ARRAY
         raise TypeException if val.class != Array
-        array do
+        array(type.child) do
           val.each do |elem|
             append(type.child, elem)
           end
@@ -337,7 +362,7 @@ module DBus
       marshaller.append(Type::BYTE, @protocol)
       marshaller.append(Type::UINT32, @body_length)
       marshaller.append(Type::UINT32, @serial)
-      marshaller.array do
+      marshaller.array(Type::Parser.new("y").parse[0]) do
         if @path
           marshaller.struct do
             marshaller.append(Type::BYTE, PATH)

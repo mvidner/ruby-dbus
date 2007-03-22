@@ -51,6 +51,27 @@ module Type
       @members = Array.new
     end
 
+    def alignment
+      {
+        BYTE => 1,
+        BOOLEAN => 4,
+        INT16 => 2,
+        UINT16 => 2,
+        INT32 => 4,
+        UINT32 => 4,
+        INT64 => 8,
+        UINT64 => 8,
+        STRUCT => 8,
+        DICT_ENTRY => 8,
+        DOUBLE => 8,
+        ARRAY => 4,
+        VARIANT => 4,
+        OBJECT_PATH => 4,
+        STRING => 4,
+        SIGNATURE => 1,
+      }[@sigtype]
+    end
+
     def to_s
       case @sigtype
       when STRUCT
