@@ -28,7 +28,6 @@ module DBus
       end
     end
 
-    alias :<< :add
     def add(m)
       if m.class == Method
         @methods[m.name] = m
@@ -36,6 +35,7 @@ module DBus
         @signals[m.name] = m
       end
     end
+    alias :<< :add
 
     def export_method(id, prototype)
       m = Method.new(methodname)
