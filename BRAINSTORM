@@ -44,7 +44,7 @@ lower level API.
 ################################################################################
 def MyInterface < DBus::Interface
   name "org.whatever.interface"
-  export_method :MyMethod, "in s, in y, out u"
+  export_method :MyMethod, "in arg1:s, in arg2:y, out ret1:u"
   export_signal :MySignal, "s, y, u"
 end
 

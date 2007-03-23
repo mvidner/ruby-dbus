@@ -7,8 +7,17 @@ module DBus
   class InvalidIntrospectionData < Exception
   end
 
+  # This class is the interface descriptor that comes from the XML we parsed
+  # from the Introspect() call
+  # It also is the local definition of inerface exported by the program.
   class Interface
     attr_reader :methods, :name
+    def initialize(name)
+      validate_name(name)
+      @name = name
+      @methods, @signals = Hash.new, Hash.new
+    end
+
     def validate_name(name)
       raise InvalidIntrospectionData if name.size > 255
       raise InvalidIntrospectionData if name =~ /^\./ or name =~ /\.$/
@@ -19,17 +28,65 @@ module DBus
       end
     end
 
-    def initialize(name)
-      validate_name(name)
-      @name = name
-      @methods, @signals = Hash.new, Hash.new
-    end
-
-    def <<(m)
+    alias :<< :add
+    def add(m)
       if m.class == Method
         @methods[m.name] = m
       elsif m.class == Signal
         @signals[m.name] = m
+      end
+    end
+
+    def export_method(id, prototype)
+      m = Method.new(methodname)
+      prototype.split(/, */) do |arg|
+        arg = arg.split(" ")
+        raise InvalidClassDefinition if arg.size != 2
+        dir, arg = arg
+        arg = arg.split(":")
+        raise InvalidClassDefinition if arg.size != 2
+        name, sig = arg
+        if dir == "in"
+          m.add_param(name, sig)
+        end
+      end
+      add(m)
+    end
+  end
+
+  class InterfaceNotImplemented < Exception
+  end
+
+  class MethodNotInInterface < Exception
+  end
+
+  class MethodNotImplemented < Exception
+  end
+
+  class InvalidParameters < Exception
+  end
+
+  class Object
+    def initialize(connection, path)
+      @intfs = Hash.new
+    end
+
+    def implements(intf)
+      @intfs[intf.name] = intf
+    end
+
+    def dispatch(msg)
+      case msg.mstgype
+      when Message::METHOD_CALL
+        if not @intfs[msg.interface]
+          raise InterfaceNotImplemented
+        end
+        meth = @intfs[msg.interface].methods[msg.member]
+        raise MethodNotInInterface if not meth
+        if meth.signature != msg.signature
+          raise InvalidParameters
+        end
+        method(msg.member).call(*msg.param)
       end
     end
   end
