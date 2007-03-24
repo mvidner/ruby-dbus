@@ -27,6 +27,9 @@ module DBus
   class NotImplementedException < Exception
   end
 
+  class IncompleteBufferException < Exception
+  end
+
   class PacketUnmarshaller
     attr_reader :idx
 
@@ -470,9 +473,6 @@ module DBus
       ret, size = unmarshall_buffer(buf)
       ret
     end
-  end
-
-  class IncompleteBufferException < Exception
   end
 
   class Connection
