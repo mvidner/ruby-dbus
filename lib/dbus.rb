@@ -247,8 +247,8 @@ module DBus
     end
 
     def append(type, val)
-      type = type.chr if type.class == Fixnum
-      type = Type::Parser.new(type).parse[0] if type.class == String
+      type = type.chr if type.kind_of?(Fixnum)
+      type = Type::Parser.new(type).parse[0] if type.kind_of?(String)
       case type.sigtype
       when Type::BYTE
         @packet += val.chr
@@ -269,14 +269,14 @@ module DBus
       when Type::SIGNATURE
         setsignature(val)
       when Type::ARRAY
-        raise TypeException if val.class != Array
+        raise TypeException if not val.kind_of?(Array)
         array(type.child) do
           val.each do |elem|
             append(type.child, elem)
           end
         end
       when Type::STRUCT
-        raise TypeException if val.class != Array
+        raise TypeException if not val.kind_of?(Array)
         struct do
           idx = 0
           while val[idx] != nil
@@ -334,7 +334,7 @@ module DBus
     end
 
     def add_param(type, val)
-      type = type.chr if type.class == Fixnum
+      type = type.chr if type.kind_of?(Fixnum)
       @signature += type.to_s
       @params << [type, val]
     end

@@ -29,9 +29,9 @@ module DBus
     end
 
     def add(m)
-      if m.class == Method
+      if m.kind_of?(Method)
         @methods[m.name] = m
-      elsif m.class == Signal
+      elsif m.kind_of?(Signal)
         @signals[m.name] = m
       end
     end
