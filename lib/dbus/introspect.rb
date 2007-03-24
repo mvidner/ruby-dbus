@@ -38,7 +38,7 @@ module DBus
     alias :<< :add
 
     def export_method(id, prototype)
-      m = Method.new(methodname)
+      m = Method.new(id)
       prototype.split(/, */) do |arg|
         arg = arg.split(" ")
         raise InvalidClassDefinition if arg.size != 2
@@ -66,8 +66,51 @@ module DBus
   class InvalidParameters < Exception
   end
 
+  class InvalidMethodName < Exception
+  end
+
+  class Node
+    attr_accessor :object
+    def initialize(name)
+      @name = name
+      @subn = Hash.new
+      @object = nil
+    end
+
+    def <<(n)
+      if n.kind_of?(Node)
+        @subn[n.name] = n
+      elsif n.kind_of?(Object)
+        @object = n
+      end
+    end
+
+    def [](name)
+      @subn[name]
+    end
+
+    def []=(k, v)
+      @subn[k] = v
+    end
+
+    def to_xml
+      xml = '<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+'
+
+      @subn.each_pair do |k, v|
+        xml += "<node name=\"#{k}\" />"
+      end
+      xml += '</node>'
+      xml
+    end
+  end
+
   class Object
+    attr_reader :connection, :path
     def initialize(connection, path)
+      @connection, @path = connection, path
       @intfs = Hash.new
     end
 
@@ -96,12 +139,12 @@ module DBus
     attr_reader :name, :params, :rets
     def validate_name(name)
       if (not name =~ MethodSignalRE) or (name.size > 255)
-        raise InvalidIntrospectionData
+        raise InvalidMethodName
       end
     end
 
     def initialize(name)
-      validate_name(name)
+      validate_name(name.to_s)
       @name = name
       @params, @rets = Array.new, Array.new
     end

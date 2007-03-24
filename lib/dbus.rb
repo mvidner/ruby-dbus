@@ -326,11 +326,29 @@ module DBus
         @@serial += 1
       end
       @params = Array.new
+
+      if mtype == METHOD_RETURN
+        @flags = NO_REPLY_EXPECTED
+      end
     end
 
     def message_type=(mt)
       @message_type = mt
       @mt = ["INVALID", "METHOD_CALL", "METHOD_RETURN", "ERROR", "SIGNAL"][mt]
+    end
+
+    def Message.serial_seen(s)
+      if s > @@serial
+        @@serial = s + 1
+      end
+    end
+
+    def reply_to(m)
+      @reply_serial = m.serial
+      @destination = m.sender
+      #@interface = m.interface
+      #@member = m.member
+      self
     end
 
     def add_param(type, val)
@@ -468,6 +486,7 @@ module DBus
       @proxy = nil
       @socket = Socket.new(Socket::Constants::PF_UNIX,
                            Socket::Constants::SOCK_STREAM, 0)
+      @object_root = Node.new("/")
     end
 
     def connect
@@ -689,6 +708,7 @@ module DBus
     end
 
     def process(m)
+      Message.serial_seen(m.serial) if m.serial
       case m.message_type
       when DBus::Message::METHOD_RETURN
         raise InvalidPacketException if m.reply_serial == nil
@@ -701,11 +721,47 @@ module DBus
           @method_call_msgs.delete(m.reply_serial)
         end
       when DBus::Message::METHOD_CALL
-        puts "methcall"
+        # handle introspectable as an exception:
         p m
+        if m.interface == "org.freedesktop.DBus.Introspectable" and
+          m.member == "Introspect"
+          reply = Message.new(Message::METHOD_RETURN).reply_to(m)
+          reply.sender = @unique_name
+          p @unique_name
+          node = get_node(m.path)
+          raise NotImplementedException if not node
+          p get_node(m.path).to_xml
+          reply.sender = @unique_name
+          reply.add_param(Type::STRING, get_node(m.path).to_xml)
+          s = reply.marshall
+          p reply
+          p Message.new.unmarshall(s)
+          send(reply.marshall)
+        end
       else
         p m
       end
+    end
+
+    # ierk
+    def get_node(path, create = false)
+      n = @object_root
+      path.split("/") do |elem|
+        if not n[elem]
+          if not create
+            return false
+          else
+            n[elem] = Node.new(elem)
+          end
+        end
+        n = n[elem]
+      end
+      n
+    end
+
+    def export_object(object)
+      n = get_node(object.path, true)
+      n.object = object
     end
 
 ################################################################################
@@ -748,6 +804,7 @@ module DBus
       # parse OK ?
       writel("BEGIN")
     end
+
   end
 end # module DBus
 
