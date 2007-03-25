@@ -12,7 +12,7 @@ require 'thread'
 
 # = D-Bus main module
 #
-# Module containing all the D-Bus modules and classes
+# Module containing all the D-Bus modules and classes.
 module DBus
   # Default socket name for the system bus.
   SystemSocketName = "unix=/var/run/dbus/system_bus_socket"
@@ -23,9 +23,10 @@ module DBus
   LIL_END = ?l
 
   if [0x01020304].pack("L").unpack("V")[0] == 0x01020304
-    # Byte signifying the endianness of the host.
+    # Flag signifying that the host is little endian.
     HOST_END = LIL_END
   else
+    # Flag signifying that the host is big endian.
     HOST_END = BIG_END
   end
 
@@ -38,6 +39,7 @@ module DBus
   end
 
   # Exception raised when there is a part not (yet) implemented.
+  #
   # FIXME: isn't there a Ruby core NotImplementedError exception already?
   class NotImplementedException < Exception
   end
@@ -52,8 +54,9 @@ module DBus
   class PacketUnmarshaller
     # Index pointer that points to the byte in the data that is 
     # currently being processed.
+    #
     # FIXME: @idx seems to be an internal ivar, is it ever accessed from
-    #        the outside?
+    # the outside?
     attr_reader :idx
 
     # Create a new unmarshaller for the given data _buffer_ and _endianness_.
@@ -153,6 +156,7 @@ module DBus
 
     # Get the string length and string itself from the buffer.
     # Return the string.
+    #
     # FIXME: should be called get_string
     def getstring
       align4
@@ -170,6 +174,7 @@ module DBus
 
     # Get the signature length and signature itself from the buffer.
     # Return the signature.
+    #
     # FIXME: should be called get_signature
     def getsignature
       str_sz = get(1).unpack('C')[0]
@@ -287,6 +292,7 @@ module DBus
     end
 
     # Append the string type and the string _str_ itself to the packet.
+    #
     # FIXME: should be called set_string
     def setstring(str)
       align4
@@ -295,6 +301,7 @@ module DBus
 
     # Append the signature type and the signature _signature_ itself to the
     # packet.
+    #
     # FIXME: should be called set_signature
     def setsignature(str)
       @packet += str.length.chr + str + "\0"
@@ -384,6 +391,7 @@ module DBus
     MESSAGE_SIGNATURE = "yyyyuua(yyv)"
 
     # FIXME: following message type constants should be under Message::Type IMO
+    #
     # Invalid message type.
     INVALID = 0
     # Method call message type.
@@ -417,8 +425,7 @@ module DBus
     attr_accessor :sender
     # The signature of the message contents.
     attr_accessor :signature
-    # The serial number of the message this message is a reply for.
-    # FIXME: right?
+    # The serial number of the message this message is a reply for. FIXME: right?
     attr_accessor :reply_serial
     # The protocol.
     attr_reader :protocol
@@ -449,14 +456,16 @@ module DBus
     end
 
     # Set the message type to _mt_ (_mt_ is given in constant name string form).
+    #
     # FIXME: odd method, these already exist in Ruby space as constants, why
-    #        introduce strings as well... Message::Type::SIGNAL should be fine.
+    # introduce strings as well... Message::Type::SIGNAL should be fine.
     def message_type=(mt)
       @message_type = mt
       @mt = ["INVALID", "METHOD_CALL", "METHOD_RETURN", "ERROR", "SIGNAL"][mt]
     end
 
     # Increases the last seen serial number?
+    #
     # FIXME: strange place for a class method
     # FIXME: an operation on @@serial that is unprotected?
     def Message.serial_seen(s)
@@ -483,7 +492,8 @@ module DBus
       @params << [type, val]
     end
 
-    # FIXME: what are theses? a message element constant enumeration?
+    # FIXME: what are these? a message element constant enumeration?
+
     PATH = 1
     INTERFACE = 2
     MEMBER = 3
