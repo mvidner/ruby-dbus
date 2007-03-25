@@ -1,3 +1,9 @@
+# dbus/type.rb - module containing low-level D-Bus data type information
+#
+# Copyright (C) 2007 Arnaud Cornet, Paul van Tilburg
+#
+# FIXME: license 
+
 module DBus
 module Type
   INVALID = 0

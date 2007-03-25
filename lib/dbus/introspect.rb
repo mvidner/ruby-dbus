@@ -1,3 +1,9 @@
+# dbus/introspection.rb - module containing a low-level D-Bus introspection implementation
+#
+# Copyright (C) 2007 Arnaud Cornet, Paul van Tilburg
+#
+# FIXME: license 
+
 require 'rexml/document'
 
 module DBus
@@ -7,8 +13,10 @@ module DBus
   class InvalidIntrospectionData < Exception
   end
 
-  # This class is the interface descriptor that comes from the XML we parsed
-  # from the Introspect() call
+  # = D-Bus interface class
+  #
+  # This class is the interface descriptor that comes from the XML we
+  # parsed from the Introspect() call.
   # It also is the local definition of inerface exported by the program.
   class Interface
     attr_reader :methods, :name

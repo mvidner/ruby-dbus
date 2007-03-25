@@ -1,4 +1,8 @@
-#!/usr/bin/ruby
+# dbus.rb - Module containing the low-level D-Bus implementation
+#
+# Copyright (C) 2007 Arnaud Cornet, Paul van Tilburg
+#
+# FIXME: license 
 
 require 'dbus/type'
 require 'dbus/introspect'
@@ -6,33 +10,53 @@ require 'dbus/introspect'
 require 'socket'
 require 'thread'
 
+# = D-Bus main module
+#
+# Module containing all the D-Bus modules and classes
 module DBus
+  # Default socket name for the system bus.
   SystemSocketName = "unix=/var/run/dbus/system_bus_socket"
 
+  # Byte signifying big endianness.
   BIG_END = ?B
+  # Byte signifying little endianness.
   LIL_END = ?l
 
   if [0x01020304].pack("L").unpack("V")[0] == 0x01020304
+    # Byte signifying the endianness of the host.
     HOST_END = LIL_END
   else
     HOST_END = BIG_END
   end
 
+  # Exception raised when an invalid packet is encountered.
   class InvalidPacketException < Exception
   end
 
+  # Exception raised when there is a problem with a type (may be unknown or mismatch).
   class TypeException < Exception
   end
 
+  # Exception raised when there is a part not (yet) implemented.
+  # FIXME: isn't there a Ruby core NotImplementedError exception already?
   class NotImplementedException < Exception
   end
 
+  # = D-Bus packet unmarshaller class
+  #
+  # Class that handles the conversion (unmarshalling) of payload data
+  # to Ruby objects.
   class IncompleteBufferException < Exception
   end
 
   class PacketUnmarshaller
+    # Index pointer that points to the byte in the data that is 
+    # currently being processed.
+    # FIXME: @idx seems to be an internal ivar, is it ever accessed from
+    #        the outside?
     attr_reader :idx
 
+    # Create a new unmarshaller for the given data _buffer_ and _endianness_.
     def initialize(buffer, endianness)
       @buffy, @endianness = buffer.dup, endianness
       if @endianness == BIG_END
@@ -42,11 +66,14 @@ module DBus
         @uint32 = "V"
         @uint16 = "v"
       else
+        # FIXME: shouldn't a more special exception be raised here?
         raise Exception, "Incorrect endianneess"
       end
       @idx = 0
     end
 
+    # Unmarshall the buffer for a given _signature_ and length _len_.
+    # Return an array of unmashalled (Ruby) objects.
     def unmarshall(signature, len = nil)
       if len != nil
         if @buffy.size < @idx + len
@@ -61,22 +88,35 @@ module DBus
       ret
     end
 
+    # Align the pointer index on a 2 byte index.
     def align2
       @idx = @idx + 1 & ~1
       raise IncompleteBufferException if @idx > @buffy.size
     end
 
+    # Align the pointer index on a 4 byte index.
     def align4
       @idx = @idx + 3 & ~3
       raise IncompleteBufferException if @idx > @buffy.size
     end
 
+    # Align the pointer index on a 8 byte index.
     def align8
       @idx = @idx + 7 & ~7
       raise IncompleteBufferException if @idx > @buffy.size
     end
 
+    # Align the pointer index on a byte index of _a_, where a
+    # must be 1, 2, 4 or 8.
     def align(a)
+      # FIXME: not replaceable (and the previous 3 methods by)?? ->
+      # when 1
+      # when 2, 4, 8
+      #   @idx = @idx + (a - 1) & ~(a - 1)
+      #   raise ...
+      # else
+      #   raise
+      # end
       case a
       when 1
       when 2
@@ -90,8 +130,11 @@ module DBus
       end
     end
 
+    ###############################################################
+    # FIXME: does anyone except the object itself call the above methods?
     private
 
+    # Retrieve the next _nbytes_ number of bytes from the buffer.
     def get(nbytes)
       raise IncompleteBufferException if @idx + nbytes > @buffy.size
       ret = @buffy.slice(@idx, nbytes)
@@ -99,6 +142,7 @@ module DBus
       ret
     end
 
+    # Retrieve the series of bytes until the next NULL (\0) byte.
     def get_nul_terminated
       raise IncompleteBufferException if not @buffy[@idx..-1] =~ /^([^\0]*)\0/
       str = $1
@@ -107,6 +151,9 @@ module DBus
       str
     end
 
+    # Get the string length and string itself from the buffer.
+    # Return the string.
+    # FIXME: should be called get_string
     def getstring
       align4
       str_sz = get(4).unpack(@uint32)[0]
@@ -121,6 +168,9 @@ module DBus
       ret
     end
 
+    # Get the signature length and signature itself from the buffer.
+    # Return the signature.
+    # FIXME: should be called get_signature
     def getsignature
       str_sz = get(1).unpack('C')[0]
       ret = @buffy.slice(@idx, str_sz)
@@ -134,6 +184,8 @@ module DBus
       ret
     end
 
+    # Based on the _signature_ type, retrieve a packet from the buffer
+    # and return it.
     def do_parse(signature)
       packet = nil
       case signature.sigtype
@@ -186,27 +238,41 @@ module DBus
         	"sigtype: #{signature.sigtype} (#{signature.sigtype.chr})"
       end
       packet
-    end
-  end
+    end # def do_parse
+  end # class PacketUnmarshaller
 
+  # D-Bus packet marshaller class
+  #
+  # Class that handles the conversion (unmarshalling) of Ruby objects to
+  # (binary) payload data.
   class PacketMarshaller
+    # The current or result packet.
     attr_reader :packet
+
+    # Create a new marshaller, setting the current packet to the
+    # empty packet.
     def initialize
       @packet = ""
     end
+
+    # Align the buffer with NULL (\0) bytes on a 2 byte length.
     def align2
       @packet = @packet.ljust(@packet.length + 1 & ~1, 0.chr)
     end
 
+    # Align the buffer with NULL (\0) bytes on a 4 byte length.
     def align4
       @packet = @packet.ljust(@packet.length + 3 & ~3, 0.chr)
     end
 
+    # Align the buffer with NULL (\0) bytes on a 8 byte length.
     def align8
       @packet = @packet.ljust(@packet.length + 7 & ~7, 0.chr)
     end
 
+    # Align the buffer with NULL (\0) bytes on a byte length of _a_.
     def align(a)
+      # FIXME: same fixme as with PacketUnmarshaller#align
       case a
       when 1
       when 2
@@ -220,15 +286,22 @@ module DBus
       end
     end
 
+    # Append the string type and the string _str_ itself to the packet.
+    # FIXME: should be called set_string
     def setstring(str)
       align4
       @packet += [str.length].pack("L") + str + "\0"
     end
 
+    # Append the signature type and the signature _signature_ itself to the
+    # packet.
+    # FIXME: should be called set_signature
     def setsignature(str)
       @packet += str.length.chr + str + "\0"
     end
 
+    # Append the array type _type_ to the packet and allow for appending
+    # the child elements.
     def array(type)
       sizeidx = @packet.size
       @packet += "ABCD"
@@ -240,15 +313,18 @@ module DBus
       @packet[sizeidx...sizeidx + 4] = [sz].pack("L")
     end
 
+    # Align and allow for appending struct fields.
     def struct
       align8
       yield
     end
 
+    # Append a string of bytes without type.
     def append_string(s)
       @packet += s + "\0"
     end
 
+    # Append a value _val_ to the packet based on its _type_.
     def append(type, val)
       type = type.chr if type.kind_of?(Fixnum)
       type = Type::Parser.new(type).parse[0] if type.kind_of?(String)
@@ -293,29 +369,66 @@ module DBus
       else
         raise NotImplementedException
       end
-    end
+    end # def append
+  end # class PacketMarshaller
 
-  end
-
+  # = D-Bus message class
+  #
+  # Class that holds any type of message that travels over the bus.
   class Message
+    # The serial number of the message.
     @@serial = 1
+    # Mutex that protects updates on the serial number.
     @@serial_mutex = Mutex.new
+    # Type of a message (by specification).
     MESSAGE_SIGNATURE = "yyyyuua(yyv)"
 
+    # FIXME: following message type constants should be under Message::Type IMO
+    # Invalid message type.
     INVALID = 0
+    # Method call message type.
     METHOD_CALL = 1
+    # Method call return value message type.
     METHOD_RETURN = 2
+    # Error message type.
     ERROR = 3
+    # Signal message type.
     SIGNAL = 4
 
+    # Message flag signyfing that no reply is expected.
     NO_REPLY_EXPECTED = 0x1
+    # Message flag signifying that no automatic start is required/must be 
+    # performed.
     NO_AUTO_START = 0x2
 
+    # The type of the message.
     attr_reader :message_type
-    attr_accessor :path, :interface, :member, :error_name, :destination,
-      :sender, :signature, :reply_serial
-    attr_reader :protocol, :serial, :params
+    # The path of the object the message must be sent to/is sent from.
+    attr_accessor :path
+    # The interface of the object that must be used/was used.
+    attr_accessor :interface
+    # The interface member (method) of the object that must be used/was used.
+    attr_accessor :member
+    # The name of the error (in case of an error message type).
+    attr_accessor :error_name
+    # The destination connection of the object that must be used/was used.
+    attr_accessor :destination
+    # The sender of the message.
+    attr_accessor :sender
+    # The signature of the message contents.
+    attr_accessor :signature
+    # The serial number of the message this message is a reply for.
+    # FIXME: right?
+    attr_accessor :reply_serial
+    # The protocol.
+    attr_reader :protocol
+    # The serial of the message.
+    attr_reader :serial
+    # The parameters of the message.
+    attr_reader :params
 
+    # Create a message with message type _mtype_ with default values and a
+    # unique serial number.
     def initialize(mtype = INVALID)
       @message_type = mtype
       message_type = mtype
@@ -335,17 +448,26 @@ module DBus
       end
     end
 
+    # Set the message type to _mt_ (_mt_ is given in constant name string form).
+    # FIXME: odd method, these already exist in Ruby space as constants, why
+    #        introduce strings as well... Message::Type::SIGNAL should be fine.
     def message_type=(mt)
       @message_type = mt
       @mt = ["INVALID", "METHOD_CALL", "METHOD_RETURN", "ERROR", "SIGNAL"][mt]
     end
 
+    # Increases the last seen serial number?
+    # FIXME: strange place for a class method
+    # FIXME: an operation on @@serial that is unprotected?
     def Message.serial_seen(s)
       if s > @@serial
         @@serial = s + 1
       end
     end
 
+    # Mark this message as a reply to a another message _m_, taking
+    # the serial number of _m_ as reply serial and the sender of _m_ as
+    # destination.
     def reply_to(m)
       @reply_serial = m.serial
       @destination = m.sender
@@ -354,12 +476,14 @@ module DBus
       self
     end
 
+    # Add a parameter _val_ of type _type_ to the message.
     def add_param(type, val)
       type = type.chr if type.kind_of?(Fixnum)
       @signature += type.to_s
       @params << [type, val]
     end
 
+    # FIXME: what are theses? a message element constant enumeration?
     PATH = 1
     INTERFACE = 2
     MEMBER = 3
@@ -369,6 +493,8 @@ module DBus
     SENDER = 7
     SIGNATURE = 8
 
+    # Marshall the message with its current set parameters and return
+    # it in a packet form.
     def marshall
       params = PacketMarshaller.new
       @params.each do |param|
@@ -432,6 +558,11 @@ module DBus
       marshaller.packet
     end
 
+    # Unmarshall a packet contained in the buffer _buf_ and set the
+    # parameters of the message object according the data found in the
+    # buffer.
+    # Return the detected message and the index pointer of the buffer where
+    # the message data ended.
     def unmarshall_buffer(buf)
       buf = buf.dup
       if buf[0] == ?l
@@ -467,16 +598,33 @@ module DBus
         @params = pu.unmarshall(@signature, @body_length)
       end
       [self, pu.idx]
-    end
+    end # def unmarshall_buf
 
+    # Unmarshall the data of a message found in the buffer _buf_ using
+    # Message#unmarshall_buf.  
+    # Return the message.
     def unmarshall(buf)
       ret, size = unmarshall_buffer(buf)
       ret
     end
+  end # class Message
+
+  # Exception that is raised when an incomplete buffer is encountered.
+  class IncompleteBufferException < Exception
   end
 
+  # D-Bus main connection class
+  #
+  # Main class that maintains a connection to a bus and can handle incoming
+  # and outgoing messages.
   class Connection
-    attr_reader :unique_name, :socket
+    # The unique name (by specification) of the message.
+    attr_reader :unique_name
+    # The socket that is used to connect with the bus.
+    attr_reader :socket
+
+    # Create a new connection to the bus for a given connect _path_
+    # (UNIX socket).
     def initialize(path)
       @path = path
       @unique_name = nil
@@ -489,6 +637,7 @@ module DBus
       @object_root = Node.new("/")
     end
 
+    # Connect to the bus and initialize the connection by saying 'Hello'.
     def connect
       parse_session_string
       if @type == "unix:abstract"
@@ -505,18 +654,23 @@ module DBus
       send_hello
     end
 
+    # Write _s_ to the socket followed by CR LF.
     def writel(s)
       @socket.write("#{s}\r\n")
     end
 
+    # Send the buffer _buf_ to the bus using Connection#writel.
     def send(buf)
       @socket.write(buf)
     end
 
+    # Read data (a buffer) from the bus until CR LF is encountered.
+    # Return the buffer without the CR LF characters.
     def readl
       @socket.readline.chomp
     end
 
+    # FIXME: describe the following names, flags and constants.
     NAME_FLAG_ALLOW_REPLACEMENT = 0x1
     NAME_FLAG_REPLACE_EXISTING = 0x2
     NAME_FLAG_DO_NOT_QUEUE = 0x4
@@ -605,6 +759,7 @@ module DBus
 </node>
 '
 
+    # FIXME: describe this
     def introspect(dest, path)
       m = DBus::Message.new(DBus::Message::METHOD_CALL)
       m.path = path
@@ -628,6 +783,7 @@ module DBus
       end
     end
 
+    # Set up a proxy for ... (FIXME).
     def proxy
       if @proxy == nil
         path = "/org/freedesktop/DBus"
@@ -638,11 +794,14 @@ module DBus
       @proxy
     end
 
+    # Fill (append) the buffer from data that might be available on the
+    # socket.
     def update_buffer
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)
     end
 
-    # gets one message and remove it from buffer
+    # Get one message from the bus and remove it from the buffer.
+    # Return the message.
     def pop_message
       ret = nil
       begin
@@ -654,7 +813,7 @@ module DBus
       ret
     end
 
-    # gets all messages currently on buffer
+    # Retrieve all the messages that are currently in the buffer.
     def messages
       ret = Array.new
       while msg = pop_message
@@ -665,7 +824,8 @@ module DBus
 
     MSG_BUF_SIZE = 4096
 
-    # updates buffer and get all message on buffer
+    # Update the buffer and retrieve all messages using Connection#messages.
+    # Return the messages.
     def poll_messages
       ret = nil
       r, d, d = IO.select([@socket], nil, nil, 0)
@@ -675,6 +835,7 @@ module DBus
       messages
     end
 
+    # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
       ret = pop_message
       while ret == nil
@@ -687,7 +848,9 @@ module DBus
       ret
     end
 
-    def send_sync(m, &retc)
+    # Send a message _m_ on to the bus. This is done synchronously, thus
+    # the call will block until a reply message arrives.
+    def send_sync(m, &retc) # :yields: reply/return message
       send(m.marshall)
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
@@ -701,12 +864,17 @@ module DBus
       process(retm)
     end
 
+    # FIXME: this does nothing yet, really?
     def on_return(m, &retc)
-      # for debug
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
     end
 
+    # Process a message _m) based on its type.
+    # method call:: FIXME...
+    # method call return value:: FIXME...
+    # signal:: FIXME...
+    # error:: FIXME...
     def process(m)
       Message.serial_seen(m.serial) if m.serial
       case m.message_type
@@ -743,7 +911,7 @@ module DBus
       end
     end
 
-    # ierk
+    # FIXME: what does this do? looks very private too.
     def get_node(path, create = false)
       n = @object_root
       path.split("/") do |elem|
@@ -759,14 +927,16 @@ module DBus
       n
     end
 
+    # Exports an object with an D-Bus interface on the bus.
     def export_object(object)
       n = get_node(object.path, true)
       n.object = object
     end
 
-################################################################################
+    ###########################################################################
     private
 
+    # Send a hello messages to the bus to let it know we are here.
     def send_hello
       m = Message.new
       m.message_type = DBus::Message::METHOD_CALL
@@ -780,6 +950,7 @@ module DBus
       end
     end
 
+    # Parse the session string (socket address).
     def parse_session_string
       @path.split(",").each do |eqstr|
         idx, val = eqstr.split("=")
@@ -796,6 +967,7 @@ module DBus
       end
     end
 
+    # Initialize the connection to the bus.
     def init_connection
       @socket.write("\0")
       # TODO: code some real stuff here
@@ -805,6 +977,5 @@ module DBus
       writel("BEGIN")
     end
 
-  end
+  end # class Connection
 end # module DBus
-
