@@ -12,6 +12,72 @@ require 'singleton'
 #
 # Module containing all the D-Bus modules and classes.
 module DBus
+  # node for the object tree
+  class Node
+    attr_accessor :object
+    def initialize(name)
+      @name = name
+      @subn = Hash.new
+      @object = nil
+    end
+
+    def <<(n)
+      if n.kind_of?(Node)
+        @subn[n.name] = n
+      elsif n.kind_of?(Object)
+        @object = n
+      end
+    end
+
+    def [](name)
+      @subn[name]
+    end
+
+    def []=(k, v)
+      @subn[k] = v
+    end
+
+    def to_xml
+      xml = '<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+'
+      @subn.each_pair do |k, v|
+        xml += "<node name=\"#{k}\" />"
+      end
+      xml += '</node>'
+      xml
+    end
+  end
+
+  # Exported object type
+  class Object
+    attr_reader :connection, :path
+    def initialize(connection, path)
+      @connection, @path = connection, path
+      @intfs = Hash.new
+    end
+
+    def implements(intf)
+      @intfs[intf.name] = intf
+    end
+
+    def dispatch(msg)
+      case msg.mstgype
+      when Message::METHOD_CALL
+        if not @intfs[msg.interface]
+          raise InterfaceNotImplemented
+        end
+        meth = @intfs[msg.interface].methods[msg.member]
+        raise MethodNotInInterface if not meth
+        if meth.signature != msg.signature
+          raise InvalidParameters
+        end
+        method(msg.member).call(*msg.param)
+      end
+    end
+  end
+
   # D-Bus main connection class
   #
   # Main class that maintains a connection to a bus and can handle incoming
@@ -377,12 +443,10 @@ module DBus
       m.destination = "org.freedesktop.DBus"
       m.interface = "org.freedesktop.DBus"
       m.member = "Hello"
-      puts "hello"
       send_sync(m) do |rmsg|
         @unique_name = rmsg.destination
         puts "Got hello reply. Our unique_name is #{@unique_name}"
       end
-      puts "out"
     end
 
     # Parse the session string (socket address).

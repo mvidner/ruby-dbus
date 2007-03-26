@@ -42,7 +42,8 @@ module DBus
     end
     alias :<< :add
 
-    def export_method(id, prototype)
+    # Almost same code as above. Factorize.
+    def define_method(id, prototype)
       m = Method.new(id)
       prototype.split(/, */) do |arg|
         arg = arg.split(" ")
@@ -52,74 +53,10 @@ module DBus
         raise InvalidClassDefinition if arg.size != 2
         name, sig = arg
         if dir == "in"
-          m.add_param(name, sig)
+          m.add_param([name, sig])
         end
       end
       add(m)
-    end
-  end
-
-  class Node
-    attr_accessor :object
-    def initialize(name)
-      @name = name
-      @subn = Hash.new
-      @object = nil
-    end
-
-    def <<(n)
-      if n.kind_of?(Node)
-        @subn[n.name] = n
-      elsif n.kind_of?(Object)
-        @object = n
-      end
-    end
-
-    def [](name)
-      @subn[name]
-    end
-
-    def []=(k, v)
-      @subn[k] = v
-    end
-
-    def to_xml
-      xml = '<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
-"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
-<node>
-'
-      @subn.each_pair do |k, v|
-        xml += "<node name=\"#{k}\" />"
-      end
-      xml += '</node>'
-      xml
-    end
-  end
-
-  class Object
-    attr_reader :connection, :path
-    def initialize(connection, path)
-      @connection, @path = connection, path
-      @intfs = Hash.new
-    end
-
-    def implements(intf)
-      @intfs[intf.name] = intf
-    end
-
-    def dispatch(msg)
-      case msg.mstgype
-      when Message::METHOD_CALL
-        if not @intfs[msg.interface]
-          raise InterfaceNotImplemented
-        end
-        meth = @intfs[msg.interface].methods[msg.member]
-        raise MethodNotInInterface if not meth
-        if meth.signature != msg.signature
-          raise InvalidParameters
-        end
-        method(msg.member).call(*msg.param)
-      end
     end
   end
 
@@ -226,6 +163,68 @@ module DBus
     def singleton_class
       (class << self ; self ; end)
     end
+
+    def define(m)
+      methdef = "def #{m.name}("
+      methdef += (0..(m.params.size - 1)).to_a.collect { |n|
+        "arg#{n}"
+      }.join(", ")
+      methdef += %{)
+              msg = Message.new(Message::METHOD_CALL)
+              msg.path = @object.path
+              msg.interface = "#{@name}"
+              msg.destination = @object.destination
+              msg.member = "#{m.name}"
+              msg.sender = @object.bus.unique_name
+            }
+      idx = 0
+      m.params.each do |npar|
+        paramname, par = npar
+  
+        # This is the signature validity check
+        Type::Parser.new(par).parse
+  
+        methdef += %{
+          msg.add_param("#{par}", arg#{idx})
+        }
+        idx += 1
+      end
+      methdef += "
+        ret = nil
+        if block_given?
+          @object.bus.on_return(msg) do |rmsg|
+            yield(rmsg, *rmsg.params)
+          end
+          @object.bus.send(msg.marshall)
+        else
+          @object.bus.send_sync(msg) do |rmsg|
+            ret = rmsg.params
+          end
+        end
+        ret
+      end
+      "
+      singleton_class.class_eval(methdef)
+      @methods[m.name] = m
+    end
+
+    def define_method(methodname, prototype)
+      m = Method.new(methodname)
+      p prototype
+      prototype.split(/, */).each do |arg|
+        arg = arg.split(" ")
+        raise InvalidClassDefinition if arg.size != 2
+        dir, arg = arg
+        arg = arg.split(":")
+        raise InvalidClassDefinition if arg.size != 2
+        name, sig = arg
+        if dir == "in"
+          m.add_param([name, sig])
+        end
+      end
+      p m
+      define(m)
+    end
   end
 
   class ProxyObject
@@ -262,49 +261,7 @@ module DBus
       intfs, po.subnodes = IntrospectXMLParser.new(@xml).parse
       intfs.each do |i|
         poi = ProxyObjectInterface.new(po, i.name)
-        i.methods.each_value do |m|
-          methdef = "def #{m.name}("
-          methdef += (0..(m.params.size - 1)).to_a.collect { |n|
-            "arg#{n}"
-          }.join(", ")
-          methdef += %{)
-            msg = Message.new(Message::METHOD_CALL)
-            msg.path = @object.path
-            msg.interface = "#{i.name}"
-            msg.destination = @object.destination
-            msg.member = "#{m.name}"
-            msg.sender = @object.bus.unique_name
-          }
-          idx = 0
-          m.params.each do |npar|
-            paramname, par = npar
-
-            # This is the signature validity check
-            Type::Parser.new(par).parse
-
-            methdef += %{
-              msg.add_param("#{par}", arg#{idx})
-            }
-            idx += 1
-          end
-          methdef += "
-            ret = nil
-            if block_given?
-              @object.bus.on_return(msg) do |rmsg|
-                yield(rmsg, *rmsg.params)
-              end
-              @object.bus.send(msg.marshall)
-            else
-              @object.bus.send_sync(msg) do |rmsg|
-                ret = rmsg.params
-              end
-            end
-            ret
-          end
-          "
-          poi.singleton_class.class_eval(methdef)
-          poi.methods[m.name] = m
-        end
+        i.methods.each_value { |m| poi.define(m) }
         po[i.name] = poi
       end
       po
