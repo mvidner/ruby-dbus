@@ -10,9 +10,6 @@ module DBus
   MethodSignalRE = /^[A-Za-z][A-Za-z0-9_]*$/
   InterfaceElementRE = /^[A-Za-z][A-Za-z0-9_]*$/
 
-  class InvalidIntrospectionData < Exception
-  end
-
   # = D-Bus interface class
   #
   # This class is the interface descriptor that comes from the XML we
@@ -62,21 +59,6 @@ module DBus
     end
   end
 
-  class InterfaceNotImplemented < Exception
-  end
-
-  class MethodNotInInterface < Exception
-  end
-
-  class MethodNotImplemented < Exception
-  end
-
-  class InvalidParameters < Exception
-  end
-
-  class InvalidMethodName < Exception
-  end
-
   class Node
     attr_accessor :object
     def initialize(name)
@@ -106,7 +88,6 @@ module DBus
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
 '
-
       @subn.each_pair do |k, v|
         xml += "<node name=\"#{k}\" />"
       end
@@ -192,7 +173,7 @@ module DBus
           m.add_param(sig)
         else
           puts dir
-          raise NotImplementedException, dir
+          raise NotImplementedError, dir
         end
       end
     end

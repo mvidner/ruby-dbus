@@ -88,7 +88,7 @@ module Type
         "{" + @members.collect { |t| t.to_s }.join + "}"
       else
         if not TypeName.keys.member?(@sigtype)
-          raise NotImplementedException
+          raise NotImplementedError
         end
         @sigtype.chr
       end
