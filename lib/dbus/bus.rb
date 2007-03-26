@@ -419,12 +419,14 @@ module DBus
 
     def initialize
       super(ENV["DBUS_SESSION_BUS_ADDRESS"])
+      connect
     end
   end
 
   class SystemBus < Connection
     def initialize
       super(SystemSocketName)
+      connect
     end
   end
 

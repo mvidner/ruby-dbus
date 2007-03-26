@@ -3,7 +3,7 @@
 require 'dbus'
 Thread.abort_on_exception = true
 
-bus = DBus::Connection.new(ENV["DBUS_SESSION_BUS_ADDRESS"])
+bus = DBus.session_bus
 bus.connect
 
 r = bus.proxy.RequestName("org.ruby.service",

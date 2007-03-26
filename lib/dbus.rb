@@ -7,8 +7,8 @@
 require 'dbus/type'
 require 'dbus/introspect'
 require 'dbus/bus.rb'
-require 'dbus/marshall.rb'
-require 'dbus/message.rb'
+require 'dbus/marshall'
+require 'dbus/message'
 
 require 'socket'
 require 'thread'
