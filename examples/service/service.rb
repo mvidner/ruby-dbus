@@ -23,13 +23,11 @@ class MyObject < DBus::Object
   def MyMethod(mystring)
     puts "MyMethod"
     p mystring
-    exit
   end
 end
 
 obj = MyObject.new(bus, "/org/ruby/MyInstance")
 obj.implements(intf)
-
 bus.export_object(obj)
 
 loop { bus.process(bus.wait_for_message) }

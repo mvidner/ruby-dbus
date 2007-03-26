@@ -13,28 +13,12 @@ require 'singleton'
 # Module containing all the D-Bus modules and classes.
 module DBus
   # node for the object tree
-  class Node
+  class Node < Hash
     attr_accessor :object
+    attr_reader :name
     def initialize(name)
       @name = name
-      @subn = Hash.new
       @object = nil
-    end
-
-    def <<(n)
-      if n.kind_of?(Node)
-        @subn[n.name] = n
-      elsif n.kind_of?(Object)
-        @object = n
-      end
-    end
-
-    def [](name)
-      @subn[name]
-    end
-
-    def []=(k, v)
-      @subn[k] = v
     end
 
     def to_xml
@@ -42,39 +26,15 @@ module DBus
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
 '
-      @subn.each_pair do |k, v|
+      self.each_pair do |k, v|
         xml += "<node name=\"#{k}\" />"
       end
       xml += '</node>'
       xml
     end
-  end
 
-  # Exported object type
-  class Object
-    attr_reader :connection, :path
-    def initialize(connection, path)
-      @connection, @path = connection, path
-      @intfs = Hash.new
-    end
-
-    def implements(intf)
-      @intfs[intf.name] = intf
-    end
-
-    def dispatch(msg)
-      case msg.mstgype
-      when Message::METHOD_CALL
-        if not @intfs[msg.interface]
-          raise InterfaceNotImplemented
-        end
-        meth = @intfs[msg.interface].methods[msg.member]
-        raise MethodNotInInterface if not meth
-        if meth.signature != msg.signature
-          raise InvalidParameters
-        end
-        method(msg.member).call(*msg.param)
-      end
+    def inspect
+      "Node #{super.inspect} #{object.inspect}"
     end
   end
 
@@ -328,8 +288,8 @@ module DBus
     # Send a message _m_ on to the bus. This is done synchronously, thus
     # the call will block until a reply message arrives.
     def send_sync(m, &retc) # :yields: reply/return message
-      p m.marshall
       send(m.marshall)
+      puts m.serial
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
 
@@ -337,9 +297,9 @@ module DBus
       until retm.message_type == DBus::Message::METHOD_RETURN and
           retm.reply_serial == m.serial
         retm = wait_for_message
+        p retm
         process(retm)
       end
-      process(retm)
     end
 
     # FIXME: this does nothing yet, really?
@@ -372,7 +332,6 @@ module DBus
     # signal:: FIXME...
     # error:: FIXME...
     def process(m)
-      Message.serial_seen(m.serial) if m.serial
       case m.message_type
       when DBus::Message::METHOD_RETURN
         raise InvalidPacketException if m.reply_serial == nil
@@ -387,7 +346,6 @@ module DBus
       when DBus::Message::METHOD_CALL
         # This is just not working
         # handle introspectable as an exception:
-        p m
         if m.interface == "org.freedesktop.DBus.Introspectable" and
           m.member == "Introspect"
           reply = Message.new(Message::METHOD_RETURN).reply_to(m)
@@ -402,6 +360,9 @@ module DBus
           p reply
           p Message.new.unmarshall(s)
           send(reply.marshall)
+        else
+          obj = get_node(m.path).object
+          obj.dispatch(m) if obj
         end
       else
         p m
@@ -410,19 +371,15 @@ module DBus
 
     # Exports an DBus object instance with an D-Bus interface on the bus.
     def export_object(object)
-      n = get_node(object.path, true)
-      n.object = object
+      get_node(object.path, true).object = object
     end
-
-    ###########################################################################
-    private
 
     # FIXME: what does this do? looks very private too.
     # Get the object node corresponding to the given _path_. if _create_ is
     # true, the the nodes in the path are created if they do not already exist.
     def get_node(path, create = false)
       n = @object_root
-      path.split("/") do |elem|
+      path.sub(/^\//, "").split("/").each do |elem|
         if not n[elem]
           if not create
             return false
@@ -432,8 +389,14 @@ module DBus
         end
         n = n[elem]
       end
+      if n.nil?
+        puts "Warning, unknown object #{path}"
+      end
       n
     end
+
+    ###########################################################################
+    private
 
     # Send a hello messages to the bus to let it know we are here.
     def send_hello

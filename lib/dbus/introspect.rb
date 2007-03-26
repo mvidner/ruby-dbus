@@ -10,6 +10,39 @@ module DBus
   MethodSignalRE = /^[A-Za-z][A-Za-z0-9_]*$/
   InterfaceElementRE = /^[A-Za-z][A-Za-z0-9_]*$/
 
+  # Exported object type
+  class Object
+    attr_reader :bus, :path
+    def initialize(bus, path)
+      @bus, @path = bus, path
+      @intfs = Hash.new
+    end
+
+    def implements(intf)
+      @intfs[intf.name] = intf
+    end
+
+    def dispatch(msg)
+      case msg.message_type
+      when Message::METHOD_CALL
+        if not @intfs[msg.interface]
+          raise InterfaceNotImplemented
+        end
+        meth = @intfs[msg.interface].methods[msg.member.to_sym]
+        raise MethodNotInInterface if not meth
+        retdata = method(msg.member).call(*msg.params)
+
+        reply = Message.new.reply_to(msg)
+        # I'm sure there is a ruby way to do that
+        i = 0
+        meth.rets.each do |rsig|
+          reply.add_param(rsig, reply[i])
+        end
+        @bus.send(reply.marshall)
+      end
+    end
+  end
+
   # = D-Bus interface class
   #
   # This class is the interface descriptor that comes from the XML we
@@ -62,7 +95,7 @@ module DBus
 
   # give me a better name please
   class MethSig
-    attr_reader :name, :params, :rets
+    attr_reader :name, :params
     def validate_name(name)
       if (not name =~ MethodSignalRE) or (name.size > 255)
         raise InvalidMethodName
@@ -72,19 +105,25 @@ module DBus
     def initialize(name)
       validate_name(name.to_s)
       @name = name
-      @params, @rets = Array.new, Array.new
+      @params = Array.new
     end
 
     def add_param(param)
       @params << param
     end
+  end
+
+  class Method < MethSig
+    attr_reader :rets
+
+    def initialize(name)
+      super(name)
+      @rets = Array.new
+    end
 
     def add_return(ret)
       @rets << ret
     end
-  end
-
-  class Method < MethSig
   end
 
   class Signal < MethSig
@@ -139,7 +178,6 @@ module DBus
         ret << i
       end
       d = Time.now - t
-      p d
       if d > 2
         puts @xml
       end
@@ -210,7 +248,6 @@ module DBus
 
     def define_method(methodname, prototype)
       m = Method.new(methodname)
-      p prototype
       prototype.split(/, */).each do |arg|
         arg = arg.split(" ")
         raise InvalidClassDefinition if arg.size != 2
@@ -222,7 +259,6 @@ module DBus
           m.add_param([name, sig])
         end
       end
-      p m
       define(m)
     end
   end

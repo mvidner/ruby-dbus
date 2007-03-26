@@ -98,22 +98,11 @@ module DBus
       @mt = ["INVALID", "METHOD_CALL", "METHOD_RETURN", "ERROR", "SIGNAL"][mt]
     end
 
-    # Increases the last seen serial number?
-    #
-    # FIXME: strange place for a class method
-    # Don't know where to move it
-    def Message.serial_seen(s)
-      @@serial_mutex.synchronize do
-        if s > @@serial
-          @@serial = s + 1
-        end
-      end
-    end
-
     # Mark this message as a reply to a another message _m_, taking
     # the serial number of _m_ as reply serial and the sender of _m_ as
     # destination.
     def reply_to(m)
+      @message_type = METHOD_RETURN
       @reply_serial = m.serial
       @destination = m.sender
       #@interface = m.interface
@@ -167,14 +156,6 @@ module DBus
             marshaller.append(Type::OBJECT_PATH, @path)
           end
         end
-        if @destination
-          marshaller.struct do
-            marshaller.append(Type::BYTE, DESTINATION)
-            marshaller.append(Type::BYTE, 1)
-            marshaller.append_simple_string("s")
-            marshaller.append(Type::STRING, @destination)
-          end
-        end
         if @interface
           marshaller.struct do
             marshaller.append(Type::BYTE, INTERFACE)
@@ -191,6 +172,23 @@ module DBus
             marshaller.append(Type::STRING, @member)
           end
         end
+        # FIXME: add error_name here
+        if @reply_serial
+          marshaller.struct do
+            marshaller.append(Type::BYTE, REPLY_SERIAL)
+            marshaller.append(Type::BYTE, 1)
+            marshaller.append_simple_string("u")
+            marshaller.append(Type::UINT32, @reply_serial)
+          end
+        end
+        if @destination
+          marshaller.struct do
+            marshaller.append(Type::BYTE, DESTINATION)
+            marshaller.append(Type::BYTE, 1)
+            marshaller.append_simple_string("s")
+            marshaller.append(Type::STRING, @destination)
+          end
+        end
         if @signature != ""
           marshaller.struct do
             marshaller.append(Type::BYTE, SIGNATURE)
@@ -201,6 +199,7 @@ module DBus
         end
       end
       marshaller.align(8)
+      p @params
       @params.each do |param|
         marshaller.append(param[0], param[1])
       end
