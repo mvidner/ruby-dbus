@@ -79,7 +79,7 @@ class DBusUI
 
     @methsigtreeview = @glade.get_widget("methsigtreeview")
     # ierk
-    setup_treeview_renderer(@methsigtreeview, 'Methods')
+    setup_methodview_renderer(@methsigtreeview)
 
     @window = @glade.get_widget("window1")
     @window.show_all
@@ -87,16 +87,22 @@ class DBusUI
   end
 
   def beautify_method(meth)
+    # Damn, this need to be rewritten :p
     s = meth.name + "("
-    s += (meth.params.collect { |a| "in #{a[0]}:#{a[1]}" } +
-          meth.rets.collect { |a| "out #{a[0]}:#{a[1]}" }).join(", ")
+    if meth.kind_of?(DBus::Method)
+      s += (meth.params.collect { |a| "in #{a[0]}:#{a[1]}" } +
+            meth.rets.collect { |a| "out #{a[0]}:#{a[1]}" }).join(", ")
+    elsif meth.kind_of?(DBus::Signal)
+      s += (meth.params.collect { |a| "in #{a[0]}:#{a[1]}" }).join(", ")
+    end
     s += ")"
     s
   end
 
   def on_treeview_selection_changed(selection)
     selected = selection.selected
-    model = Gtk::ListStore.new(String, DBus::Method, DBus::ProxyObjectInterface)
+    model = Gtk::ListStore.new(String, String, DBus::Method,
+                               DBus::ProxyObjectInterface)
     @methsigtreeview.model = model
     if selected
       if intf = selected[1]
@@ -104,8 +110,17 @@ class DBusUI
           m = intf.methods[mi]
           subiter = model.append
           subiter[0] = beautify_method(m)
-          subiter[1] = m
-          subiter[2] = intf
+          subiter[1] = "Method"
+          subiter[2] = m
+          subiter[3] = intf
+        end
+        intf.signals.keys.sort.each do |mi|
+          m = intf.signals[mi]
+          subiter = model.append
+          subiter[0] = beautify_method(m)
+          subiter[1] = "Signal"
+          subiter[2] = m
+          subiter[3] = intf
         end
       end
     end
@@ -114,9 +129,20 @@ class DBusUI
   def on_method_activated(view, path, column)
     name = view.model.get_iter(path)[0]
     puts "Clicked on: #{name.inspect}"
-    method = view.model.get_iter(path)[1]
+    type = view.model.get_iter(path)[1]
     intf = view.model.get_iter(path)[2]
-    MethodCallWindow.new(@window, intf, method).run
+    if type == "Method"
+      method = view.model.get_iter(path)[2]
+      intf = view.model.get_iter(path)[3]
+      MethodCallWindow.new(@window, intf, method).run
+    elsif type == "Signal"
+      signal = view.model.get_iter(path)[2]
+      p DBus::MatchRule.new.from_signal(signal)
+      intf.object.bus.proxy.AddMatch(signal) do |ret|
+        puts "Got AddMatch reply"
+        p ret
+      end
+    end
   end
 
   def on_sessiontreeview_row_activated(view, path, column)
@@ -127,6 +153,14 @@ class DBusUI
 
   def on_window_delete_event(window, event)
     Gtk.main_quit
+  end
+
+  def setup_methodview_renderer(treeview)
+    renderer = Gtk::CellRendererText.new
+    col_offset = treeview.insert_column(-1, "Name", renderer, 'text' => 0)
+    col_offset = treeview.insert_column(-1, "Type", renderer, 'text' => 1)
+    column = treeview.get_column(col_offset - 1)
+    column.clickable = true
   end
 
   def setup_treeview_renderer(treeview, str)

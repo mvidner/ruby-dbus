@@ -9,6 +9,7 @@ require 'dbus/introspect'
 require 'dbus/bus.rb'
 require 'dbus/marshall'
 require 'dbus/message'
+require 'dbus/matchrule'
 
 require 'socket'
 require 'thread'

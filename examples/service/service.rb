@@ -13,16 +13,12 @@ if r[0] != DBus::Connection::REQUEST_NAME_REPLY_PRIMARY_OWNER
 end
 
 intf = DBus::Interface.new("org.ruby.MyInterface")
-intf.define_method(:MyMethod, "in mystring:s")
+intf.define_method(:MyMethod, "in mystring:s, out ret1:s")
 
 class MyObject < DBus::Object
-  def initialize(bus, path)
-    super(bus, path)
-  end
-
   def MyMethod(mystring)
-    puts "MyMethod"
-    p mystring
+    puts "You called: MyMethod, returning YAY"
+    return ["YAY"]
   end
 end
 
@@ -31,5 +27,4 @@ obj.implements(intf)
 bus.export_object(obj)
 
 loop { bus.process(bus.wait_for_message) }
-
 

@@ -256,6 +256,9 @@ module DBus
       when Type::UINT32
         align(4)
         @packet += [val].pack("L")
+      when Type::INT32
+        align(4)
+        @packet += [val].pack("l")
       when Type::BOOLEAN
         align(4)
         if val
@@ -270,14 +273,24 @@ module DBus
       when Type::SIGNATURE
         append_signature(val)
       when Type::ARRAY
-        raise TypeException if not val.kind_of?(Array)
+        if val.kind_of?(Hash)
+          raise TypeException if type.child.sigtype != Type::DICT_ENTRY
+          # Damn ruby rocks here
+          val = val.to_a
+        end
+        if not val.kind_of?(Array)
+          raise TypeException 
+        end
         array(type.child) do
           val.each do |elem|
             append(type.child, elem)
           end
         end
-      when Type::STRUCT
+      when Type::STRUCT, Type::DICT_ENTRY
         raise TypeException if not val.kind_of?(Array)
+        if type.sigtype == Type::DICT_ENTRY and val.size != 2
+          raise TypeException 
+        end
         struct do
           idx = 0
           while val[idx] != nil
@@ -289,6 +302,7 @@ module DBus
           end
         end
       else
+        p type
         raise NotImplementedError
       end
     end # def append

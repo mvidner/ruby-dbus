@@ -199,7 +199,6 @@ module DBus
         end
       end
       marshaller.align(8)
-      p @params
       @params.each do |param|
         marshaller.append(param[0], param[1])
       end

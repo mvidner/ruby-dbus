@@ -29,6 +29,13 @@ module DBus
       self.each_pair do |k, v|
         xml += "<node name=\"#{k}\" />"
       end
+      if @object
+        @object.intfs.each_pair do |k, v|
+          xml += %{<interface name="#{v.name}">\n}
+          v.methods.each_value { |m| xml += m.to_xml }
+          xml +="</interface>\n"
+        end
+      end
       xml += '</node>'
       xml
     end
@@ -289,7 +296,6 @@ module DBus
     # the call will block until a reply message arrives.
     def send_sync(m, &retc) # :yields: reply/return message
       send(m.marshall)
-      puts m.serial
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
 
@@ -297,7 +303,6 @@ module DBus
       until retm.message_type == DBus::Message::METHOD_RETURN and
           retm.reply_serial == m.serial
         retm = wait_for_message
-        p retm
         process(retm)
       end
     end
@@ -350,20 +355,21 @@ module DBus
           m.member == "Introspect"
           reply = Message.new(Message::METHOD_RETURN).reply_to(m)
           reply.sender = @unique_name
-          p @unique_name
           node = get_node(m.path)
           raise NotImplementedError if not node
-          p get_node(m.path).to_xml
           reply.sender = @unique_name
           reply.add_param(Type::STRING, get_node(m.path).to_xml)
-          s = reply.marshall
-          p reply
-          p Message.new.unmarshall(s)
           send(reply.marshall)
         else
-          obj = get_node(m.path).object
+          node = get_node(m.path)
+          return if node.nil?
+          obj = node.object
+          return if obj.nil?
           obj.dispatch(m) if obj
         end
+      when DBus::Message::SIGNAL
+        puts "SIGNAL!"
+        p m
       else
         p m
       end
