@@ -349,7 +349,10 @@ module DBus
           @method_call_msgs.delete(m.reply_serial)
         end
       when DBus::Message::METHOD_CALL
-        # This is just not working
+        if m.path == "/org/freedesktop/DBus"
+          puts "Got method call on /org/freedesktop/DBus"
+          p m
+        end
         # handle introspectable as an exception:
         if m.interface == "org.freedesktop.DBus.Introspectable" and
           m.member == "Introspect"
@@ -369,7 +372,6 @@ module DBus
         end
       when DBus::Message::SIGNAL
         puts "SIGNAL!"
-        p m
       else
         p m
       end
@@ -388,7 +390,7 @@ module DBus
       path.sub(/^\//, "").split("/").each do |elem|
         if not n[elem]
           if not create
-            return false
+            return nil
           else
             n[elem] = Node.new(elem)
           end

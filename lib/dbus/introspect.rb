@@ -171,7 +171,7 @@ module DBus
         when "out"
           m.add_return([name, sig])
         when nil # It's a signal, no direction
-          m.add_param(sig)
+          m.add_param([name, sig])
         else
           raise NotImplementedError, dir
         end
@@ -184,7 +184,6 @@ module DBus
       subnodes = Array.new
       t = Time.now
       d = REXML::Document.new(@xml)
-      puts @xml
       d.elements.each("node/node") do |e|
         subnodes << e.attributes["name"]
       end

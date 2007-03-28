@@ -105,8 +105,6 @@ module DBus
       @message_type = METHOD_RETURN
       @reply_serial = m.serial
       @destination = m.sender
-      #@interface = m.interface
-      #@member = m.member
       self
     end
 

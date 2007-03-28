@@ -110,15 +110,16 @@ class DBusUI
           m = intf.methods[mi]
           subiter = model.append
           subiter[0] = beautify_method(m)
-          subiter[1] = "Method"
+          subiter[1] = "M"
           subiter[2] = m
           subiter[3] = intf
         end
         intf.signals.keys.sort.each do |mi|
           m = intf.signals[mi]
+          p m
           subiter = model.append
           subiter[0] = beautify_method(m)
-          subiter[1] = "Signal"
+          subiter[1] = "S"
           subiter[2] = m
           subiter[3] = intf
         end
@@ -131,16 +132,17 @@ class DBusUI
     puts "Clicked on: #{name.inspect}"
     type = view.model.get_iter(path)[1]
     intf = view.model.get_iter(path)[2]
-    if type == "Method"
+    if type == "M"
       method = view.model.get_iter(path)[2]
       intf = view.model.get_iter(path)[3]
       MethodCallWindow.new(@window, intf, method).run
-    elsif type == "Signal"
+    elsif type == "S"
       signal = view.model.get_iter(path)[2]
-      p DBus::MatchRule.new.from_signal(signal)
-      intf.object.bus.proxy.AddMatch(signal) do |ret|
-        puts "Got AddMatch reply"
-        p ret
+      intf = view.model.get_iter(path)[3]
+      mr = DBus::MatchRule.new.from_signal(intf, signal)
+      p mr.to_s
+      intf.object.bus.proxy.AddMatch(mr.to_s) do |ret|
+        puts "Got AddMatch reply, that probably means 'ok'"
       end
     end
   end
@@ -157,8 +159,8 @@ class DBusUI
 
   def setup_methodview_renderer(treeview)
     renderer = Gtk::CellRendererText.new
+    col_offset = treeview.insert_column(-1, "T", renderer, 'text' => 1)
     col_offset = treeview.insert_column(-1, "Name", renderer, 'text' => 0)
-    col_offset = treeview.insert_column(-1, "Type", renderer, 'text' => 1)
     column = treeview.get_column(col_offset - 1)
     column.clickable = true
   end
@@ -221,12 +223,12 @@ class DBusUI
       process_input(@sessionbus)
       true
     }
-#    gio = GLib::IOChannel.new(@systembus.socket.fileno)
-#    @channels << gio
-#    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
-#      process_input(@systembus)
-#      true
-#    }
+    gio = GLib::IOChannel.new(@systembus.socket.fileno)
+    @channels << gio
+    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
+      process_input(@systembus)
+      true
+    }
 
     @sessionbus.proxy.ListNames do |msg, names|
       fill_treeview(@sessionbus, @sessiontreeview, names)

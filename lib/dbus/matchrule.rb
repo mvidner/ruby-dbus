@@ -3,6 +3,7 @@ module DBus
   end
 
   class MatchRule
+    FILTERS = [:sender, :interface, :member, :path, :destination, :type]
     attr_accessor :sender, :interface, :member, :path, :destination
     attr_accessor :args
     attr_reader :type
@@ -16,10 +17,10 @@ module DBus
     # Returns a MatchRule string from object eg:
     # "type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='Foo',path='/bar/foo',destination=':452345.34',arg2='bar'"
     def to_s
-      [:sender, :interface, :member, :path, :destination, :type].select do |sym|
+      FILTERS.select do |sym|
         not method(sym).call.nil?
       end.collect do |sym|
-        str += "#{sym.to_s}='#{method(sym).call}'"
+        "#{sym.to_s}='#{method(sym).call}'"
       end.join(",")
     end
 
@@ -29,14 +30,21 @@ module DBus
         if eq =~ /^(.*)='([^']*)'$/
           name = $1
           val = $1
-          if [:sender, :interface, :member, :path, :destination,
-            :type].member?(name.to_sym)
+          if FILTERS.member?(name.to_sym)
             method(name + "=").call(val)
           else
             raise MatchRuleException 
           end
         end
       end
+    end
+
+    def from_signal(intf, signal)
+      self.type = "signal"
+      self.interface = intf.name
+      self.member = signal.name
+      self.path = intf.object.path
+      self
     end
   end
 end
