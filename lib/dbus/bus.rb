@@ -63,6 +63,7 @@ module DBus
       @buffer = ""
       @method_call_replies = Hash.new
       @method_call_msgs = Hash.new
+      @signal_matchrules = Array.new
       @proxy = nil
       # FIXME: can be TCP or any stream
       @socket = Socket.new(Socket::Constants::PF_UNIX,
@@ -331,6 +332,14 @@ module DBus
       @method_call_replies[m.serial] = retc
     end
 
+    # Asks bus to send us messages matching mr, and execute slot when
+    # received
+    def add_match(mr, &slot)
+      # check this is a signal.
+      @signal_matchrules << [mr, slot]
+      self.proxy.AddMatch(mr.to_s)
+    end
+
     # Process a message _m) based on its type.
     # method call:: FIXME...
     # method call return value:: FIXME...
@@ -371,7 +380,13 @@ module DBus
           obj.dispatch(m) if obj
         end
       when DBus::Message::SIGNAL
-        puts "SIGNAL!"
+        @signal_matchrules.each do |elem|
+          mr, slot = elem
+          if mr.match(m)
+            slot.call(m, *m.params)
+            return
+          end
+        end
       else
         p m
       end

@@ -223,12 +223,12 @@ class DBusUI
       process_input(@sessionbus)
       true
     }
-    gio = GLib::IOChannel.new(@systembus.socket.fileno)
-    @channels << gio
-    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
-      process_input(@systembus)
-      true
-    }
+#    gio = GLib::IOChannel.new(@systembus.socket.fileno)
+#    @channels << gio
+#    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
+#      process_input(@systembus)
+#      true
+#    }
 
     @sessionbus.proxy.ListNames do |msg, names|
       fill_treeview(@sessionbus, @sessiontreeview, names)

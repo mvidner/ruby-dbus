@@ -46,5 +46,17 @@ module DBus
       self.path = intf.object.path
       self
     end
+
+    def match(msg)
+      if @type
+        if [SIGNAL => "signal", METHOD_CALL => "method_call", METHOD_RETURN => "method_return", ERROR => "error"][msg.message_type] != @type
+          return false
+        end
+      end
+      return false if @interface and @interface != msg.interface
+      return false if @member and @member != msg.member
+      return false if @path and @path != msg.path
+      true
+    end
   end
 end
