@@ -70,7 +70,6 @@ module DBus
     # unique serial number.
     def initialize(mtype = INVALID)
       @message_type = mtype
-      message_type = mtype
 
       @flags = 0
       @protocol = 1
@@ -85,17 +84,6 @@ module DBus
       if mtype == METHOD_RETURN
         @flags = NO_REPLY_EXPECTED
       end
-    end
-
-    # Set the message type to _mt_ (_mt_ is given in constant name string form).
-    #
-    # FIXME: odd method, these already exist in Ruby space as constants, why
-    # introduce strings as well... Message::Type::SIGNAL should be fine.
-    # This was supposed to help debugging when introspecting a Message type
-    # ofject. This never really worked for unknown reaons
-    def message_type=(mt)
-      @message_type = mt
-      @mt = ["INVALID", "METHOD_CALL", "METHOD_RETURN", "ERROR", "SIGNAL"][mt]
     end
 
     # Mark this message as a reply to a another message _m_, taking

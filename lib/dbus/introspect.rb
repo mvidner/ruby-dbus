@@ -85,7 +85,7 @@ module DBus
   end
 
   # give me a better name please
-  class MethSig
+  class InterfaceElement
     attr_reader :name, :params
     def validate_name(name)
       if (not name =~ MethodSignalRE) or (name.size > 255)
@@ -104,7 +104,7 @@ module DBus
     end
   end
 
-  class Method < MethSig
+  class Method < InterfaceElement
     attr_reader :rets
 
     def initialize(name)
@@ -151,7 +151,16 @@ module DBus
     end
   end
 
-  class Signal < MethSig
+  class Signal < InterfaceElement
+    def to_xml
+      xml = %{<signal name="#{@name}">\n}
+      @params.each do |param|
+        name = param[0] ? %{name="#{param[0]}" } : ""
+        xml += %{<arg #{name}type="#{param[1]}"/>\n}
+      end
+      xml += %{</signal>\n}
+      xml
+    end
   end
 
   class IntrospectXMLParser
@@ -179,6 +188,16 @@ module DBus
     end
 
     public
+    def parse_subnodes
+      subnodes = Array.new
+      t = Time.now
+      d = REXML::Document.new(@xml)
+      d.elements.each("node/node") do |e|
+        subnodes << e.attributes["name"]
+      end
+      subnodes
+    end
+
     def parse
       ret = Array.new
       subnodes = Array.new
@@ -290,13 +309,14 @@ module DBus
   end
 
   class ProxyObject
-    attr_accessor :subnodes
+    attr_accessor :subnodes, :introspected
     attr_reader :destination, :path, :bus
 
     def initialize(bus, dest, path)
       @bus, @destination, @path = bus, dest, path
       @interfaces = Hash.new
       @subnodes = Array.new
+      @introspected = false
     end
 
     def interfaces
@@ -310,6 +330,29 @@ module DBus
     def []=(intfname, intf)
       @interfaces[intfname] = intf
     end
+
+    def introspect
+      if not @introspected
+        # Synchronous call here
+        xml = @bus.introspect_data(@destination, @path)
+        ProxyObjectFactory.introspect_into(self, xml)
+        @introspected = true
+      end
+    end
+
+    def has_iface?(name)
+      raise "Cannot call has_iface? is not introspected" if not @introspected
+      @interfaces.member?(name)
+    end
+
+    attr_accessor :default_iface
+    def method_missing(name, *args)
+      if @default_iface and has_iface?(@default_iface)
+        @interfaces[@default_iface].method(name).call(*args)
+      else
+        raise NoMethodError
+      end
+    end
   end
 
   class ProxyObjectFactory
@@ -317,16 +360,20 @@ module DBus
       @xml, @bus, @path, @dest = xml, bus, path, dest
     end
 
-    def build
-      po = ProxyObject.new(@bus, @dest, @path)
-
-      intfs, po.subnodes = IntrospectXMLParser.new(@xml).parse
+    def ProxyObjectFactory.introspect_into(po, xml)
+      intfs, po.subnodes = IntrospectXMLParser.new(xml).parse
       intfs.each do |i|
         poi = ProxyObjectInterface.new(po, i.name)
         i.methods.each_value { |m| poi.define(m) }
         i.signals.each_value { |s| poi.define(s) }
         po[i.name] = poi
       end
+      po.introspected = true
+    end
+
+    def build
+      po = ProxyObject.new(@bus, @dest, @path)
+      ProxyObjectFactory.introspect_into(po, @xml)
       po
     end
   end

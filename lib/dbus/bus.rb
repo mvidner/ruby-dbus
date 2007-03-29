@@ -12,6 +12,64 @@ require 'singleton'
 #
 # Module containing all the D-Bus modules and classes.
 module DBus
+  # This represents a remote service. It should not be instancied directly
+  # Use Bus::service()
+  class Service
+    attr_reader :name, :bus, :root
+    def initialize(name, bus)
+      @name, @bus = name, bus
+      @root = Node.new("/")
+    end
+
+    def exists?
+      bus.proxy.ListName.member?(@name)
+    end
+
+    def introspect
+      if block_given?
+        raise NotImplementedError
+      else
+        rec_introspect(@root, "/")
+      end
+    end
+
+    def object(path)
+      node = get_node(path, true)
+      if node.object.nil?
+        node.object = ProxyObject.new(@bus, @name, path)
+      end
+      node.object
+    end
+
+    private
+    def rec_introspect(node, path)
+      xml = bus.introspect_data(@name, path)
+      IntrospectXMLParser.new(xml).parse_subnodes.each do |nodename|
+        node[nodename] = Node.new(nodename)
+      end
+    end
+
+    # Get the object node corresponding to the given _path_. if _create_ is
+    # true, the the nodes in the path are created if they do not already exist.
+    def get_node(path, create = false)
+      n = @root
+      path.sub(/^\//, "").split("/").each do |elem|
+        if not n[elem]
+          if not create
+            return nil
+          else
+            n[elem] = Node.new(elem)
+          end
+        end
+        n = n[elem]
+      end
+      if n.nil?
+        puts "Warning, unknown object #{path}"
+      end
+      n
+    end
+  end
+
   # node for the object tree
   class Node < Hash
     attr_accessor :object
@@ -194,6 +252,27 @@ module DBus
 </node>
 '
 
+    def introspect_data(dest, path)
+      m = DBus::Message.new(DBus::Message::METHOD_CALL)
+      m.path = path
+      m.interface = "org.freedesktop.DBus.Introspectable"
+      m.destination = dest
+      m.member = "Introspect"
+      m.sender = unique_name
+      if not block_given?
+        # introspect in synchronous !
+        send_sync(m) do |rmsg|
+          return rmsg.params[0]
+        end
+      else
+        send(m.marshall)
+        on_return(m) do |rmsg|
+          yield rmsg.params[0]
+        end
+      end
+      nil
+    end
+
     # FIXME: describe this
     # Issues a call to the org.freedesktop.DBus.Introspectable.Introspect method
     # _dest_ is the service and _path_ the object path you want to introspect
@@ -204,24 +283,14 @@ module DBus
     # The returned object is a ProxyObject that has methods you can call to
     # issue somme METHOD_CALL messages, and to setup to receive METHOD_RETURN
     def introspect(dest, path)
-      m = DBus::Message.new(DBus::Message::METHOD_CALL)
-      m.path = path
-      m.interface = "org.freedesktop.DBus.Introspectable"
-      m.destination = dest
-      m.member = "Introspect"
-      m.sender = unique_name
-      ret = nil
       if not block_given?
         # introspect in synchronous !
-        send_sync(m) do |rmsg|
-          pof = DBus::ProxyObjectFactory.new(rmsg.params[0], self, dest, path)
-          return pof.build
-        end
+        data = introspect_data(dest, path)
+        pof = DBus::ProxyObjectFactory.new(data, self, dest, path)
+        return pof.build
       else
-        send(m.marshall)
-        on_return(m) do |rmsg|
-          inret = rmsg.params[0]
-          yield(DBus::ProxyObjectFactory.new(inret, self, dest, path).build)
+        introspect_data(dest, path) do |data|
+          yield(DBus::ProxyObjectFactory.new(data, self, dest, path).build)
         end
       end
     end
@@ -301,6 +370,7 @@ module DBus
       @method_call_replies[m.serial] = retc
 
       retm = wait_for_message
+      process(retm)
       until retm.message_type == DBus::Message::METHOD_RETURN and
           retm.reply_serial == m.serial
         retm = wait_for_message
@@ -392,6 +462,13 @@ module DBus
       end
     end
 
+    def service(str)
+      # The service might not exist at this time so we cannot really check
+      # anything
+      Service.new(str, self)
+    end
+    alias :[] :service
+
     # Exports an DBus object instance with an D-Bus interface on the bus.
     def export_object(object)
       get_node(object.path, true).object = object
@@ -423,8 +500,7 @@ module DBus
 
     # Send a hello messages to the bus to let it know we are here.
     def send_hello
-      m = Message.new
-      m.message_type = DBus::Message::METHOD_CALL
+      m = Message.new(DBus::Message::METHOD_CALL)
       m.path = "/org/freedesktop/DBus"
       m.destination = "org.freedesktop.DBus"
       m.interface = "org.freedesktop.DBus"
@@ -461,7 +537,6 @@ module DBus
       # parse OK ?
       writel("BEGIN")
     end
-
   end # class Connection
 
   class SessionBus < Connection
@@ -474,6 +549,8 @@ module DBus
   end
 
   class SystemBus < Connection
+    include Singleton
+
     def initialize
       super(SystemSocketName)
       connect
