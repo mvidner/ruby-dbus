@@ -10,40 +10,6 @@ module DBus
   MethodSignalRE = /^[A-Za-z][A-Za-z0-9_]*$/
   InterfaceElementRE = /^[A-Za-z][A-Za-z0-9_]*$/
 
-  # Exported object type
-  class Object
-    attr_reader :bus, :path, :intfs
-
-    def initialize(bus, path)
-      @bus, @path = bus, path
-      @intfs = Hash.new
-    end
-
-    def implements(intf)
-      @intfs[intf.name] = intf
-    end
-
-    def dispatch(msg)
-      case msg.message_type
-      when Message::METHOD_CALL
-        if not @intfs[msg.interface]
-          raise InterfaceNotImplemented
-        end
-        meth = @intfs[msg.interface].methods[msg.member.to_sym]
-        raise MethodNotInInterface if not meth
-        retdata = method(msg.member).call(*msg.params)
-
-        reply = Message.new.reply_to(msg)
-        # I'm sure there is a ruby way to do that
-        i = 0
-        meth.rets.each do |rsig|
-          reply.add_param(rsig[1], retdata[i])
-        end
-        @bus.send(reply.marshall)
-      end
-    end
-  end
-
   # = D-Bus interface class
   #
   # This class is the interface descriptor that comes from the XML we
@@ -51,6 +17,7 @@ module DBus
   # It also is the local definition of inerface exported by the program.
   class Interface
     attr_reader :name, :methods, :signals
+
     def initialize(name)
       validate_name(name)
       @name = name
@@ -67,20 +34,20 @@ module DBus
       end
     end
 
-    def add(m)
+    def define(m)
       if m.kind_of?(Method)
-        @methods[m.name] = m
+        @methods[m.name.to_sym] = m
       elsif m.kind_of?(Signal)
-        @signals[m.name] = m
+        @signals[m.name.to_sym] = m
       end
     end
-    alias :<< :add
+    alias :<< :define
 
     # Almost same code as above. Factorize.
     def define_method(id, prototype)
       m = Method.new(id)
       m.from_prototype(prototype)
-      add(m)
+      define(m)
     end
   end
 
@@ -134,6 +101,7 @@ module DBus
           add_return([name, sig])
         end
       end
+      self
     end
 
     def to_xml
@@ -316,7 +284,6 @@ module DBus
       @bus, @destination, @path = bus, dest, path
       @interfaces = Hash.new
       @subnodes = Array.new
-      @introspected = false
     end
 
     def interfaces
@@ -332,12 +299,10 @@ module DBus
     end
 
     def introspect
-      if not @introspected
-        # Synchronous call here
-        xml = @bus.introspect_data(@destination, @path)
-        ProxyObjectFactory.introspect_into(self, xml)
-        @introspected = true
-      end
+      # Synchronous call here
+      xml = @bus.introspect_data(@destination, @path)
+      puts xml
+      ProxyObjectFactory.introspect_into(self, xml)
     end
 
     def has_iface?(name)

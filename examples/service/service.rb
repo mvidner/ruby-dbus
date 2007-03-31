@@ -22,7 +22,7 @@ class MyObject < DBus::Object
   end
 end
 
-obj = MyObject.new(bus, "/org/ruby/MyInstance")
+obj = MyObject.new("/org/ruby/MyInstance")
 obj.implements(intf)
 bus.export_object(obj)
 

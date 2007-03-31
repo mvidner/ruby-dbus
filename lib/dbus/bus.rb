@@ -41,12 +41,9 @@ module DBus
       node.object
     end
 
-    private
-    def rec_introspect(node, path)
-      xml = bus.introspect_data(@name, path)
-      IntrospectXMLParser.new(xml).parse_subnodes.each do |nodename|
-        node[nodename] = Node.new(nodename)
-      end
+    def export(obj)
+      obj.service = self
+      get_node(obj.path, true).object = obj
     end
 
     # Get the object node corresponding to the given _path_. if _create_ is
@@ -67,6 +64,14 @@ module DBus
         puts "Warning, unknown object #{path}"
       end
       n
+    end
+
+    private
+    def rec_introspect(node, path)
+      xml = bus.introspect_data(@name, path)
+      IntrospectXMLParser.new(xml).parse_subnodes.each do |nodename|
+        node[nodename] = Node.new(nodename)
+      end
     end
   end
 
@@ -295,6 +300,13 @@ module DBus
       end
     end
 
+    def request_service(name)
+      r = proxy.RequestName("org.ruby.service", NAME_FLAG_REPLACE_EXISTING)
+      raise NameRequestError if r[0] != REQUEST_NAME_REPLY_PRIMARY_OWNER
+      @service = Service.new(name, self)
+      @service
+    end
+
     # Set up a proxy for ... (FIXME).
     # Set up a ProxyObject for the bus itself. Since the bus is introspectable.
     #
@@ -434,16 +446,16 @@ module DBus
         end
         # handle introspectable as an exception:
         if m.interface == "org.freedesktop.DBus.Introspectable" and
-          m.member == "Introspect"
+            m.member == "Introspect"
           reply = Message.new(Message::METHOD_RETURN).reply_to(m)
           reply.sender = @unique_name
-          node = get_node(m.path)
+          node = @service.get_node(m.path)
           raise NotImplementedError if not node
           reply.sender = @unique_name
-          reply.add_param(Type::STRING, get_node(m.path).to_xml)
+          reply.add_param(Type::STRING, @service.get_node(m.path).to_xml)
           send(reply.marshall)
         else
-          node = get_node(m.path)
+          node = @service.get_node(m.path)
           return if node.nil?
           obj = node.object
           return if obj.nil?
@@ -468,32 +480,6 @@ module DBus
       Service.new(str, self)
     end
     alias :[] :service
-
-    # Exports an DBus object instance with an D-Bus interface on the bus.
-    def export_object(object)
-      get_node(object.path, true).object = object
-    end
-
-    # FIXME: what does this do? looks very private too.
-    # Get the object node corresponding to the given _path_. if _create_ is
-    # true, the the nodes in the path are created if they do not already exist.
-    def get_node(path, create = false)
-      n = @object_root
-      path.sub(/^\//, "").split("/").each do |elem|
-        if not n[elem]
-          if not create
-            return nil
-          else
-            n[elem] = Node.new(elem)
-          end
-        end
-        n = n[elem]
-      end
-      if n.nil?
-        puts "Warning, unknown object #{path}"
-      end
-      n
-    end
 
     ###########################################################################
     private

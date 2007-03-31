@@ -4,14 +4,27 @@
 #
 # FIXME: license 
 
+require 'thread'
+
 module DBus
+  class InterfaceNotInObject < Exception
+  end
+  class MethodNotInInterface < Exception
+  end
+
   # Exported object type
   class Object
-    attr_reader :bus, :path, :intfs
+    attr_reader :path, :intfs
+    attr_writer :service
 
-    def initialize(bus, path)
-      @bus, @path = bus, path
-      @intfs = Hash.new
+    @@intfs = Hash.new
+    @@cur_intf = nil
+    @@intfs_mutex = Mutex.new
+
+    def initialize(path)
+      @path = path
+      @intfs = @@intfs.dup
+      @service = nil
     end
 
     def implements(intf)
@@ -22,11 +35,17 @@ module DBus
       case msg.message_type
       when Message::METHOD_CALL
         if not @intfs[msg.interface]
-          raise InterfaceNotImplemented
+          raise InterfaceNotInObject, msg.interface
         end
+        p msg
+        p @intfs[msg.interface]
+        p msg.member.to_sym
+        p @intfs[msg.interface].methods.keys
         meth = @intfs[msg.interface].methods[msg.member.to_sym]
+        p meth
         raise MethodNotInInterface if not meth
-        retdata = method(msg.member).call(*msg.params)
+        methname = Object.make_method_name(msg.interface, msg.member)
+        retdata = method(methname).call(*msg.params)
 
         reply = Message.new.reply_to(msg)
         # I'm sure there is a ruby way to do that
@@ -34,49 +53,33 @@ module DBus
         meth.rets.each do |rsig|
           reply.add_param(rsig[1], retdata[i])
         end
-        @bus.send(reply.marshall)
-      end
-    end
-  end
-
-  # = D-Bus interface class
-  #
-  # This class is the interface descriptor that comes from the XML we
-  # parsed from the Introspect() call.
-  # It also is the local definition of inerface exported by the program.
-  class Interface
-    attr_reader :name, :methods, :signals
-    def initialize(name)
-      validate_name(name)
-      @name = name
-      @methods, @signals = Hash.new, Hash.new
-    end
-
-    def validate_name(name)
-      raise InvalidIntrospectionData if name.size > 255
-      raise InvalidIntrospectionData if name =~ /^\./ or name =~ /\.$/
-      raise InvalidIntrospectionData if name =~ /\.\./
-      raise InvalidIntrospectionData if not name =~ /\./
-      name.split(".").each do |element|
-        raise InvalidIntrospectionData if not element =~ InterfaceElementRE
+        @service.bus.send(reply.marshall)
       end
     end
 
-    def add(m)
-      if m.kind_of?(Method)
-        @methods[m.name] = m
-      elsif m.kind_of?(Signal)
-        @signals[m.name] = m
+    def self.dbus_interface(s)
+      @@intfs_mutex.synchronize do
+        @@cur_intf = @@intfs[s] = Interface.new(s)
+        yield
+        @@cur_intf = nil
       end
     end
-    alias :<< :add
 
-    # Almost same code as above. Factorize.
-    def define_method(id, prototype)
-      m = Method.new(id)
-      m.from_prototype(prototype)
-      add(m)
+    class UndefinedInterface
+    end
+
+    def self.dbus_method(sym, protoype = "", &block)
+      raise UndefinedInterface if @@cur_intf.nil?
+      puts "dbus_method"
+      @@cur_intf.define(Method.new(sym.to_s).from_prototype(protoype))
+      p block
+      define_method(Object.make_method_name(@@cur_intf.name, sym.to_s), &block) 
+      p @@cur_intf.methods
+    end
+
+    private
+    def self.make_method_name(intfname, methname)
+      "#{intfname}%%#{methname}"
     end
   end
 end
-

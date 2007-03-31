@@ -6,7 +6,7 @@
 
 require 'dbus/type'
 require 'dbus/introspect'
-#require 'dbus/export'
+require 'dbus/export'
 require 'dbus/bus.rb'
 require 'dbus/marshall'
 require 'dbus/message'
