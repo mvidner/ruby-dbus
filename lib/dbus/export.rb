@@ -37,12 +37,7 @@ module DBus
         if not @intfs[msg.interface]
           raise InterfaceNotInObject, msg.interface
         end
-        p msg
-        p @intfs[msg.interface]
-        p msg.member.to_sym
-        p @intfs[msg.interface].methods.keys
         meth = @intfs[msg.interface].methods[msg.member.to_sym]
-        p meth
         raise MethodNotInInterface if not meth
         methname = Object.make_method_name(msg.interface, msg.member)
         retdata = method(methname).call(*msg.params)
@@ -70,11 +65,22 @@ module DBus
 
     def self.dbus_method(sym, protoype = "", &block)
       raise UndefinedInterface if @@cur_intf.nil?
-      puts "dbus_method"
       @@cur_intf.define(Method.new(sym.to_s).from_prototype(protoype))
-      p block
       define_method(Object.make_method_name(@@cur_intf.name, sym.to_s), &block) 
-      p @@cur_intf.methods
+    end
+
+    def emit(intf, sig, *args)
+      @service.bus.emit(@service, self, intf, sig, *args)
+    end
+
+    def self.dbus_signal(sym, protoype = "")
+      raise UndefinedInterface if @@cur_intf.nil?
+      cur_intf = @@cur_intf
+      signal = Signal.new(sym.to_s).from_prototype(protoype)
+      cur_intf.define(Signal.new(sym.to_s).from_prototype(protoype))
+      define_method(sym.to_s) do |*args|
+        emit(cur_intf, signal, *args)
+      end
     end
 
     private

@@ -10,6 +10,9 @@ module DBus
   MethodSignalRE = /^[A-Za-z][A-Za-z0-9_]*$/
   InterfaceElementRE = /^[A-Za-z][A-Za-z0-9_]*$/
 
+  class UnknownSignal
+  end
+
   # = D-Bus interface class
   #
   # This class is the interface descriptor that comes from the XML we
@@ -120,6 +123,19 @@ module DBus
   end
 
   class Signal < InterfaceElement
+    def from_prototype(prototype)
+      prototype.split(/, */).each do |arg|
+        if arg =~ /:/
+          arg = arg.split(":")
+          name, sig = arg
+        else
+          sig = arg
+        end
+        add_param([name, sig])
+      end
+      self
+    end
+
     def to_xml
       xml = %{<signal name="#{@name}">\n}
       @params.each do |param|
@@ -279,6 +295,7 @@ module DBus
   class ProxyObject
     attr_accessor :subnodes, :introspected
     attr_reader :destination, :path, :bus
+    attr_accessor :default_iface
 
     def initialize(bus, dest, path)
       @bus, @destination, @path = bus, dest, path
@@ -301,7 +318,6 @@ module DBus
     def introspect
       # Synchronous call here
       xml = @bus.introspect_data(@destination, @path)
-      puts xml
       ProxyObjectFactory.introspect_into(self, xml)
     end
 
@@ -310,7 +326,18 @@ module DBus
       @interfaces.member?(name)
     end
 
-    attr_accessor :default_iface
+    def on_signal(name, &block)
+      if @default_iface and has_iface?(@default_iface)
+        intf = @interfaces[@default_iface]
+        signal = intf.signals[name]
+        raise UnknownSignal if signal.nil?
+        mr = DBus::MatchRule.new.from_signal(intf, signal)
+        bus.add_match(mr) { |msg| block.call(*msg.params) }
+      else
+        raise NoMethodError
+      end
+    end
+
     def method_missing(name, *args)
       if @default_iface and has_iface?(@default_iface)
         @interfaces[@default_iface].method(name).call(*args)

@@ -13,5 +13,10 @@ player = ruby_srv.object("/org/ruby/MyInstance")
 # Introspect it
 player.introspect
 player.default_iface = "org.ruby.SampleInterface"
+player.on_signal("SomethingJustHappened") do |u, v|
+  puts "SomethingJustHappened: #{u} #{v}"
+end
 player.hello("8=======D", "(_._)")
+
+loop { system_bus.process(system_bus.wait_for_message) }
 

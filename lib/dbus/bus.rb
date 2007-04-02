@@ -31,6 +31,7 @@ module DBus
       else
         rec_introspect(@root, "/")
       end
+      self
     end
 
     def object(path)
@@ -69,8 +70,18 @@ module DBus
     private
     def rec_introspect(node, path)
       xml = bus.introspect_data(@name, path)
-      IntrospectXMLParser.new(xml).parse_subnodes.each do |nodename|
-        node[nodename] = Node.new(nodename)
+      intfs, subnodes = IntrospectXMLParser.new(xml).parse
+      subnodes.each do |nodename|
+        subnode = node[nodename] = Node.new(nodename)
+        if path == "/"
+          subpath = "/" + nodename
+        else
+          subpath = path + "/" + nodename
+        end
+        rec_introspect(subnode, subpath)
+      end
+      if intfs.size > 0
+        node.object = ProxyObjectFactory.new(xml, @bus, path, @name).build
       end
     end
   end
@@ -96,6 +107,7 @@ module DBus
         @object.intfs.each_pair do |k, v|
           xml += %{<interface name="#{v.name}">\n}
           v.methods.each_value { |m| xml += m.to_xml }
+          v.signals.each_value { |m| xml += m.to_xml }
           xml +="</interface>\n"
         end
       end
@@ -104,7 +116,7 @@ module DBus
     end
 
     def inspect
-      "Node #{super.inspect} #{object.inspect}"
+      "Node #{super.inspect} #{@object.inspect}"
     end
   end
 
@@ -442,7 +454,6 @@ module DBus
       when DBus::Message::METHOD_CALL
         if m.path == "/org/freedesktop/DBus"
           puts "Got method call on /org/freedesktop/DBus"
-          p m
         end
         # handle introspectable as an exception:
         if m.interface == "org.freedesktop.DBus.Introspectable" and
@@ -465,7 +476,7 @@ module DBus
         @signal_matchrules.each do |elem|
           mr, slot = elem
           if mr.match(m)
-            slot.call(m, *m.params)
+            slot.call(m)
             return
           end
         end
@@ -480,6 +491,20 @@ module DBus
       Service.new(str, self)
     end
     alias :[] :service
+
+    def emit(service, obj, intf, sig, *args)
+      m = Message.new(DBus::Message::SIGNAL)
+      m.path = obj.path
+      m.interface = intf.name
+      m.member = sig.name
+      m.sender = service.name
+      i = 0
+      sig.params.each do |par|
+        m.add_param(par[1], args[i])
+        i += 1
+      end
+      send(m.marshall)
+    end
 
     ###########################################################################
     private
