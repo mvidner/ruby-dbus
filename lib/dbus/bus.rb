@@ -81,7 +81,7 @@ module DBus
         rec_introspect(subnode, subpath)
       end
       if intfs.size > 0
-        node.object = ProxyObjectFactory.new(xml, @bus, path, @name).build
+        node.object = ProxyObjectFactory.new(xml, @bus, @name, path).build
       end
     end
   end
@@ -395,7 +395,8 @@ module DBus
 
       retm = wait_for_message
       process(retm)
-      until retm.message_type == DBus::Message::METHOD_RETURN and
+      until [DBus::Message::ERROR,
+          DBus::Message::METHOD_RETURN].include?(retm.message_type) and
           retm.reply_serial == m.serial
         retm = wait_for_message
         process(retm)
@@ -441,7 +442,7 @@ module DBus
     # error:: FIXME...
     def process(m)
       case m.message_type
-      when DBus::Message::METHOD_RETURN
+      when DBus::Message::ERROR, DBus::Message::METHOD_RETURN
         raise InvalidPacketException if m.reply_serial == nil
         mcs = @method_call_replies[m.reply_serial]
         if not mcs
