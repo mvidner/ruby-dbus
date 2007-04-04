@@ -163,20 +163,9 @@ module DBus
       send_hello
     end
 
-    # Write _s_ to the socket followed by CR LF.
-    def writel(s)
-      @socket.write("#{s}\r\n")
-    end
-
     # Send the buffer _buf_ to the bus using Connection#writel.
     def send(buf)
       @socket.write(buf)
-    end
-
-    # Read data (a buffer) from the bus until CR LF is encountered.
-    # Return the buffer without the CR LF characters.
-    def readl
-      @socket.readline.chomp
     end
 
     # FIXME: describe the following names, flags and constants.
@@ -542,12 +531,13 @@ module DBus
 
     # Initialize the connection to the bus.
     def init_connection
-      @socket.write("\0")
+      @client = Client.new(@socket)
+      @client.authenticate
       # TODO: code some real stuff here
-      writel("AUTH EXTERNAL 31303030")
-      s = readl
+      #writel("AUTH EXTERNAL 31303030")
+      #s = readl
       # parse OK ?
-      writel("BEGIN")
+      #writel("BEGIN")
     end
   end # class Connection
 

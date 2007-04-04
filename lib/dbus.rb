@@ -11,6 +11,7 @@ require 'dbus/bus.rb'
 require 'dbus/marshall'
 require 'dbus/message'
 require 'dbus/matchrule'
+require 'dbus/auth.rb'
 
 require 'socket'
 require 'thread'
