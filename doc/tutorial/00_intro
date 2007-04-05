@@ -1,0 +1,90 @@
+This is a tutorial for ruby-dbus, a library to access D-Bus facilities of your
+system.
+
+What is D-Bus?
+
+D-Bus is a RPC (remote procedure call) protocol, and two common busses that
+route the procedure calls. One bus is used by modern desktops (the session
+bus), another one is used bye hardware abstraction layer (the system bus).
+To be sharp, the D-Bus RPC protocol can be used without the system or session
+bus. I never came across any actual use of this though.
+
+At the desktop level, D-Bus allow some components to interact. Typically if you
+are writing an application or a personnal script that wants to interact with
+your webbrowser, your music player, or that simply wants to popup a desktop
+notification, D-Bus comes into play.
+
+At the system level, the hardware absctaction layer is a priviledge daemon that
+notifies other software of hardware activities. Typically, if you want to be
+notified if a CD rom has been loaded in, of if you want to explore hardware,
+the system daemon comes into play.
+
+The D-Bus RPC system is as we will see object oriented.
+
+Buses provide acces to services provided in turn by runing or ready do run
+processes. To have a clearer talk, let me introduce some D-Bus terminology
+before the ruby API.
+
+Vocab!
+ - D-Bus client
+     A D-Bus client is a process that connects to a D-Bus. They issue method
+     calls, register to the bugs for signals events.
+
+ - Service
+     A connected client can export some of its objects and let other clients
+     call some of its methods. Such client typically register a special name
+     like org.freedesktop.Notifications, the service name.
+
+     There is slightly different type of service. They are provided by
+     processes that can be launched by a D-Bus daemon on demand. Once the are
+     started by D-Bus they register a service name and behave like another
+     client.
+
+     The Buses themselves provide the org.freedesktop.DBus service. And provide
+     features through it.
+
+ - Object path
+     An object path is the D-Bus way to specify an object *instance* address. A
+     service can provide different object instance to the outside world, so
+     that external processes to call methods on them.
+     Object path is an address of an instance in very similay way that the path
+     is an address of a file on a filesystem.
+     /org/freedesktop/Notification is an object path of an object provided by
+     the org.freedesktop.Notification service
+ - Interface
+     Classically in an object model, classes can implement interface. That is
+     some method definitions grouped in an interface. This is exactly what a
+     D-Bus interface is. In D-Bus interface have names. This names must  be
+     specified on method calls.
+     The org.freedesktop.Notification service provides an object instance
+     /org/freedesktop/Notification. This instance object implements
+     the interface org.freedesktop.Notifications. It also provides two special
+     interfaces: org.freedesktop.DBus.Introspect,
+     org.freedesktop.DBus.Properties.
+
+     Basically the org.freedesktop.DBus.Introspect has a Introspect method,
+     that returns XML data describing the /org/freedesktop/Notification object
+     interfaces. This is used heavily internally by ruby-dbus.
+
+ - Method
+     A method is well, a method in the classical meaning. It's a function that
+     is called in the context of an object instance. Methods have typed
+     parameteers and return typed return value.
+
+ - Signals
+     Signal are simplified method calls that do not have a return value. They
+     do have typed parameters though.
+
+ - Messages
+     Method calls, Method returns, Signals, Errors, all are encoded as a DBus
+     message sent on a bus. They are made of a packet header with source and
+     destination address, a type (method call, method reply, signal ?) and the
+     body is the parameters (for signals and method calls) or the return values
+     (for a method return message).
+
+ - Signatures
+     Because D-Bus is typed and dynamic, messages come with signature, that
+     describe the types of the data that comes with the message. The signature
+     is a string. It's an extremly basic langage that only can describe data
+     type. You will need to have some knowledge of what a signature looks like
+     if you program a service. D-Bus clients can live without knowing them.

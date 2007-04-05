@@ -1,0 +1,38 @@
+I will describe here the most common use case. Issue a D-Bus call.
+
+If you want to use the lib you have to make ruby load it by issuing:
+
+{{{
+	require 'dbus'
+}}}
+
+On a typical system, two buses are running, the system bus and the session bus.
+The systembus can be accessed by:
+{{{
+	bus = SystemBus.instance
+}}}
+
+I can tell some of you already have guessed how to access the session bus:
+{{{
+	bus = SessionBus.instance
+}}}
+
+Let me continue this example using the SessionBus. Lets say that I want to
+access an object of a client connected to the SessionBus. This particular D-Bus client provides a service.  Let me access this service:
+
+{{{
+	rb_service = bus.service("org.gnome.Rhythmbox")
+}}}
+
+In this example I access the org.gnome.Rhythmbox service, which is provided by
+the application rhythmbox.
+See [ListName] to know the available services of your bus.
+
+Ok, I have a service, and I know that it exports the object "/org/gnome/Rhythmbox/Player", I will trivially access this "object" using:
+{{{
+	rb_player = rb_service.object("/org/gnome/Rhythmbox/Player")
+}}}
+
+Well that was easy. Let's say that I know that this particular object is introspectable. In real life most of them are.
+Let me recall you that objects in D-Bus have interfaces and
+interfaces have methods.

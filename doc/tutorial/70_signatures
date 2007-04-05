@@ -1,0 +1,8 @@
+
+
+     s describes a string,
+     u describes an unsigned integer
+     su is a concatenaton of both
+     (su) is a struct made of a string and an unsigned integer.
+     a(su) is an array of struct made of a string and an integer.
+
