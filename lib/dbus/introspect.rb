@@ -229,7 +229,17 @@ module DBus
       (class << self ; self ; end)
     end
 
+    def check_for_eval(s)
+      raise RuntimeException, "invalid internal data" if not s.to_s =~ /^[A-Za-z0-9_]*$/
+    end
+  
+    def check_for_quoted_eval(s)
+      raise RuntimeException, "invalid internal data" if not s.to_s =~ /^[^"]+$/
+    end
+
     def define_method_from_descriptor(m)
+      check_for_eval(m.name)
+      check_for_quoted_eval(@name)
       methdef = "def #{m.name}("
       methdef += (0..(m.params.size - 1)).to_a.collect { |n|
         "arg#{n}"
@@ -245,6 +255,7 @@ module DBus
       idx = 0
       m.params.each do |npar|
         paramname, par = npar
+        check_for_quoted_eval(par)
   
         # This is the signature validity check
         Type::Parser.new(par).parse
@@ -258,7 +269,11 @@ module DBus
         ret = nil
         if block_given?
           @object.bus.on_return(msg) do |rmsg|
-            yield(rmsg, *rmsg.params)
+            if rmsg.is_a?(Error)
+              yield(rmsg)
+            else
+              yield(rmsg, *rmsg.params)
+            end
           end
           @object.bus.send(msg.marshall)
         else

@@ -158,7 +158,14 @@ module DBus
             marshaller.append(Type::STRING, @member)
           end
         end
-        # FIXME: add error_name here
+        if @error_name
+          marshaller.struct do
+            marshaller.append(Type::BYTE, ERROR_NAME)
+            marshaller.append(Type::BYTE, 1)
+            marshaller.append_simple_string("s")
+            marshaller.append(Type::STRING, @error_name)
+          end
+        end
         if @reply_serial
           marshaller.struct do
             marshaller.append(Type::BYTE, REPLY_SERIAL)
@@ -241,4 +248,13 @@ module DBus
       ret
     end
   end # class Message
+
+  # A helper exception on errors
+  class Error < Exception
+    attr_reader :message
+    def initialize(msg)
+      super(msg.error_name)
+      @message = msg
+    end
+  end
 end # module DBus

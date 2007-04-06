@@ -116,7 +116,16 @@ module DBus
     end
 
     def inspect
-      "Node #{super.inspect} #{@object.inspect}"
+      # Need something here
+      "<DBus::Node #{sub_inspect}>"
+    end
+
+    def sub_inspect
+      s = ""
+      if not @object.nil?
+        s += "%x " % @object.object_id
+      end
+      s + "{" + keys.collect { |k| "#{k} => #{self[k].sub_inspect}" }.join(",") + "}"
     end
   end
 
@@ -268,12 +277,20 @@ module DBus
       if not block_given?
         # introspect in synchronous !
         send_sync(m) do |rmsg|
-          return rmsg.params[0]
+          if rmsg.is_a?(Error)
+            raise rmsg 
+          else
+            return rmsg.params[0]
+          end
         end
       else
         send(m.marshall)
         on_return(m) do |rmsg|
-          yield rmsg.params[0]
+          if rmsg.is_a?(Error)
+            yield rmsg
+          else
+            yield rmsg.params[0]
+          end
         end
       end
       nil
@@ -388,6 +405,7 @@ module DBus
           DBus::Message::METHOD_RETURN].include?(retm.message_type) and
           retm.reply_serial == m.serial
         retm = wait_for_message
+        raise retm if retm.is_a?(Error)
         process(retm)
       end
     end
@@ -431,13 +449,17 @@ module DBus
     # error:: FIXME...
     def process(m)
       case m.message_type
-      when DBus::Message::ERROR, DBus::Message::METHOD_RETURN
+      when Message::ERROR, Message::METHOD_RETURN
         raise InvalidPacketException if m.reply_serial == nil
         mcs = @method_call_replies[m.reply_serial]
         if not mcs
           puts "no return code for #{mcs.inspect} (#{m.inspect})"
         else
-          mcs.call(m)
+          if m.message_type == Message::ERROR
+            mcs.call(Error.new(m))
+          else
+            mcs.call(m)
+          end
           @method_call_replies.delete(m.reply_serial)
           @method_call_msgs.delete(m.reply_serial)
         end
@@ -471,7 +493,7 @@ module DBus
           end
         end
       else
-        p m
+        puts "Unknown message type: #{m.message_type}"
       end
     end
 

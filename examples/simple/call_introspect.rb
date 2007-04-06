@@ -24,7 +24,7 @@ p player_with_iface.getPlayingUri
 player.default_iface = "org.gnome.Rhythmbox.Player"
 puts "default_iface test:"
 p player.getPlayingUri
-player.on_signal("elapsedChanged") do |*u|
+player.on_signal("elapsedChanged") do |u|
   puts "elapsedChanged: #{u}"
 end
 

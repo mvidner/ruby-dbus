@@ -1,4 +1,6 @@
+********************************************************************************
 I will describe here the most common use case. Issue a D-Bus call.
+********************************************************************************
 
 If you want to use the lib you have to make ruby load it by issuing:
 
@@ -33,6 +35,123 @@ Ok, I have a service, and I know that it exports the object "/org/gnome/Rhythmbo
 	rb_player = rb_service.object("/org/gnome/Rhythmbox/Player")
 }}}
 
-Well that was easy. Let's say that I know that this particular object is introspectable. In real life most of them are.
-Let me recall you that objects in D-Bus have interfaces and
-interfaces have methods.
+Well that was easy. Let's say that I know that this particular object is
+introspectable. In real life most of them are. The rb_object object we have
+here is just a descriptor of a remote object, in general they are called proxy
+objects, because they are the local descriptor of a remote object. It would be
+nice to be able to make it have methods, and that it's methods send a dbus call
+to remotely execute the actuall method in another process. Well, defining such
+method for a introspectable object is trivial:
+{{{
+	rb_player.introspect
+}}}
+And there you go.
+Let me recall you that objects in D-Bus have interfaces and interfaces have
+methods. Let's now access these methods
+{{{
+	rb_player_iface = rb_player["org.gnome.Rhythmbox.Player"]
+	puts rb_player_iface.getPlayingUri
+}}}
+As you can see, when you want to call a method on an instance object, you have
+to get the correct interface. It is a bit tedious, so we have the following
+shortcut that does the same thing as before:
+{{{
+	rb_player.default_iface = "org.gnome.Rhythmbox.Player"
+	puts rb_player.getPlayingUri
+}}}
+The default_iface specifies the interface used when non existing methods are
+called direclyt on a proxy object, and not on one of its interfaces.
+
+
+********************************************************************************
+Calling asynchronously
+********************************************************************************
+
+D-Bus is asynchronous. This means that you do not have to wait for a reply when
+you send a message. When you call a remote method that takes a lot of time to
+process remotely, you don't want your application to hang right? Well the
+asychronousness exists for this reason. What if you want not to wait for the
+return value of a method, but sill you want to take some action when you
+recieve it?
+There is a classical method to program this event-driven mechanisms. You do
+some computation, some call and at the same time you setup a callback that will
+be triggered when you recieve a reply. Then you run a mainloop that is
+responsible to call the callbacks properly.
+Here is how you do it:
+{{{
+	rb_player.getPlayingUri do |resp|
+		puts "The playing uri is #{resp}"
+	end
+	puts "See, I'm not waiting"
+
+# the main loop
+### XXX make this sexier
+	loop { bus.process(bus.wait_for_message) }
+}}}
+
+This code will print the following:
+{{{
+See, I'm not waiting
+The playing uri is file:///music/papapingoin.mp3
+}}}
+
+********************************************************************************
+Waiting for a signal
+********************************************************************************
+
+Signals are upcalls from the remote object. As a client, you set yourself up to
+receive it, with a callback. Then running the main loop triggers the callback.
+{{{
+	rb_player.on_signal("elapsedChanged") do |u|
+		puts u
+	end
+}}}
+
+
+********************************************************************************
+Exploring the remote service
+********************************************************************************
+
+There are various ways to inspect the remote service. You can simply call
+Introspect() and read the XML output. Here I assume that you want to do it
+using the ruby API.
+
+Notice that you can introspect the service, and not only objects.
+{{{
+	rb_service = bus.service("org.gnome.Rhythmbox")
+	rb_service.inspect
+	p rb_service.root
+}}}
+
+This dumps a tree like structure that represents object paths. In that particular case the output is:
+{{{
+	</: {org => {gnome => {Rhythmbox => {Player => ..fdbe625de {},Shell => ..fdbe6852e {},PlaylistManager => ..fdbe4e340 {}}}}}>
+}}}
+
+Read this left to right: the root node is "/", it has one subnode "org", "org"
+has one subnode "gnome", and "gnome" has one subnode "Rhythmbox". Rhythmbox has
+Tree subnodes "Player", "Shell" and "PlaylistManager".  These three last
+subnodes have a wierd digit that means it has an object instance. Such object
+instance is already introspected.
+
+If the prose wasn't clear, maybe the ascii art will help you:
+{{{
+	/
+		org
+			gnome
+				Rhythmbox
+					Shell (with object)
+					Player (with object)
+					PlaylistManager (with object)
+
+}}}
+
+You can have (or not) an object on any node (not limited to leaves).
+You can access a specific node like this:
+{{{
+	rb_player = rb_service.root["org"]["gnome"]["Rhythmbox"]["Player"]
+	rb_player = rb_service.object("/org/gnome/Rhythmbox/Player")
+}}}
+The difference btw the two is that for the first one, rb_service needs to have
+been introspected. Also the obtained rb_player is already introspected whereas
+the second rb_player isn't yet.
