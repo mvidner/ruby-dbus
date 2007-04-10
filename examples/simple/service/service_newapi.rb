@@ -18,6 +18,11 @@ class Test < DBus::Object
     dbus_method :ThatsALongMethodNameIThink do
       puts "ThatsALongMethodNameIThink"
     end
+    dbus_method :Reverse, "in instr:s, out outstr:s" do |instr|
+      outstr = instr.split(//).reverse.join
+      puts "got: #{instr}, replying: #{outstr}"
+      [outstr]
+    end
   end
 end
 
@@ -36,5 +41,8 @@ Thread.new do
 end
 
 puts "listening"
-loop { bus.process(bus.wait_for_message) }
+main = DBus::Main.new
+main << bus
+main.run
+#loop { bus.process(bus.wait_for_message) }
 

@@ -12,6 +12,8 @@ module DBus
 
   class UnknownSignal
   end
+  class InvalidClassDefinition < Exception
+  end
 
   # = D-Bus interface class
   #

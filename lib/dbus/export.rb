@@ -11,6 +11,8 @@ module DBus
   end
   class MethodNotInInterface < Exception
   end
+  class InvalidReturnType < Exception
+  end
 
   # Exported object type
   class Object
@@ -45,6 +47,9 @@ module DBus
         reply = Message.new.reply_to(msg)
         # I'm sure there is a ruby way to do that
         i = 0
+        if meth.rets.size > 0 and not retdata.kind_of?(Array)
+          raise InvalidReturnType
+        end
         meth.rets.each do |rsig|
           reply.add_param(rsig[1], retdata[i])
         end

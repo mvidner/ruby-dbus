@@ -1,3 +1,98 @@
-Describe how to implement a service
+Now that you know how to make some dbus calls, and to register for some
+signals, you might want to learn how to publish some object and interface to
+provide them to the dbus world. Here is how you do that.
 
-show that introspection is automagically provided.
+As you should already know, dbus clients that provide some object to be called remotely are services. Here is how to allocate a name on the bus:
+
+{{{
+bus = DBus.session_bus
+service = bus.request_service("org.ruby.service")
+}}}
+
+Now this client is know to the ouside world as "org.ruby.service".
+Let's define a class, that we will export:
+
+{{{
+class Test < DBus::Object
+  # Create an interface
+  dbus_interface "org.ruby.SampleInterface" do
+    # Create a hello method in that interface
+    dbus_method :hello, "in name:s, in name2:s" do |name, name2|
+      puts "hello(#{name}, #{name2})"
+    end
+  end
+end
+}}}
+
+As you can see, we define a Test class, in which we define a
+"org.ruby.SampleInterface" interface. In this interface, we define a method.
+The code block given is the method implementation. This will be executed when
+remote programs make the dbus call. Now the annoying part the method
+definition. As you can guess the call
+{{{
+	dbus_method :hello, "in name:s, in name2:s" do ...
+}}}
+
+Creates a "hello" method that takes two parameters both of type string. The
+":s" means "of type string". Lets have a look of commont parameter types:
+
+"u" means unsigned integer
+"i" means integer
+"y" means byte
+"(ui)" means a structure having a unsigned integer and a signed one.
+"a" means array, so that "ai" means array of integers
+  "as" means array of string
+  "a(is)" means array of structures, each having an integer and a string.
+
+For a full description of the dbus types, read the dbus-reference.
+
+{{{
+myobj = Test.new("/org/ruby/MyInstance")
+service.export(myobj)
+}}}
+
+This piece of code above instanciates a Test object, with a DBus path.  This
+object is reachable from the outsite world after service.export(myobj) is
+called. The outside world
+
+Let's now consider an external program:
+{{{
+ruby_service = bus.service("org.gnome.Rhythmbox")
+obj = ruby_service.object("/org/ruby/MyInstance")
+obj.introspect
+obj.default_iface = "org.ruby.SampleInterface"
+obj.hello("giligiligiligili", "haaaaaaa")
+}}}
+
+As you can see, the object we defined earlier is automatically introspectable.
+Let's add somme example method so you can see how to return a value to the
+caller.  Let's also define a signal.
+
+{{{
+class Test < DBus::Object
+  # Create an interface
+  dbus_interface "org.ruby.SampleInterface" do
+    # Create a hello method in that interface
+    dbus_method :hello, "in name:s, in name2:s" do |name, name2|
+      puts "hello(#{name}, #{name2})"
+    end
+
+    dbus_signal :SomethingJustHappened, "toto:s, tutu:u"
+  end
+
+  dbus_interface "org.ruby.AnotherInterface" do
+    dbus_method :ThatsALongMethodNameIThink, "in name:s, out ret:s" do |name|
+      ["So your name is #{name}"] 
+    end
+  end
+end
+}}}
+
+Notice that you always have to return an array. If you want to return multiple
+values, just have an array with multiple values.
+
+Triggering the signal is a easy as:
+{{{
+obj.SomethingJustHappened("blah", 1)
+}}}
+

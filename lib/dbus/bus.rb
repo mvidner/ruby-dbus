@@ -588,4 +588,27 @@ module DBus
   def DBus.session_bus
     SessionBus.instance
   end
+
+  class Main
+    def initialize
+      @buses = Hash.new
+    end
+
+    def <<(bus)
+      @buses[bus.socket] = bus
+    end
+
+    def run
+      loop do
+        ready, dum, dum = IO.select(@buses.keys)
+        ready.each do |socket|
+          b = @buses[socket]
+          b.update_buffer
+          while m = b.pop_message
+            b.process(m) 
+          end
+        end
+      end
+    end
+  end
 end # module DBus

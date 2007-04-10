@@ -2,10 +2,10 @@
 
 require "dbus"
 
-system_bus = DBus::session_bus
+session_bus = DBus::session_bus
 
 # Get the Rhythmbox service
-ruby_srv = system_bus.service("org.ruby.service")
+ruby_srv = session_bus.service("org.ruby.service")
 
 # Get the object from this service
 player = ruby_srv.object("/org/ruby/MyInstance")
@@ -17,6 +17,9 @@ player.on_signal("SomethingJustHappened") do |u, v|
   puts "SomethingJustHappened: #{u} #{v}"
 end
 player.hello("8=======D", "(_._)")
+p player["org.ruby.AnotherInterface"].Reverse("Hello world!")
 
-loop { system_bus.process(system_bus.wait_for_message) }
+main = DBus::Main.new
+main << session_bus
+main.run
 
