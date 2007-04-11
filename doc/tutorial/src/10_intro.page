@@ -1,7 +1,11 @@
-This is a tutorial for ruby-dbus, a library to access D-Bus facilities of your
-system.
+---
+title: The ruby-dbus tutorial
+inMenu: true
+directoryName: ruby-dbus tutorial
+---
+This is a tutorial for ruby-dbus, a library to access D-Bus facilities of your system.
 
-What is D-Bus?
+h2. What is D-Bus?
 
 D-Bus is a RPC (remote procedure call) protocol, and two common busses that
 route the procedure calls. One bus is used by modern desktops (the session
