@@ -28,5 +28,7 @@ player.on_signal("elapsedChanged") do |u|
   puts "elapsedChanged: #{u}"
 end
 
-loop { system_bus.process(system_bus.wait_for_message) }
+m = DBus::Main.new
+m << session_bus
+m.run
 

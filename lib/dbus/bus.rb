@@ -177,6 +177,23 @@ module DBus
       @socket.write(buf)
     end
 
+    # Tell a bus to register itself on the glib main loop
+    def glibize
+      require 'glib2'
+      # Circumvent a ruby-glib bug
+      @channels ||= Array.new
+
+      gio = GLib::IOChannel.new(@socket.fileno)
+      @channels << gio
+      gio.add_watch(GLib::IOChannel::IN) do |c, ch|
+        update_buffer
+        messages.each do |msg|
+          process(msg)
+        end
+        true
+      end
+    end
+
     # FIXME: describe the following names, flags and constants.
     # See DBus spec for definition
     NAME_FLAG_ALLOW_REPLACEMENT = 0x1

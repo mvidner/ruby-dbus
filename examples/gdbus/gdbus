@@ -141,8 +141,9 @@ class DBusUI
       signal = view.model.get_iter(path)[2]
       intf = view.model.get_iter(path)[3]
       mr = DBus::MatchRule.new.from_signal(intf, signal)
-      intf.object.bus.proxy.AddMatch(mr.to_s) do |ret|
-        puts "Got AddMatch reply, that probably means 'ok'"
+      puts "*** Registering matchrule: #{mr.to_s} ***"
+      intf.object.bus.add_match(mr) do |sig|
+        puts "Got #{sig.member}(#{sig.params.join(',')})"
       end
     end
   end
@@ -183,24 +184,28 @@ class DBusUI
   end
 
   def start_buses
-    @channels = []
-    
-    # This is how we install a glib main loop listener.
-    # Soooo trivial after all.
-    gio = GLib::IOChannel.new(DBus::SessionBus.instance.socket.fileno)
-    @channels << gio
-    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
-      process_input(DBus::SessionBus.instance)
-      true
-    }
-    if $enable_system
-      gio = GLib::IOChannel.new(DBus::SystemBus.instance.socket.fileno)
-      @channels << gio
-      gio.add_watch(GLib::IOChannel::IN) { |c, ch|
-        process_input(DBus::SystemBus.instance)
-        true
-      }
-    end
+    DBus::SessionBus.instance.glibize
+    DBus::SystemBus.instance.glibize if $enable_system
+
+#    @channels = []
+#    
+#    # This is how we install a glib main loop listener.
+#    # Soooo trivial after all.
+#
+#    gio = GLib::IOChannel.new(DBus::SessionBus.instance.socket.fileno)
+#    @channels << gio
+#    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
+#      process_input(DBus::SessionBus.instance)
+#      true
+#    }
+#    if $enable_system
+#      gio = GLib::IOChannel.new(DBus::SystemBus.instance.socket.fileno)
+#      @channels << gio
+#      gio.add_watch(GLib::IOChannel::IN) { |c, ch|
+#        process_input(DBus::SystemBus.instance)
+#        true
+#      }
+#    end
 
     DBus::SessionBus.instance.proxy.ListNames do |msg, names|
       fill_treeview(DBus::SessionBus.instance, @sessiontreeview, names)

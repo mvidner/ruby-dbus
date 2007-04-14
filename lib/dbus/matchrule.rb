@@ -12,6 +12,7 @@ module DBus
       if not ['signal', 'method_call', 'method_return', 'error'].member?(t)
         raise MatchRuleException 
       end
+      @type = t
     end
 
     # Returns a MatchRule string from object eg:
@@ -49,7 +50,9 @@ module DBus
 
     def match(msg)
       if @type
-        if [SIGNAL => "signal", METHOD_CALL => "method_call", METHOD_RETURN => "method_return", ERROR => "error"][msg.message_type] != @type
+        if {Message::SIGNAL => "signal", Message::METHOD_CALL => "method_call",
+          Message::METHOD_RETURN => "method_return",
+          Message::ERROR => "error"}[msg.message_type] != @type
           return false
         end
       end

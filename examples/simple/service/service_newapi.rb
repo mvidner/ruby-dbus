@@ -44,5 +44,4 @@ puts "listening"
 main = DBus::Main.new
 main << bus
 main.run
-#loop { bus.process(bus.wait_for_message) }
 

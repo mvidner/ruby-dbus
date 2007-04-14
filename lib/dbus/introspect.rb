@@ -10,7 +10,7 @@ module DBus
   MethodSignalRE = /^[A-Za-z][A-Za-z0-9_]*$/
   InterfaceElementRE = /^[A-Za-z][A-Za-z0-9_]*$/
 
-  class UnknownSignal
+  class UnknownSignal < Exception
   end
   class InvalidClassDefinition < Exception
   end
@@ -307,6 +307,14 @@ module DBus
       m.from_prototype(prototype)
       define(m)
     end
+
+    def on_signal(bus, name, &block)
+      signal = @signals[name]
+      raise UnknownSignal if signal.nil?
+      mr = DBus::MatchRule.new.from_signal(self, signal)
+      puts mr.to_s
+      bus.add_match(mr) { |msg| block.call(*msg.params) }
+    end
   end
 
   class ProxyObject
@@ -345,11 +353,7 @@ module DBus
 
     def on_signal(name, &block)
       if @default_iface and has_iface?(@default_iface)
-        intf = @interfaces[@default_iface]
-        signal = intf.signals[name]
-        raise UnknownSignal if signal.nil?
-        mr = DBus::MatchRule.new.from_signal(intf, signal)
-        bus.add_match(mr) { |msg| block.call(*msg.params) }
+        @interfaces[@default_iface].on_signal(@bus, name, &block)
       else
         raise NoMethodError
       end

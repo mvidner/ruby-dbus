@@ -19,5 +19,7 @@ end
 
 proxyi.playPause(true)
 
-loop { bus.process(bus.wait_for_message) }
+m = DBus::Main.new
+m << bus
+m.run
 
