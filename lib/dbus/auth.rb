@@ -1,3 +1,13 @@
+# This file is part of the ruby-dbus project
+# Copyright (C) 2007 Arnaud Cornet and Paul van Tilburg
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# See the file "COPYING" for the exact licensing terms.
+
+
 module DBus
   class AuthenticationFailed < Exception
   end
