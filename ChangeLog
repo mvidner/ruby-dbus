@@ -1,2 +1,9 @@
+2007-04-23  Arnaud Cornet <arnaud.cornet@gmail.com>
+
+	* lib/dbus/bus.rb: Fix stupid hardcoded string. Found by Rudi
+	Cilibrasi.
+	* ruby-dbus: Release ruby-dbus "Release often" 0.1.1.
+
 2007-04-17  Arnaud Cornet <arnaud.cornet@gmail.com>
+
 	* ruby-dbus: Release ruby-dbus "Happy birthday Paul" 0.1.0.

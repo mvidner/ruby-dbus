@@ -340,8 +340,11 @@ module DBus
       end
     end
 
+    class NameRequestError < Exception
+    end
+
     def request_service(name)
-      r = proxy.RequestName("org.ruby.service", NAME_FLAG_REPLACE_EXISTING)
+      r = proxy.RequestName(name, NAME_FLAG_REPLACE_EXISTING)
       raise NameRequestError if r[0] != REQUEST_NAME_REPLY_PRIMARY_OWNER
       @service = Service.new(name, self)
       @service
