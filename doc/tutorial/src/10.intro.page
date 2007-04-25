@@ -1,7 +1,6 @@
 ---
-title: The ruby-dbus tutorial
+title: Introduction
 inMenu: true
-directoryName: ruby-dbus tutorial
 ---
 This is a tutorial for ruby-dbus, a library to access D-Bus facilities of your system.
 

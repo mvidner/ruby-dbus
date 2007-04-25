@@ -1,7 +1,12 @@
 ---
-title: Ruby D-Bus tutorial
+title: The Ruby D-Bus Tutorial
 inMenu: false
-directoryName: ruby-dbus tutorial
+directoryName: Start
 ---
 
-This is the ruby-dbus tutorial.
+h2. Welcome
+
+This is the Ruby D-Bus tutorial.  It aims to show you the features of Ruby
+D-Bus and as you proceed also how to use them.
+
+Please proceed to the "Introduction":intro.html.

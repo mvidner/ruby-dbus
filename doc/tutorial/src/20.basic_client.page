@@ -1,7 +1,6 @@
 ---
-title: Basic client usage
+title: Basic Client Usage
 inMenu: true
-directoryName: ruby-dbus tutorial
 ---
 h2. The most common use case. Issue a D-Bus call.
 

@@ -1,7 +1,6 @@
 ---
-title: Creating a D-Bus service
+title: Creating a D-Bus Service
 inMenu: true
-directoryName: ruby-dbus tutorial
 ---
 h2. Creating a D-Bus Service
 
