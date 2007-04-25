@@ -48,14 +48,14 @@ _a_ means array, so that "ai" means array of integers
 
 For a full description of the dbus types, read the dbus-reference.
 
-  myobj = Test.new("/org/ruby/MyInstance")
-  service.export(myobj)
+  exported_obj = Test.new("/org/ruby/MyInstance")
+  service.export(exported_obj)
 
 This piece of code above instanciates a Test object, with a DBus path.  This
-object is reachable from the outsite world after service.export(myobj) is
-called. The outside world
+object is reachable from the outsite world after service.export(exported_obj)
+is called.
 
-Let's now consider an external program:
+Let's now consider another program that will access our newly created service:
 
   ruby_service = bus.service("org.ruby.service")
   obj = ruby_service.object("/org/ruby/MyInstance")
@@ -65,10 +65,9 @@ Let's now consider an external program:
 
 As you can see, the object we defined earlier is automatically introspectable.
 Let's add somme example method so you can see how to return a value to the
-caller.  Let's also define a signal.
+caller. Let's now define another exemple service that has a signal.
 
-
-  class Test < DBus::Object
+  class Test2 < DBus::Object
     # Create an interface
     dbus_interface "org.ruby.SampleInterface" do
       # Create a hello method in that interface
@@ -84,12 +83,11 @@ caller.  Let's also define a signal.
     end
   end
 
+Triggering the signal is a easy as calling a method:
 
-Notice that you always have to return an array. If you want to return multiple
-values, just have an array with multiple values.
+  exported_obj.SomethingJustHappened("blah", 1)
 
-Triggering the signal is a easy as:
-
-  obj.SomethingJustHappened("blah", 1)
-
+Look also at the :ThatsALongMethodNameIThink method is returning a value to the
+caller.  Notice that you always have to return an array. If you want to return
+multiple values, just have an array with multiple values.
 
