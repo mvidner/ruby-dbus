@@ -75,10 +75,8 @@ caller.  Let's also define a signal.
       dbus_method :hello, "in name:s, in name2:s" do |name, name2|
         puts "hello(#{name}, #{name2})"
       end
-  
       dbus_signal :SomethingJustHappened, "toto:s, tutu:u"
     end
-  
     dbus_interface "org.ruby.AnotherInterface" do
       dbus_method :ThatsALongMethodNameIThink, "in name:s, out ret:s" do |name|
         ["So your name is #{name}"] 
