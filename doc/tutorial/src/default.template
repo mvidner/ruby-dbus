@@ -33,7 +33,13 @@
       </div>
 
       <div id="footer" class="bar">
-        generated with <a href="http://webgen.rubyforge.org">webgen</a> on <b>{date: }</b>
+        Generated with <a href="http://webgen.rubyforge.org">webgen</a> on <b>{date: }</b><br/>
+        &copy; Arnaud Cornet and Paul van Tilburg; this tutorial is part of
+        free software; you can redistribute it and/or modify it under the
+        terms of the GNU 
+        <a href="http://www.gnu.org/licenses/lgpl.html">Lesser General Public
+        License, version 2.1</a> as published by the 
+        <a href="http://www.fsf.org/">Free Software Foundation</a>.
       </div>
     </div>
   </body>
