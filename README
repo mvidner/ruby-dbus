@@ -20,6 +20,22 @@ D-Bus system can be used in the Ruby programming language.
     You can also install files in your favorite directory by
     supplying setup.rb some options. Try "ruby setup.rb --help".
 
+== Feature
+
+Ruby D-Bus currently supports the following features:
+
+ * Connecting to local busses.
+ * Accessing remote services, objects and interfaces.
+ * Invoking methods on remote objects synchronously and asynchronously.
+ * Catch signals on remote objects and handle them via callbacks.
+ * Remote object introspection.
+ * Walking object trees.
+ * Creating services and registering them on the bus.
+ * Exporting objects with interfaces on a bus for remote use.
+ * Rubyish D-Bus object and interface syntax support that automatically
+   allows for introspection.
+ * Emitting signals on exported objects.
+
 == Usage
 
  See some of the examples in the examples/ subdirectory of the tarball.
