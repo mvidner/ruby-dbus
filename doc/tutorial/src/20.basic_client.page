@@ -9,7 +9,7 @@ If you want to use the lib you have to make ruby load it by issuing:
   require 'dbus'
 
 On a typical system, two buses are running, the system bus and the session bus.
-The systembus can be accessed by:
+The system bus can be accessed by:
 
   bus = SystemBus.instance
 
@@ -34,7 +34,7 @@ introspectable. In real life most of them are. The rb_object object we have
 here is just a descriptor of a remote object, in general they are called proxy
 objects, because they are the local descriptor of a remote object. It would be
 nice to be able to make it have methods, and that it's methods send a dbus call
-to remotely execute the actuall method in another process. Well, defining such
+to remotely execute the actual method in another process. Well, defining such
 method for a introspectable object is trivial:
 
   rb_player.introspect
@@ -54,19 +54,19 @@ shortcut that does the same thing as before:
   puts rb_player.getPlayingUri
 
 The default_iface specifies the interface used when non existing methods are
-called direclyt on a proxy object, and not on one of its interfaces.
+called directly on a proxy object, and not on one of its interfaces.
 
 h2. Calling asynchronously
 
 D-Bus is asynchronous. This means that you do not have to wait for a reply when
 you send a message. When you call a remote method that takes a lot of time to
 process remotely, you don't want your application to hang right? Well the
-asychronousness exists for this reason. What if you want not to wait for the
+asynchronous-ness exists for this reason. What if you want not to wait for the
 return value of a method, but sill you want to take some action when you
-recieve it?
+receive it?
 There is a classical method to program this event-driven mechanisms. You do
 some computation, some call and at the same time you setup a callback that will
-be triggered when you recieve a reply. Then you run a mainloop that is
+be triggered when you receive a reply. Then you run a main loop that is
 responsible to call the callbacks properly.
 Here is how you do it:
 
@@ -111,7 +111,7 @@ This dumps a tree like structure that represents object paths. In that particula
 Read this left to right: the root node is "/", it has one subnode "org", "org"
 has one subnode "gnome", and "gnome" has one subnode "Rhythmbox". Rhythmbox has
 Tree subnodes "Player", "Shell" and "PlaylistManager".  These three last
-subnodes have a wierd digit that means it has an object instance. Such object
+subnodes have a weird digit that means it has an object instance. Such object
 instance is already introspected.
 
 If the prose wasn't clear, maybe the ascii art will help you:
@@ -130,7 +130,7 @@ You can access a specific node like this:
   rb_player = rb_service.root["org"]["gnome"]["Rhythmbox"]["Player"]
   rb_player = rb_service.object("/org/gnome/Rhythmbox/Player")
 
-The difference btw the two is that for the first one, rb_service needs to have
-been introspected. Also the obtained rb_player is already introspected whereas
-the second rb_player isn't yet.
+The difference between the two is that for the first one, rb_service needs to
+have been introspected. Also the obtained rb_player is already introspected
+whereas the second rb_player isn't yet.
 

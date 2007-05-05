@@ -35,7 +35,7 @@ definition. As you can guess the call
   dbus_method :hello, "in name:s, in name2:s" do ...
 
 Creates a "hello" method that takes two parameters both of type string. The
-_:s_ means "of type string". Lets have a look of commont parameter types:
+_:s_ means "of type string". Lets have a look of common parameter types:
 
 _u_ means unsigned integer
 _i_ means integer
@@ -50,9 +50,9 @@ For a full description of the dbus types, read the dbus-reference.
   exported_obj = Test.new("/org/ruby/MyInstance")
   service.export(exported_obj)
 
-This piece of code above instanciates a Test object, with a DBus path.  This
-object is reachable from the outsite world after service.export(exported_obj)
-is called.
+This piece of code above creates a Test object instance, with a DBus path.
+This object is reachable from the outsite world after
+service.export(exported_obj) is called.
 
 Let's now consider another program that will access our newly created service:
 
@@ -63,8 +63,8 @@ Let's now consider another program that will access our newly created service:
   obj.hello("giligiligiligili", "haaaaaaa")
 
 As you can see, the object we defined earlier is automatically introspectable.
-Let's add somme example method so you can see how to return a value to the
-caller. Let's now define another exemple service that has a signal.
+Let's add some example method so you can see how to return a value to the
+caller. Let's now define another example service that has a signal.
 
   class Test2 < DBus::Object
     # Create an interface
