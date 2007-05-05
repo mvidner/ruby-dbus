@@ -1,8 +1,8 @@
   a          { text-decoration: none; }
-  a:link     { color: #738899; }
-  a:visited  { color: #A39B7A; }
+  a:link     { color: #2E5F84; }
+  a:visited  { color: #4084B8; }
   a:hover,
-  a:active   { text-decoration: underline; }
+  a:active   { color: #4084B8; text-decoration: underline; }
 
   #content {
      width: 50em;
@@ -11,10 +11,10 @@
 
   #header {
      padding: 2pt;
-     background-color: #5A6B78;
-     border-top: thin solid #2F393F;
-     border-left: thin solid #2F393F;
-     border-right: thin solid #2F393F;
+     background-color: #C61C18;
+     border-top: thin solid #891D1B;
+     border-left: thin solid #891D1B;
+     border-right: thin solid #891D1B;
   }
 
   #header h1 {
@@ -24,7 +24,7 @@
 
   #footer { 
      margin-top: 5pt;
-     border-top: thin solid #2F393F;
+     border-top: thin solid #891D1B;
   }
 
   #body { text-align: justify; }
@@ -34,8 +34,8 @@
      padding: 2pt;
      text-align: center;
      font-size: 83%;
-     background-color: #869FB3;
-     border: thin solid #2F393F;
+     background-color: #F07F7D;
+     border: thin solid #891D1B;
   }
   .bar a:link { color: #FFFFFF; }
   .bar a:visited { color: #FFFFFF; }
@@ -61,14 +61,17 @@
      font-size: 90%;
      overflow: hidden;
      padding-left: 10pt;
-     border: thin solid #F2CBD9; 
-     background-color: #FCE6EE;
+     border: thin solid #F0B5B4; 
+     background-color: #F0DDDD;
   }
   
-  h2 { border-bottom: thin dashed #635E4A; }
-  h3 { border-bottom: thin dashed #A39B7A; }
+  h2, h3 { 
+    color: #1D3B52;
+    background-color: inherit;
+    border-bottom: thin dashed #1D3B52; }
+  }
 
-  table th { background-color: #F3E7B6; }
+  table th { background-color: #B4D2E8; }
 
   /* styling the menu */
 
@@ -77,8 +80,8 @@
      width: 15em;
      margin: 10pt 0pt 5pt 10pt;
      font-size: 83%;
-     background-color: #F3E7B6;
-     border: thin solid #A39B7A;
+     background-color: #B4D2E8;
+     border: thin solid #2E5F84;
   }
 
   #menu a {
@@ -101,7 +104,7 @@
 
   #menu li {
      padding: 3pt 0pt;          /* inter-item padding */
-     color: #635E4A;
+     color: #2E5F84;
   }
 
   #menu li > ul {

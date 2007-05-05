@@ -1,39 +1,61 @@
 ---
-title: Basic Client Usage
+title: Client Usage
 inMenu: true
 ---
-h2. The most common use case. Issue a D-Bus call.
 
-If you want to use the lib you have to make ruby load it by issuing:
+This chapter will discuss basic client usage and has the following topics:
+
+# "Using the library":#loading
+# "Connecting to a bus":#connecting
+# "Performing method calls":#method-call
+## "Introspection":#method-call--introspection
+# "Calling a method asynchronously":#method-call-async
+# "Waiting for a signal":#signal-wait
+# "More about introspection":#introspection
+## "Walking the object tree":#introspection--tree
+
+h2(#loading). Using the library
+
+If you want to use the lib you have to make Ruby load it by issuing:
 
   require 'dbus'
 
-On a typical system, two buses are running, the system bus and the session bus.
-The system bus can be accessed by:
+That's all!  Now we can move on to really using it...
 
-  bus = SystemBus.instance
+h2(#connecting). Connecting to a bus
+
+On a typical system, two buses are running, the system bus and the session
+bus.  The system bus can be accessed by:
+
+  bus = DBus::SystemBus.instance
 
 I can tell some of you already have guessed how to access the session bus:
 
-  bus = SessionBus.instance
+  bus = DBus::SessionBus.instance
 
-Let me continue this example using the SessionBus. Lets say that I want to
-access an object of a client connected to the SessionBus. This particular D-Bus client provides a service.  Let me access this service:
+h2(#method-call). Performing method calls
+
+Let me continue this example using the session bus.  Lets say that I want to
+access an object of a client connected to the session bus.  This particular D-Bus
+client provides a service.  Let me access this service:
 
   rb_service = bus.service("org.gnome.Rhythmbox")
 
 In this example I access the org.gnome.Rhythmbox service, which is provided by
-the application rhythmbox.
-See [ListName] to know the available services of your bus.
+the application Rhythmbox.  See [ListName] to know the available services of
+your bus.
 
-Ok, I have a service, and I know that it exports the object "/org/gnome/Rhythmbox/Player", I will trivially access this "object" using:
+OK, I have a service, and I know that it exports the object "/org/gnome/Rhythmbox/Player", I will trivially access this "object" using:
+
   rb_player = rb_service.object("/org/gnome/Rhythmbox/Player")
 
+h3(#method-call--introspection). Introspection
+
 Well that was easy. Let's say that I know that this particular object is
-introspectable. In real life most of them are. The rb_object object we have
+introspectable. In real life most of them are. The @rb_object@ object we have
 here is just a descriptor of a remote object, in general they are called proxy
 objects, because they are the local descriptor of a remote object. It would be
-nice to be able to make it have methods, and that it's methods send a dbus call
+nice to be able to make it have methods, and that it's methods send a D-Bus call
 to remotely execute the actual method in another process. Well, defining such
 method for a introspectable object is trivial:
 
@@ -56,12 +78,12 @@ shortcut that does the same thing as before:
 The default_iface specifies the interface used when non existing methods are
 called directly on a proxy object, and not on one of its interfaces.
 
-h2. Calling asynchronously
+h2(#method-call-async). Calling a method asynchronously
 
 D-Bus is asynchronous. This means that you do not have to wait for a reply when
 you send a message. When you call a remote method that takes a lot of time to
 process remotely, you don't want your application to hang right? Well the
-asynchronous-ness exists for this reason. What if you want not to wait for the
+asychronousness exists for this reason. What if you want not to wait for the
 return value of a method, but sill you want to take some action when you
 receive it?
 There is a classical method to program this event-driven mechanisms. You do
@@ -71,31 +93,31 @@ responsible to call the callbacks properly.
 Here is how you do it:
 
   rb_player.getPlayingUri do |resp|
-  	puts "The playing uri is #{resp}"
+  	puts "The playing URI is #{resp}"
   end
-  puts "See, I'm not waiting"
+  puts "See, I'm not waiting!"
   loop = DBus::Main.new
   loop.run
 
 This code will print the following:
 
-  See, I'm not waiting
-  The playing uri is file:///music/papapingoin.mp3
+  See, I'm not waiting!
+  The playing URI is file:///music/papapingoin.mp3
 
-h2. Waiting for a signal
+h2(#signal-wait). Waiting for a signal
 
-Signals are upcalls from the remote object. As a client, you set yourself up to
+Signals are up-calls from the remote object. As a client, you set yourself up to
 receive it, with a callback. Then running the main loop triggers the callback.
 
   rb_player.on_signal("elapsedChanged") do |u|
   	puts u
   end
 
-h2. Exploring the remote service: Introspection
+h2(#introspection). More about introspection
 
 There are various ways to inspect the remote service. You can simply call
 Introspect() and read the XML output. Here I assume that you want to do it
-using the ruby API.
+using the Ruby API.
 
 Notice that you can introspect the service, and not only objects.
 
@@ -103,18 +125,18 @@ Notice that you can introspect the service, and not only objects.
   rb_service.inspect
   p rb_service.root
 
+This dumps a tree like structure that represents object paths.  In that
+particular case the output is:
 
-This dumps a tree like structure that represents object paths. In that particular case the output is:
+  </: {org => {gnome => {Rhythmbox => {Player => ..fdbe625de {},Shell => ..fdbe6852e {},PlaylistManager => ..fdbe4e340 {}}></code></pre>
 
-  </: {org => {gnome => {Rhythmbox => {Player => ..fdbe625de {},Shell => ..fdbe6852e {},PlaylistManager => ..fdbe4e340 {</code></pre>}}>
-
-Read this left to right: the root node is "/", it has one subnode "org", "org"
-has one subnode "gnome", and "gnome" has one subnode "Rhythmbox". Rhythmbox has
-Tree subnodes "Player", "Shell" and "PlaylistManager".  These three last
-subnodes have a weird digit that means it has an object instance. Such object
+Read this left to right: the root node is "/", it has one sub-node "org", "org"
+has one sub-node "gnome", and "gnome" has one sub-node "Rhythmbox". Rhythmbox has
+Tree sub-nodes "Player", "Shell" and "PlaylistManager".  These three last
+sub-nodes have a weird digit that means it has an object instance. Such object
 instance is already introspected.
 
-If the prose wasn't clear, maybe the ascii art will help you:
+If the prose wasn't clear, maybe the ASCII art will help you:
 
   /
   	org
@@ -124,13 +146,14 @@ If the prose wasn't clear, maybe the ascii art will help you:
   				Player (with object)
   				PlaylistManager (with object)
 
+h3(#introspection--tree). Walking the object tree
+
 You can have (or not) an object on any node (not limited to leaves).
 You can access a specific node like this:
 
   rb_player = rb_service.root["org"]["gnome"]["Rhythmbox"]["Player"]
   rb_player = rb_service.object("/org/gnome/Rhythmbox/Player")
 
-The difference between the two is that for the first one, rb_service needs to
-have been introspected. Also the obtained rb_player is already introspected
-whereas the second rb_player isn't yet.
-
+The difference between the two is that for the first one, @rb_service@
+needs to have been introspected.  Also the obtained @rb_player@ is already
+introspected whereas the second @rb_player@ isn't yet.
