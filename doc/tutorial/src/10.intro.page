@@ -68,7 +68,7 @@ and provide some features through it.
 
 h3(#def-obj-path). Object path
 
-An object path is the D-Bus way to specify an object *instance* address.  A
+An object path is the D-Bus way to specify an object _instance_ address.  A
 service can provide different object instances to the outside world, so
 that external processes can call methods on each of them.  An object path
 is an address of an instance in very similar way that the path is an

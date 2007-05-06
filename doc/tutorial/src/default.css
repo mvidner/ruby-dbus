@@ -1,8 +1,12 @@
   a          { text-decoration: none; }
-  a:link     { color: #2E5F84; }
-  a:visited  { color: #4084B8; }
+  a:link     { color: #2E5F84; background-color: inherit; }
+  a:visited  { color: #4084B8; background-color: inherit; }
   a:hover,
-  a:active   { color: #4084B8; text-decoration: underline; }
+  a:active   { 
+    color: #4084B8; 
+    background-color: inherit;
+    text-decoration: underline; 
+  }
 
   #content {
      width: 50em;
@@ -11,6 +15,7 @@
 
   #header {
      padding: 2pt;
+     color: inherit;
      background-color: #C61C18;
      border-top: thin solid #891D1B;
      border-left: thin solid #891D1B;
@@ -19,7 +24,8 @@
 
   #header h1 {
      margin: 5pt;
-     color: white;
+     color: #FFFFFF;
+     background-color: inherit;
   }
 
   #footer { 
@@ -34,11 +40,12 @@
      padding: 2pt;
      text-align: center;
      font-size: 83%;
-     background-color: #F07F7D;
      border: thin solid #891D1B;
+     color: inherit;
+     background-color: #F07F7D;
   }
-  .bar a:link { color: #FFFFFF; }
-  .bar a:visited { color: #FFFFFF; }
+  .bar a:link { color: #FFFFFF; background-color: inherit; }
+  .bar a:visited { color: #FFFFFF; background-color: inherit; }
 
   .left, .right {
      padding: 0pt 1em;
@@ -57,21 +64,26 @@
   .log { table-layout: fixed; width: 100%; }
   .log tr.header .day { width: 6em; }
 
+  code { color: inherit; background-color: #F0E7E7; }
+
   pre {
      font-size: 90%;
      overflow: hidden;
      padding-left: 10pt;
-     border: thin solid #F0B5B4; 
+     border: thin solid #F0B4B4; 
+     color: inherit;
      background-color: #F0DDDD;
   }
+  
+  pre code { color: inherit; background-color: #F0DDDD; }
   
   h2, h3 { 
     color: #1D3B52;
     background-color: inherit;
-    border-bottom: thin dashed #1D3B52; }
+    border-bottom: thin dashed #1D3B52; 
   }
 
-  table th { background-color: #B4D2E8; }
+  table th { color: inherit; background-color: #B4D2E8; }
 
   /* styling the menu */
 
@@ -80,8 +92,9 @@
      width: 15em;
      margin: 10pt 0pt 5pt 10pt;
      font-size: 83%;
-     background-color: #B4D2E8;
      border: thin solid #2E5F84;
+     color: inherit;
+     background-color: #B4D2E8;
   }
 
   #menu a {
@@ -105,6 +118,7 @@
   #menu li {
      padding: 3pt 0pt;          /* inter-item padding */
      color: #2E5F84;
+     background-color: inherit;
   }
 
   #menu li > ul {
