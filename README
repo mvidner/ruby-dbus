@@ -24,7 +24,7 @@ D-Bus system can be used in the Ruby programming language.
 
 Ruby D-Bus currently supports the following features:
 
- * Connecting to local busses.
+ * Connecting to local buses.
  * Accessing remote services, objects and interfaces.
  * Invoking methods on remote objects synchronously and asynchronously.
  * Catch signals on remote objects and handle them via callbacks.
