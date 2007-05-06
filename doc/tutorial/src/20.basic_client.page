@@ -16,7 +16,7 @@ This chapter will discuss basic client usage and has the following topics:
 
 h2(#loading). Using the library
 
-If you want to use the lib you have to make Ruby load it by issuing:
+If you want to use the library, you have to make Ruby load it by issuing:
 
   require 'dbus'
 
@@ -29,41 +29,46 @@ bus.  The system bus can be accessed by:
 
   bus = DBus::SystemBus.instance
 
-I can tell some of you already have guessed how to access the session bus:
+Probably you already have guessed how to access the session bus. This
+can be done by:
 
   bus = DBus::SessionBus.instance
 
 h2(#method-call). Performing method calls
 
-Let me continue this example using the session bus.  Lets say that I want to
-access an object of a client connected to the session bus.  This particular D-Bus
-client provides a service.  Let me access this service:
+Let me continue this example using the session bus.  Let's say that I want
+to access an object of some client on the session bus.  This particular
+D-Bus client provides a service called @org.gnome.Rhythmbox@.  Let me
+access this service:
 
   rb_service = bus.service("org.gnome.Rhythmbox")
 
-In this example I access the org.gnome.Rhythmbox service, which is provided by
-the application Rhythmbox.  See [ListName] to know the available services of
-your bus.
+In this example I access the @org.gnome.Rhythmbox@ service, which is
+provided by the application
+"Rhythmbox":http://www.gnome.org/projects/rhythmbox/.  See [ListName] to
+know the available services of your bus (?).
 
-OK, I have a service, and I know that it exports the object "/org/gnome/Rhythmbox/Player", I will trivially access this "object" using:
+OK, I have a service handle now, and I know that it exports the object
+"/org/gnome/Rhythmbox/Player".  I will trivially access this remote object
+using:
 
   rb_player = rb_service.object("/org/gnome/Rhythmbox/Player")
 
 h3(#method-call--introspection). Introspection
 
-Well that was easy. Let's say that I know that this particular object is
-introspectable. In real life most of them are. The @rb_object@ object we have
-here is just a descriptor of a remote object, in general they are called proxy
-objects, because they are the local descriptor of a remote object. It would be
-nice to be able to make it have methods, and that it's methods send a D-Bus call
-to remotely execute the actual method in another process. Well, defining such
-method for a introspectable object is trivial:
+Well, that was easy.  Let's say that I know that this particular object is
+introspectable.  In real life most of them are.  The @rb_object@ object we
+have here is just a handle of a remote object, in general they are called
+_proxy objects_, because they are the local handle of a remote object.  It
+would be nice to be able to make it have methods, and that its methods send
+a D-Bus call to remotely execute the actual method in another process. 
+Well, instating these methods for a _introspectable_ object is trivial:
 
   rb_player.introspect
 
 And there you go.
-Let me recall you that objects in D-Bus have interfaces and interfaces have
-methods. Let's now access these methods
+Let me remind you that objects in D-Bus have interfaces and interfaces have
+methods. Let's now access these methods:
 
   rb_player_iface = rb_player["org.gnome.Rhythmbox.Player"]
   puts rb_player_iface.getPlayingUri
@@ -75,22 +80,24 @@ shortcut that does the same thing as before:
   rb_player.default_iface = "org.gnome.Rhythmbox.Player"
   puts rb_player.getPlayingUri
 
-The default_iface specifies the interface used when non existing methods are
-called directly on a proxy object, and not on one of its interfaces.
+The @default_iface=@ call specifies the default interface that should be
+used when non existing methods are called directly on a proxy object, and
+not on one of its interfaces.
 
 h2(#method-call-async). Calling a method asynchronously
 
-D-Bus is asynchronous. This means that you do not have to wait for a reply when
-you send a message. When you call a remote method that takes a lot of time to
-process remotely, you don't want your application to hang right? Well the
-asychronousness exists for this reason. What if you want not to wait for the
-return value of a method, but sill you want to take some action when you
-receive it?
-There is a classical method to program this event-driven mechanisms. You do
-some computation, some call and at the same time you setup a callback that will
-be triggered when you receive a reply. Then you run a main loop that is
-responsible to call the callbacks properly.
-Here is how you do it:
+D-Bus is _asynchronous_.  This means that you do not have to wait for a
+reply when you send a message.  When you call a remote method that takes a
+lot of time to process remotely, you don't want your application to hang
+right?  Well the asychronousness exists for this reason.  What if you want
+not to wait for the return value of a method, but still you want to take
+some action when you receive it?
+
+There is a classical method to program this event-driven mechanism.  You do
+some computation, perform some method call, and at the same time you setup
+a callback that will be triggered once you receive a reply.  Then you run a
+main loop that is responsible to call the callbacks properly.  Here is how
+you do it:
 
   rb_player.getPlayingUri do |resp|
   	puts "The playing URI is #{resp}"
@@ -106,8 +113,10 @@ This code will print the following:
 
 h2(#signal-wait). Waiting for a signal
 
-Signals are up-calls from the remote object. As a client, you set yourself up to
-receive it, with a callback. Then running the main loop triggers the callback.
+Signals are calls from the remote object to your program.  As a client, you
+set yourself up to receive it and handle it with a callback.  Then running
+the main loop triggers the callback.  You can register a callback handler
+as allows:
 
   rb_player.on_signal("elapsedChanged") do |u|
   	puts u
@@ -115,28 +124,28 @@ receive it, with a callback. Then running the main loop triggers the callback.
 
 h2(#introspection). More about introspection
 
-There are various ways to inspect the remote service. You can simply call
-Introspect() and read the XML output. Here I assume that you want to do it
-using the Ruby API.
+There are various ways to inspect a remote service.  You can simply call
+@Introspect()@ and read the XML output.  However, in this tutorial I assume
+that you want to do it using the Ruby D-Bus API.
 
-Notice that you can introspect the service, and not only objects.
+Notice that you can introspect a service, and not only objects:
 
   rb_service = bus.service("org.gnome.Rhythmbox")
   rb_service.inspect
   p rb_service.root
 
-This dumps a tree like structure that represents object paths.  In that
-particular case the output is:
+This dumps a tree-like structure that represents multiple object paths.  In
+this particular case the output is:
 
   </: {org => {gnome => {Rhythmbox => {Player => ..fdbe625de {},Shell => ..fdbe6852e {},PlaylistManager => ..fdbe4e340 {}}></code></pre>
 
-Read this left to right: the root node is "/", it has one sub-node "org", "org"
-has one sub-node "gnome", and "gnome" has one sub-node "Rhythmbox". Rhythmbox has
-Tree sub-nodes "Player", "Shell" and "PlaylistManager".  These three last
-sub-nodes have a weird digit that means it has an object instance. Such object
-instance is already introspected.
+Read this left to right:  the root node is "/", it has one child node "org",
+"org" has one child node "gnome", and "gnome" has one child node "Rhythmbox". 
+Rhythmbox has Tree child nodes "Player", "Shell" and "PlaylistManager". 
+These three last child nodes have a weird digit that means it has an object
+instance.  Such object instances are already introspected.
 
-If the prose wasn't clear, maybe the ASCII art will help you:
+If the prose wasn't clear, maybe the following ASCII art will help you:
 
   /
   	org
@@ -148,7 +157,7 @@ If the prose wasn't clear, maybe the ASCII art will help you:
 
 h3(#introspection--tree). Walking the object tree
 
-You can have (or not) an object on any node (not limited to leaves).
+You can have an object on any node, i.e. it is not limited to leaves.
 You can access a specific node like this:
 
   rb_player = rb_service.root["org"]["gnome"]["Rhythmbox"]["Player"]
