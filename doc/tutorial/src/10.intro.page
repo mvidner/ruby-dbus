@@ -21,15 +21,15 @@ h2(#what-is). What is D-Bus?
 
 D-Bus is an RPC(Remote Procedure Call) protocol.  A common setup can have
 multiple D-Bus daemons running that route procedure calls and signals in
-the form of messages.  Each of theses daemon supports a bus.  One bus that
-is used often by modern desktop environments is available per session is
-called the _session bus_.  Another bus that can be available but then in a
+the form of messages.  Each of these daemons supports a bus.  A bus that
+is often used by modern desktop environments, and is available per session, is
+called the _session bus_.  Another bus that can be available, but in a
 system-wide manner, is called the _system bus_.  It is used for example by
 the "Hardware Abstraction Layer":http://hal.freedesktop.org/ daemon.  Note
 that theoretically the D-Bus RPC protocol can be used without a system or
 session bus.  I never came across any actual use of this though.
 
-At the desktop level, D-Bus allow some components to interact.  Typically
+At the desktop level, D-Bus allows some components to interact.  Typically
 if you are writing an application or a personal script that wants to
 interact with your web browser, your music player, or that simply wants to
 pop-up a desktop notification, D-Bus comes into play.
@@ -50,16 +50,16 @@ h2(#def). Definitions
 h3(#def-client). Client
 
 A D-Bus client is a process that connects to a D-Bus. They issue method
-calls, register to the bugs for signals events.
+calls and register to the bus for signals and events.
 
 h3(#def-service). Service
 
 A connected client can export some of its objects and let other clients
-call some of its methods.  Such client typically register a special name
+call some of its methods.  Such clients typically register a special name
 like @org.freedesktop.Notifications@, the service name.
 
 There is slightly different type of service.  They are provided by
-processes that can be launched by a D-Bus daemon on demand.  Once the are
+processes that can be launched by a D-Bus daemon on demand.  Once they are
 started by D-Bus they register a service name and behave like another
 client.
 
@@ -71,30 +71,30 @@ h3(#def-obj-path). Object path
 An object path is the D-Bus way to specify an object _instance_ address.  A
 service can provide different object instances to the outside world, so
 that external processes can call methods on each of them.  An object path
-is an address of an instance in very similar way that the path is an
+is an address of an instance in a very similar way that the path is an
 address of a file on a file system.  For example: 
 @/org/freedesktop/Notification@ is an object path of an object provided by
 the @org.freedesktop.Notification@ service
 
 *Beware*:  service names and object paths can, but do _not_ have to be
-related!  You'll probably will encounter a lot of cases though, where the
+related!  You'll probably encounter a lot of cases though, where the
 object path is a slashed version of the dotted service name.
 
 h3(#def-iface). Interface
 
-Classically in an object model, classes can implement interface. That is,
+Classically in an object model, classes can implement interfaces. That is,
 some method definitions grouped in an interface. This is exactly what a
-D-Bus interface is too. In D-Bus interfaces have names. This names must be
+D-Bus interface is as well. In D-Bus interfaces have names. These names must be
 specified on method calls.
 
 The @org.freedesktop.Notification@ service provides an object instance
 called @/org/freedesktop/Notification@.  This instance object implements an
 interface called @org.freedesktop.Notifications@.  It also provides two
-special D-Bus specific interfaces:  @org.freedesktop.DBus.Introspect@,
-@org.freedesktop.DBus.Properties@. Again, object path, service names,
+special D-Bus specific interfaces:  @org.freedesktop.DBus.Introspect@ and
+@org.freedesktop.DBus.Properties@. Again, object paths, service names,
 and interface names can be related but do not have to be.
 
-Basically the @org.freedesktop.DBus.Introspect@ has a @Introspect@ method,
+Basically the @org.freedesktop.DBus.Introspect@ has an @Introspect@ method,
 that returns XML data describing the @/org/freedesktop/Notification@ object
 interfaces. This is used heavily internally by Ruby D-Bus.
 
@@ -102,7 +102,7 @@ h3(#def-method). Method
 
 A method is, well, a method in the classical meaning. It's a function that
 is called in the context of an object instance. Methods have typed
-parameters and return typed return value.
+parameters and return typed return values.
 
 h3(#def-signal). Signal
 
@@ -111,7 +111,7 @@ do have typed parameters though.
 
 h3(#def-message). Message
 
-Method calls, method returns, signals, errors: all are encoded as a D-Bus
+Method calls, method returns, signals, errors: all are encoded as D-Bus
 messages sent over a bus. They are made of a packet header with source and
 destination address, a type (method call, method reply, signal) and the
 body containing the parameters (for signals and method calls) or the return
@@ -119,9 +119,9 @@ values (for a method return message).
 
 h3(#def-sig). Signature
 
-Because D-Bus is typed and dynamic, each message comes with signature that
+Because D-Bus is typed and dynamic, each message comes with a signature that
 describes the types of the data that is contained within the message.  The
 signature is a string with an extremely basic language that only describes
 a data type.  You will need to have some knowledge of what a signature
 looks like if you are setting up a service.  If you are just programming a
-D-Bus clients, you can live without knowing about them.
+D-Bus client, you can live without knowing about them.

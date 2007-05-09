@@ -3,7 +3,7 @@ title: Client Usage
 inMenu: true
 ---
 
-This chapter will discuss basic client usage and has the following topics:
+This chapter discusses basic client usage and has the following topics:
 
 # "Using the library":#loading
 # "Connecting to a bus":#connecting
@@ -88,9 +88,9 @@ h2(#method-call-async). Calling a method asynchronously
 
 D-Bus is _asynchronous_.  This means that you do not have to wait for a
 reply when you send a message.  When you call a remote method that takes a
-lot of time to process remotely, you don't want your application to hang
-right?  Well the asychronousness exists for this reason.  What if you want
-not to wait for the return value of a method, but still you want to take
+lot of time to process remotely, you don't want your application to hang,
+right?  Well the asychronousness exists for this reason.  What if you dont'
+want to wait for the return value of a method, but still you want to take
 some action when you receive it?
 
 There is a classical method to program this event-driven mechanism.  You do
@@ -114,7 +114,7 @@ This code will print the following:
 h2(#signal-wait). Waiting for a signal
 
 Signals are calls from the remote object to your program.  As a client, you
-set yourself up to receive it and handle it with a callback.  Then running
+set yourself up to receive a signal and handle it with a callback.  Then running
 the main loop triggers the callback.  You can register a callback handler
 as allows:
 
