@@ -131,7 +131,7 @@ that you want to do it using the Ruby D-Bus API.
 Notice that you can introspect a service, and not only objects:
 
   rb_service = bus.service("org.gnome.Rhythmbox")
-  rb_service.inspect
+  rb_service.introspect
   p rb_service.root
 
 This dumps a tree-like structure that represents multiple object paths.  In
