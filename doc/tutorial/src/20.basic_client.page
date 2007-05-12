@@ -64,9 +64,10 @@ Well, instating these methods for a _introspectable_ object is trivial:
 
   rb_player.introspect
 
-And there you go.
-Let me remind you that objects in D-Bus have interfaces and interfaces have
-methods. Let's now access these methods:
+And there you go.  Note that not all services or objects can be
+introspected, therefore you have to do this manually!  Let me remind you
+that objects in D-Bus have interfaces and interfaces have methods.  Let's
+now access these methods:
 
   rb_player_iface = rb_player["org.gnome.Rhythmbox.Player"]
   puts rb_player_iface.getPlayingUri

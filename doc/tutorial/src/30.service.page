@@ -24,7 +24,8 @@ called remotely are services.  Here is how to allocate a name on a bus:
   service = bus.request_service("org.ruby.service")
 
 Now this client is know to the outside world as @org.ruby.service@.
-Note that this is a request and it _can_ be denied!
+Note that this is a request and it _can_ be denied! When it
+is denied, an exception (@DBus::NameRequestError@) is thrown.
 
 h2(#obj-export). Exporting an object
 
