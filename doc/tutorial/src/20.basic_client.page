@@ -45,9 +45,7 @@ access this service:
 
 In this example I access the @org.gnome.Rhythmbox@ service, which is
 provided by the application
-"Rhythmbox":http://www.gnome.org/projects/rhythmbox/.  See [ListName] to
-know the available services of your bus (?).
-
+"Rhythmbox":http://www.gnome.org/projects/rhythmbox/.
 OK, I have a service handle now, and I know that it exports the object
 "/org/gnome/Rhythmbox/Player".  I will trivially access this remote object
 using:
@@ -83,6 +81,12 @@ shortcut that does the same thing as before:
 The @default_iface=@ call specifies the default interface that should be
 used when non existing methods are called directly on a proxy object, and
 not on one of its interfaces.
+
+Note that the bus itself has a corresponding introspectable object. You can
+access it with @bus.proxy@ method. For example, you can retrieve an array of
+exported service names of a bus like this:
+
+  bus.proxy.ListNames[0]
 
 h2(#method-call-async). Calling a method asynchronously
 
