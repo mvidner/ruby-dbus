@@ -42,7 +42,7 @@ module DBus
       else
         # FIXME: shouldn't a more special exception be raised here?
         # yes, idea for a good name ? :)
-        raise Exception, "Incorrect endianneess"
+        raise Exception, "Incorrect endianness"
       end
       @idx = 0
     end
@@ -140,9 +140,21 @@ module DBus
       when Type::UINT16
         align(2)
         packet = get(2).unpack(@uint16)[0]
+      when Type::INT16
+        align(4)
+        packet = get(4).unpack(@uint16)[0]
+        if (packet & 0x8000) != 0
+          packet -= 0x10000
+        end
       when Type::UINT32
         align(4)
         packet = get(4).unpack(@uint32)[0]
+      when Type::INT32
+        align(4)
+        packet = get(4).unpack(@uint32)[0]
+        if (packet & 0x80000000) != 0
+          packet -= 0x100000000
+        end
       when Type::BOOLEAN
         align(4)
         v = get(4).unpack(@uint32)[0]
