@@ -1,4 +1,9 @@
 #!/usr/bin/ruby
+#
+# This is a quite complex example using internal lower level API.
+# Not a good starting point, but might be usefull if you want to do tricky
+# stuff.
+# -- Arnaud
 
 require 'dbus'
 require 'libglade2'
