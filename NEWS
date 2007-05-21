@@ -8,10 +8,11 @@ for exploratory purposes. New in 0.1.2:
  * Complete tutorial revamp.
  * Relicensed to the LGPL.
 
-== Ruby D-Bus 0.1.1
+== Ruby D-Bus "Release Often" 0.1.1 - 2007-04-23
 
-Bugfix release.  Fixes hardcoded string for requesting bus names.
+Bugfix release.  Fixes hardcoded string for requesting bus names,
+found by Rudi Cilibrasi.
 
-== Ruby D-Bus 0.1.0
+== Ruby D-Bus "Happy Birthday Paul" 0.1.0 - 2007-04-17
 
 First release. Supports most of D-Bus' features.
