@@ -2,7 +2,7 @@
 
 require "dbus"
 
-session_bus = DBus::session_bus
+session_bus = DBus::SessionBus.instance
 
 # Get the Rhythmbox service
 ruby_srv = session_bus.service("org.ruby.service")

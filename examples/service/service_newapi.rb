@@ -26,7 +26,7 @@ class Test < DBus::Object
   end
 end
 
-bus = DBus.session_bus
+bus = DBus::SessionBus.instance
 service = bus.request_service("org.ruby.service")
 myobj = Test.new("/org/ruby/MyInstance")
 service.export(myobj)

@@ -8,7 +8,7 @@ if ARGV.size < 2
   exit
 end
 
-d = DBus.session_bus
+d = DBus::SessionBus.instance
 o = d.service("org.freedesktop.Notifications").object("/org/freedesktop/Notifications")
 o.introspect
 

@@ -2,10 +2,10 @@
 
 require "dbus"
 
-system_bus = DBus::session_bus
+session_bus = DBus::SessionBus.instance
 
 # Get the Rhythmbox service
-rhythmbox = system_bus.service("org.gnome.Rhythmbox")
+rhythmbox = session_bus.service("org.gnome.Rhythmbox")
 
 # Get the object from this service
 player = rhythmbox.object("/org/gnome/Rhythmbox/Player")
@@ -28,7 +28,7 @@ player.on_signal("elapsedChanged") do |u|
   puts "elapsedChanged: #{u}"
 end
 
-m = DBus::Main.new
-m << session_bus
-m.run
+main = DBus::Main.new
+main << session_bus
+main.run
 
