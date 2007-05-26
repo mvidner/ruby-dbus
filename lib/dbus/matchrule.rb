@@ -49,9 +49,10 @@ module DBus
     end
 
     def from_signal(intf, signal)
+      signal = signal.name unless signal.is_a?(String)
       self.type = "signal"
       self.interface = intf.name
-      self.member = signal.name
+      self.member = signal
       self.path = intf.object.path
       self
     end

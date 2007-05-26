@@ -155,6 +155,27 @@ module DBus
         if (packet & 0x80000000) != 0
           packet -= 0x100000000
         end
+      when Type::UINT64
+        align(8)
+        packet_l = get(4).unpack(@uint32)[0]
+        packet_h = get(4).unpack(@uint32)[0]
+        if @endianness == LIL_END
+          packet = packet_l + packet_h * 2**32
+        else
+          packet = packet_l * 2**32 + packet_h
+        end
+      when Type::INT64
+        align(8)
+        packet_l = get(4).unpack(@uint32)[0]
+        packet_h = get(4).unpack(@uint32)[0]
+        if @endianness == LIL_END
+          packet = packet_l + packet_h * 2**32
+        else
+          packet = packet_l * 2**32 + packet_h
+        end
+        if (packet & 0x8000000000000000) != 0
+          packet -= 0x10000000000000000
+        end
       when Type::BOOLEAN
         align(4)
         v = get(4).unpack(@uint32)[0]

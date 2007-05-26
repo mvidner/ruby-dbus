@@ -313,10 +313,7 @@ module DBus
     end
 
     def on_signal(bus, name, &block)
-      signal = @signals[name]
-      raise UnknownSignal if signal.nil?
-      mr = DBus::MatchRule.new.from_signal(self, signal)
-      puts mr.to_s
+      mr = DBus::MatchRule.new.from_signal(self, name)
       bus.add_match(mr) { |msg| block.call(*msg.params) }
     end
   end
