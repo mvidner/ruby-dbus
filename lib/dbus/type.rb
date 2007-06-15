@@ -9,7 +9,13 @@
 # See the file "COPYING" for the exact licensing terms.
 
 module DBus
+
+# = D-Bus type module
+#
+# This module containts the constants of the types specified in the D-Bus
+# protocol.
 module Type
+  # The types.
   INVALID = 0
   BYTE = ?y
   BOOLEAN = ?b
@@ -28,6 +34,7 @@ module Type
   SIGNATURE = ?g
   DICT_ENTRY = ?e
 
+  # Mapping from type number to name.
   TypeName = {
     INVALID => "INVALID",
     BYTE => "BYTE",
@@ -48,11 +55,20 @@ module Type
     DICT_ENTRY => "DICT_ENTRY"
   }
 
+  # Exception raised when an unknown/incorrect type is encountered.
   class SignatureException < Exception
   end
 
+  # = D-Bus type conversion class
+  #
+  # Helper class for representing a D-Bus type.
   class Type
-    attr_reader :sigtype, :members
+    # Returns the signature type number.
+    attr_reader :sigtype
+    # Return contained member types.
+    attr_reader :members
+
+    # Create a new type instance for type number _sigtype_.
     def initialize(sigtype)
       if not TypeName.keys.member?(sigtype)
         raise SignatureException, "Unknown key in signature: #{sigtype.chr}"
@@ -61,6 +77,7 @@ module Type
       @members = Array.new
     end
 
+    # Return the required alignment for the type.
     def alignment
       {
         BYTE => 1,
@@ -82,6 +99,8 @@ module Type
       }[@sigtype]
     end
 
+    # Return a string representation of the type according to the
+    # D-Bus specification.
     def to_s
       case @sigtype
       when STRUCT
@@ -98,6 +117,7 @@ module Type
       end
     end
 
+    # Add a new member type _a_.
     def <<(a)
       if not [STRUCT, ARRAY, DICT_ENTRY].member?(@sigtype)
         raise SignatureException 
@@ -116,6 +136,7 @@ module Type
       @members << a
     end
 
+    # Return the first contained member type.
     def child
       @members[0]
     end
@@ -127,20 +148,26 @@ module Type
       end
       s
     end
-  end
+  end # class Type
 
+  # = D-Bus type parser class
+  #
+  # Helper class to parse a type signature in the protocol.
   class Parser
+    # Create a new parser for the given _signature_.
     def initialize(signature)
       @signature = signature
       @idx = 0
     end
 
+    # Returns the next character from the signature.
     def nextchar
       c = @signature[@idx]
       @idx += 1
       c
     end
 
+    # Parse one character _c_ of the signature.
     def parse_one(c)
       res = nil
       case c
@@ -166,6 +193,7 @@ module Type
       res
     end
 
+    # Parse the entire signature, return a DBus::Type object.
     def parse
       @idx = 0
       ret = Array.new
@@ -174,6 +202,6 @@ module Type
       end
       ret
     end
-  end
-end
-end
+  end # class Parser
+end # module Type
+end # module DBus

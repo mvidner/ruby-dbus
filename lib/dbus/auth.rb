@@ -7,16 +7,23 @@
 # See the file "COPYING" for the exact licensing terms.
 
 module DBus
+  # Exception raised when authentication fails somehow.
   class AuthenticationFailed < Exception
   end
 
+  # = General class for authentication.
   class Authenticator
+    # Returns the name of the authenticator.
     def name
       self.class.to_s.upcase.sub(/.*::/, "")
     end
   end
 
+  # = External authentication class 
+  #
+  # Class for 'external' type authentication.
   class External < Authenticator
+    # Performs the authentication.
     def authenticate
       # Take the user id (eg integer 1000) make a string out of it "1000", take
       # each character and determin hex value "1" => 0x31, "0" => 0x30. You
@@ -27,14 +34,20 @@ module DBus
     end
   end
 
-  # This stuff is tested with External authenticator only
+  # Note: this following stuff is tested with External authenticator only!
+
+  # = Authentication client class.
+  #
+  # Class tha performs the actional authentication.
   class Client
+    # Create a new authentication client.
     def initialize(socket)
       @socket = socket
       @state = nil
       @auth_list = [External]
     end
 
+    # Start the authentication process.
     def authenticate
       @socket.write(0.chr)
       next_authenticator
@@ -46,12 +59,18 @@ module DBus
       true
     end
 
+    ##########
     private
+    ##########
+
+    # Send an authentication method _meth_ with arguments _args_ to the
+    # server.
     def send(meth, *args)
       o = ([meth] + args).join(" ")
       @socket.write(o + "\r\n")
     end
 
+    # Try authentication using the next authenticator.
     def next_authenticator
       raise AuthenticationFailed if @auth_list.size == 0
       @authenticator = @auth_list.shift.new
@@ -65,6 +84,7 @@ module DBus
       @socket.readline.chomp.split(" ")
     end
 
+    # Try to reach the next state based on the current state.
     def next_state
       msg = next_msg
       if @state == :Starting
@@ -131,6 +151,6 @@ module DBus
         end
       end
       return true
-    end
-  end
-end
+    end # def next_state
+  end # class Client
+end # module D-Bus

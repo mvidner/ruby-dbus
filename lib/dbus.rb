@@ -39,6 +39,8 @@ module DBus
     BIG_END
   end
 
+  # General exceptions.
+
   # Exception raised when an invalid packet is encountered.
   class InvalidPacketException < Exception
   end

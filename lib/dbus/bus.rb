@@ -19,16 +19,26 @@ module DBus
   # This represents a remote service. It should not be instancied directly
   # Use Bus::service()
   class Service
-    attr_reader :name, :bus, :root
+    # The service name.
+    attr_reader :name
+    # The bus the service is running on.
+    attr_reader :bus
+    # The service root (FIXME).
+    attr_reader :root
+
+    # Create a new service with a given _name_ on a given _bus_.
     def initialize(name, bus)
       @name, @bus = name, bus
       @root = Node.new("/")
     end
 
+    # Determine whether the serice name already exists.
     def exists?
       bus.proxy.ListName.member?(@name)
     end
 
+    # Perform an introspection on all the objects on the service
+    # (starting recursively from the root).
     def introspect
       if block_given?
         raise NotImplementedError
@@ -38,6 +48,7 @@ module DBus
       self
     end
 
+    # Retrieves an object at the given _path_.
     def object(path)
       node = get_node(path, true)
       if node.object.nil?
@@ -46,6 +57,7 @@ module DBus
       node.object
     end
 
+    # Export an object _obj_ (an DBus::Object subclass instance).
     def export(obj)
       obj.service = self
       get_node(obj.path, true).object = obj
@@ -71,7 +83,12 @@ module DBus
       n
     end
 
+    #########
     private
+    #########
+
+    # Perform a recursive retrospection on the given current _node_
+    # on the given _path_.
     def rec_introspect(node, path)
       xml = bus.introspect_data(@name, path)
       intfs, subnodes = IntrospectXMLParser.new(xml).parse
@@ -90,15 +107,22 @@ module DBus
     end
   end
 
-  # node for the object tree
+  # = Object path node class
+  #
+  # Class representing a node on an object path.
   class Node < Hash
+    # The D-Bus object contained by the node.
     attr_accessor :object
+    # The name of the node.
     attr_reader :name
+
+    # Create a new node with a given _name_.
     def initialize(name)
       @name = name
       @object = nil
     end
 
+    # Return an XML string representation of the node.
     def to_xml
       xml = '<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
@@ -119,11 +143,13 @@ module DBus
       xml
     end
 
+    # Return inspect information of the node.
     def inspect
       # Need something here
       "<DBus::Node #{sub_inspect}>"
     end
 
+    # Return instance inspect information, used by Node#inspect.
     def sub_inspect
       s = ""
       if not @object.nil?
@@ -131,7 +157,9 @@ module DBus
       end
       s + "{" + keys.collect { |k| "#{k} => #{self[k].sub_inspect}" }.join(",") + "}"
     end
-  end
+  end # class Inspect
+
+  # FIXME: rename Connection to Bus?
 
   # D-Bus main connection class
   #
@@ -339,9 +367,11 @@ module DBus
       end
     end
 
+    # Exception raised when a service name is requested that is not available.
     class NameRequestError < Exception
     end
 
+    # Attempt to request a service _name_.
     def request_service(name)
       r = proxy.RequestName(name, NAME_FLAG_REPLACE_EXISTING)
       raise NameRequestError if r[0] != REQUEST_NAME_REPLY_PRIMARY_OWNER
@@ -349,9 +379,8 @@ module DBus
       @service
     end
 
-    # Set up a proxy for ... (FIXME).
-    # Set up a ProxyObject for the bus itself. Since the bus is introspectable.
-    #
+    # Set up a ProxyObject for the bus itself, since the bus is introspectable.
+    # Returns the object.
     def proxy
       if @proxy == nil
         path = "/org/freedesktop/DBus"
@@ -390,6 +419,7 @@ module DBus
       ret
     end
 
+    # The buffer size for messages.
     MSG_BUF_SIZE = 4096
 
     # Update the buffer and retrieve all messages using Connection#messages.
@@ -434,21 +464,8 @@ module DBus
       end
     end
 
-    # FIXME: this does nothing yet, really?
-    # Actually this is very important, see the retc code block that is stored.
-    #
-    # When you send a message asynchronously you pass to on_return a code block
-    # that will be called on reception of the reply for this message.
-    # This just sets up the call back and returns. Code block is called
-    # asynchronously.
-    #
-    # This is how you use this:
-    # m = Message.new(Message::METHOD_CALL)
-    # m.destination = ...
-    # m...
-    # m.send
-    # bus.on_return(m) do |returned_message|
-    # end
+    # Specify a code block that has to be executed when a reply for
+    # message _m_ is received.
     def on_return(m, &retc)
       # Have a better exception here
       if m.message_type != Message::METHOD_CALL
@@ -521,13 +538,16 @@ module DBus
       end
     end
 
-    def service(str)
+    # Retrieves the service with the given _name_.
+    def service(name)
       # The service might not exist at this time so we cannot really check
       # anything
-      Service.new(str, self)
+      Service.new(name, self)
     end
     alias :[] :service
 
+    # Emit a signal event for the given _service_, object _obj_, interface
+    # _intf_ and signal _sig_ with arguments _args_.
     def emit(service, obj, intf, sig, *args)
       m = Message.new(DBus::Message::SIGNAL)
       m.path = obj.path
@@ -587,23 +607,35 @@ module DBus
     end
   end # class Connection
 
+  # = D-Bus session bus class
+  #
+  # The session bus is a session specific bus (mostly for desktop use).
+  # This is a singleton class.
   class SessionBus < Connection
     include Singleton
 
+    # Get the the default session bus.
     def initialize
       super(ENV["DBUS_SESSION_BUS_ADDRESS"])
       connect
     end
   end
 
+  # = D-Bus system bus class
+  #
+  # The system bus is a system-wide bus mostly used for global or
+  # system usages.  This is a singleton class.
   class SystemBus < Connection
     include Singleton
 
+    # Get the default system bus.
     def initialize
       super(SystemSocketName)
       connect
     end
   end
+
+  # FIXME: we should get rid of these
 
   def DBus.system_bus
     SystemBus.instance
@@ -613,15 +645,23 @@ module DBus
     SessionBus.instance
   end
 
+  # = Main event loop class.
+  #
+  # Class that takes care of handling message and signal events
+  # asynchronously.  *Note:* This is a native implement and therefore does
+  # not integrate with a graphical widget set main loop.
   class Main
+    # Create a new main event loop.
     def initialize
       @buses = Hash.new
     end
 
+    # Add a _bus_ to the list of buses to watch for events.
     def <<(bus)
       @buses[bus.socket] = bus
     end
 
+    # Run the main loop. This is a blocking call!
     def run
       loop do
         ready, dum, dum = IO.select(@buses.keys)
@@ -634,5 +674,5 @@ module DBus
         end
       end
     end
-  end
+  end # class Main
 end # module DBus

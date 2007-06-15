@@ -7,15 +7,31 @@
 # See the file "COPYING" for the exact licensing terms.
 
 module DBus
+  # Exception raised when an erroneous match rule type is encountered.
   class MatchRuleException < Exception
   end
 
+  # = D-Bus match rule class
+  #
+  # FIXME
   class MatchRule
+    # The list of possible match filters.
     FILTERS = [:sender, :interface, :member, :path, :destination, :type]
-    attr_accessor :sender, :interface, :member, :path, :destination
-    attr_accessor :args
+    # The sender filter.
+    attr_accessor :sender
+    # The interface filter.
+    attr_accessor :interface
+    # The member filter.
+    attr_accessor :member
+    # The path filter.
+    attr_accessor :path
+    # The destination filter.
+    attr_accessor :destination
+    # The type type that is matched.
     attr_reader :type
 
+    # Set the message types to filter to type _t_.
+    # Possible message types are: signal, method_call, method_return, and error.
     def type=(t)
       if not ['signal', 'method_call', 'method_return', 'error'].member?(t)
         raise MatchRuleException 
@@ -23,8 +39,8 @@ module DBus
       @type = t
     end
 
-    # Returns a MatchRule string from object eg:
-    # "type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='Foo',path='/bar/foo',destination=':452345.34',arg2='bar'"
+    # Returns a match rule string version of the object.
+    # E.g.:  "type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='Foo',path='/bar/foo',destination=':452345.34',arg2='bar'"
     def to_s
       FILTERS.select do |sym|
         not method(sym).call.nil?
@@ -33,7 +49,7 @@ module DBus
       end.join(",")
     end
 
-    # parse matchadd string and load it in
+    # Parses a match rule string _s_ and sets the filters on the object.
     def from_s(str)
       s.split(",").each do |eq|
         if eq =~ /^(.*)='([^']*)'$/
@@ -48,6 +64,8 @@ module DBus
       end
     end
 
+    # Sets the match rule to filter for the given _signal_ and the
+    # given interface _intf_.
     def from_signal(intf, signal)
       signal = signal.name unless signal.is_a?(String)
       self.type = "signal"
@@ -57,6 +75,7 @@ module DBus
       self
     end
 
+    # Determines whether a message _msg_ matches the match rule.
     def match(msg)
       if @type
         if {Message::SIGNAL => "signal", Message::METHOD_CALL => "method_call",
@@ -70,5 +89,5 @@ module DBus
       return false if @path and @path != msg.path
       true
     end
-  end
-end
+  end # class MatchRule
+end # module D-Bus
