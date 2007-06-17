@@ -26,9 +26,10 @@ module DBus
 
   # = D-Bus interface class
   #
-  # This class is the interface descriptor that comes from the XML we
-  # parsed from the Introspect() call.
-  # It also is the local definition of inerface exported by the program.
+  # This class is the interface descriptor.  In most cases, the Introspect()
+  # method call instanciates and configures this class for us.
+  #
+  # It also is the local definition of interface exported by the program.
   class Interface
     # The name of the interface.
     attr_reader :name
