@@ -390,7 +390,10 @@ module DBus
 
   # D-Bus proxy object class
   #
-  # Class proxying objects that live (remotely) on the bus.
+  # Class representing a remote object in an external application.
+  # Typically, calling a method on an instance of a ProxyObject sends a message
+  # over the bus so that the method is executed remotely on the correctponding
+  # object.
   class ProxyObject
     # The subnodes of the object in the tree.
     attr_accessor :subnodes
