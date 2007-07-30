@@ -338,8 +338,8 @@ module DBus
           idx = 0
           while val[idx] != nil
             type.members.each do |subtype|
-              raise TypeException if data[idx] == nil
-              append(subtype, data[idx])
+              raise TypeException if val[idx] == nil
+              append(subtype, val[idx])
               idx += 1
             end
           end
