@@ -109,6 +109,7 @@ you do it:
   end
   puts "See, I'm not waiting!"
   loop = DBus::Main.new
+  loop << bus
   loop.run
 
 This code will print the following:
