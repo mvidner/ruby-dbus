@@ -193,7 +193,7 @@ class DBusUI
     DBus::SystemBus.instance.glibize if $enable_system
 
 #    @channels = []
-#    
+#
 #    # This is how we install a glib main loop listener.
 #    # Soooo trivial after all.
 #
