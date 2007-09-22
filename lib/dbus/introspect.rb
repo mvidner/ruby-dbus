@@ -301,7 +301,7 @@ module DBus
     def check_for_eval(s)
       raise RuntimeException, "invalid internal data" if not s.to_s =~ /^[A-Za-z0-9_]*$/
     end
-  
+
     # FIXME
     def check_for_quoted_eval(s)
       raise RuntimeException, "invalid internal data" if not s.to_s =~ /^[^"]+$/
@@ -327,10 +327,10 @@ module DBus
       m.params.each do |npar|
         paramname, par = npar
         check_for_quoted_eval(par)
-  
+
         # This is the signature validity check
         Type::Parser.new(par).parse
-  
+
         methdef += %{
           msg.add_param("#{par}", arg#{idx})
         }
@@ -349,7 +349,11 @@ module DBus
           @object.bus.send(msg.marshall)
         else
           @object.bus.send_sync(msg) do |rmsg|
-            ret = rmsg.params
+            if rmsg.is_a?(Error)
+              raise rmsg
+            else
+              ret = rmsg.params
+            end
           end
         end
         ret

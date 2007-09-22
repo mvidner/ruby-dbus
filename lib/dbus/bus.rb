@@ -668,7 +668,7 @@ module DBus
           b = @buses[socket]
           b.update_buffer
           while m = b.pop_message
-            b.process(m) 
+            b.process(m)
           end
         end
       end

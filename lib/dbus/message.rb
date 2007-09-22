@@ -245,7 +245,7 @@ module DBus
     end # def unmarshall_buf
 
     # Unmarshall the data of a message found in the buffer _buf_ using
-    # Message#unmarshall_buf.  
+    # Message#unmarshall_buf.
     # Return the message.
     def unmarshall(buf)
       ret, size = unmarshall_buffer(buf)
@@ -255,10 +255,10 @@ module DBus
 
   # A helper exception on errors
   class Error < Exception
-    attr_reader :message
+    attr_reader :dbus_message
     def initialize(msg)
-      super(msg.error_name)
-      @message = msg
+      super(msg.error_name + ": " + msg.params.join(", "))
+      @dbus_message = msg
     end
   end
 end # module DBus
