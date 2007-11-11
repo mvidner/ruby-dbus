@@ -186,7 +186,7 @@ module DBus
         # checks please
         array_sz = get(4).unpack(@uint32)[0]
         raise InvalidPacketException if array_sz > 67108864
-        
+
         align(signature.child.alignment)
         raise IncompleteBufferException if @idx + array_sz > @buffy.size
 
@@ -214,7 +214,7 @@ module DBus
         packet = get_signature
       else
         raise NotImplementedError,
-        	"sigtype: #{signature.sigtype} (#{signature.sigtype.chr})"
+	  "sigtype: #{signature.sigtype} (#{signature.sigtype.chr})"
       end
       packet
     end # def do_parse
@@ -322,7 +322,7 @@ module DBus
           val = val.to_a
         end
         if not val.kind_of?(Array)
-          raise TypeException 
+          raise TypeException
         end
         array(type.child) do
           val.each do |elem|
