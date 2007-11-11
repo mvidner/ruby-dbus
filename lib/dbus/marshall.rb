@@ -262,6 +262,8 @@ module DBus
     # Append the array type _type_ to the packet and allow for appending
     # the child elements.
     def array(type)
+      # Thanks to Peter Rullmann for this line
+      align(4)
       sizeidx = @packet.size
       @packet += "ABCD"
       align(type.alignment)
