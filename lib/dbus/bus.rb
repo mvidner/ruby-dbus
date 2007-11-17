@@ -327,7 +327,7 @@ module DBus
         # introspect in synchronous !
         send_sync(m) do |rmsg|
           if rmsg.is_a?(Error)
-            raise rmsg 
+            raise rmsg
           else
             return rmsg.params[0]
           end

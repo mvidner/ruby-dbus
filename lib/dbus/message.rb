@@ -12,6 +12,12 @@
 #
 # Module containing all the D-Bus modules and classes.
 module DBus
+  # = InvalidDestinationName class
+  # Thrown when you try do send a message to /org/freedesktop/DBus/Local, that
+  # is reserved.
+  class InvalidDestinationName < Exception
+  end
+
   # = D-Bus message class
   #
   # Class that holds any type of message that travels over the bus.
@@ -25,7 +31,7 @@ module DBus
 
     # FIXME: following message type constants should be under Message::Type IMO
     # well, yeah sure
-    # 
+    #
     # Invalid message type.
     INVALID = 0
     # Method call message type.
@@ -60,8 +66,7 @@ module DBus
     attr_accessor :sender
     # The signature of the message contents.
     attr_accessor :signature
-    # The serial number of the message this message is a reply for. FIXME: right?
-    # Indeed.
+    # The serial number of the message this message is a reply for.
     attr_accessor :reply_serial
     # The protocol.
     attr_reader :protocol
@@ -124,6 +129,10 @@ module DBus
     # Marshall the message with its current set parameters and return
     # it in a packet form.
     def marshall
+      if @path == "/org/freedesktop/DBus/Local"
+        raise InvalidDestinationName
+      end
+
       params = PacketMarshaller.new
       @params.each do |param|
         params.append(param[0], param[1])

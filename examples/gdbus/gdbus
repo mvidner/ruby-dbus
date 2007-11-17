@@ -248,7 +248,7 @@ class DBusUI
         walk_node(model, iter, service.root)
       rescue Exception => e
         puts "DBus Error:"
-        puts e.backtrace.to_s
+        puts e.backtrace.join("\n")
       end
     end
 
