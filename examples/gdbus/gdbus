@@ -189,28 +189,9 @@ class DBusUI
   end
 
   def start_buses
+    # call glibize to get dbus messages from the glib mainloop
     DBus::SessionBus.instance.glibize
     DBus::SystemBus.instance.glibize if $enable_system
-
-#    @channels = []
-#
-#    # This is how we install a glib main loop listener.
-#    # Soooo trivial after all.
-#
-#    gio = GLib::IOChannel.new(DBus::SessionBus.instance.socket.fileno)
-#    @channels << gio
-#    gio.add_watch(GLib::IOChannel::IN) { |c, ch|
-#      process_input(DBus::SessionBus.instance)
-#      true
-#    }
-#    if $enable_system
-#      gio = GLib::IOChannel.new(DBus::SystemBus.instance.socket.fileno)
-#      @channels << gio
-#      gio.add_watch(GLib::IOChannel::IN) { |c, ch|
-#        process_input(DBus::SystemBus.instance)
-#        true
-#      }
-#    end
 
     DBus::SessionBus.instance.proxy.ListNames do |msg, names|
       fill_treeview(DBus::SessionBus.instance, @sessiontreeview, names)
