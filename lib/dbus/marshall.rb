@@ -195,6 +195,13 @@ module DBus
         while @idx - start_idx < array_sz
           packet << do_parse(signature.child)
         end
+
+        if signature.child.sigtype == Type::DICT_ENTRY then
+          packet = packet.inject(Hash.new) do |hash, pair|
+            hash[pair[0]] = pair[1]
+            hash
+	  end
+        end
       when Type::STRUCT
         align(8)
         packet = Array.new
@@ -212,6 +219,11 @@ module DBus
         packet = get_string
       when Type::SIGNATURE
         packet = get_signature
+      when Type::DICT_ENTRY
+        align(8)
+        key = do_parse(signature.members[0])
+        value = do_parse(signature.members[1])
+        packet = [key, value]
       else
         raise NotImplementedError,
 	  "sigtype: #{signature.sigtype} (#{signature.sigtype.chr})"
@@ -334,7 +346,7 @@ module DBus
       when Type::STRUCT, Type::DICT_ENTRY
         raise TypeException if not val.kind_of?(Array)
         if type.sigtype == Type::DICT_ENTRY and val.size != 2
-          raise TypeException 
+          raise TypeException
         end
         struct do
           idx = 0
