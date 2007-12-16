@@ -209,7 +209,7 @@ module DBus
           packet << do_parse(elem)
         end
       when Type::VARIANT
-        string = get_nul_terminated
+        string = get_signature
         # error checking please
         sig = Type::Parser.new(string).parse[0]
         packet = do_parse(sig)

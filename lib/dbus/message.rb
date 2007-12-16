@@ -27,7 +27,7 @@ module DBus
     # Mutex that protects updates on the serial number.
     @@serial_mutex = Mutex.new
     # Type of a message (by specification).
-    MESSAGE_SIGNATURE = "yyyyuua(yyv)"
+    MESSAGE_SIGNATURE = "yyyyuua(yv)"
 
     # FIXME: following message type constants should be under Message::Type IMO
     # well, yeah sure
@@ -229,21 +229,21 @@ module DBus
       headers.each do |struct|
         case struct[0]
         when PATH
-          @path = struct[2]
+          @path = struct[1]
         when INTERFACE
-          @interface = struct[2]
+          @interface = struct[1]
         when MEMBER
-          @member = struct[2]
+          @member = struct[1]
         when ERROR_NAME
-          @error_name = struct[2]
+          @error_name = struct[1]
         when REPLY_SERIAL
-          @reply_serial = struct[2]
+          @reply_serial = struct[1]
         when DESTINATION
-          @destination = struct[2]
+          @destination = struct[1]
         when SENDER
-          @sender = struct[2]
+          @sender = struct[1]
         when SIGNATURE
-          @signature = struct[2]
+          @signature = struct[1]
         end
       end
       pu.align(8)
