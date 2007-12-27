@@ -321,6 +321,9 @@ module DBus
       when Type::INT16
         align(2)
         @packet += [val].pack("s")
+      when Type::DOUBLE
+        align(8)
+	@packet += [val].pack("d")
       when Type::BOOLEAN
         align(4)
         if val
