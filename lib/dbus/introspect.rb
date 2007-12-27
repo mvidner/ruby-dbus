@@ -237,7 +237,7 @@ module DBus
       end
       d = Time.now - t
       if d > 2
-        puts "Some XML took more that two secs to parse. Optimize me!"
+        puts "Some XML took more that two secs to parse. Optimize me!" if $DEBUG
       end
       [ret, subnodes]
     end

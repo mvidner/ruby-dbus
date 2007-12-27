@@ -78,7 +78,7 @@ module DBus
         n = n[elem]
       end
       if n.nil?
-        puts "Warning, unknown object #{path}"
+        puts "Warning, unknown object #{path}" if $DEBUG
       end
       n
     end
@@ -492,7 +492,7 @@ module DBus
         raise InvalidPacketException if m.reply_serial == nil
         mcs = @method_call_replies[m.reply_serial]
         if not mcs
-          puts "no return code for #{mcs.inspect} (#{m.inspect})"
+          puts "no return code for #{mcs.inspect} (#{m.inspect})" if $DEBUG
         else
           if m.message_type == Message::ERROR
             mcs.call(Error.new(m))
@@ -504,7 +504,7 @@ module DBus
         end
       when DBus::Message::METHOD_CALL
         if m.path == "/org/freedesktop/DBus"
-          puts "Got method call on /org/freedesktop/DBus"
+          puts "Got method call on /org/freedesktop/DBus" if $DEBUG
         end
         # handle introspectable as an exception:
         if m.interface == "org.freedesktop.DBus.Introspectable" and
@@ -532,7 +532,7 @@ module DBus
           end
         end
       else
-        puts "Unknown message type: #{m.message_type}"
+        puts "Unknown message type: #{m.message_type}" if $DEBUG
       end
     end
 
@@ -572,7 +572,7 @@ module DBus
       m.member = "Hello"
       send_sync(m) do |rmsg|
         @unique_name = rmsg.destination
-        puts "Got hello reply. Our unique_name is #{@unique_name}"
+        puts "Got hello reply. Our unique_name is #{@unique_name}" if $DEBUG
       end
     end
 
