@@ -217,6 +217,7 @@ module DBus
         string = get_signature
         # error checking please
         sig = Type::Parser.new(string).parse[0]
+        align(sig.alignment)
         packet = do_parse(sig)
       when Type::OBJECT_PATH
         packet = get_string
@@ -341,8 +342,9 @@ module DBus
           raise TypeException
         end
         vartype, vardata = val
-        vartype = Type::Parser.new(vartype).parse[0] if type.kind_of?(String)
+        vartype = Type::Parser.new(vartype).parse[0] if vartype.kind_of?(String)
         append_signature(vartype.to_s)
+        align(vartype.alignment)
         sub = PacketMarshaller.new
         sub.append(vartype, vardata)
         @packet += sub.packet
@@ -376,7 +378,6 @@ module DBus
           end
         end
       else
-        p type
         raise NotImplementedError
       end
     end # def append

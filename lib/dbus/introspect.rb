@@ -441,6 +441,7 @@ module DBus
       # Synchronous call here.
       xml = @bus.introspect_data(@destination, @path)
       ProxyObjectFactory.introspect_into(self, xml)
+      xml
     end
 
     # Returns whether the object has an interface with the given _name_.

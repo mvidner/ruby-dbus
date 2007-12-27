@@ -229,8 +229,10 @@ module DBus
         endianness = BIG_END
       end
       pu = PacketUnmarshaller.new(buf, endianness)
-      dummy, @message_type, @flags, @protocol, @body_length, @serial,
-        headers = pu.unmarshall(MESSAGE_SIGNATURE)
+      mdata = pu.unmarshall(MESSAGE_SIGNATURE)
+      dummy, @message_type, @flags, @protocol, @body_length, @serial, 
+        headers = mdata
+
       headers.each do |struct|
         case struct[0]
         when PATH
