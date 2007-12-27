@@ -458,7 +458,6 @@ module DBus
           DBus::Message::METHOD_RETURN].include?(retm.message_type) and
           retm.reply_serial == m.serial
         retm = wait_for_message
-        raise retm if retm.is_a?(Error)
         process(retm)
       end
     end
