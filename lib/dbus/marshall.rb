@@ -36,9 +36,11 @@ module DBus
       if @endianness == BIG_END
         @uint32 = "N"
         @uint16 = "n"
+        @double = "G"
       elsif @endianness == LIL_END
         @uint32 = "V"
         @uint16 = "v"
+        @double = "E"
       else
         # FIXME: shouldn't a more special exception be raised here?
         # yes, idea for a good name ? :)
@@ -176,6 +178,9 @@ module DBus
         if (packet & 0x8000000000000000) != 0
           packet -= 0x10000000000000000
         end
+      when Type::DOUBLE
+        align(8)
+        packet = get(8).unpack(@double)[0]
       when Type::BOOLEAN
         align(4)
         v = get(4).unpack(@uint32)[0]
