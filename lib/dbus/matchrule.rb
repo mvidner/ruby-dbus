@@ -30,6 +30,11 @@ module DBus
     # The type type that is matched.
     attr_reader :type
 
+    # Create a new match rule
+    def initialize
+      @sender = @interface = @member = @path = @destination = @type = nil
+    end
+
     # Set the message types to filter to type _t_.
     # Possible message types are: signal, method_call, method_return, and error.
     def type=(t)

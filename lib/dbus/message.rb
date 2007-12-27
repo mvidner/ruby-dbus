@@ -83,12 +83,17 @@ module DBus
       @flags = 0
       @protocol = 1
       @body_length = 0
-      @signature = ""
+      @signature = String.new
       @@serial_mutex.synchronize do
         @serial = @@serial
         @@serial += 1
       end
       @params = Array.new
+      @destination = nil
+      @error_name = nil
+      @member = nil
+      @path = nil
+      @reply_serial = nil
 
       if mtype == METHOD_RETURN
         @flags = NO_REPLY_EXPECTED
