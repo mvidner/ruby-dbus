@@ -1,5 +1,17 @@
 = Ruby D-Bus NEWS
 
+== Ruby D-Bus "Thanks for all the fish" 0.2.1 - 2007-12-??
+
+More bugfixes, mostly supplied by users supplying us with patches.  Thanks!
+
+ * Support for new types added: 
+   - dict (courtesy of Drake Wilson).
+   - double (courtesy of Patrick Sissons).
+ * Improved exception raise support (courtesy of Sjoerd Simons,
+   Patrick Sissons).
+ * Some polish (removed debug output, solved unnecessary warnings).
+ * Documentation updates, example fixes and updates.
+
 == Ruby D-Bus "Almost live from DebConf 7" 0.2.0 - 2007-06-02
 
 Again a bugfix release, also meant to be the public release
