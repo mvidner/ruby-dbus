@@ -62,7 +62,11 @@ class MethodCallWindow
       m.add_param(param[1], data)
     end
     bus.on_return(m) do |retm|
-      puts "Method #{m.member} returns: #{retm.params.inspect}"
+      if retm.is_a?(DBus::Error)
+        puts "Error: #{retm.inspect}"
+      else
+        puts "Method #{m.member} returns: #{retm.params.inspect}"
+      end
     end
     bus.send(m.marshall)
   end
