@@ -11,6 +11,10 @@ class Test < DBus::Object
       puts "hello(#{name}, #{name2})"
     end
 
+    dbus_method :test_variant, "in stuff:v" do |variant|
+      p variant
+    end
+
     dbus_signal :SomethingJustHappened, "toto:s, tutu:u"
   end
 

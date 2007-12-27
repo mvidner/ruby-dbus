@@ -4,15 +4,15 @@ require "dbus"
 
 session_bus = DBus::SessionBus.instance
 
-# Get the Rhythmbox service
 ruby_srv = session_bus.service("org.ruby.service")
 
 # Get the object from this service
 player = ruby_srv.object("/org/ruby/MyInstance")
 
 # Introspect it
-player.introspect
+puts player.introspect
 player.default_iface = "org.ruby.SampleInterface"
+player.test_variant(["s", "coucou"])
 player.on_signal("SomethingJustHappened") do |u, v|
   puts "SomethingJustHappened: #{u} #{v}"
 end
