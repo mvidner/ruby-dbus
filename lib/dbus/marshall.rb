@@ -264,14 +264,13 @@ module DBus
       end
     end
 
-    # Append the string type and the string _str_ itself to the packet.
+    # Append the the string _str_ itself to the packet.
     def append_string(str)
       align(4)
       @packet += [str.length].pack("L") + str + "\0"
     end
 
-    # Append the signature type and the signature _signature_ itself to the
-    # packet.
+    # Append the the signature _signature_ itself to the packet.
     def append_signature(str)
       @packet += str.length.chr + str + "\0"
     end
@@ -337,6 +336,16 @@ module DBus
         append_string(val)
       when Type::SIGNATURE
         append_signature(val)
+      when Type::VARIANT
+        if not val.kind_of?(Array)
+          raise TypeException
+        end
+        vartype, vardata = val
+        vartype = Type::Parser.new(vartype).parse[0] if type.kind_of?(String)
+        append_signature(vartype.to_s)
+        sub = PacketMarshaller.new
+        sub.append(vartype, vardata)
+        @packet += sub.packet
       when Type::ARRAY
         if val.kind_of?(Hash)
           raise TypeException if type.child.sigtype != Type::DICT_ENTRY
