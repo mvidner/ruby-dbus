@@ -5,8 +5,9 @@
 More bugfixes, mostly supplied by users supplying us with patches.  Thanks!
 
  * Support for new types added: 
-   - dict (courtesy of Drake Wilson).
-   - double (courtesy of Patrick Sissons).
+   - dict (courtesy of Drake Wilson);
+   - double (courtesy of Patrick Sissons);
+   - variant.
  * Improved exception raise support (courtesy of Sjoerd Simons,
    Patrick Sissons).
  * Some polish (removed debug output, solved unnecessary warnings).

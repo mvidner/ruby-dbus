@@ -1,3 +1,27 @@
+2007-12-27 22:26  acornet
+
+	* examples/gdbus/gdbus: gdbus: Don't fail on error.
+
+2007-12-27 21:57  acornet
+
+	* examples/service/call_service.rb,
+	  examples/service/service_newapi.rb: Variant usage example.
+
+2007-12-27 21:57  acornet
+
+	* lib/dbus/introspect.rb, lib/dbus/marshall.rb,
+	  lib/dbus/message.rb, lib/dbus/type.rb: Working VARIANT
+	  marshalling (closes: #10).
+
+2007-12-27 20:51  acornet
+
+	* lib/dbus/marshall.rb: Totally untested VARIANT marshalling code
+
+2007-12-27 20:11  paul
+
+	* ChangeLog, NEWS: Prepare for the 0.2.1 release; updated the NEWS
+	  and ChangeLog files.
+
 2007-12-27 20:00  paul
 
 	* examples/gdbus/launch.sh, lib/dbus/matchrule.rb,
