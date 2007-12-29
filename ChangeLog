@@ -1,3 +1,8 @@
+2007-12-28 09:37  paul
+
+	* ChangeLog, NEWS: Another NEWS and ChangeLog for the 0.2.1
+	  release.
+
 2007-12-27 22:26  acornet
 
 	* examples/gdbus/gdbus: gdbus: Don't fail on error.
