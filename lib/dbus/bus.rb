@@ -581,7 +581,7 @@ module DBus
       @path.split(",").each do |eqstr|
         idx, val = eqstr.split("=")
         case idx
-        when "unix"
+        when "unix", "unix:path"
           @type = idx
           @unix = val
         when "unix:abstract"
