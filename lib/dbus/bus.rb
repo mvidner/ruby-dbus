@@ -585,7 +585,7 @@ module DBus
           @type = idx
           @unix = val
         when "unix:path"
-          @type = unix
+          @type = "unix"
           @unix = val
         when "unix:abstract"
           @type = idx
