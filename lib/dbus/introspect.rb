@@ -246,19 +246,21 @@ module DBus
     private
 
     # Parses a method signature XML element _e_ and initialises
-    # method _m_.
+    # method/signal _m_.
     def parse_methsig(e, m)
       e.elements.each("arg") do |ae|
         name = ae.attributes["name"]
         dir = ae.attributes["direction"]
         sig = ae.attributes["type"]
-        case dir
-        when "in"
+	if m.is_a?(DBus::Signal)
           m.add_param([name, sig])
-        when "out"
-          m.add_return([name, sig])
-        when nil # It's a signal, no direction
-          m.add_param([name, sig])
+	elsif m.is_a?(DBus::Method)
+          case dir
+          when "in"
+            m.add_param([name, sig])
+          when "out"
+	    m.add_return([name, sig])
+	  end
         else
           raise NotImplementedError, dir
         end
