@@ -209,7 +209,6 @@ module DBus
       end
       @socket.connect(sockaddr)
       init_connection
-      send_hello
     end
 
     # Send the buffer _buf_ to the bus using Connection#writel.
@@ -629,6 +628,7 @@ module DBus
     def initialize
       super(ENV["DBUS_SESSION_BUS_ADDRESS"])
       connect
+      send_hello
     end
   end
 
@@ -643,6 +643,7 @@ module DBus
     def initialize
       super(SystemSocketName)
       connect
+      send_hello
     end
   end
 
