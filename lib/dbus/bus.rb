@@ -171,8 +171,16 @@ module DBus
     # The socket that is used to connect with the bus.
     attr_reader :socket
 
-    # Create a new connection to the bus for a given connect _path_
-    # (UNIX socket).
+    # Create a new connection to the bus for a given connect _path_. _path_
+    # format is described in the D-Bus specification:
+    # http://dbus.freedesktop.org/doc/dbus-specification.html#addresses
+    # and is something like:
+    # "transport1:key1=value1,key2=value2;transport2:key1=value1,key2=value2"
+    # e.g. "unix:path=/tmp/dbus-test"
+    #
+    # Current implementation of ruby-dbus supports only a single server
+    # address and only "unix:path=...,guid=..." and
+    # "unix:abstract=...,guid=..." forms
     def initialize(path)
       @path = path
       @unique_name = nil
@@ -190,13 +198,13 @@ module DBus
     # Connect to the bus and initialize the connection.
     def connect
       parse_session_string
-      if @type == "unix:abstract"
+      if @transport == "unix" and @type == "abstract"
         if HOST_END == LIL_END
           sockaddr = "\1\0\0#{@unix_abstract}"
         else
           sockaddr = "\0\1\0#{@unix_abstract}"
         end
-      elsif @type == "unix"
+      elsif @transport == "unix" and @type == "path"
         sockaddr = Socket.pack_sockaddr_un(@unix)
       end
       @socket.connect(sockaddr)
@@ -578,20 +586,22 @@ module DBus
 
     # Parse the session string (socket address).
     def parse_session_string
-      @path.split(",").each do |eqstr|
-        idx, val = eqstr.split("=")
-        case idx
-        when "unix"
-          @type = idx
-          @unix = val
-        when "unix:path"
-          @type = "unix"
-          @unix = val
-        when "unix:abstract"
-          @type = idx
-          @unix_abstract = val
-        when "guid"
-          @guid = val
+      path_parsed = /^([^:]*):([^;]*)$/.match(@path)
+      @transport = path_parsed[1]
+      adr = path_parsed[2]
+      if @transport == "unix"
+        adr.split(",").each do |eqstr|
+          idx, val = eqstr.split("=")
+          case idx
+          when "path"
+            @type = idx
+            @unix = val
+          when "abstract"
+            @type = idx
+            @unix_abstract = val
+          when "guid"
+            @guid = val
+          end
         end
       end
     end
