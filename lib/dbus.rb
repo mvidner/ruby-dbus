@@ -25,7 +25,7 @@ require 'thread'
 # Module containing all the D-Bus modules and classes.
 module DBus
   # Default socket name for the system bus.
-  SystemSocketName = "unix=/var/run/dbus/system_bus_socket"
+  SystemSocketName = "unix:path=/var/run/dbus/system_bus_socket"
 
   # Byte signifying big endianness.
   BIG_END = ?B
