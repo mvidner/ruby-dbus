@@ -39,7 +39,7 @@ module DBus
     # Possible message types are: signal, method_call, method_return, and error.
     def type=(t)
       if not ['signal', 'method_call', 'method_return', 'error'].member?(t)
-        raise MatchRuleException 
+        raise MatchRuleException
       end
       @type = t
     end
@@ -63,7 +63,7 @@ module DBus
           if FILTERS.member?(name.to_sym)
             method(name + "=").call(val)
           else
-            raise MatchRuleException 
+            raise MatchRuleException
           end
         end
       end

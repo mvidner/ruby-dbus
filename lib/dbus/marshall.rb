@@ -312,6 +312,12 @@ module DBus
       when Type::UINT32
         align(4)
         @packet += [val].pack("L")
+      when Type::UINT64
+	align(8)
+	@packet += [val].pack("Q")
+      when Type::INT64
+	align(8)
+	@packet += [val].pack("q")
       when Type::INT32
         align(4)
         @packet += [val].pack("l")
