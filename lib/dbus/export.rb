@@ -62,16 +62,11 @@ module DBus
         meth = @intfs[msg.interface].methods[msg.member.to_sym]
         raise MethodNotInInterface if not meth
         methname = Object.make_method_name(msg.interface, msg.member)
-        retdata = method(methname).call(*msg.params)
+        retdata = method(methname).call(*msg.params).to_a
 
         reply = Message.new.reply_to(msg)
-        # I'm sure there is a ruby way to do that
-        i = 0
-        if meth.rets.size > 0 and not retdata.kind_of?(Array)
-          raise InvalidReturnType
-        end
-        meth.rets.each do |rsig|
-          reply.add_param(rsig[1], retdata[i])
+        meth.rets.zip(retdata).each do |rsig, rdata|
+          reply.add_param(rsig[1], rdata)
         end
         @service.bus.send(reply.marshall)
       end
