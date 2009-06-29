@@ -109,7 +109,7 @@ module DBus
       ret = @buffy.slice(@idx, str_sz)
       raise IncompleteBufferException if @idx + str_sz + 1 > @buffy.size
       @idx += str_sz
-      if @buffy[@idx] != 0
+      if @buffy[@idx].ord != 0
         raise InvalidPacketException, "String is not nul-terminated"
       end
       @idx += 1
@@ -124,7 +124,7 @@ module DBus
       ret = @buffy.slice(@idx, str_sz)
       raise IncompleteBufferException if @idx + str_sz + 1 >= @buffy.size
       @idx += str_sz
-      if @buffy[@idx] != 0
+      if @buffy[@idx].ord != 0
         raise InvalidPacketException, "Type is not nul-terminated"
       end
       @idx += 1
