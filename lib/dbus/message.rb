@@ -90,6 +90,7 @@ module DBus
       end
       @params = Array.new
       @destination = nil
+      @interface = nil
       @error_name = nil
       @member = nil
       @path = nil
