@@ -105,7 +105,7 @@ module Type
       when STRUCT
         "(" + @members.collect { |t| t.to_s }.join + ")"
       when ARRAY
-        "a" + @members.collect { |t| t.to_s }
+        "a" + child.to_s
       when DICT_ENTRY
         "{" + @members.collect { |t| t.to_s }.join + "}"
       else

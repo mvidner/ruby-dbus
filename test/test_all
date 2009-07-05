@@ -3,7 +3,7 @@
 # $0 [-a: all, even failing]
 # $0 ./a_single_testcase
 if [ "$1" = "" ]; then
-  : ${CASES:=./t1*}
+  : ${CASES:=./t[0-9]*}
 elif [ "$1" = "-a" ]; then
   : ${CASES:=./t? ./t*-*}
 else
@@ -16,7 +16,7 @@ if ! which python; then
   CASES_A=(${CASES_A[@]/*.py/})	 # exclude python files
 fi
 
-./test_server \
+RUBYLIB=../lib ./test_server \
 	./service_newapi.rb \
 	-- \
 	${CASES_A[@]}
