@@ -3,9 +3,10 @@
 # $0 [-a: all, even failing]
 # $0 ./a_single_testcase
 if [ "$1" = "" ]; then
-  : ${CASES:=./t[0-9]*}
+  : ${CASES:=./t[0124-9]*}
 elif [ "$1" = "-a" ]; then
   : ${CASES:=./t? ./t*-*}
+  OPTS=-k
 else
   : ${CASES:=$@}
 fi
@@ -16,7 +17,9 @@ if ! which python; then
   CASES_A=(${CASES_A[@]/*.py/})	 # exclude python files
 fi
 
-RUBYLIB=../lib ./test_server \
+#export DBUS_VERBOSE=1
+#export RUBYOPT="-d"
+RUBYLIB=../lib ./test_server $OPTS \
 	./service_newapi.rb \
 	-- \
 	${CASES_A[@]}

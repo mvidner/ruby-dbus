@@ -2,8 +2,14 @@
 # A wrapper for DBus tests
 # Sets up a private session bus and calls all its arguments in turn
 # exiting on first failure
-# $0 server [arg1 arg2...] -- test1 test2...
+# $0 server [-k] [arg1 arg2...] -- test1 test2...
 set -o errexit
+
+KEEP_GOING=false
+if [ "$1" = "-k" ]; then
+    KEEP_GOING=true
+    shift
+fi
 
 while [ "$1" != "--" ]; do
   SERVER="$SERVER $1"
@@ -35,6 +41,7 @@ echo "off we go!"
 
 while [ -n "$1" ]; do
   echo Running $1
-  $1
+  $1 || $KEEP_GOING
   shift
 done
+echo Done
