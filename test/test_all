@@ -3,7 +3,7 @@
 # $0 [-a: all, even failing]
 # $0 ./a_single_testcase
 if [ "$1" = "" ]; then
-  : ${CASES:=./t[0124-9]*}
+  : ${CASES:=./t[01234-9]*}
 elif [ "$1" = "-a" ]; then
   : ${CASES:=./t? ./t*-*}
   OPTS=-k

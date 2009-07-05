@@ -249,20 +249,25 @@ module DBus
 
     # Create a new marshaller, setting the current packet to the
     # empty packet.
-    def initialize
+    def initialize(offset = 0)
       @packet = ""
+      @offset = offset          # for correct alignment of nested marshallers
+    end
+
+    # Round _n_ up to the specified power of two, _a_
+    def num_align(n, a)
+      case a
+      when 1, 2, 4, 8
+        bits = a - 1
+        n + bits & ~bits
+      else
+        raise "Unsupported alignment"
+      end
     end
 
     # Align the buffer with NULL (\0) bytes on a byte length of _a_.
     def align(a)
-      case a
-      when 1
-      when 2, 4, 8
-        bits = a - 1
-        @packet = @packet.ljust(@packet.length + bits & ~bits, 0.chr)
-      else
-        raise "Unsupported alignment"
-      end
+      @packet = @packet.ljust(num_align(@offset + @packet.length, a) - @offset, 0.chr)
     end
 
     # Append the the string _str_ itself to the packet.
@@ -351,7 +356,7 @@ module DBus
         vartype = Type::Parser.new(vartype).parse[0] if vartype.kind_of?(String)
         append_signature(vartype.to_s)
         align(vartype.alignment)
-        sub = PacketMarshaller.new
+        sub = PacketMarshaller.new(@offset + @packet.length)
         sub.append(vartype, vardata)
         @packet += sub.packet
       when Type::ARRAY

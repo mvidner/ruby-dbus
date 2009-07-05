@@ -10,6 +10,8 @@ obj.default_iface = "org.ruby.SampleInterface"
 # The bug is probably alignment related so whether it triggers
 # depends also on the combined length of service, interface,
 # and method names. Luckily here it works out.
+triple = ['a(uuu)', []]
+obj.test_variant(triple)
 quadruple = ['a(uuuu)', []]     # a(uuu) works fine
 # The bus disconnects us because of malformed message,
 # code 12: DBUS_INVALID_TOO_MUCH_DATA
