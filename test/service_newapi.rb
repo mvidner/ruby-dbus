@@ -26,6 +26,12 @@ class Test < DBus::Object
       [outstr]
     end
   end
+
+  dbus_interface "org.ruby.Ticket30" do
+    dbus_method :Sybilla, 'in choices:av, out advice:s' do |choices|
+      ["Do #{choices[0]}"]
+    end
+  end
 end
 
 bus = DBus::SessionBus.instance

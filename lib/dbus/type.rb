@@ -92,6 +92,7 @@ module Type
         DICT_ENTRY => 8,
         DOUBLE => 8,
         ARRAY => 4,
+        VARIANT => 1,
         OBJECT_PATH => 4,
         STRING => 4,
         SIGNATURE => 1,
