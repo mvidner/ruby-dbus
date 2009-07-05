@@ -1,0 +1,22 @@
+#! /bin/sh
+# run all applicable test cases with proper setup
+# $0 [-a: all, even failing]
+# $0 ./a_single_testcase
+if [ "$1" = "" ]; then
+  : ${CASES:=./t1*}
+elif [ "$1" = "-a" ]; then
+  : ${CASES:=./t? ./t*-*}
+else
+  : ${CASES:=$@}
+fi
+CASES_A=($CASES)		 # make array
+CASES_A=(${CASES_A[@]/*~/})	 # exclude backup files
+if ! which python; then
+  echo >&2 "Python not found, skipping those tests"
+  CASES_A=(${CASES_A[@]/*.py/})	 # exclude python files
+fi
+
+./test_server \
+	./service_newapi.rb \
+	-- \
+	${CASES_A[@]}

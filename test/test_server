@@ -1,0 +1,40 @@
+#! /bin/sh
+# A wrapper for DBus tests
+# Sets up a private session bus and calls all its arguments in turn
+# exiting on first failure
+# $0 server [arg1 arg2...] -- test1 test2...
+set -o errexit
+
+while [ "$1" != "--" ]; do
+  SERVER="$SERVER $1"
+  shift
+done
+shift # --
+
+# This launches the bus daemon,
+# exports DBUS_SESSION_BUS_ADDRESS and sets DBUS_SESSION_BUS_PID
+my_dbus_launch () {
+    # reimplementing dbus-launch because it is in dbus-1-x11.rpm
+    PF=`mktemp --tmpdir dbus.pid.XXXXXX` || exit
+    AF=`mktemp --tmpdir dbus.addr.XXXXXX` || exit
+
+    dbus-daemon --session --print-address=3 3>$AF --print-pid=4 4>$PF &
+    # wait for the daemon to print the info
+    while [ ! -s $AF -a ! -s $PF ]; do sleep 0.1; done
+    DBUS_SESSION_BUS_PID=$(cat $PF)
+    export DBUS_SESSION_BUS_ADDRESS=$(cat $AF)
+    # Clean up at exit. This will also kill the server.
+    trap "kill $DBUS_SESSION_BUS_PID; rm $AF $PF" EXIT TERM INT
+}
+
+my_dbus_launch
+echo -n "Hey, server, get on da bus... "
+# start the server
+$SERVER & sleep 3
+echo "off we go!"
+
+while [ -n "$1" ]; do
+  echo Running $1
+  $1
+  shift
+done

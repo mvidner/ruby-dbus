@@ -1,8 +1,6 @@
 #!/usr/bin/ruby
 
 require 'dbus'
-require 'thread'
-Thread.abort_on_exception = true
 
 class Test < DBus::Object
   # Create an interface aggregating all upcoming dbus_method defines.
@@ -34,15 +32,6 @@ bus = DBus::SessionBus.instance
 service = bus.request_service("org.ruby.service")
 myobj = Test.new("/org/ruby/MyInstance")
 service.export(myobj)
-
-Thread.new do
-  i = 0
-  loop do 
-    # Signal emission
-    myobj.SomethingJustHappened("hey", i += 1)
-    sleep(0.5)
-  end
-end
 
 puts "listening"
 main = DBus::Main.new
