@@ -92,6 +92,7 @@ module Type
         DICT_ENTRY => 8,
         DOUBLE => 8,
         ARRAY => 4,
+        VARIANT => 1,
         OBJECT_PATH => 4,
         STRING => 4,
         SIGNATURE => 1,
@@ -105,7 +106,7 @@ module Type
       when STRUCT
         "(" + @members.collect { |t| t.to_s }.join + ")"
       when ARRAY
-        "a" + @members.collect { |t| t.to_s }
+        "a" + child.to_s
       when DICT_ENTRY
         "{" + @members.collect { |t| t.to_s }.join + "}"
       else

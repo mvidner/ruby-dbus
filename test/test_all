@@ -1,0 +1,25 @@
+#! /bin/sh
+# run all applicable test cases with proper setup
+# $0 [-a: all, even failing]
+# $0 ./a_single_testcase
+if [ "$1" = "" ]; then
+  : ${CASES:=./t[01234-9]*}
+elif [ "$1" = "-a" ]; then
+  : ${CASES:=./t? ./t*-*}
+  OPTS=-k
+else
+  : ${CASES:=$@}
+fi
+CASES_A=($CASES)		 # make array
+CASES_A=(${CASES_A[@]/*~/})	 # exclude backup files
+if ! which python; then
+  echo >&2 "Python not found, skipping those tests"
+  CASES_A=(${CASES_A[@]/*.py/})	 # exclude python files
+fi
+
+#export DBUS_VERBOSE=1
+#export RUBYOPT="-d"
+RUBYLIB=../lib ./test_server $OPTS \
+	./service_newapi.rb \
+	-- \
+	${CASES_A[@]}
