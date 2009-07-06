@@ -679,7 +679,11 @@ module DBus
         ready, dum, dum = IO.select(@buses.keys)
         ready.each do |socket|
           b = @buses[socket]
-          b.update_buffer
+          begin
+            b.update_buffer
+          rescue EOFError
+            return              # the bus died
+          end
           while m = b.pop_message
             b.process(m)
           end
