@@ -468,8 +468,15 @@ module DBus
     # default interface.
     def method_missing(name, *args)
       if @default_iface and has_iface?(@default_iface)
-        @interfaces[@default_iface].method(name).call(*args)
+        begin
+          @interfaces[@default_iface].method(name).call(*args)
+        rescue NameError => e
+          match = /undefined method `([^']*)' for class `([^']*)'/.match e.to_s
+          raise unless match and match[2] == "DBus::ProxyObjectInterface"
+          raise NameError,"undefined method `#{match[1]}' for DBus interface `#{@default_iface}'"
+        end
       else
+        # TODO improve
         raise NoMethodError
       end
     end
