@@ -6,6 +6,8 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
+$debug = $DEBUG #it's all over the state machine
+
 module DBus
   # Exception raised when authentication fails somehow.
   class AuthenticationFailed < Exception

@@ -173,7 +173,7 @@ module DBus
 
     # Create a new connection to the bus for a given connect _path_. _path_
     # format is described in the D-Bus specification:
-      # http://dbus.freedesktop.org/doc/dbus-specification.html#addresses
+    # http://dbus.freedesktop.org/doc/dbus-specification.html#addresses
     # and is something like:
     # "transport1:key1=value1,key2=value2;transport2:key1=value1,key2=value2"
     # e.g. "unix:path=/tmp/dbus-test" or "tcp:host=localhost,port=2687"
@@ -561,7 +561,7 @@ module DBus
         raise InvalidPacketException if m.reply_serial == nil
         mcs = @method_call_replies[m.reply_serial]
         if not mcs
-          puts "DEBUG: no return code for mcs: #{mcs.inspect} m: #{m.inspect}"
+          puts "DEBUG: no return code for mcs: #{mcs.inspect} m: #{m.inspect}" if $DEBUG
         else
           if m.message_type == Message::ERROR
             mcs.call(Error.new(m))
@@ -573,7 +573,7 @@ module DBus
         end
       when DBus::Message::METHOD_CALL
         if m.path == "/org/freedesktop/DBus"
-          puts "DEBUG: Got method call on /org/freedesktop/DBus"
+          puts "DEBUG: Got method call on /org/freedesktop/DBus" if $DEBUG
         end
         # handle introspectable as an exception:
         if m.interface == "org.freedesktop.DBus.Introspectable" and
@@ -601,7 +601,7 @@ module DBus
           end
         end
       else
-        puts "DEBUG: Unknown message type: #{m.message_type}"
+        puts "DEBUG: Unknown message type: #{m.message_type}" if $DEBUG
       end
     end
 
@@ -641,6 +641,7 @@ module DBus
       m.member = "Hello"
       send_sync(m) do |rmsg|
         @unique_name = rmsg.destination
+        puts "Got hello reply. Our unique_name is #{@unique_name}" if $DEBUG
       end
     end
 
