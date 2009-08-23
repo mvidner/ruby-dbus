@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 # should report it missing on org.ruby.SampleInterface
 # (on object...) instead of on DBus::Proxy::ObjectInterface
 require "test/unit"

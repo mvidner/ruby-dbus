@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 #
 # Trivial network interface lister using NetworkManager.
 # NetworkManager does not support introspection, so the api is not that sexy.

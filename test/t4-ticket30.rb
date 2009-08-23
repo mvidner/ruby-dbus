@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 # Test marshalling an array of variants
 # https://trac.luon.net/ruby-dbus/ticket/30
 require "dbus"

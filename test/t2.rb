@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 # test passing an array through a variant
 require "dbus"
 session_bus = DBus::SessionBus.instance

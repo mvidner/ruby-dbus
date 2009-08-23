@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 # Test passing a particular struct array through a variant
 # https://trac.luon.net/ruby-dbus/ticket/27
 require "dbus"
