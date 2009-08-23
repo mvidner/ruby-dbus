@@ -449,15 +449,14 @@ module DBus
     # Fill (append) the buffer from data that might be available on the
     # socket.
     def update_buffer
-      @buffer += @socket.read_nonblock(MSG_BUF_SIZE) if @is_tcp
-      unless @is_tcp
-        begin
-          @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
-        rescue
-          puts "WARNING: read_nonblock failed, falling back to .recv"
-          @buffer += @socket.recv(MSG_BUF_SIZE)  
-        end
-      end
+      @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
+    rescue EOFError
+      raise                     # the caller expects it
+    rescue Exception => e
+      puts "Oops:", e
+      raise if @is_tcp          # why?
+      puts "WARNING: read_nonblock failed, falling back to .recv"
+      @buffer += @socket.recv(MSG_BUF_SIZE)  
     end
 
     # Get one message from the bus and remove it from the buffer.
