@@ -62,7 +62,8 @@ module DBus
         meth = @intfs[msg.interface].methods[msg.member.to_sym]
         raise MethodNotInInterface if not meth
         methname = Object.make_method_name(msg.interface, msg.member)
-        retdata = method(methname).call(*msg.params).to_a
+        retdata = method(methname).call(*msg.params)
+        retdata =  [*retdata]
 
         reply = Message.new.reply_to(msg)
         meth.rets.zip(retdata).each do |rsig, rdata|
