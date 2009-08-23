@@ -23,4 +23,9 @@ class ValueTest < Test::Unit::TestCase
     @obj.default_iface = "org.ruby.Ticket30"
     p @obj.Sybilla(choices)
   end
+
+  def test_service_returning_nonarray
+    # "warning: default `to_a' will be obsolete"
+    @obj.the_answer
+  end
 end

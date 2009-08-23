@@ -13,6 +13,10 @@ class Test < DBus::Object
       p variant
     end
 
+    dbus_method :the_answer, "out answer:i" do
+      42
+    end
+
     dbus_signal :SomethingJustHappened, "toto:s, tutu:u"
   end
 
