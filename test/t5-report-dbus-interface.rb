@@ -19,7 +19,7 @@ class ErrMsgTest < Test::Unit::TestCase
     # a specific exception...
     rescue NameError => e
       # mentioning DBus and the interface
-      assert_match /DBus interface.*#{@obj.default_iface}/, e.to_s
+      assert_match(/DBus interface.*#{@obj.default_iface}/, e.to_s)
     end
   end
 end

@@ -19,6 +19,7 @@ fi
 
 #export DBUS_VERBOSE=1
 #export RUBYOPT="-d"
+export RUBYOPT="-w"
 RUBYLIB=../lib ./test_server $OPTS \
 	./service_newapi.rb \
 	-- \
