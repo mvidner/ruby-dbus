@@ -666,6 +666,7 @@ module DBus
     # Create a new main event loop.
     def initialize
       @buses = Hash.new
+      @quitting = false
     end
 
     # Add a _bus_ to the list of buses to watch for events.
@@ -673,16 +674,22 @@ module DBus
       @buses[bus.socket] = bus
     end
 
+    # Quit a running main loop, to be used eg. from a signal handler
+    def quit
+      @quitting = true
+    end
+
     # Run the main loop. This is a blocking call!
     def run
-      loop do
+      while not @quitting and not @buses.empty?
         ready, dum, dum = IO.select(@buses.keys)
         ready.each do |socket|
           b = @buses[socket]
           begin
             b.update_buffer
           rescue EOFError
-            return              # the bus died
+            @buses.delete socket # this bus died
+            next
           end
           while m = b.pop_message
             b.process(m)

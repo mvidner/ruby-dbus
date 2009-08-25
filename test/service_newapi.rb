@@ -2,6 +2,10 @@
 
 require 'dbus'
 
+def d(msg)
+  puts msg if $DEBUG
+end
+
 class Test < DBus::Object
   # Create an interface aggregating all upcoming dbus_method defines.
   dbus_interface "org.ruby.SampleInterface" do
@@ -35,6 +39,24 @@ class Test < DBus::Object
     dbus_method :Sybilla, 'in choices:av, out advice:s' do |choices|
       ["Do #{choices[0]}"]
     end
+  end
+
+  dbus_interface "org.ruby.Loop" do
+    # starts doing something long, but returns immediately
+    # and sends a signal when done
+    dbus_method :LongTaskBegin, 'in delay:i' do |delay|
+# FIXME did not complain about mismatch between signature and block args
+      d "Long task began"
+      task = Thread.new do
+        d "Long task thread started (#{delay}s)"
+        sleep delay
+        d "Long task will signal end"
+        self.LongTaskEnd
+      end
+      task.abort_on_exception = true # protect from test case bugs
+    end
+
+    dbus_signal :LongTaskEnd
   end
 end
 
