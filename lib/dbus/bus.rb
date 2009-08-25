@@ -32,9 +32,9 @@ module DBus
       @root = Node.new("/")
     end
 
-    # Determine whether the serice name already exists.
+    # Determine whether the service name already exists.
     def exists?
-      bus.proxy.ListName.member?(@name)
+      bus.proxy.ListNames[0].member?(@name)
     end
 
     # Perform an introspection on all the objects on the service
