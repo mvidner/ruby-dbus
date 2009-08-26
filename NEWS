@@ -1,5 +1,18 @@
 = Ruby D-Bus NEWS
 
+== Ruby D-Bus "I'm not dead" 0.2.9 - 2009-08-26
+
+Thank you to Paul and Arnaud for starting the project. I, Martin
+Vidner, am continuing with it on GitHub.
+
+ * Fixed passing an array through a variant (no ticket).
+ * Fixed marshalling "av" (Ticket #30).
+ * Fixed variant alignment (Ticket #27).
+ * Added DBus::Main.quit.
+ * Mention the DBus interface in a NameError for an unknown method.
+ * Fixed ruby-1.9 "warning: default `to_a' will be obsolete".
+ * Added Rakefile and gemspec.
+
 == Ruby D-Bus "Thanks for all the fish" 0.2.1 - 2007-12-29
 
 More bugfixes, mostly supplied by users supplying us with patches.  Thanks!

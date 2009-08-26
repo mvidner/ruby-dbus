@@ -4,14 +4,14 @@ require 'fileutils'
 include FileUtils
 
 spec = Gem::Specification.new do |s|
-    s.name = "dbus"
-    s.version = "0.2.1"
-    s.author = "Ruby DBUS Team"
-    s.email = "http://trac.luon.net"
+    s.name = "ruby-dbus"
+    s.version = "0.2.9"
+    s.author = "Ruby DBus Team"
+    s.email = "ruby-dbus-devel@lists.luon.net"
     s.homepage = "http://trac.luon.net/data/ruby-dbus/"
     s.platform = Gem::Platform::RUBY
-    s.summary = "Ruby module for interaction with dbus"
-    s.files = FileList["{examples,lib}/**/*"].to_a
+    s.summary = "Ruby module for interaction with DBus"
+    s.files = FileList["{doc,examples,lib,test}/**/*", "setup.rb"].to_a.sort
     s.require_path = "lib"
     s.autorequire = "dbus"
     s.has_rdoc = true
@@ -19,5 +19,13 @@ spec = Gem::Specification.new do |s|
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|
-  pkg.need_tar = false
+  pkg.need_tar = true
 end
+
+# thanks to Josh Nichols
+desc "Generate a gemspec file for GitHub"
+task :gemspec do
+  File.open("#{spec.name}.gemspec", 'w') do |f|
+    f.write spec.to_ruby
+  end
+end 
