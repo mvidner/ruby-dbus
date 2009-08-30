@@ -16,7 +16,7 @@ require 'singleton'
 #
 # Module containing all the D-Bus modules and classes.
 module DBus
-  # This represents a remote service. It should not be instancied directly
+  # This represents a remote service. It should not be instantiated directly
   # Use Bus::service()
   class Service
     # The service name.
@@ -48,7 +48,7 @@ module DBus
       self
     end
 
-    # Retrieves an object at the given _path_.
+    # Retrieves an object (ProxyObject) at the given _path_.
     def object(path)
       node = get_node(path, true)
       if node.object.nil?
@@ -543,7 +543,7 @@ module DBus
       end
     end
 
-    # Retrieves the service with the given _name_.
+    # Retrieves the Service with the given _name_.
     def service(name)
       # The service might not exist at this time so we cannot really check
       # anything

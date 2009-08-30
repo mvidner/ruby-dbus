@@ -2,6 +2,7 @@ require 'rake'
 require 'rake/gempackagetask'
 require 'fileutils'
 include FileUtils
+require 'rake/rdoctask'
 
 spec = Gem::Specification.new do |s|
     s.name = "ruby-dbus"
@@ -29,3 +30,10 @@ task :gemspec do
     f.write spec.to_ruby
   end
 end 
+
+Rake::RDocTask.new do |rd|
+  rd.rdoc_dir = 'doc/rdoc'
+  rd.rdoc_files.include("README", "lib/**/*.rb")
+#  rd.options << "--diagram"
+#  rd.options << "--all"
+end

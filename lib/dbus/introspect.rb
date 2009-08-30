@@ -309,7 +309,7 @@ module DBus
       raise RuntimeException, "invalid internal data" if not s.to_s =~ /^[^"]+$/
     end
 
-    # Defines a method on the interface from the descriptor _m_.
+    # Defines a method on the interface from the Method descriptor _m_.
     def define_method_from_descriptor(m)
       check_for_eval(m.name)
       check_for_quoted_eval(@name)
