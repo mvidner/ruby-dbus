@@ -681,6 +681,13 @@ module DBus
 
     # Run the main loop. This is a blocking call!
     def run
+      # before blocking, empty the buffers
+      # https://bugzilla.novell.com/show_bug.cgi?id=537401
+      @buses.each_value do |b|
+        while m = b.pop_message
+          b.process(m)
+        end
+      end
       while not @quitting and not @buses.empty?
         ready, dum, dum = IO.select(@buses.keys)
         ready.each do |socket|
