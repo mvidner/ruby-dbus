@@ -647,12 +647,12 @@ module DBus
     end
   end
 
-  # FIXME: we should get rid of these
-
+  # Shortcut for the SystemBus instance
   def DBus.system_bus
     SystemBus.instance
   end
 
+  # Shortcut for the SessionBus instance
   def DBus.session_bus
     SessionBus.instance
   end
