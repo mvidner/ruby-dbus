@@ -4,19 +4,19 @@ require "test/unit"
 require "dbus"
 
 def d(msg)
-  puts msg if $DEBUG
+  puts "#{$$} #{msg}" if $DEBUG
 end
 
 class MainLoopTest < Test::Unit::TestCase
   def setup
-    session_bus = DBus::SessionBus.instance
-    svc = session_bus.service("org.ruby.service")
+    @session_bus = DBus::SessionBus.instance
+    svc = @session_bus.service("org.ruby.service")
     @obj = svc.object("/org/ruby/MyInstance")
     @obj.introspect                  # necessary
     @obj.default_iface = "org.ruby.Loop"
 
     @loop = DBus::Main.new
-    @loop << session_bus
+    @loop << @session_bus
   end
 #  def teardown ?
 
@@ -40,8 +40,9 @@ class MainLoopTest < Test::Unit::TestCase
       # (if abort_on_exception is set) it terminates the whole script.
       Thread.main.raise RuntimeError, "The main loop did not quit in time"
     end
-    
+
     @loop.run
+    d "Defusing dynamite"
     # if we get here, defuse the bomb
     dynamite.exit
   end

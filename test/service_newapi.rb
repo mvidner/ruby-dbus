@@ -3,7 +3,7 @@
 require 'dbus'
 
 def d(msg)
-  puts msg if $DEBUG
+  puts "#{$$} #{msg}" if $DEBUG
 end
 
 class Test < DBus::Object
