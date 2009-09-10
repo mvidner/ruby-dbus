@@ -350,7 +350,7 @@ module DBus
         append_signature(val)
       when Type::VARIANT
         if not val.kind_of?(Array)
-          raise TypeException
+          raise TypeException, "Variant needs to be passed as a pair [type, value]"
         end
         vartype, vardata = val
         vartype = Type::Parser.new(vartype).parse[0] if vartype.kind_of?(String)
@@ -361,12 +361,12 @@ module DBus
         @packet += sub.packet
       when Type::ARRAY
         if val.kind_of?(Hash)
-          raise TypeException if type.child.sigtype != Type::DICT_ENTRY
+          raise TypeException, "Expected an Array but got a Hash" if type.child.sigtype != Type::DICT_ENTRY
           # Damn ruby rocks here
           val = val.to_a
         end
         if not val.kind_of?(Array)
-          raise TypeException
+          raise TypeException, "Expected an Array but got a #{val.class}"
         end
         array(type.child) do
           val.each do |elem|
@@ -374,9 +374,9 @@ module DBus
           end
         end
       when Type::STRUCT, Type::DICT_ENTRY
-        raise TypeException if not val.kind_of?(Array)
+        raise TypeException "Struct/DE expects an Array"if not val.kind_of?(Array)
         if type.sigtype == Type::DICT_ENTRY and val.size != 2
-          raise TypeException
+          raise TypeException, "Dict entry expects a pair"
         end
         struct do
           idx = 0
@@ -389,7 +389,8 @@ module DBus
           end
         end
       else
-        raise NotImplementedError
+        raise NotImplementedError,
+	  "sigtype: #{type.sigtype} (#{type.sigtype.chr})"     
       end
     end # def append
   end # class PacketMarshaller
