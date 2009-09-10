@@ -1,5 +1,16 @@
 = Ruby D-Bus NEWS
 
+== Ruby D-Bus 0.2.10 - 2009-09-10
+
+Bug fixes:
+
+ * DBus::Service.exists? fixed (Murat Demirten).
+ * Ruby 1.9 fixes (Jedediah Smith).
+ * Fixed an endless sleep in DBus::Main.run (bnc#537401).
+ * Added details to PacketMarshaller exceptions (bnc#538050).
+
+(bnc#FOO refers to https://bugzilla.novell.com/show_bug.cgi?id=FOO )
+
 == Ruby D-Bus "I'm not dead" 0.2.9 - 2009-08-26
 
 Thank you to Paul and Arnaud for starting the project. I, Martin

@@ -6,7 +6,7 @@ require 'rake/rdoctask'
 
 spec = Gem::Specification.new do |s|
     s.name = "ruby-dbus"
-    s.version = "0.2.9"
+    s.version = "0.2.10"
     s.author = "Ruby DBus Team"
     s.email = "ruby-dbus-devel@lists.luon.net"
     s.homepage = "http://trac.luon.net/data/ruby-dbus/"
