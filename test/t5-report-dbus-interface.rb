@@ -22,5 +22,37 @@ class ErrMsgTest < Test::Unit::TestCase
       assert_match(/DBus interface.*#{@obj.default_iface}/, e.to_s)
     end
   end
-end
 
+  def test_report_short_struct
+    begin
+      @obj.test_variant ["(ss)", ["too few"] ]
+    rescue DBus::TypeException => e
+      assert_match(/1 elements but type info for 2/, e.to_s)
+    end
+  end
+
+  def test_report_long_struct
+    begin
+      @obj.test_variant ["(ss)", ["a", "b", "too many"] ]
+    rescue DBus::TypeException => e
+      assert_match(/3 elements but type info for 2/, e.to_s)
+    end
+  end
+
+  def test_report_nil
+    nils = [
+            ["(s)", [nil] ],    # would get disconnected
+            ["i", nil ],
+            ["a{ss}", {"foo" => nil} ],
+           ]
+    nils.each do |has_nil|
+      begin
+        @obj.test_variant has_nil
+      rescue DBus::TypeException => e
+        # TODO want backtrace from the perspective of the caller:
+        # rescue/reraise in send_sync?
+        assert_match(/Cannot send nil/, e.to_s)
+      end
+    end
+  end
+end

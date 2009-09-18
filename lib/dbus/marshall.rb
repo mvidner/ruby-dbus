@@ -309,6 +309,8 @@ module DBus
 
     # Append a value _val_ to the packet based on its _type_.
     def append(type, val)
+      raise TypeException, "Cannot send nil" if val.nil?
+
       type = type.chr if type.kind_of?(Fixnum)
       type = Type::Parser.new(type).parse[0] if type.kind_of?(String)
       case type.sigtype
@@ -374,18 +376,17 @@ module DBus
           end
         end
       when Type::STRUCT, Type::DICT_ENTRY
-        raise TypeException "Struct/DE expects an Array"if not val.kind_of?(Array)
+        # TODO use duck typing, val.respond_to?
+        raise TypeException, "Struct/DE expects an Array" if not val.kind_of?(Array)
         if type.sigtype == Type::DICT_ENTRY and val.size != 2
           raise TypeException, "Dict entry expects a pair"
         end
+        if type.members.size != val.size
+          raise TypeException, "Struct/DE has #{val.size} elements but type info for #{type.members.size}"
+        end
         struct do
-          idx = 0
-          while val[idx] != nil
-            type.members.each do |subtype|
-              raise TypeException if val[idx] == nil
-              append(subtype, val[idx])
-              idx += 1
-            end
+          type.members.zip(val).each do |t, v|
+            append(t, v)
           end
         end
       else
