@@ -21,8 +21,8 @@ shift # --
 # exports DBUS_SESSION_BUS_ADDRESS and sets DBUS_SESSION_BUS_PID
 my_dbus_launch () {
     # reimplementing dbus-launch because it is in dbus-1-x11.rpm
-    PF=`mktemp --tmpdir dbus.pid.XXXXXX` || exit
-    AF=`mktemp --tmpdir dbus.addr.XXXXXX` || exit
+    PF=`mktemp dbus.pid.XXXXXX` || exit
+    AF=`mktemp dbus.addr.XXXXXX` || exit
 
     dbus-daemon --session --print-address=3 3>$AF --print-pid=4 4>$PF &
     # wait for the daemon to print the info
