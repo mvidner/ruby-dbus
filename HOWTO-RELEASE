@@ -1,0 +1,13 @@
+edit version in Rakefile
+edit NEWS
+rake gemspec
+git commit
+git tag
+rake package
+osc build
+git push
+git push --tags
+upload pkg/*.{tgz, gem}
+edit homepage
+mail to ML
+post to blog
