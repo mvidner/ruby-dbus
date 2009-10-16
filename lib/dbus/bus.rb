@@ -513,21 +513,22 @@ module DBus
         if m.path == "/org/freedesktop/DBus"
           puts "Got method call on /org/freedesktop/DBus" if $DEBUG
         end
+        node = @service.get_node(m.path)
+        if not node
+          reply = Message.error(m, "org.freedesktop.DBus.Error.UnknownObject",
+                                "Object #{m.path} doesn't exist")
+          send(reply.marshall)
         # handle introspectable as an exception:
-        if m.interface == "org.freedesktop.DBus.Introspectable" and
+        elsif m.interface == "org.freedesktop.DBus.Introspectable" and
             m.member == "Introspect"
           reply = Message.new(Message::METHOD_RETURN).reply_to(m)
-          reply.sender = @unique_name
-          node = @service.get_node(m.path)
-          raise NotImplementedError if not node
           reply.sender = @unique_name
           reply.add_param(Type::STRING, @service.get_node(m.path).to_xml)
           send(reply.marshall)
         else
           node = @service.get_node(m.path)
-          return if node.nil?
           obj = node.object
-          return if obj.nil?
+          return if obj.nil?    # FIXME, sends no reply
           obj.dispatch(m) if obj
         end
       when DBus::Message::SIGNAL

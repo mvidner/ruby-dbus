@@ -101,6 +101,18 @@ module DBus
       end
     end
 
+    # Create an error reply to a message _m_.
+    def self.error(m, error_name, description=nil)
+      e = Message.new(ERROR)
+      e.reply_serial = m.serial
+      e.destination = m.sender
+      e.error_name = error_name
+      unless description.nil?
+        e.add_param(Type::STRING, description)
+      end
+      e
+    end
+
     # Mark this message as a reply to a another message _m_, taking
     # the serial number of _m_ as reply serial and the sender of _m_ as
     # destination.
