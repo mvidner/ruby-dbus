@@ -351,11 +351,25 @@ module DBus
       when Type::SIGNATURE
         append_signature(val)
       when Type::VARIANT
-        if not val.kind_of?(Array)
-          raise TypeException, "Variant needs to be passed as a pair [type, value]"
+        vartype = nil
+        if val.is_a?(Array) and val.size == 2
+          if val[0].is_a?(DBus::Type::Type)
+            vartype, vardata = val
+          elsif val[0].is_a?(String)
+            begin
+              parsed = Type::Parser.new(val[0]).parse
+              vartype = parsed[0] if parsed.size == 1
+              vardata = val[1]
+            rescue Type::SignatureException
+              # no assignment
+            end
+          end
         end
-        vartype, vardata = val
-        vartype = Type::Parser.new(vartype).parse[0] if vartype.kind_of?(String)
+        if vartype.nil?
+          vartype, vardata = PacketMarshaller.make_variant(val)
+          vartype = Type::Parser.new(vartype).parse[0]
+        end
+
         append_signature(vartype.to_s)
         align(vartype.alignment)
         sub = PacketMarshaller.new(@offset + @packet.length)
@@ -394,5 +408,36 @@ module DBus
 	  "sigtype: #{type.sigtype} (#{type.sigtype.chr})"     
       end
     end # def append
+
+    # Make a [signature, value] pair for a variant
+    def self.make_variant(value)
+      # TODO: mix in _make_variant to String, Integer...
+      if value == true
+        ["b", true]
+      elsif value == false
+        ["b", false]
+      elsif value.nil?
+        ["b", nil]
+      elsif value.is_a? Float
+        ["d", value]
+      elsif value.is_a? Symbol
+        ["s", value.to_s]
+      elsif value.is_a? Array
+        ["av", value.map {|i| make_variant(i) }]
+      elsif value.is_a? Hash
+        h = {}
+        value.each_key {|k| h[k] = make_variant(value[k]) }
+        ["a{sv}", h]
+      elsif value.respond_to? :to_str
+        ["s", value.to_str]
+      elsif value.respond_to? :to_int
+        i = value.to_int
+        if -2_147_483_648 <= i && i < 2_147_483_648
+          ["i", i]
+        else
+          ["x", i]
+        end
+      end
+    end    
   end # class PacketMarshaller
 end # module DBus

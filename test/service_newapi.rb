@@ -17,6 +17,14 @@ class Test < DBus::Object
       p variant
     end
 
+    dbus_method :bounce_variant, "in stuff:v, out chaff:v" do |variant|
+      [variant]
+    end
+
+    dbus_method :variant_size, "in stuff:v, out size:u" do |variant|
+      [variant.size]
+    end
+
     dbus_method :the_answer, "out answer:i" do
       42
     end

@@ -204,4 +204,19 @@ module Type
     end
   end # class Parser
 end # module Type
+
+# shortcuts
+
+# Parse a String to a DBus::Type::Type
+def type(string_type)
+  Type::Parser.new(string_type).parse[0]
+end
+module_function :type
+
+# Make an explicit [Type, value] pair
+def variant(string_type, value)
+  [type(string_type), value]
+end
+module_function :variant
+
 end # module DBus
