@@ -63,6 +63,18 @@ module DBus
       get_node(obj.path, true).object = obj
     end
 
+    def unexport(obj)
+      raise ArgumentError.new("DBus::Service#unexport() expects a DBus::Object argument") unless obj.kind_of?(DBus::Object)
+      return false unless obj.path
+      pathSep = obj.path.rindex("/") #last path seperator
+      parent_path = obj.path[1..pathSep-1]
+      node_name = obj.path[pathSep+1..-1]
+		
+      parent_node = get_node(parent_path, false)
+      return false unless parent_node
+      parent_node.delete(node_name)
+    end
+	
     # Get the object node corresponding to the given _path_. if _create_ is
     # true, the the nodes in the path are created if they do not already exist.
     def get_node(path, create = false)
