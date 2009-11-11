@@ -63,15 +63,19 @@ module DBus
       get_node(obj.path, true).object = obj
     end
 
+    # Undo exporting an object _obj_.
+    # Raises ArgumentError if it is not a DBus::Object.
+    # Returns the object, or false if _obj_ was not exported.
     def unexport(obj)
       raise ArgumentError.new("DBus::Service#unexport() expects a DBus::Object argument") unless obj.kind_of?(DBus::Object)
       return false unless obj.path
       pathSep = obj.path.rindex("/") #last path seperator
       parent_path = obj.path[1..pathSep-1]
       node_name = obj.path[pathSep+1..-1]
-		
+
       parent_node = get_node(parent_path, false)
       return false unless parent_node
+      obj.service = nil
       parent_node.delete(node_name)
     end
 	
