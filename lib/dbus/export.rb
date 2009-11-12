@@ -62,12 +62,18 @@ module DBus
         meth = @intfs[msg.interface].methods[msg.member.to_sym]
         raise MethodNotInInterface if not meth
         methname = Object.make_method_name(msg.interface, msg.member)
-        retdata = method(methname).call(*msg.params)
-        retdata =  [*retdata]
+        reply = nil
+        begin
+          retdata = method(methname).call(*msg.params)
+          retdata =  [*retdata]
 
-        reply = Message.new.reply_to(msg)
-        meth.rets.zip(retdata).each do |rsig, rdata|
-          reply.add_param(rsig[1], rdata)
+          reply = Message.new.reply_to(msg)
+          meth.rets.zip(retdata).each do |rsig, rdata|
+            reply.add_param(rsig[1], rdata)
+          end
+        rescue => ex
+          puts("DBus call Error: #{ex.to_s}")
+          reply = Message.error(msg, "org.freedesktop.DBus.Error.Failed", "#{ex.class}: #{ex}\n==== Backtrace ====\n#{ex.backtrace.join("\n")}")
         end
         @service.bus.send(reply.marshall)
       end
