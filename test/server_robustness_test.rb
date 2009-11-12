@@ -48,4 +48,15 @@ class ServerRobustnessTest < Test::Unit::TestCase
   rescue DBus::Error => e
     assert_no_match(/timeout/, e.to_s)
   end
+
+  # https://trac.luon.net/ruby-dbus/ticket/31#comment:3
+  def test_no_such_method_without_introspection
+    obj = @svc.object "/org/ruby/MyInstance"
+    ifc = DBus::ProxyObjectInterface.new(obj, "org.ruby.SampleInterface")
+    ifc.define_method("not_the_answer", "out n:i")
+    ifc.not_the_answer
+    assert false, "should have raised"
+  rescue DBus::Error => e
+    assert_no_match(/timeout/, e)
+  end
 end

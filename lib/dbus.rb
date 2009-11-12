@@ -68,10 +68,6 @@ module DBus
   class InterfaceNotImplemented < Exception
   end
 
-  # Exception raised when an method is not found in the interface.
-  class MethodNotInInterface < Exception
-  end
-
   # Exception raised when a method has not been implemented (yet).
   class MethodNotImplemented < Exception
   end

@@ -15,10 +15,6 @@ module DBus
   class InterfaceNotInObject < Exception
   end
 
-  # Exception raised when a method cannot be found in an inferface.
-  class MethodNotInInterface < Exception
-  end
-
   # Method raised when a method returns an invalid return type.
   class InvalidReturnType < Exception
   end
@@ -55,14 +51,17 @@ module DBus
     def dispatch(msg)
       case msg.message_type
       when Message::METHOD_CALL
-        if not self.intfs[msg.interface]
-          raise InterfaceNotInObject, msg.interface
-        end
-        meth = self.intfs[msg.interface].methods[msg.member.to_sym]
-        raise MethodNotInInterface if not meth
-        methname = Object.make_method_name(msg.interface, msg.member)
         reply = nil
         begin
+          if not self.intfs[msg.interface]
+            raise InterfaceNotInObject, msg.interface
+          end
+          meth = self.intfs[msg.interface].methods[msg.member.to_sym]
+          if not meth
+            raise DBus.error("org.freedesktop.DBus.Error.UnknownMethod"),
+            "Method \"#{msg.member}\" on interface \"#{msg.interface}\" of object \"#{msg.path}\" doesn't exist"
+          end
+          methname = Object.make_method_name(msg.interface, msg.member)
           retdata = method(methname).call(*msg.params)
           retdata =  [*retdata]
 
