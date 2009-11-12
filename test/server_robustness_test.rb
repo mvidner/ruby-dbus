@@ -28,4 +28,14 @@ class ServerRobustnessTest < Test::Unit::TestCase
   rescue DBus::Error => e
     assert_no_match(/timeout/, e)
   end
+
+  def test_a_method_that_raises
+    obj = @svc.object "/org/ruby/MyInstance"
+    obj.introspect
+    obj.default_iface = "org.ruby.SampleInterface"
+    obj.will_raise
+    assert false, "should have raised"
+  rescue DBus::Error => e
+    assert_no_match(/timeout/, e)
+  end
 end

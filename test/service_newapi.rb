@@ -21,6 +21,10 @@ class Test < DBus::Object
       42
     end
 
+    dbus_method :will_raise, "" do
+      raise "Handle this"
+    end
+
     dbus_signal :SomethingJustHappened, "toto:s, tutu:u"
   end
 
