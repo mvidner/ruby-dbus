@@ -1,11 +1,12 @@
 edit version in Rakefile
 edit NEWS
-rake gemspec
+rake gemspec # but check the resulting filelist for clutter
 git commit
 git tag
 rake package
 osc build
 git push
+git tag
 git push --tags
 upload pkg/*.{tgz, gem}
 edit homepage

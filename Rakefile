@@ -6,13 +6,13 @@ require 'rake/rdoctask'
 
 spec = Gem::Specification.new do |s|
     s.name = "ruby-dbus"
-    s.version = "0.2.10"
+    s.version = "0.2.11"
     s.author = "Ruby DBus Team"
     s.email = "ruby-dbus-devel@lists.luon.net"
     s.homepage = "http://trac.luon.net/data/ruby-dbus/"
     s.platform = Gem::Platform::RUBY
     s.summary = "Ruby module for interaction with DBus"
-    s.files = FileList["{doc,examples,lib,test}/**/*", "setup.rb"].to_a.sort
+    s.files = FileList["{doc/tutorial/src,examples,lib,test}/**/*", "setup.rb"].to_a.sort
     s.require_path = "lib"
     s.autorequire = "dbus"
     s.has_rdoc = true
