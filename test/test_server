@@ -38,15 +38,33 @@ my_dbus_launch () {
     trap "kill $DBUS_SESSION_BUS_PID; rm $AF $PF" EXIT TERM INT
 }
 
+setup_activation () {
+    SDIR=$XDG_DATA_DIRS/dbus-1/services
+    mkdir -p $SDIR
+    cat <<EOF > $SDIR/test.service
+[D-BUS Service]
+Name=org.ruby.service
+Exec=$SERVER
+EOF
+}
+
+run_server () {
+    echo -n "Hey, server, get on da bus... "
+    # start the server
+    $SERVER & sleep 3
+    echo "off we go!"
+}
+
+export XDG_DATA_DIRS=`mktemp -d dbus.activation.XXXXXX`
 my_dbus_launch
-echo -n "Hey, server, get on da bus... "
-# start the server
-$SERVER & sleep 3
-echo "off we go!"
+setup_activation
+#run_server
 
 while [ -n "$1" ]; do
   echo Running $1
   $1 || $KEEP_GOING
   shift
 done
+
+rm -r $XDG_DATA_DIRS
 echo Done
