@@ -539,10 +539,9 @@ module DBus
             m.member == "Introspect"
           reply = Message.new(Message::METHOD_RETURN).reply_to(m)
           reply.sender = @unique_name
-          reply.add_param(Type::STRING, @service.get_node(m.path).to_xml)
+          reply.add_param(Type::STRING, node.to_xml)
           send(reply.marshall)
         else
-          node = @service.get_node(m.path)
           obj = node.object
           return if obj.nil?    # FIXME, sends no reply
           obj.dispatch(m) if obj
