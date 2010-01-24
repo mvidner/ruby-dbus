@@ -394,9 +394,17 @@ module DBus
     end
 
     # Attempt to request a service _name_.
+    #
+    # FIXME, NameRequestError cannot really be rescued as it will be raised
+    # when dispatching a later call. Rework the API to better match the spec.
     def request_service(name)
-      r = proxy.RequestName(name, NAME_FLAG_REPLACE_EXISTING)
-      raise NameRequestError if r[0] != REQUEST_NAME_REPLY_PRIMARY_OWNER
+      # Use RequestName, but asynchronously!
+      # A synchronous call would not work with service activation, where
+      # method calls to be serviced arrive before the reply for RequestName
+      # (Ticket#29).
+      proxy.RequestName(name, NAME_FLAG_REPLACE_EXISTING) do |rmsg, r|
+        raise NameRequestError if r != REQUEST_NAME_REPLY_PRIMARY_OWNER
+      end
       @service = Service.new(name, self)
       @service
     end
