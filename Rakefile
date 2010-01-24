@@ -14,7 +14,7 @@ end
 
 spec = Gem::Specification.new do |s|
     s.name = "ruby-dbus"
-    s.version = "0.2.11"
+    s.version = "0.2.12"
     s.author = "Ruby DBus Team"
     s.email = "ruby-dbus-devel@lists.luon.net"
     s.homepage = "http://trac.luon.net/data/ruby-dbus/"
