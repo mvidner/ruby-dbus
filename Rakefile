@@ -4,6 +4,14 @@ require 'fileutils'
 include FileUtils
 require 'rake/rdoctask'
 
+desc 'Default: run tests'
+task :default => :test
+
+desc 'Run tests.'
+task :test do
+    system "make -C test check"
+end
+
 spec = Gem::Specification.new do |s|
     s.name = "ruby-dbus"
     s.version = "0.2.11"
