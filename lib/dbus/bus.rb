@@ -434,6 +434,7 @@ module DBus
     # Get one message from the bus and remove it from the buffer.
     # Return the message.
     def pop_message
+      return nil if @buffer.empty?
       ret = nil
       begin
         ret, size = Message.new.unmarshall_buffer(@buffer)
