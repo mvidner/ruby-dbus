@@ -403,7 +403,11 @@ module DBus
       # method calls to be serviced arrive before the reply for RequestName
       # (Ticket#29).
       proxy.RequestName(name, NAME_FLAG_REPLACE_EXISTING) do |rmsg, r|
-        raise NameRequestError if r != REQUEST_NAME_REPLY_PRIMARY_OWNER
+        if rmsg.is_a?(Error)  # check and report errors first
+	  raise rmsg
+	elsif r != REQUEST_NAME_REPLY_PRIMARY_OWNER
+          raise NameRequestError
+	end
       end
       @service = Service.new(name, self)
       @service
