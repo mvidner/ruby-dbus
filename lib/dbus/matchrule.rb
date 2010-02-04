@@ -58,6 +58,7 @@ module DBus
     def from_s(str)
       s.split(",").each do |eq|
         if eq =~ /^(.*)='([^']*)'$/
+# "
           name = $1
           val = $1
           if FILTERS.member?(name.to_sym)
