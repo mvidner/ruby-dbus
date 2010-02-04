@@ -560,7 +560,6 @@ module DBus
           mr, slot = elem
           if mr.match(m)
             slot.call(m)
-            return
           end
         end
       else
