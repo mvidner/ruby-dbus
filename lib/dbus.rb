@@ -20,6 +20,14 @@ require 'dbus/auth'
 require 'socket'
 require 'thread'
 
+unless 0.respond_to?(:ord)
+  # Backward compatibility with Ruby 1.8.6, see
+  # http://osdir.com/ml/ruby-talk/2009-07/msg01384.html
+  class Integer
+    def ord; self; end
+  end
+end
+
 # = D-Bus main module
 #
 # Module containing all the D-Bus modules and classes.
