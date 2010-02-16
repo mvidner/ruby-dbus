@@ -4,6 +4,9 @@ require "test/unit"
 require "dbus"
 
 class Foo < DBus::Object
+  dbus_signal :signal_without_interface
+rescue DBus::Object::UndefinedInterface => e
+  # raised by the preceding signal declaration
 end
 
 class ServerTest < Test::Unit::TestCase

@@ -90,13 +90,16 @@ module DBus
     end
 
     # Dummy undefined interface class.
-    class UndefinedInterface
+    class UndefinedInterface < ScriptError
+      def initialize(sym)
+        super "No interface specified for #{sym}"
+      end
     end
 
     # Defines an exportable method on the object with the given name _sym_,
     # _prototype_ and the code in a block.
     def self.dbus_method(sym, protoype = "", &block)
-      raise UndefinedInterface if @@cur_intf.nil?
+      raise UndefinedInterface, sym if @@cur_intf.nil?
       @@cur_intf.define(Method.new(sym.to_s).from_prototype(protoype))
       define_method(Object.make_method_name(@@cur_intf.name, sym.to_s), &block) 
     end
@@ -109,7 +112,7 @@ module DBus
 
     # Defines a signal for the object with a given name _sym_ and _prototype_.
     def self.dbus_signal(sym, protoype = "")
-      raise UndefinedInterface if @@cur_intf.nil?
+      raise UndefinedInterface, sym if @@cur_intf.nil?
       cur_intf = @@cur_intf
       signal = Signal.new(sym.to_s).from_prototype(protoype)
       cur_intf.define(Signal.new(sym.to_s).from_prototype(protoype))
