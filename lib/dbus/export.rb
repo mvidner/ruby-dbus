@@ -69,7 +69,7 @@ module DBus
 
           reply = Message.new.reply_to(msg)
           meth.rets.zip(retdata).each do |rsig, rdata|
-            reply.add_param(rsig[1], rdata)
+            reply.add_param(rsig.type, rdata)
           end
         rescue => ex
           puts("DBus call Error: #{ex.to_s}")

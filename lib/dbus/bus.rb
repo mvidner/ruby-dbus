@@ -590,7 +590,7 @@ module DBus
       m.sender = service.name
       i = 0
       sig.params.each do |par|
-        m.add_param(par[1], args[i])
+        m.add_param(par.type, args[i])
         i += 1
       end
       send(m.marshall)

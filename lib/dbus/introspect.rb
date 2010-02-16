@@ -75,6 +75,26 @@ module DBus
     end
   end # class Interface
 
+  # = A formal parameter has a name and a type
+  class FormalParameter
+    attr_reader :name
+    attr_reader :type
+
+    def initialize(name, type)
+      @name = name
+      @type = type
+    end
+
+    # backward compatibility, deprecated
+    def [](index)
+      case index
+        when 0: name
+        when 1: type
+        else nil
+      end
+    end
+  end
+
   # = D-Bus interface element class
   #
   # This is a generic class for entities that are part of the interface
@@ -99,9 +119,10 @@ module DBus
       @params = Array.new
     end
 
-    # Adds a parameter _param_.
-    def add_param(param)
-      @params << param
+    # Adds a formal parameter with _name_ and _signature_
+    # (See also Message#add_param which takes signature+value)
+    def add_fparam(name, signature)
+      @params << FormalParameter.new(name, signature)
     end
   end # class InterfaceElement
 
@@ -118,9 +139,9 @@ module DBus
       @rets = Array.new
     end
 
-    # Add a return value _ret_.
-    def add_return(ret)
-      @rets << ret
+    # Add a return value _name_ and _signature_.
+    def add_return(name, signature)
+      @rets << FormalParameter.new(name, signature)
     end
 
     # Add parameter types by parsing the given _prototype_.
@@ -137,9 +158,9 @@ module DBus
         end
         case dir
         when "in"
-          add_param([name, sig])
+          add_fparam(name, sig)
         when "out"
-          add_return([name, sig])
+          add_return(name, sig)
         end
       end
       self
@@ -149,12 +170,12 @@ module DBus
     def to_xml
       xml = %{<method name="#{@name}">\n}
       @params.each do |param|
-        name = param[0] ? %{name="#{param[0]}" } : ""
-        xml += %{<arg #{name}direction="in" type="#{param[1]}"/>\n}
+        name = param.name ? %{name="#{param.name}" } : ""
+        xml += %{<arg #{name}direction="in" type="#{param.type}"/>\n}
       end
       @rets.each do |param|
-        name = param[0] ? %{name="#{param[0]}" } : ""
-        xml += %{<arg #{name}direction="out" type="#{param[1]}"/>\n}
+        name = param.name ? %{name="#{param.name}" } : ""
+        xml += %{<arg #{name}direction="out" type="#{param.type}"/>\n}
       end
       xml += %{</method>\n}
       xml
@@ -174,7 +195,7 @@ module DBus
         else
           sig = arg
         end
-        add_param([name, sig])
+        add_fparam(name, sig)
       end
       self
     end
@@ -183,8 +204,8 @@ module DBus
     def to_xml
       xml = %{<signal name="#{@name}">\n}
       @params.each do |param|
-        name = param[0] ? %{name="#{param[0]}" } : ""
-        xml += %{<arg #{name}type="#{param[1]}"/>\n}
+        name = param.name ? %{name="#{param.name}" } : ""
+        xml += %{<arg #{name}type="#{param.type}"/>\n}
       end
       xml += %{</signal>\n}
       xml
@@ -253,13 +274,13 @@ module DBus
         dir = ae.attributes["direction"]
         sig = ae.attributes["type"]
 	if m.is_a?(DBus::Signal)
-          m.add_param([name, sig])
+          m.add_fparam(name, sig)
 	elsif m.is_a?(DBus::Method)
           case dir
           when "in"
-            m.add_param([name, sig])
+            m.add_fparam(name, sig)
           when "out"
-	    m.add_return([name, sig])
+	    m.add_return(name, sig)
 	  end
         else
           raise NotImplementedError, dir
@@ -326,8 +347,8 @@ module DBus
               msg.sender = @object.bus.unique_name
             }
       idx = 0
-      m.params.each do |npar|
-        paramname, par = npar
+      m.params.each do |fpar|
+        par = fpar.type
         check_for_quoted_eval(par)
 
         # This is the signature validity check
