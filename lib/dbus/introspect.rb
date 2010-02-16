@@ -301,12 +301,12 @@ module DBus
 
     # FIXME
     def check_for_eval(s)
-      raise RuntimeException, "invalid internal data" if not s.to_s =~ /^[A-Za-z0-9_]*$/
+      raise RuntimeError, "invalid internal data '#{s}'" if not s.to_s =~ /^[A-Za-z0-9_]*$/
     end
 
     # FIXME
     def check_for_quoted_eval(s)
-      raise RuntimeException, "invalid internal data" if not s.to_s =~ /^[^"]+$/
+      raise RuntimeError, "invalid internal data '#{s}'" if not s.to_s =~ /^[^"]+$/
     end
 
     # Defines a method on the interface from the Method descriptor _m_.
