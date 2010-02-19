@@ -338,6 +338,7 @@ module DBus
   </interface>
 </node>
 '
+# This apostroph is for syntax highlighting editors confused by above xml: "
 
     def introspect_data(dest, path)
       m = DBus::Message.new(DBus::Message::METHOD_CALL)
@@ -564,7 +565,6 @@ module DBus
           mr, slot = elem
           if mr.match(m)
             slot.call(m)
-            return
           end
         end
       else

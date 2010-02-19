@@ -21,8 +21,7 @@ require 'socket'
 require 'thread'
 
 unless 0.respond_to?(:ord)
-  # Backward compatibility with Ruby 1.8.6, see
-  # http://osdir.com/ml/ruby-talk/2009-07/msg01384.html
+  # Backward compatibility with Ruby 1.8.6, see http://www.pubbs.net/ruby/200907/65871/
   class Integer
     def ord; self; end
   end
