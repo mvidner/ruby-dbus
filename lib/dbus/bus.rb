@@ -655,9 +655,21 @@ module DBus
 
     # Get the the default session bus.
     def initialize
-      super(ENV["DBUS_SESSION_BUS_ADDRESS"])
+      super(ENV["DBUS_SESSION_BUS_ADDRESS"] || address_from_file)
       connect
       send_hello
+    end
+
+    def address_from_file
+      f = File.new("/var/lib/dbus/machine-id")
+      machine_id = f.readline.chomp
+      f.close
+      display = ENV["DISPLAY"].gsub(/.*:([0-9]*).*/, '\1')
+      File.open(ENV["HOME"] + "/.dbus/session-bus/#{machine_id}-#{display}").each do |line|
+        if line =~ /^DBUS_SESSION_BUS_ADDRESS=(.*)/
+          return $1
+        end
+      end
     end
   end
 
