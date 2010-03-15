@@ -77,6 +77,21 @@ service = bus.request_service("org.ruby.service")
 myobj = Test.new("/org/ruby/MyInstance")
 service.export(myobj)
 
+# introspect every other connection, Ticket #34
+#  (except the one that activates us - it has already emitted
+#  NOC by the time we run this. Therefore the test for #34 will not work
+#  by running t2.rb alone, one has to run t1 before it; 'rake' does it)
+mr = DBus::MatchRule.new.from_s "type='signal',interface='org.freedesktop.DBus',member='NameOwnerChanged'"
+bus.add_match(mr) do |msg|
+  new_unique_name = msg.params[2]
+  unless new_unique_name.empty?
+    # puts "RRRING #{new_unique_name}"
+    bus.introspect_data(new_unique_name, "/") do
+      # ignore the result
+    end
+  end
+end
+
 puts "listening"
 main = DBus::Main.new
 main << bus

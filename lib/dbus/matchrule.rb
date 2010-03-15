@@ -39,7 +39,7 @@ module DBus
     # Possible message types are: signal, method_call, method_return, and error.
     def type=(t)
       if not ['signal', 'method_call', 'method_return', 'error'].member?(t)
-        raise MatchRuleException
+        raise MatchRuleException, t
       end
       @type = t
     end
@@ -56,18 +56,19 @@ module DBus
 
     # Parses a match rule string _s_ and sets the filters on the object.
     def from_s(str)
-      s.split(",").each do |eq|
+      str.split(",").each do |eq|
         if eq =~ /^(.*)='([^']*)'$/
 # "
           name = $1
-          val = $1
+          val = $2
           if FILTERS.member?(name.to_sym)
             method(name + "=").call(val)
           else
-            raise MatchRuleException
+            raise MatchRuleException, name
           end
         end
       end
+      self
     end
 
     # Sets the match rule to filter for the given _signal_ and the

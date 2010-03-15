@@ -353,7 +353,7 @@ module DBus
           if rmsg.is_a?(Error)
             raise rmsg
           else
-            return rmsg.params[0]
+            return rmsg.params[0] # return value of introspect_data
           end
         end
       else
@@ -610,6 +610,7 @@ module DBus
         @unique_name = rmsg.destination
         puts "Got hello reply. Our unique_name is #{@unique_name}" if $DEBUG
       end
+      @service = Service.new(@unique_name, self)
     end
 
     # Parse the session string (socket address).
