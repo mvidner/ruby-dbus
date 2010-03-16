@@ -478,6 +478,7 @@ module DBus
       if @default_iface and has_iface?(@default_iface)
         @interfaces[@default_iface].on_signal(@bus, name, &block)
       else
+        # TODO improve
         raise NoMethodError
       end
     end
@@ -492,13 +493,19 @@ module DBus
         begin
           @interfaces[@default_iface].method(name).call(*args)
         rescue NameError => e
-          match = /undefined method `([^']*)' for class `([^']*)'/.match e.to_s
+          # interesting, foo.method("unknown")
+          # raises NameError, not NoMethodError
+          match = /undefined method `([^']*)' for class `([^']*)'/.match e
           raise unless match and match[2] == "DBus::ProxyObjectInterface"
-          raise NameError,"undefined method `#{match[1]}' for DBus interface `#{@default_iface}'"
+          # BTW e.exception("...") would preserve the class.
+          raise NoMethodError,"undefined method `#{match[1]}' for DBus interface `#{@default_iface}' on object `#{@path}'"
         end
       else
-        # TODO improve
-        raise NoMethodError
+        # TODO distinguish:
+        # - di not specified
+        #TODO
+        # - di is specified but not found in introspection data
+        raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
       end
     end
   end # class ProxyObject
