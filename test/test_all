@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 # run all applicable test cases with proper setup
 # $0 [-a: all, even failing]
 # $0 ./a_single_testcase
