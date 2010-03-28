@@ -1,5 +1,31 @@
 = Ruby D-Bus NEWS
 
+Note about bug numbers:
+ Ticket#1 - https://trac.luon.net/ruby-dbus/ticket/1
+ Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
+ bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
+
+== Ruby D-Bus 0.3.0 - 2010-03-28
+
+Bug fixes:
+ 
+ * Fixed "undefined method `get_node' for nil:NilClass"
+   on Ubuntu Karmic (Ticket#34).
+ * Get the session bus address even if unset in ENV (Issue#4).
+ * Improved exceptions a bit:
+   UndefinedInterface, InvalidMethodName, NoMethodError, no RuntimeException
+
+ These are by Klaus Kaempf:
+ * Make the signal dispatcher call all handlers (Issue#3).
+ * Run on Ruby < 1.8.7 (Issue#2).
+ * Avoid needless DBus::IncompleteBufferException (Ticket#33).
+ * Don't ignore DBus Errors in request_service, raise them (Ticket#32).
+
+Features:
+
+ * Automatic signature inference for variants.
+ * Introduced FormalParameter where a plain pair had been used.
+
 == Ruby D-Bus 0.2.12 - 2010-01-24
 
 Bug fixes:
