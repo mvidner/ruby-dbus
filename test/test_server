@@ -23,6 +23,7 @@ my_dbus_launch () {
     # reimplementing dbus-launch because it is in dbus-1-x11.rpm
     PF=`mktemp dbus.pid.XXXXXX` || exit
     AF=`mktemp dbus.addr.XXXXXX` || exit
+    RM_FILES="$RM_FILES $PF $AF"
 
     dbus-daemon --session --print-address=3 3>$AF --print-pid=4 4>$PF &
     # wait for the daemon to print the info
@@ -34,9 +35,8 @@ my_dbus_launch () {
     done
     DBUS_SESSION_BUS_PID=$(cat $PF)
     export DBUS_SESSION_BUS_ADDRESS=$(cat $AF)
+    KILLS="$KILLS $DBUS_SESSION_BUS_PID"
 #    dbus-monitor &
-    # Clean up at exit. This will also kill the server.
-    trap "kill $DBUS_SESSION_BUS_PID; rm $AF $PF" EXIT TERM INT
 }
 
 setup_activation () {
@@ -57,9 +57,13 @@ run_server () {
 }
 
 export XDG_DATA_DIRS=`mktemp -d dbus.activation.XXXXXX`
+RM_FILES="$RM_FILES $XDG_DATA_DIRS"
 my_dbus_launch
 setup_activation
 #run_server
+
+# Clean up at exit. This will also kill the server.
+trap "kill \$KILLS; rm -rf \$RM_FILES" EXIT TERM INT
 
 while [ -n "$1" ]; do
   echo Running $1
@@ -67,5 +71,4 @@ while [ -n "$1" ]; do
   shift
 done
 
-rm -r $XDG_DATA_DIRS
 echo Done
