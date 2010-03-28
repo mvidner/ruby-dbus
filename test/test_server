@@ -34,6 +34,7 @@ my_dbus_launch () {
     done
     DBUS_SESSION_BUS_PID=$(cat $PF)
     export DBUS_SESSION_BUS_ADDRESS=$(cat $AF)
+#    dbus-monitor &
     # Clean up at exit. This will also kill the server.
     trap "kill $DBUS_SESSION_BUS_PID; rm $AF $PF" EXIT TERM INT
 }

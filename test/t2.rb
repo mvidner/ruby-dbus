@@ -23,6 +23,8 @@ class ValueTest < Test::Unit::TestCase
     assert_equal "cuckoo", @obj.bounce_variant("cuckoo")[0]
     assert_equal ["coucou", "kuku"], @obj.bounce_variant(["coucou", "kuku"])[0]
     assert_equal [], @obj.bounce_variant([])[0]
+    empty_hash = {}
+    assert_equal empty_hash, @obj.bounce_variant(empty_hash)[0]
   end
   
   # these are ambiguous
