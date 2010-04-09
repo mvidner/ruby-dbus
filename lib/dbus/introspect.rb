@@ -124,6 +124,11 @@ module DBus
     def add_fparam(name, signature)
       @params << FormalParameter.new(name, signature)
     end
+
+    # Deprecated, for backward compatibility
+    def add_param(name_signature_pair)
+      add_fparam(*name_signature_pair)
+    end
   end # class InterfaceElement
 
   # = D-Bus interface method class
