@@ -78,12 +78,22 @@ end
 class Derived < Test
 end
 
+class Test2 < DBus::Object
+  dbus_interface "org.ruby.Test2" do
+    dbus_method :hi, "in name:s, out greeting:s" do |name|
+      "Hi, #{name}!"
+    end
+  end
+end
+
 bus = DBus::SessionBus.instance
 service = bus.request_service("org.ruby.service")
 myobj = Test.new("/org/ruby/MyInstance")
 service.export(myobj)
 derived = Derived.new "/org/ruby/MyDerivedInstance"
 service.export derived
+test2 = Test2.new "/org/ruby/MyInstance2"
+service.export test2 
 
 # introspect every other connection, Ticket #34
 #  (except the one that activates us - it has already emitted
