@@ -24,7 +24,7 @@ my_dbus_launch () {
     PF=`mktemp dbus.pid.XXXXXX` || exit
     AF=`mktemp dbus.addr.XXXXXX` || exit
 
-    dbus-daemon --session --print-address=3 3>$AF --print-pid=4 4>$PF &
+    dbus-daemon --config-file=dbus-limited-session.conf --print-address=3 3>$AF --print-pid=4 4>$PF &
     # wait for the daemon to print the info
     TRIES=0
     while [ ! -s $AF -o ! -s $PF ]; do
