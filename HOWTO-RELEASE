@@ -1,3 +1,4 @@
+rake test # and also for Ruby 1.9.1
 edit version in Rakefile
 edit NEWS
 rake gemspec # but check the resulting filelist for clutter
