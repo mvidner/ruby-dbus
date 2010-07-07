@@ -54,4 +54,12 @@ class SignalHandlerTest < Test::Unit::TestCase
 
     assert_equal 11, counter
   end
+
+  def test_too_many_rules
+    100.times do
+      @obj.on_signal "Whichever" do
+        puts "not called"
+      end
+    end
+  end
 end
