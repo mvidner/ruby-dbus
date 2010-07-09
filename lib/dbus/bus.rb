@@ -736,7 +736,7 @@ module DBus
           b = @buses[socket]
           begin
             b.update_buffer
-          rescue EOFError
+          rescue EOFError, SystemCallError
             @buses.delete socket # this bus died
             next
           end

@@ -85,7 +85,7 @@ mr = DBus::MatchRule.new.from_s "type='signal',interface='org.freedesktop.DBus',
 bus.add_match(mr) do |msg|
   new_unique_name = msg.params[2]
   unless new_unique_name.empty?
-    # puts "RRRING #{new_unique_name}"
+    d "RRRING #{new_unique_name}"
     bus.introspect_data(new_unique_name, "/") do
       # ignore the result
     end
@@ -95,5 +95,9 @@ end
 puts "listening"
 main = DBus::Main.new
 main << bus
-main.run
+begin
+  main.run
+rescue SystemCallError
+  # the test driver will kill the bus, that's OK
+end
 
