@@ -413,10 +413,14 @@ module DBus
     end
 
     # Registers a handler (code block) for a signal with _name_ arriving
-    # over the given _bus_.
+    # over the given _bus_. If no block is given, the signal is unregistered.
     def on_signal(bus, name, &block)
       mr = DBus::MatchRule.new.from_signal(self, name)
-      bus.add_match(mr) { |msg| block.call(*msg.params) }
+      if block.nil?
+        bus.remove_match(mr)
+      else
+        bus.add_match(mr) { |msg| block.call(*msg.params) }
+      end
     end
   end # class ProxyObjectInterface
 

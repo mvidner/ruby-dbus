@@ -19,13 +19,8 @@ class SignalHandlerTest < Test::Unit::TestCase
     @loop << @session_bus
   end
 
-  def teardown
-    # workaround for nonexisting remove_match
-    @session_bus.instance_variable_set(:@signal_matchrules, [])
-  end
-
   # testing for commit 017c83 (kkaempf)
-  def test_calling_both_handlers
+  def test_overriding_a_handler
     counter = 0
 
     @obj.on_signal "LongTaskEnd" do
@@ -52,7 +47,7 @@ class SignalHandlerTest < Test::Unit::TestCase
     end
     @loop.run
 
-    assert_equal 11, counter
+    assert_equal 1, counter
   end
 
   def test_too_many_rules
@@ -61,5 +56,9 @@ class SignalHandlerTest < Test::Unit::TestCase
         puts "not called"
       end
     end
+  end
+
+  def test_removing_a_nonexistent_rule
+    @obj.on_signal "DoesNotExist"
   end
 end
