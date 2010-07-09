@@ -47,7 +47,7 @@ class SignalHandlerTest < Test::Unit::TestCase
     end
     @loop.run
 
-    assert_equal 11, counter
+    assert_equal 1, counter
   end
 
   def test_too_many_rules
@@ -56,5 +56,9 @@ class SignalHandlerTest < Test::Unit::TestCase
         puts "not called"
       end
     end
+  end
+
+  def test_removing_a_nonexistent_rule
+    @obj.on_signal "DoesNotExist"
   end
 end

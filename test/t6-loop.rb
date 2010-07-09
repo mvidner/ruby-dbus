@@ -19,11 +19,6 @@ class MainLoopTest < Test::Unit::TestCase
     @loop << @session_bus
   end
 
-  def teardown
-    # workaround for nonexisting remove_match
-    @session_bus.instance_variable_set(:@signal_matchrules, [])
-  end
-
   # Hack the library internals so that there is a delay between
   # sending a DBus call and listening for its reply, so that
   # the bus has a chance to join the server messages and a race is reproducible
@@ -76,6 +71,8 @@ class MainLoopTest < Test::Unit::TestCase
     d "Defusing dynamite"
     # if we get here, defuse the bomb
     dynamite.exit
+    # remove signal handler
+    @obj.on_signal "LongTaskEnd"
   end
 
   # https://bugzilla.novell.com/show_bug.cgi?id=537401

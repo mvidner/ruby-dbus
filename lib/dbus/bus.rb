@@ -203,7 +203,7 @@ module DBus
       @buffer = ""
       @method_call_replies = Hash.new
       @method_call_msgs = Hash.new
-      @signal_matchrules = Array.new
+      @signal_matchrules = Hash.new
       @proxy = nil
       # FIXME: can be TCP or any stream
       @socket = Socket.new(Socket::Constants::PF_UNIX,
@@ -500,8 +500,24 @@ module DBus
     # received
     def add_match(mr, &slot)
       # check this is a signal.
-      @signal_matchrules << [mr, slot]
-      self.proxy.AddMatch(mr.to_s)
+      mrs = mr.to_s
+      puts "#{@signal_matchrules.size} rules, adding #{mrs.inspect}" if $DEBUG
+      # don't ask for the same match if we override it
+      unless @signal_matchrules.key?(mrs)
+        puts "Asked for a new match" if $DEBUG
+        proxy.AddMatch(mrs)
+      end
+      @signal_matchrules[mrs] = slot
+    end
+
+    def remove_match(mr)
+      mrs = mr.to_s
+      unless @signal_matchrules.delete(mrs).nil?
+        # don't remove nonexisting matches.
+        # FIXME if we do try, the Error.MatchRuleNotFound is *not* raised
+        # and instead is reported as "no return code for nil"
+        proxy.RemoveMatch(mrs)
+      end
     end
 
     # Process a message _m_ based on its type.
@@ -548,11 +564,10 @@ module DBus
           obj.dispatch(m) if obj
         end
       when DBus::Message::SIGNAL
-        @signal_matchrules.each do |elem|
-          mr, slot = elem
-          if mr.match(m)
+        # the signal can match multiple different rules
+        @signal_matchrules.each do |mrs, slot|
+          if DBus::MatchRule.new.from_s(mrs).match(m)
             slot.call(m)
-            return
           end
         end
       else
