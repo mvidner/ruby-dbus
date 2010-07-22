@@ -1,3 +1,4 @@
+osc build # for the previous release, in advance, to cache the current packages
 rake test # and also for Ruby 1.9.1
 edit version in Rakefile
 edit NEWS
@@ -7,9 +8,10 @@ git tag
 rake package
 osc build
 git push
-git tag
 git push --tags
-upload pkg/*.{tgz, gem}
+upload pkg/*.{tgz, gem} (to github)
+osc ci
+osc sr
 edit homepage
 mail to ML
 post to blog
