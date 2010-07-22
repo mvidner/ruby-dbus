@@ -5,6 +5,17 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.3.1 - 2010-07-22
+
+Bug fixes:
+ * Many on_signal could cause DBus.Error.LimitsExceeded bnc#617350).
+   Don't add a match rule that already exists, enable removing match
+   rules. Now only one handler for a rule is called (but it is possible
+   for one signal to match more rules). This reverts the half-fix done
+   to fix Issue#3
+ * Re-added InterfaceElement#add_param for compatibility.
+ * Handle more ways which tell us that a bus connection has died.
+
 == Ruby D-Bus 0.3.0 - 2010-03-28
 
 Bug fixes:
