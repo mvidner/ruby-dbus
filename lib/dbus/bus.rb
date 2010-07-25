@@ -207,24 +207,38 @@ module DBus
 
     # Connect to the bus and initialize the connection.
     def connect
-      connect_to_tcp if @path.include? "tcp:" #connect to tcp socket
-      connect_to_unix if @path.include? "unix:" #connect to unix socket
+      addresses = @path.split ";"
+      # connect to first one that succeeds
+      worked = addresses.find do |a|
+        transport, keyvaluestring = a.split ":"
+        kv_list = keyvaluestring.split ","
+        kv_hash = Hash.new
+        kv_list.each do |kv|
+          key, escaped_value = kv.split "="
+          value = escaped_value.gsub(/%(..)/) {|m| [$1].pack "H2" }
+          kv_hash[key] = value
+        end
+        case transport
+          when "unix"
+          connect_to_unix kv_hash
+          when "tcp"
+          connect_to_tcp kv_hash
+          else
+          # ignore, report?
+        end
+      end
+      worked
+      # returns the address that worked or nil.
+      # how to report failure?
     end
 
     # Connect to a bus over tcp and initialize the connection.
-    def connect_to_tcp
+    def connect_to_tcp(params)
       #check if the path is sufficient
-      if @path.include? "host=" and @path.include? "port="
-        host,port,family = "","",""
-        #get the parameters
-        @path.split(",").each do |para|
-          host = para.sub("tcp:","").sub("host=","") if para.include? "host="
-          port = para.sub("port=","").to_i if para.include? "port="
-          family = para.sub("family=","") if para.include? "family="
-        end
+      if params.key?("host") and params.key?("port")
         begin
           #initialize the tcp socket
-          @socket = TCPSocket.new(host,port)
+          @socket = TCPSocket.new(params["host"],params["port"].to_i)
           init_connection
           @is_tcp = true
         rescue
@@ -238,42 +252,19 @@ module DBus
     end
 
     # Connect to an abstract unix bus and initialize the connection.
-    def connect_to_unix
+    def connect_to_unix(params)
       @socket = Socket.new(Socket::Constants::PF_UNIX,Socket::Constants::SOCK_STREAM, 0)
-      parse_session_string
-      if @transport == "unix" and @type == "abstract"
+      if ! params['abstract'].nil?
         if HOST_END == LIL_END
-          sockaddr = "\1\0\0#{@unix_abstract}"
+          sockaddr = "\1\0\0#{params['abstract']}"
         else
-          sockaddr = "\0\1\0#{@unix_abstract}"
+          sockaddr = "\0\1\0#{params['abstract']}"
         end
-      elsif @transport == "unix" and @type == "path"
-        sockaddr = Socket.pack_sockaddr_un(@unix)
+      elsif ! params['path'].nil?
+        sockaddr = Socket.pack_sockaddr_un(params['path'])
       end
       @socket.connect(sockaddr)
       init_connection
-    end
-    
-    # Parse the session string (socket address).
-    def parse_session_string
-      path_parsed = /^([^:]*):([^;]*)$/.match(@path)
-      @transport = path_parsed[1]
-      adr = path_parsed[2]
-      if @transport == "unix"
-        adr.split(",").each do |eqstr|
-          idx, val = eqstr.split("=")
-          case idx
-          when "path"
-            @type = idx
-            @unix = val
-          when "abstract"
-            @type = idx
-            @unix_abstract = val
-          when "guid"
-            @guid = val
-          end
-        end
-      end
     end
 
     # Send the buffer _buf_ to the bus using Connection#writel.
