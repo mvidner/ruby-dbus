@@ -11,11 +11,12 @@ class BusDriverTest < Test::Unit::TestCase
   def setup
     @bus = DBus::SessionBus.instance
     @svc = @bus.service("org.ruby.service")
+    @svc.object("/").introspect
   end
 
   def test_exists
-    assert @svc.exists?
+    assert @svc.exists?, "could not find the service"
     nonsvc = @bus.service "org.ruby.nosuchservice"
-    assert ! nonsvc.exists?
+    assert ! nonsvc.exists?, "found a service that should not exist"
   end
 end
