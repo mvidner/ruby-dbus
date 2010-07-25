@@ -1,15 +1,8 @@
 #! /bin/sh
 # A wrapper for DBus tests
-# Sets up a private session bus and calls all its arguments in turn
-# exiting on first failure
-# $0 server [-k] [arg1 arg2...] -- test1 test2...
+# Run a server (directly or by dbus activation) and then the test
+# $0 server [args...] -- test [args...]
 set -o errexit
-
-KEEP_GOING=false
-if [ "$1" = "-k" ]; then
-    KEEP_GOING=true
-    shift
-fi
 
 while [ "$1" != "--" ]; do
   SERVER="$SERVER $1"
@@ -17,31 +10,10 @@ while [ "$1" != "--" ]; do
 done
 shift # --
 
-# This launches the bus daemon,
-# exports DBUS_SESSION_BUS_ADDRESS and sets DBUS_SESSION_BUS_PID
-my_dbus_launch () {
-    # reimplementing dbus-launch because it is in dbus-1-x11.rpm
-    PF=`mktemp dbus.pid.XXXXXX` || exit
-    AF=`mktemp dbus.addr.XXXXXX` || exit
-    RM_FILES="$RM_FILES $PF $AF"
-
-    dbus-daemon --config-file=dbus-limited-session.conf --print-address=3 3>$AF --print-pid=4 4>$PF &
-    # wait for the daemon to print the info
-    TRIES=0
-    while [ ! -s $AF -o ! -s $PF ]; do
-	sleep 0.1
-	TRIES=`expr $TRIES + 1`
-	if [ $TRIES -gt 100 ]; then echo "dbus-daemon failed?"; exit 1; fi
-    done
-    DBUS_SESSION_BUS_PID=$(cat $PF)
-    export DBUS_SESSION_BUS_ADDRESS=$(cat $AF)
-    KILLS="$KILLS $DBUS_SESSION_BUS_PID"
-#    dbus-monitor &
-}
-
 setup_activation () {
     SDIR=$XDG_DATA_DIRS/dbus-1/services
     mkdir -p $SDIR
+    # FIXME Name is hardcoded
     cat <<EOF > $SDIR/test.service
 [D-BUS Service]
 Name=org.ruby.service
@@ -58,17 +30,10 @@ run_server () {
 
 export XDG_DATA_DIRS=`mktemp -d dbus.activation.XXXXXX`
 RM_FILES="$RM_FILES $XDG_DATA_DIRS"
-my_dbus_launch
 setup_activation
 #run_server
 
-# Clean up at exit. This will also kill the server.
-trap "kill \$KILLS; rm -rf \$RM_FILES" EXIT TERM INT
+# Clean up at exit.
+trap "rm -rf \$RM_FILES" EXIT TERM INT
 
-while [ -n "$1" ]; do
-  echo Running $1
-  $1 || $KEEP_GOING
-  shift
-done
-
-echo Done
+"$@"

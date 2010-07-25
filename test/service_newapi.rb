@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 
+# find the library without external help
+$:.unshift File.expand_path("../../lib", __FILE__)
+
 require 'dbus'
 
 def d(msg)

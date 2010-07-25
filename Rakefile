@@ -1,15 +1,37 @@
+#! /usr/bin/env ruby
 require 'rake'
 require 'rake/gempackagetask'
 require 'fileutils'
 include FileUtils
 require 'rake/rdoctask'
+require 'rake/testtask'
 
-desc 'Default: run tests'
-task :default => :test
+desc 'Default: run tests in the proper environment'
+task :default => "env:test"
 
-desc 'Run tests.'
-task :test do
-    system "make -C test check"
+def common_test_task(t)
+    t.libs << "lib"
+    t.test_files = FileList['test/*_test.rb', 'test/t*.rb']
+    t.verbose = true
+end
+Rake::TestTask.new {|t| common_test_task t }
+
+begin
+  require 'rcov/rcovtask'
+  Rcov::RcovTask.new {|t| common_test_task t }
+rescue LoadError
+  # no rcov, never mind
+end
+
+%w(test rcov).each do |tname|
+  namespace :env do
+    desc "Run #{tname} in the proper environment"
+    task tname do |t|
+      cd "test" do
+        system "./test_env rake #{tname}"
+      end
+    end
+  end
 end
 
 spec = Gem::Specification.new do |s|

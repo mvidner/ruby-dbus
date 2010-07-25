@@ -1,0 +1,13 @@
+#! /bin/bash
+# test_env: set up the environment needed to run tests:
+# - set up a private bus
+# - run a test server on it
+
+#export DBUS_VERBOSE=1
+#export RUBYOPT="-d"
+export RUBYOPT="$RUBYOPT -w"
+./test_server \
+	./service_newapi.rb \
+	-- \
+	./dbus-launch-simple \
+	"$@"

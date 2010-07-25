@@ -1,0 +1,35 @@
+#! /bin/sh
+# A wrapper for DBus tests
+# Reimplementing dbus-launch because it is in dbus-1-x11.rpm
+# Sets up a private session bus and call the specified program
+set -o errexit
+
+# This launches the bus daemon,
+# exports DBUS_SESSION_BUS_ADDRESS and sets DBUS_SESSION_BUS_PID
+my_dbus_launch () {
+    # reimplementing dbus-launch because it is in dbus-1-x11.rpm
+    PF=`mktemp dbus.pid.XXXXXX` || exit
+    AF=`mktemp dbus.addr.XXXXXX` || exit
+    RM_FILES="$RM_FILES $PF $AF"
+
+    dbus-daemon --config-file=dbus-limited-session.conf --print-address=3 3>$AF --print-pid=4 4>$PF &
+    # wait for the daemon to print the info
+    TRIES=0
+    while [ ! -s $AF -o ! -s $PF ]; do
+	sleep 0.1
+	TRIES=`expr $TRIES + 1`
+	if [ $TRIES -gt 100 ]; then echo "dbus-daemon failed?"; exit 1; fi
+    done
+    DBUS_SESSION_BUS_PID=$(cat $PF)
+    export DBUS_SESSION_BUS_ADDRESS=$(cat $AF)
+    KILLS="$KILLS $DBUS_SESSION_BUS_PID"
+#    dbus-monitor &
+}
+
+my_dbus_launch
+
+# Clean up at exit.
+trap "kill \$KILLS; rm -rf \$RM_FILES" EXIT TERM INT
+
+# run the payload; the return value is passed on
+"$@"
