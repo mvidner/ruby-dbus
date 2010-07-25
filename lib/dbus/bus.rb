@@ -192,11 +192,7 @@ module DBus
     # http://dbus.freedesktop.org/doc/dbus-specification.html#addresses
     # and is something like:
     # "transport1:key1=value1,key2=value2;transport2:key1=value1,key2=value2"
-    # e.g. "unix:path=/tmp/dbus-test"
-    #
-    # Current implementation of ruby-dbus supports only a single server
-    # address and only "unix:path=...,guid=..." and
-    # "unix:abstract=...,guid=..." forms
+    # e.g. "unix:path=/tmp/dbus-test" or "tcp:host=localhost,port=2687"
     def initialize(path)
       @path = path
       @unique_name = nil
@@ -205,14 +201,45 @@ module DBus
       @method_call_msgs = Hash.new
       @signal_matchrules = Hash.new
       @proxy = nil
-      # FIXME: can be TCP or any stream
-      @socket = Socket.new(Socket::Constants::PF_UNIX,
-                           Socket::Constants::SOCK_STREAM, 0)
       @object_root = Node.new("/")
+      @is_tcp = false
     end
 
     # Connect to the bus and initialize the connection.
     def connect
+      connect_to_tcp if @path.include? "tcp:" #connect to tcp socket
+      connect_to_unix if @path.include? "unix:" #connect to unix socket
+    end
+
+    # Connect to a bus over tcp and initialize the connection.
+    def connect_to_tcp
+      #check if the path is sufficient
+      if @path.include? "host=" and @path.include? "port="
+        host,port,family = "","",""
+        #get the parameters
+        @path.split(",").each do |para|
+          host = para.sub("tcp:","").sub("host=","") if para.include? "host="
+          port = para.sub("port=","").to_i if para.include? "port="
+          family = para.sub("family=","") if para.include? "family="
+        end
+        begin
+          #initialize the tcp socket
+          @socket = TCPSocket.new(host,port)
+          init_connection
+          @is_tcp = true
+        rescue
+          puts "Error: Could not establish connection to: #{@path}, will now exit."
+          exit(0) #a little harsh
+        end
+      else
+        #Danger, Will Robinson: the specified "path" is not usable
+        puts "Error: supplied path: #{@path}, unusable! sorry."
+      end
+    end
+
+    # Connect to an abstract unix bus and initialize the connection.
+    def connect_to_unix
+      @socket = Socket.new(Socket::Constants::PF_UNIX,Socket::Constants::SOCK_STREAM, 0)
       parse_session_string
       if @transport == "unix" and @type == "abstract"
         if HOST_END == LIL_END
@@ -226,10 +253,32 @@ module DBus
       @socket.connect(sockaddr)
       init_connection
     end
+    
+    # Parse the session string (socket address).
+    def parse_session_string
+      path_parsed = /^([^:]*):([^;]*)$/.match(@path)
+      @transport = path_parsed[1]
+      adr = path_parsed[2]
+      if @transport == "unix"
+        adr.split(",").each do |eqstr|
+          idx, val = eqstr.split("=")
+          case idx
+          when "path"
+            @type = idx
+            @unix = val
+          when "abstract"
+            @type = idx
+            @unix_abstract = val
+          when "guid"
+            @guid = val
+          end
+        end
+      end
+    end
 
     # Send the buffer _buf_ to the bus using Connection#writel.
     def send(buf)
-      @socket.write(buf)
+      @socket.write(buf) unless @socket.nil?
     end
 
     # Tell a bus to register itself on the glib main loop
@@ -429,7 +478,14 @@ module DBus
     # Fill (append) the buffer from data that might be available on the
     # socket.
     def update_buffer
-      @buffer += @socket.read_nonblock(MSG_BUF_SIZE)
+      @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
+    rescue EOFError
+      raise                     # the caller expects it
+    rescue Exception => e
+      puts "Oops:", e
+      raise if @is_tcp          # why?
+      puts "WARNING: read_nonblock failed, falling back to .recv"
+      @buffer += @socket.recv(MSG_BUF_SIZE)  
     end
 
     # Get one message from the bus and remove it from the buffer.
@@ -471,6 +527,10 @@ module DBus
 
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
+      if @socket.nil?
+        puts "ERROR: Can't wait for messages, @socket is nil."
+        return
+      end
       ret = pop_message
       while ret == nil
         r, d, d = IO.select([@socket])
@@ -485,11 +545,15 @@ module DBus
     # Send a message _m_ on to the bus. This is done synchronously, thus
     # the call will block until a reply message arrives.
     def send_sync(m, &retc) # :yields: reply/return message
+      return if m.nil? #check if somethings wrong
       send(m.marshall)
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
 
       retm = wait_for_message
+      
+      return if retm.nil? #check if somethings wrong
+      
       process(retm)
       until [DBus::Message::ERROR,
           DBus::Message::METHOD_RETURN].include?(retm.message_type) and
@@ -535,17 +599,14 @@ module DBus
     end
 
     # Process a message _m_ based on its type.
-    # method call:: FIXME...
-    # method call return value:: FIXME...
-    # signal:: FIXME...
-    # error:: FIXME...
     def process(m)
+      return if m.nil? #check if somethings wrong
       case m.message_type
       when Message::ERROR, Message::METHOD_RETURN
         raise InvalidPacketException if m.reply_serial == nil
         mcs = @method_call_replies[m.reply_serial]
         if not mcs
-          puts "no return code for #{mcs.inspect} (#{m.inspect})" if $DEBUG
+          puts "DEBUG: no return code for mcs: #{mcs.inspect} m: #{m.inspect}" if $DEBUG
         else
           if m.message_type == Message::ERROR
             mcs.call(Error.new(m))
@@ -557,7 +618,7 @@ module DBus
         end
       when DBus::Message::METHOD_CALL
         if m.path == "/org/freedesktop/DBus"
-          puts "Got method call on /org/freedesktop/DBus" if $DEBUG
+          puts "DEBUG: Got method call on /org/freedesktop/DBus" if $DEBUG
         end
         node = @service.get_node(m.path)
         if not node
@@ -584,7 +645,7 @@ module DBus
           end
         end
       else
-        puts "Unknown message type: #{m.message_type}" if $DEBUG
+        puts "DEBUG: Unknown message type: #{m.message_type}" if $DEBUG
       end
     end
 
@@ -629,39 +690,13 @@ module DBus
       @service = Service.new(@unique_name, self)
     end
 
-    # Parse the session string (socket address).
-    def parse_session_string
-      path_parsed = /^([^:]*):([^;]*)$/.match(@path)
-      @transport = path_parsed[1]
-      adr = path_parsed[2]
-      if @transport == "unix"
-        adr.split(",").each do |eqstr|
-          idx, val = eqstr.split("=")
-          case idx
-          when "path"
-            @type = idx
-            @unix = val
-          when "abstract"
-            @type = idx
-            @unix_abstract = val
-          when "guid"
-            @guid = val
-          end
-        end
-      end
-    end
-
     # Initialize the connection to the bus.
     def init_connection
       @client = Client.new(@socket)
       @client.authenticate
-      # TODO: code some real stuff here
-      #writel("AUTH EXTERNAL 31303030")
-      #s = readl
-      # parse OK ?
-      #writel("BEGIN")
     end
   end # class Connection
+
 
   # = D-Bus session bus class
   #
@@ -700,6 +735,27 @@ module DBus
     # Get the default system bus.
     def initialize
       super(SystemSocketName)
+      connect
+      send_hello
+    end
+  end
+  
+  # = D-Bus remote (TCP) bus class
+  #
+  # This class may be used when connecting to remote (listening on a TCP socket) 
+  # busses. You can also use it to connect to other non-standard path busses.
+  # 
+  # The specified socket_name should look like this:
+  # (for TCP)         tcp:host=127.0.0.1,port=2687
+  # (for Unix-socket) unix:path=/tmp/my_funky_bus_socket
+  # 
+  # you'll need to take care about authentification then, more info here: 
+  # http://github.com/pangdudu/ruby-dbus/blob/master/README.rdoc
+  class RemoteBus < Connection
+
+    # Get the remote bus.
+    def initialize socket_name
+      super(socket_name)
       connect
       send_hello
     end
