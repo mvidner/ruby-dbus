@@ -16,7 +16,7 @@ class ServerRobustnessTest < Test::Unit::TestCase
     obj.introspect
     assert false, "should have raised"
   rescue DBus::Error => e
-    assert_no_match(/timeout/, e)
+    assert_no_match(/timeout/, e.to_s)
   end
 
   def test_no_such_path_without_introspection
@@ -26,7 +26,7 @@ class ServerRobustnessTest < Test::Unit::TestCase
     ifc.the_answer
     assert false, "should have raised"
   rescue DBus::Error => e
-    assert_no_match(/timeout/, e)
+    assert_no_match(/timeout/, e.to_s)
   end
 
   def test_a_method_that_raises
@@ -36,6 +36,6 @@ class ServerRobustnessTest < Test::Unit::TestCase
     obj.will_raise
     assert false, "should have raised"
   rescue DBus::Error => e
-    assert_no_match(/timeout/, e)
+    assert_no_match(/timeout/, e.to_s)
   end
 end
