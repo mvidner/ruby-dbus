@@ -88,8 +88,8 @@ module DBus
     # backward compatibility, deprecated
     def [](index)
       case index
-        when 0: name
-        when 1: type
+        when 0 then name
+        when 1 then type
         else nil
       end
     end
