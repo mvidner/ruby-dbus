@@ -75,10 +75,15 @@ class Test < DBus::Object
   end
 end
 
+class Derived < Test
+end
+
 bus = DBus::SessionBus.instance
 service = bus.request_service("org.ruby.service")
 myobj = Test.new("/org/ruby/MyInstance")
 service.export(myobj)
+derived = Derived.new "/org/ruby/MyDerivedInstance"
+service.export derived
 
 # introspect every other connection, Ticket #34
 #  (except the one that activates us - it has already emitted
