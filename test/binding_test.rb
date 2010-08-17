@@ -28,5 +28,10 @@ class BindingTest < Test::Unit::TestCase
     assert_not_nil test2["org.ruby.Test2"]
     # but not an interface of the Test class
     assert_nil test2["org.ruby.SampleInterface"]
+
+    base = @svc.object "/org/ruby/MyInstance"
+    base.introspect
+    # and the parent should not get polluted by the child
+    assert_nil base["org.ruby.Test2"]
   end
 end
