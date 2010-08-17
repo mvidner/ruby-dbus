@@ -32,34 +32,33 @@ module DBus
     # The path of the object.
     attr_reader :path
     # The interfaces that the object supports.
-    attr_reader :intfs
+    class_attribute :intfs
     # The service that the object is exported by.
     attr_writer :service
 
-    @@intfs = Hash.new
     @@cur_intf = nil
     @@intfs_mutex = Mutex.new
 
     # Create a new object with a given _path_.
     def initialize(path)
       @path = path
-      @intfs = @@intfs.dup
       @service = nil
     end
 
     # State that the object implements the given _intf_.
     def implements(intf)
-      @intfs[intf.name] = intf
+      # use a setter
+      self.intfs = (self.intfs || {}).merge({intf.name => intf})
     end
 
     # Dispatch a message _msg_.
     def dispatch(msg)
       case msg.message_type
       when Message::METHOD_CALL
-        if not @intfs[msg.interface]
+        if not self.intfs[msg.interface]
           raise InterfaceNotInObject, msg.interface
         end
-        meth = @intfs[msg.interface].methods[msg.member.to_sym]
+        meth = self.intfs[msg.interface].methods[msg.member.to_sym]
         raise MethodNotInInterface if not meth
         methname = Object.make_method_name(msg.interface, msg.member)
         reply = nil
@@ -83,7 +82,8 @@ module DBus
     # belong to.
     def self.dbus_interface(s)
       @@intfs_mutex.synchronize do
-        @@cur_intf = @@intfs[s] = Interface.new(s)
+        @@cur_intf = Interface.new(s)
+        self.intfs = (self.intfs || {}).merge({s => @@cur_intf})
         yield
         @@cur_intf = nil
       end
