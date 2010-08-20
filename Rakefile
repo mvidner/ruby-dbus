@@ -36,15 +36,14 @@ end
 
 spec = Gem::Specification.new do |s|
     s.name = "ruby-dbus"
-    s.version = "0.3.1"
+    s.version = "0.4.0"
     s.author = "Ruby DBus Team"
     s.email = "ruby-dbus-devel@lists.luon.net"
     s.homepage = "http://trac.luon.net/data/ruby-dbus/"
     s.platform = Gem::Platform::RUBY
     s.summary = "Ruby module for interaction with DBus"
-    s.files = FileList["{doc/tutorial/src,examples,lib,test}/**/*", "setup.rb"].to_a.sort
+    s.files = FileList["{doc/tutorial/src,examples,lib,test}/**/*", "setup.rb", "Rakefile"].to_a.sort
     s.require_path = "lib"
-    s.autorequire = "dbus"
     s.has_rdoc = true
     s.extra_rdoc_files = ["ChangeLog", "COPYING", "README", "NEWS"]
 end

@@ -5,6 +5,16 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.4.0 - 2010-08-20
+
+Features:
+ * TCP transport (by pangdudu)
+ * Enabled test code coverage report (rcov)
+
+Bug fixes:
+ * Classes should not share all interfaces (Ticket#36/Issue#5)
+ * Ruby 1.9 compatibility (Ticket#37, by Myra Nelson)
+
 == Ruby D-Bus 0.3.1 - 2010-07-22
 
 Bug fixes:
