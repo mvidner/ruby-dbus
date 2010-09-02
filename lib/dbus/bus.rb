@@ -11,6 +11,7 @@
 require 'socket'
 require 'thread'
 require 'singleton'
+require 'fcntl'
 
 # = D-Bus main module
 #
@@ -239,6 +240,7 @@ module DBus
         begin
           #initialize the tcp socket
           @socket = TCPSocket.new(params["host"],params["port"].to_i)
+          @socket.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
           init_connection
           @is_tcp = true
         rescue
@@ -254,6 +256,7 @@ module DBus
     # Connect to an abstract unix bus and initialize the connection.
     def connect_to_unix(params)
       @socket = Socket.new(Socket::Constants::PF_UNIX,Socket::Constants::SOCK_STREAM, 0)
+      @socket.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
       if ! params['abstract'].nil?
         if HOST_END == LIL_END
           sockaddr = "\1\0\0#{params['abstract']}"
