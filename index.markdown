@@ -1,3 +1,7 @@
+---
+layout: default
+title: Ruby D-Bus Tutorial
+---
 <style>
 code { background-color: #F0E7E7; }
 pre code { background-color: #F0DDDD; }
