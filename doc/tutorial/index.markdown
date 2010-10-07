@@ -387,6 +387,12 @@ This piece of code above instantiates a `Test` object with a D-Bus object
 path.  This object is reachable from the outside world after
 `service.export(exported_obj)` is called.
 
+We also need a loop which will read and process the calls coming over the bus:
+
+    loop = DBus::Main.new
+    loop << bus
+    loop.run
+
 ### Using the exported object
 
 Now, let's consider another program that will access our newly created service:
