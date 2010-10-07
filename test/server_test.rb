@@ -14,6 +14,15 @@ rescue DBus::Object::UndefinedInterface => e
   # raised by the preceding signal declaration
 end
 
+class Bar < DBus::Object
+  dbus_interface "org.ruby.ServerTest" do
+    # a valid Ruby symbol but an invalid DBus name; Ticket#38
+    dbus_signal :signal_with_a_bang!
+  end
+rescue DBus::InvalidMethodName
+  # raised by the preceding signal declaration
+end
+
 class ServerTest < Test::Unit::TestCase
   def setup
     @bus = DBus::SessionBus.instance

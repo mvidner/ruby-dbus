@@ -108,7 +108,7 @@ module DBus
     # Validates element _name_.
     def validate_name(name)
       if (not name =~ MethodSignalRE) or (name.size > 255)
-        raise InvalidMethodName name
+        raise InvalidMethodName, name
       end
     end
 
