@@ -13,7 +13,7 @@
 # Module containing all the D-Bus modules and classes.
 module DBus
   # = InvalidDestinationName class
-  # Thrown when you try do send a message to /org/freedesktop/DBus/Local, that
+  # Thrown when you try to send a message to /org/freedesktop/DBus/Local, that
   # is reserved.
   class InvalidDestinationName < Exception
   end
