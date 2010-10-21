@@ -316,6 +316,18 @@ The difference between the two is that for the first one, `rb_service`
 needs to have been introspected.  Also the obtained `rb_player` is already
 introspected whereas the second `rb_player` isn't yet.
 
+Errors
+------
+
+D-Bus calls can reply with an error instead of a return value. An error is
+translated to a Ruby exception.
+
+    begin
+        network_manager.sleep
+    rescue DBus::Error => e
+        puts e unless e.name == "org.freedesktop.NetworkManager.AlreadyAsleepOrAwake"
+    end
+
 Creating a Service
 ==================
 
@@ -439,3 +451,17 @@ Note that the `ThatsALongMethodNameIThink` method is returning a single
 value to the caller.  Notice that you always have to return an array.  If
 you want to return multiple values, just have an array with multiple
 values.
+
+Replying with an error
+----------------------
+
+To reply to a dbus_method with a D-Bus error, raise a `DBus::Error`,
+as constructed by the `error` convenience function:
+
+    raise DBus.error("org.example.Error.SeatOccupied"), "Seat #{seat} is occupied"
+
+If the error name is not specified, the generic
+`org.freedesktop.DBus.Error.Failed` is used.
+
+    raise DBus.error, "Seat #{seat} is occupied"
+    raise DBus.error

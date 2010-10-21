@@ -36,6 +36,14 @@ class Test < DBus::Object
       raise "Handle this"
     end
 
+    dbus_method :will_raise_error_failed, "" do
+      raise DBus.error, "failed as designed"
+    end
+
+    dbus_method :Error, "in name:s, in description:s" do |name, description|
+      raise DBus.error(name), description
+    end
+
     dbus_signal :SomethingJustHappened, "toto:s, tutu:u"
   end
 

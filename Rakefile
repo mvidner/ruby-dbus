@@ -66,3 +66,9 @@ Rake::RDocTask.new do |rd|
 #  rd.options << "--diagram"
 #  rd.options << "--all"
 end
+
+desc "Render the tutorial in HTML"
+task :tutorial => "doc/tutorial/index.html"
+file "doc/tutorial/index.html" => "doc/tutorial/index.markdown" do |t|
+  sh "markdown #{t.prerequisites[0]} > #{t.name}"
+end
