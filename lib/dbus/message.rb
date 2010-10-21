@@ -101,23 +101,20 @@ module DBus
       end
     end
 
+    # Create a regular reply to a message _m_.
+    def self.method_return(m)
+      MethodReturnMessage.new.reply_to(m)
+    end
+
     # Create an error reply to a message _m_.
     def self.error(m, error_name, description=nil)
-      e = Message.new(ERROR)
-      e.reply_serial = m.serial
-      e.destination = m.sender
-      e.error_name = error_name
-      unless description.nil?
-        e.add_param(Type::STRING, description)
-      end
-      e
+      ErrorMessage.new(error_name, description).reply_to(m)
     end
 
     # Mark this message as a reply to a another message _m_, taking
     # the serial number of _m_ as reply serial and the sender of _m_ as
     # destination.
     def reply_to(m)
-      @message_type = METHOD_RETURN
       @reply_serial = m.serial
       @destination = m.sender
       self
@@ -281,4 +278,33 @@ module DBus
       ret
     end
   end # class Message
+
+  class MethodReturnMessage < Message
+    def initialize
+      super(METHOD_RETURN)
+    end
+  end
+
+  class ErrorMessage < Message
+    def initialize(error_name, description=nil)
+      super(ERROR)
+      @error_name = error_name
+      unless description.nil?
+        add_param(Type::STRING, description)
+      end
+    end
+
+    def self.from_exception(ex)
+      name = if ex.respond_to? :name
+               ex.name
+             else
+               "org.freedesktop.DBus.Error.Failed"
+               # ex.class.to_s # RuntimeError is not a valid name, has no dot
+             end
+      description = ex.message
+      msg = self.new(name, description)
+      msg.add_param(DBus.type("as"), ex.backtrace)
+      msg
+    end
+  end
 end # module DBus

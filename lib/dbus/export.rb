@@ -66,13 +66,12 @@ module DBus
           retdata = method(methname).call(*msg.params)
           retdata =  [*retdata]
 
-          reply = Message.new.reply_to(msg)
+          reply = Message.method_return(msg)
           meth.rets.zip(retdata).each do |rsig, rdata|
             reply.add_param(rsig.type, rdata)
           end
         rescue => ex
-          puts("DBus call Error: #{ex.to_s}")
-          reply = Message.error(msg, "org.freedesktop.DBus.Error.Failed", "#{ex.class}: #{ex}\n==== Backtrace ====\n#{ex.backtrace.join("\n")}")
+          reply = ErrorMessage.from_exception(ex).reply_to(msg)
         end
         @service.bus.send(reply.marshall)
       end
