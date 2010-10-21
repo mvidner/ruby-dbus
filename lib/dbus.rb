@@ -11,6 +11,7 @@
 require 'dbus/core_ext/class/attribute'
 require 'dbus/type'
 require 'dbus/introspect'
+require 'dbus/error'
 require 'dbus/export'
 require 'dbus/bus.rb'
 require 'dbus/marshall'

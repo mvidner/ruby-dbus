@@ -281,13 +281,4 @@ module DBus
       ret
     end
   end # class Message
-
-  # A helper exception on errors
-  class Error < Exception
-    attr_reader :dbus_message
-    def initialize(msg)
-      super(msg.error_name + ": " + msg.params.join(", "))
-      @dbus_message = msg
-    end
-  end
 end # module DBus
