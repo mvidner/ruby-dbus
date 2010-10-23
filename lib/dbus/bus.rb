@@ -187,7 +187,7 @@ module DBus
     attr_reader :unique_name
     # The socket that is used to connect with the bus.
     attr_reader :socket
-    attr_accessor :main_message_queue, :mutex_main_message_queue ,:main_thread,:semaphore
+    attr_accessor :main_message_queue, :main_thread, :queue_used_by_thread, :thread_waiting_for_message
 
     # Create a new connection to the bus for a given connect _path_. _path_
     # format is described in the D-Bus specification:
@@ -205,7 +205,8 @@ module DBus
       @proxy = nil
       @object_root = Node.new("/")
       @is_tcp = false
-      @return_message_queue = Queue.new
+      @queue_used_by_thread       = Hash.new
+      @thread_waiting_for_message = Hash.new
       @main_message_queue = Queue.new
       @main_thread = nil
     end
@@ -229,7 +230,8 @@ module DBus
           end
           case ret.message_type
           when Message::ERROR, Message::METHOD_RETURN
-            @return_message_queue << ret # puts the message in the queue
+            thread_in_wait = @thread_waiting_for_message[ret.reply_serial]
+            @queue_used_by_thread[thread_in_wait] << ret # puts the message in the queue
           else
             if main_thread
               @main_message_queue << ret             
@@ -557,26 +559,25 @@ module DBus
 
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
-      return @return_message_queue.pop
+      return @queue_used_by_thread[Thread.current].pop
     end
 
     # Send a message _m_ on to the bus. This is done synchronously, thus
     # the call will block until a reply message arrives.
     def send_sync(m, &retc) # :yields: reply/return message
       return if m.nil? #check if somethings wrong
+
+      @queue_used_by_thread[Thread.current] = Queue.new      # Creating Queue message for return
+      @thread_waiting_for_message[m.serial] = Thread.current 
       send(m.marshall)
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
 
       retm = wait_for_message
-      while retm.reply_serial != m.serial # if unexpected message  
-        @return_message_queue << retm # push in the queue
-        retm = wait_for_message 
-      end
-      
       return if retm.nil? #check if somethings wrong
       
       process(retm)
+      @queue_used_by_thread.delete(Thread.current)
     end
 
     # Specify a code block that has to be executed when a reply for
