@@ -187,6 +187,7 @@ module DBus
     attr_reader :unique_name
     # The socket that is used to connect with the bus.
     attr_reader :socket
+    attr_accessor :main_message_queue, :mutex_main_message_queue ,:main_thread,:semaphore
 
     # Create a new connection to the bus for a given connect _path_. _path_
     # format is described in the D-Bus specification:
@@ -204,6 +205,40 @@ module DBus
       @proxy = nil
       @object_root = Node.new("/")
       @is_tcp = false
+      @return_message_queue = Queue.new
+      @main_message_queue = Queue.new
+      @main_thread = nil
+    end
+
+    def start_read_thread
+      @thread = Thread.new{
+        puts "start the reading thread on socket #{@socket}" if $DEBUG
+        loop do #loop to read
+      
+          if @socket.nil?
+            puts "ERROR: Can't wait for messages, @socket is nil."
+            return
+          end
+          ret = pop_message
+          while ret == nil
+            r, d, d = IO.select([@socket])
+            if r and r[0] == @socket
+              update_buffer
+              ret = pop_message
+            end
+          end
+          case ret.message_type
+          when Message::ERROR, Message::METHOD_RETURN
+            @return_message_queue << ret # puts the message in the queue
+          else
+            if main_thread
+              @main_message_queue << ret             
+            else
+              process(ret) # there is no main.run thread, process the message
+            end
+           end
+        end
+      }
     end
 
     # Connect to the bus and initialize the connection.
@@ -228,6 +263,7 @@ module DBus
           # ignore, report?
         end
       end
+      start_read_thread
       worked
       # returns the address that worked or nil.
       # how to report failure?
@@ -521,19 +557,7 @@ module DBus
 
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
-      if @socket.nil?
-        puts "ERROR: Can't wait for messages, @socket is nil."
-        return
-      end
-      ret = pop_message
-      while ret == nil
-        r, d, d = IO.select([@socket])
-        if r and r[0] == @socket
-          update_buffer
-          ret = pop_message
-        end
-      end
-      ret
+      return @return_message_queue.pop
     end
 
     # Send a message _m_ on to the bus. This is done synchronously, thus
@@ -545,16 +569,14 @@ module DBus
       @method_call_replies[m.serial] = retc
 
       retm = wait_for_message
+      while retm.reply_serial != m.serial # if unexpected message  
+        @return_message_queue << retm # push in the queue
+        retm = wait_for_message 
+      end
       
       return if retm.nil? #check if somethings wrong
       
       process(retm)
-      until [DBus::Message::ERROR,
-          DBus::Message::METHOD_RETURN].include?(retm.message_type) and
-          retm.reply_serial == m.serial
-        retm = wait_for_message
-        process(retm)
-      end
     end
 
     # Specify a code block that has to be executed when a reply for
@@ -774,6 +796,7 @@ module DBus
     # Create a new main event loop.
     def initialize
       @buses = Hash.new
+      @quit_queue = Queue.new
       @quitting = false
     end
 
@@ -785,32 +808,41 @@ module DBus
     # Quit a running main loop, to be used eg. from a signal handler
     def quit
       @quitting = true
+      @quit_queue << "quit"
     end
 
     # Run the main loop. This is a blocking call!
     def run
       # before blocking, empty the buffers
       # https://bugzilla.novell.com/show_bug.cgi?id=537401
+      @buses_thread = Array.new
+      @thread_as_quit = Queue.new
       @buses.each_value do |b|
-        while m = b.pop_message
-          b.process(m)
-        end
-      end
-      while not @quitting and not @buses.empty?
-        ready, dum, dum = IO.select(@buses.keys)
-        ready.each do |socket|
-          b = @buses[socket]
-          begin
-            b.update_buffer
-          rescue EOFError, SystemCallError
-            @buses.delete socket # this bus died
-            next
-          end
+        th = Thread.new{
+          b.main_thread = true
           while m = b.pop_message
             b.process(m)
           end
-        end
+
+          while not b.nil? and not @quitting
+              m = b.main_message_queue.pop
+              b.process(m)
+          end
+
+          @thread_as_quit << Thread.current.object_id
+        }
+        @buses_thread.push th.object_id
       end
-    end
+      
+      @quit_queue.pop
+      
+      while not @buses_thread.empty?
+        id = @thread_as_quit.pop
+        @buses_thread.delete(id)
+      end
+
+    end # run
+
   end # class Main
+
 end # module DBus
