@@ -230,8 +230,12 @@ module DBus
           end
           case ret.message_type
           when Message::ERROR, Message::METHOD_RETURN
+            if ( @thread_waiting_for_message[ret.reply_serial].nil?)
+              process(ret) # there is no thread, process the message
+            else
             thread_in_wait = @thread_waiting_for_message[ret.reply_serial]
             @queue_used_by_thread[thread_in_wait] << ret # puts the message in the queue
+            end
           else
             if main_thread
               @main_message_queue << ret             
