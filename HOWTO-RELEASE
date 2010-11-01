@@ -1,8 +1,7 @@
 osc build # for the previous release, in advance, to cache the current packages
-rake test # and also for Ruby 1.9.1
-edit version in Rakefile
+rake # and also for Ruby 1.9.1
+edit VERSION
 edit NEWS
-rake gemspec # but check the resulting filelist for clutter
 git commit
 git tag
 rake package
