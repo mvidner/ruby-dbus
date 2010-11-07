@@ -5,6 +5,18 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.5.0 - 2010-11-07
+
+Features:
+ * Better binding of Ruby Exceptions to D-Bus Errors.
+ * Converted the package to a Gem (Issue#6).
+ * Converted the tutorial from Webgen to Markdown.
+
+Bug fixes:
+ * Don't pass file descriptors to subprocesses.
+ * Fixed InterfaceElement::validate_name (Ticket#38, by Herwin Weststrate).
+ * Fixed a typo in InvalidDestinationName description (Ticket#40).
+
 == Ruby D-Bus 0.4.0 - 2010-08-20
 
 Features:
