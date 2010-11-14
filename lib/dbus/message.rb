@@ -295,7 +295,7 @@ module DBus
     end
 
     def self.from_exception(ex)
-      name = if ex.respond_to? :name
+      name = if ex.is_a? DBus::Error
                ex.name
              else
                "org.freedesktop.DBus.Error.Failed"
