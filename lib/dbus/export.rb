@@ -11,10 +11,6 @@
 require 'thread'
 
 module DBus
-  # Method raised when a method returns an invalid return type.
-  class InvalidReturnType < Exception
-  end
-
   # Exported object type
   # = Exportable D-Bus object class
   #
