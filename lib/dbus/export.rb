@@ -11,10 +11,6 @@
 require 'thread'
 
 module DBus
-  # Exception raised when an interface cannot be found in an object.
-  class InterfaceNotInObject < Exception
-  end
-
   # Method raised when a method returns an invalid return type.
   class InvalidReturnType < Exception
   end
@@ -54,7 +50,8 @@ module DBus
         reply = nil
         begin
           if not self.intfs[msg.interface]
-            raise InterfaceNotInObject, msg.interface
+            raise DBus.error("org.freedesktop.DBus.Error.UnknownMethod"),
+            "Interface \"#{msg.interface}\" of object \"#{msg.path}\" doesn't exist"
           end
           meth = self.intfs[msg.interface].methods[msg.member.to_sym]
           if not meth

@@ -64,10 +64,6 @@ module DBus
   class IncompleteBufferException < Exception
   end
 
-  # Exception raised when an interface is not implemented.
-  class InterfaceNotImplemented < Exception
-  end
-
   # Exception raised when a method has not been implemented (yet).
   class MethodNotImplemented < Exception
   end

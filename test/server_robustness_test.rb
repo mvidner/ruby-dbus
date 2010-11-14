@@ -59,4 +59,14 @@ class ServerRobustnessTest < Test::Unit::TestCase
   rescue DBus::Error => e
     assert_no_match(/timeout/, e)
   end
+
+  def test_no_such_interface_without_introspection
+    obj = @svc.object "/org/ruby/MyInstance"
+    ifc = DBus::ProxyObjectInterface.new(obj, "org.ruby.NoSuchInterface")
+    ifc.define_method("the_answer", "out n:i")
+    ifc.the_answer
+    assert false, "should have raised"
+  rescue DBus::Error => e
+    assert_no_match(/timeout/, e)
+  end
 end
