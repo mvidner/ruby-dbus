@@ -40,6 +40,10 @@ class Test < DBus::Object
       raise DBus.error, "failed as designed"
     end
 
+    dbus_method :will_raise_name_error, "" do
+      "foo".frobnicate
+    end
+
     dbus_method :Error, "in name:s, in description:s" do |name, description|
       raise DBus.error(name), description
     end
