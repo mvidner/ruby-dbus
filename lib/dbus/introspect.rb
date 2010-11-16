@@ -422,6 +422,23 @@ module DBus
         bus.add_match(mr) { |msg| block.call(*msg.params) }
       end
     end
+
+    PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
+
+    # Read a property.
+    def [](propname)
+      self.object[PROPERTY_INTERFACE].Get(self.name, propname)[0]
+    end
+
+    # Write a property.
+    def []=(propname, value)
+      self.object[PROPERTY_INTERFACE].Set(self.name, propname, value)
+    end
+
+    # Read all properties at once.
+    def all_properties
+      self.object[PROPERTY_INTERFACE].GetAll(self.name)[0]
+    end
   end # class ProxyObjectInterface
 
   # D-Bus proxy object class
