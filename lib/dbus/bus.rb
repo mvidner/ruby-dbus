@@ -563,8 +563,10 @@ module DBus
 
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
+      Thread.abort_on_exception = true
       return @queue_used_by_thread[Thread.current].pop
-    end
+      Thread.abort_on_exception = false
+     end
 
     # Send a message _m_ on to the bus. This is done synchronously, thus
     # the call will block until a reply message arrives.
