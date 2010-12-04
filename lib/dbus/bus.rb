@@ -187,7 +187,7 @@ module DBus
     attr_reader :unique_name
     # The socket that is used to connect with the bus.
     attr_reader :socket
-    attr_accessor :main_message_queue, :main_thread, :queue_used_by_thread, :thread_waiting_for_message
+    attr_accessor :main_message_queue, :main_thread, :queue_used_by_thread, :thread_waiting_for_message, :rescuemethod
 
     # Create a new connection to the bus for a given connect _path_. _path_
     # format is described in the D-Bus specification:
@@ -199,6 +199,7 @@ module DBus
       @path = path
       @unique_name = nil
       @buffer = ""
+      @rescuemethod = nil
       @method_call_replies = Hash.new
       @method_call_msgs = Hash.new
       @signal_matchrules = Hash.new
@@ -515,13 +516,9 @@ module DBus
     # socket.
     def update_buffer
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
-     rescue EOFError 
-      puts "coucou"
-      $mainclass.instance_variable_get("@quit_queue") << "quit"
-      $mainclass.instance_variable_get("@buses_thread").each{ |th|
-      th.kill
-      }
-      Thread.current.exit                     # the caller expects it
+     rescue EOFError
+      @rescuemethod.call
+      raise # the caller expects it
      rescue Exception => e
        puts "Oops:", e
        raise if @is_tcp          # why?
@@ -570,7 +567,7 @@ module DBus
     def wait_for_message
       Thread.current.abort_on_exception = true
       return @queue_used_by_thread[Thread.current].pop
-
+      Thread.current.abort_on_exception = false
      end
 
     # Send a message _m_ on to the bus. This is done synchronously, thus
@@ -813,6 +810,13 @@ module DBus
       $mainclass = self
     end
 
+    def kill_threads_and_exit
+    @buses_thread.each{ |th|
+      th.exit
+    }
+    @quit_queue << "quit"
+    end
+    
     # Add a _bus_ to the list of buses to watch for events.
     def <<(bus)
       @buses[bus.socket] = bus
@@ -832,6 +836,7 @@ module DBus
       @buses_thread = Array.new
       @thread_as_quit = Queue.new
       @buses.each_value do |b|
+      b.rescuemethod = self.method(:kill_threads_and_exit)
       th= Thread.new{
           b.main_thread = true
           while m = b.pop_message
