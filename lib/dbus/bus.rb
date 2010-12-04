@@ -810,7 +810,7 @@ module DBus
       $mainclass = self
     end
 
-    def kill_threads_and_exit
+    def quit_imediately
     @buses_thread.each{ |th|
       th.exit
     }
@@ -836,7 +836,7 @@ module DBus
       @buses_thread = Array.new
       @thread_as_quit = Queue.new
       @buses.each_value do |b|
-      b.rescuemethod = self.method(:kill_threads_and_exit)
+      b.rescuemethod = self.method(:quit_imediately)
       th= Thread.new{
           b.main_thread = true
           while m = b.pop_message
