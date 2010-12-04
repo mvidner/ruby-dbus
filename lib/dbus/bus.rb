@@ -516,6 +516,7 @@ module DBus
     def update_buffer
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
      rescue EOFError 
+     $mainclass.instance_variable_get("@quit_queue") << "quit"
       Thread.current.exit                     # the caller expects it
      rescue Exception => e
        puts "Oops:", e
@@ -805,6 +806,7 @@ module DBus
       @buses = Hash.new
       @quit_queue = Queue.new
       @quitting = false
+      $mainclass = self
     end
 
     # Add a _bus_ to the list of buses to watch for events.
