@@ -515,13 +515,13 @@ module DBus
     # socket.
     def update_buffer
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
-    rescue EOFError
-      raise                     # the caller expects it
-    rescue Exception => e
-      puts "Oops:", e
-      raise if @is_tcp          # why?
-      puts "WARNING: read_nonblock failed, falling back to .recv"
-      @buffer += @socket.recv(MSG_BUF_SIZE)  
+     rescue EOFError 
+      Thread.current.exit                     # the caller expects it
+     rescue Exception => e
+       puts "Oops:", e
+       raise if @is_tcp          # why?
+       puts "WARNING: read_nonblock failed, falling back to .recv"
+       @buffer += @socket.recv(MSG_BUF_SIZE)  
     end
 
     # Get one message from the bus and remove it from the buffer.
