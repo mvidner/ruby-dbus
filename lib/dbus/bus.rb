@@ -516,7 +516,11 @@ module DBus
     def update_buffer
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
      rescue EOFError 
-     $mainclass.instance_variable_get("@quit_queue") << "quit"
+      puts "coucou"
+      $mainclass.instance_variable_get("@quit_queue") << "quit"
+      $mainclass.instance_variable_get("@buses_thread").each{ |th|
+      th.kill
+      }
       Thread.current.exit                     # the caller expects it
      rescue Exception => e
        puts "Oops:", e
@@ -824,10 +828,11 @@ module DBus
     def run
       # before blocking, empty the buffers
       # https://bugzilla.novell.com/show_bug.cgi?id=537401
+      @buses_thread_id = Array.new
       @buses_thread = Array.new
       @thread_as_quit = Queue.new
       @buses.each_value do |b|
-        th = Thread.new{
+      th= Thread.new{
           b.main_thread = true
           while m = b.pop_message
             b.process(m)
@@ -840,14 +845,15 @@ module DBus
 
           @thread_as_quit << Thread.current.object_id
         }
-        @buses_thread.push th.object_id
+        @buses_thread_id.push th.object_id
+        @buses_thread.push th
       end
       
       @quit_queue.pop
       
-      while not @buses_thread.empty?
+      while not @buses_thread_id.empty?
         id = @thread_as_quit.pop
-        @buses_thread.delete(id)
+        @buses_thread_id.delete(id)
       end
 
     end # run
