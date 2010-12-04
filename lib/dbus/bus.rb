@@ -565,9 +565,9 @@ module DBus
 
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
-      Thread.current.abort_on_exception = true
+      #Thread.current.abort_on_exception = true
       return @queue_used_by_thread[Thread.current].pop
-      Thread.current.abort_on_exception = false
+      #Thread.current.abort_on_exception = false
      end
 
     # Send a message _m_ on to the bus. This is done synchronously, thus
@@ -810,11 +810,16 @@ module DBus
       $mainclass = self
     end
 
-    def quit_imediately
-    @buses_thread.each{ |th|
-      th.exit
-    }
-    @quit_queue << "quit"
+    # the standar quit method didn't quit imediately and wait for a last
+    # message. This methodes allow to quit imediately 
+    def quit_imediately 
+      @buses_thread.each do |th|
+        th.exit
+      end
+      @buses.each_value do |b|
+        b.thread.exit
+      end
+      @quit_queue << "quit"
     end
     
     # Add a _bus_ to the list of buses to watch for events.
