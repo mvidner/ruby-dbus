@@ -814,12 +814,14 @@ module DBus
     # message. This methodes allow to quit imediately 
     def quit_imediately 
       @buses_thread.each do |th|
+        @buses_thread_id.delete(th.object_id)
         th.exit
       end
+      @quit_queue << "quit"      
       @buses.each_value do |b|
         b.thread.exit
       end
-      @quit_queue << "quit"
+
     end
     
     # Add a _bus_ to the list of buses to watch for events.
