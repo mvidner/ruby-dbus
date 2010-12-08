@@ -229,6 +229,19 @@ exported service names of a bus like this:
 
     bus.proxy.ListNames[0]
 
+Properties
+----------
+
+Some D-Bus objects provide access to properties. They are accessed by
+treating a proxy interface as a hash:
+
+    nm_iface = network_manager_object["org.freedesktop.NetworkManager"]
+    enabled = nm_iface["WirelessEnabled"]
+    puts "Wireless is " + (enabled ? "enabled":"disabled")
+    puts "Toggling wireless"
+    nm_iface["WirelessEnabled"] = ! enabled
+
+
 Calling a method asynchronously
 -------------------------------
 

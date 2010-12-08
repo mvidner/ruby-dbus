@@ -435,7 +435,7 @@ module DBus
       self.object[PROPERTY_INTERFACE].Set(self.name, propname, value)
     end
 
-    # Read all properties at once.
+    # Read all properties at once, as a hash.
     def all_properties
       self.object[PROPERTY_INTERFACE].GetAll(self.name)[0]
     end
