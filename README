@@ -5,23 +5,11 @@ D-Bus system can be used in the Ruby programming language.
 
 == Requirements
 
- * Ruby 1.8 (>= 1.8.6?)
-
- Optionally, for generating the tutorial:
- * Webgen (>= 0.4) 
+ * Ruby 1.8 (>= 1.8.6?) or 1.9
 
 == Installation
 
- 1. Decompress the Ruby D-Bus tarball (ruby-dbus-<version>.tar.gz).
- 2. Move to top-level directory and type:
-
-      $ ruby setup.rb config
-      $ ruby setup.rb setup
-     ($ su)
-      # ruby setup.rb install
-
-    You can also install files in your favorite directory by
-    supplying setup.rb some options. Try "ruby setup.rb --help".
+ * gem install ruby-dbus
 
 == Feature
 
@@ -42,8 +30,9 @@ Ruby D-Bus currently supports the following features:
 == Usage
 
  See some of the examples in the examples/ subdirectory of the tarball.
- Also, check out the included tutorial (in Webgen format) in doc/tutorial/
- or view it online on http://trac.luon.net/data/ruby-dbus/tutorial/.
+ Also, check out the included tutorial (in Markdown format) in doc/tutorial/
+ or view it online on
+ https://github.com/mvidner/ruby-dbus/blob/master/doc/tutorial/index.markdown .
 
 == License
 
