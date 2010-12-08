@@ -427,8 +427,8 @@ module DBus
         pof = DBus::ProxyObjectFactory.new(data, self, dest, path)
         return pof.build
       else
-        introspect_data(dest, path) do |data|
-          yield(DBus::ProxyObjectFactory.new(data, self, dest, path).build)
+        introspect_data(dest, path) do |async_data|
+          yield(DBus::ProxyObjectFactory.new(async_data, self, dest, path).build)
         end
       end
     end
