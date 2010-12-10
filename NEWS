@@ -5,6 +5,15 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.6.0 - 2010-12-11
+
+Features:
+ * Clients can access properties conveniently (Ticket#28).
+
+Bug fixes:
+ * Service won't crash whan handling an unknown method or interface (Ticket#31).
+ * Don't send an invalid error name when it originates from a NameError.
+
 == Ruby D-Bus 0.5.0 - 2010-11-07
 
 Features:
