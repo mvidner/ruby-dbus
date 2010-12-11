@@ -79,7 +79,7 @@ module DBus
       obj.service = nil
       parent_node.delete(node_name)
     end
-	
+    
     # Get the object node corresponding to the given _path_. if _create_ is
     # true, the the nodes in the path are created if they do not already exist.
     def get_node(path, create = false)
@@ -195,7 +195,7 @@ module DBus
     # and is something like:
     # "transport1:key1=value1,key2=value2;transport2:key1=value1,key2=value2"
     # e.g. "unix:path=/tmp/dbus-test" or "tcp:host=localhost,port=2687"
-    def initialize(path, threaded=false)
+    def initialize(path)
       @path = path
       @unique_name = nil
       @buffer = ""
@@ -210,14 +210,14 @@ module DBus
       @thread_waiting_for_message = Hash.new
       @main_message_queue = Queue.new
       @main_thread = nil
-      @threaded = threaded
+      $threaded = false
     end
 
     def start_read_thread
       @thread = Thread.new{
         puts "start the reading thread on socket #{@socket}" if $DEBUG
         loop do #loop to read
-      
+          
           if @socket.nil?
             puts "ERROR: Can't wait for messages, @socket is nil."
             return
@@ -235,8 +235,8 @@ module DBus
             if ( @thread_waiting_for_message[ret.reply_serial].nil?)
               process(ret) # there is no thread, process the message
             else
-            thread_in_wait = @thread_waiting_for_message[ret.reply_serial]
-            @queue_used_by_thread[thread_in_wait] << ret # puts the message in the queue
+              thread_in_wait = @thread_waiting_for_message[ret.reply_serial]
+              @queue_used_by_thread[thread_in_wait] << ret # puts the message in the queue
             end
           else
             if main_thread
@@ -244,7 +244,7 @@ module DBus
             else
               process(ret) # there is no main.run thread, process the message
             end
-           end
+          end
         end
       }
     end
@@ -263,15 +263,15 @@ module DBus
           kv_hash[key] = value
         end
         case transport
-          when "unix"
+        when "unix"
           connect_to_unix kv_hash
-          when "tcp"
+        when "tcp"
           connect_to_tcp kv_hash
-          else
+        else
           # ignore, report?
         end
       end
-      if (@threaded)
+      if ($threaded)
         start_read_thread
       end
       worked
@@ -427,7 +427,7 @@ module DBus
   </interface>
 </node>
 '
-# This apostroph is for syntax highlighting editors confused by above xml: "
+    # This apostroph is for syntax highlighting editors confused by above xml: "
 
     def introspect_data(dest, path)
       m = DBus::Message.new(DBus::Message::METHOD_CALL)
@@ -478,7 +478,7 @@ module DBus
         end
       end
     end
-
+    
     # Exception raised when a service name is requested that is not available.
     class NameRequestError < Exception
     end
@@ -494,11 +494,12 @@ module DBus
       # (Ticket#29).
       proxy.RequestName(name, NAME_FLAG_REPLACE_EXISTING) do |rmsg, r|
         if rmsg.is_a?(Error)  # check and report errors first
-	  raise rmsg
-	elsif r != REQUEST_NAME_REPLY_PRIMARY_OWNER
+          raise rmsg
+        elsif r != REQUEST_NAME_REPLY_PRIMARY_OWNER
           raise NameRequestError
-	end
+        end
       end
+      $threaded = false
       @service = Service.new(name, self)
       @service
     end
@@ -520,7 +521,7 @@ module DBus
     def update_buffer
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
     rescue EOFError
-      if (@threaded)
+      if ($threaded)
         @rescuemethod.call
       end
       raise # the caller expects it
@@ -570,7 +571,7 @@ module DBus
 
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
-      if(@threaded)
+      if($threaded)
         return @queue_used_by_thread[Thread.current].pop
       else
         if @socket.nil?
@@ -587,12 +588,13 @@ module DBus
         end
         ret
       end
+    end
 
     # Send a message _m_ on to the bus. This is done synchronously, thus
     # the call will block until a reply message arrives.
     def send_sync(m, &retc) # :yields: reply/return message
       return if m.nil? #check if somethings wrong
-      if (@threaded)
+      if ($threaded)
         @queue_used_by_thread[Thread.current] = Queue.new      # Creating Queue message for return
         @thread_waiting_for_message[m.serial] = Thread.current 
       end
@@ -604,7 +606,7 @@ module DBus
       return if retm.nil? #check if somethings wrong
       
       process(retm)
-      if (@threaded)
+      if ($threaded)
         @queue_used_by_thread.delete(Thread.current)
       else
         until [DBus::Message::ERROR,
@@ -678,7 +680,7 @@ module DBus
           reply = Message.error(m, "org.freedesktop.DBus.Error.UnknownObject",
                                 "Object #{m.path} doesn't exist")
           send(reply.marshall)
-        # handle introspectable as an exception:
+          # handle introspectable as an exception:
         elsif m.interface == "org.freedesktop.DBus.Introspectable" and
             m.member == "Introspect"
           reply = Message.new(Message::METHOD_RETURN).reply_to(m)
@@ -871,7 +873,7 @@ module DBus
       @buses_thread = Array.new
       @thread_as_quit = Queue.new
 
-      if(@threaded)
+      if($threaded)
         @buses.each_value do |b|
           
           b.rescuemethod = self.method(:quit_imediately)
@@ -920,7 +922,7 @@ module DBus
             end
           end
         end
-
+        
       end # if(@threaded)
     end # run
     
