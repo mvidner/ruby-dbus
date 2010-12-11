@@ -195,7 +195,7 @@ module DBus
     # and is something like:
     # "transport1:key1=value1,key2=value2;transport2:key1=value1,key2=value2"
     # e.g. "unix:path=/tmp/dbus-test" or "tcp:host=localhost,port=2687"
-    def initialize(path)
+    def initialize(path, threaded=false)
       @path = path
       @unique_name = nil
       @buffer = ""
@@ -210,6 +210,7 @@ module DBus
       @thread_waiting_for_message = Hash.new
       @main_message_queue = Queue.new
       @main_thread = nil
+      @threaded = threaded
     end
 
     def start_read_thread
@@ -270,7 +271,9 @@ module DBus
           # ignore, report?
         end
       end
-      start_read_thread
+      if (@threaded)
+        start_read_thread
+      end
       worked
       # returns the address that worked or nil.
       # how to report failure?
@@ -516,14 +519,16 @@ module DBus
     # socket.
     def update_buffer
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
-     rescue EOFError
-      @rescuemethod.call
+    rescue EOFError
+      if (@threaded)
+        @rescuemethod.call
+      end
       raise # the caller expects it
-     rescue Exception => e
-       puts "Oops:", e
-       raise if @is_tcp          # why?
-       puts "WARNING: read_nonblock failed, falling back to .recv"
-       @buffer += @socket.recv(MSG_BUF_SIZE)  
+    rescue Exception => e
+      puts "Oops:", e
+      raise if @is_tcp          # why?
+      puts "WARNING: read_nonblock failed, falling back to .recv"
+      @buffer += @socket.recv(MSG_BUF_SIZE)  
     end
 
     # Get one message from the bus and remove it from the buffer.
@@ -565,18 +570,32 @@ module DBus
 
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
-      #Thread.current.abort_on_exception = true
-      return @queue_used_by_thread[Thread.current].pop
-      #Thread.current.abort_on_exception = false
-     end
+      if(@threaded)
+        return @queue_used_by_thread[Thread.current].pop
+      else
+        if @socket.nil?
+          puts "ERROR: Can't wait for messages, @socket is nil."
+          return
+        end
+        ret = pop_message
+        while ret == nil
+          r, d, d = IO.select([@socket])
+          if r and r[0] == @socket
+            update_buffer
+            ret = pop_message
+          end
+        end
+        ret
+      end
 
     # Send a message _m_ on to the bus. This is done synchronously, thus
     # the call will block until a reply message arrives.
     def send_sync(m, &retc) # :yields: reply/return message
       return if m.nil? #check if somethings wrong
-
-      @queue_used_by_thread[Thread.current] = Queue.new      # Creating Queue message for return
-      @thread_waiting_for_message[m.serial] = Thread.current 
+      if (@threaded)
+        @queue_used_by_thread[Thread.current] = Queue.new      # Creating Queue message for return
+        @thread_waiting_for_message[m.serial] = Thread.current 
+      end
       send(m.marshall)
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
@@ -585,7 +604,16 @@ module DBus
       return if retm.nil? #check if somethings wrong
       
       process(retm)
-      @queue_used_by_thread.delete(Thread.current)
+      if (@threaded)
+        @queue_used_by_thread.delete(Thread.current)
+      else
+        until [DBus::Message::ERROR,
+               DBus::Message::METHOD_RETURN].include?(retm.message_type) and
+            retm.reply_serial == m.serial
+          retm = wait_for_message
+          process(retm)
+        end
+      end        
     end
 
     # Specify a code block that has to be executed when a reply for
@@ -842,34 +870,60 @@ module DBus
       @buses_thread_id = Array.new
       @buses_thread = Array.new
       @thread_as_quit = Queue.new
-      @buses.each_value do |b|
-      b.rescuemethod = self.method(:quit_imediately)
-      th= Thread.new{
-          b.main_thread = true
+
+      if(@threaded)
+        @buses.each_value do |b|
+          
+          b.rescuemethod = self.method(:quit_imediately)
+          th= Thread.new{
+            b.main_thread = true
+            while m = b.pop_message
+              b.process(m)
+            end
+
+            while not b.nil? and not @quitting
+              m = b.main_message_queue.pop
+              b.process(m)
+            end
+
+            @thread_as_quit << Thread.current.object_id
+          }
+          @buses_thread_id.push th.object_id
+          @buses_thread.push th
+        end
+        
+        @quit_queue.pop
+        
+        while not @buses_thread_id.empty?
+          id = @thread_as_quit.pop
+          @buses_thread_id.delete(id)
+        end
+
+      else
+        @buses.each_value do |b|
           while m = b.pop_message
             b.process(m)
           end
-
-          while not b.nil? and not @quitting
-              m = b.main_message_queue.pop
+        end
+        while not @quitting and not @buses.empty?
+          ready, dum, dum = IO.select(@buses.keys)
+          ready.each do |socket|
+            b = @buses[socket]
+            begin
+              b.update_buffer
+            rescue EOFError, SystemCallError
+              @buses.delete socket # this bus died
+              next
+            end
+            while m = b.pop_message
               b.process(m)
+            end
           end
+        end
 
-          @thread_as_quit << Thread.current.object_id
-        }
-        @buses_thread_id.push th.object_id
-        @buses_thread.push th
-      end
-      
-      @quit_queue.pop
-      
-      while not @buses_thread_id.empty?
-        id = @thread_as_quit.pop
-        @buses_thread_id.delete(id)
-      end
-
+      end # if(@threaded)
     end # run
-
+    
   end # class Main
-
+  
 end # module DBus
