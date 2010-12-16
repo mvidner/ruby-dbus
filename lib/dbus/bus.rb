@@ -17,6 +17,9 @@ require 'fcntl'
 #
 # Module containing all the D-Bus modules and classes.
 module DBus
+
+$threaded = ENV["DBUS_THREADED_ACCESS"] || false
+
   # This represents a remote service. It should not be instantiated directly
   # Use Bus::service()
   class Service
@@ -210,7 +213,6 @@ module DBus
       @thread_waiting_for_message = Hash.new
       @main_message_queue = Queue.new
       @main_thread = nil
-      $threaded = false
     end
 
     def start_read_thread
@@ -499,7 +501,6 @@ module DBus
           raise NameRequestError
         end
       end
-      $threaded = false
       @service = Service.new(name, self)
       @service
     end
@@ -923,7 +924,7 @@ module DBus
           end
         end
         
-      end # if(@threaded)
+      end # if($threaded)
     end # run
     
   end # class Main
