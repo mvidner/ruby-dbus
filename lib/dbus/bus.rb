@@ -18,8 +18,6 @@ require 'fcntl'
 # Module containing all the D-Bus modules and classes.
 module DBus
 
-$threaded = ENV["DBUS_THREADED_ACCESS"] || false
-
   # This represents a remote service. It should not be instantiated directly
   # Use Bus::service()
   class Service
@@ -198,7 +196,7 @@ $threaded = ENV["DBUS_THREADED_ACCESS"] || false
     # and is something like:
     # "transport1:key1=value1,key2=value2;transport2:key1=value1,key2=value2"
     # e.g. "unix:path=/tmp/dbus-test" or "tcp:host=localhost,port=2687"
-    def initialize(path)
+    def initialize(path, threaded_access)
       @path = path
       @unique_name = nil
       @buffer = ""
@@ -213,6 +211,7 @@ $threaded = ENV["DBUS_THREADED_ACCESS"] || false
       @thread_waiting_for_message = Hash.new
       @main_message_queue = Queue.new
       @main_thread = nil
+      @threaded = threaded_access
     end
 
     def start_read_thread
@@ -273,7 +272,7 @@ $threaded = ENV["DBUS_THREADED_ACCESS"] || false
           # ignore, report?
         end
       end
-      if ($threaded)
+      if (@threaded)
         start_read_thread
       end
       worked
@@ -522,7 +521,7 @@ $threaded = ENV["DBUS_THREADED_ACCESS"] || false
     def update_buffer
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
     rescue EOFError
-      if ($threaded)
+      if (@threaded)
         @rescuemethod.call
       end
       raise # the caller expects it
@@ -572,7 +571,7 @@ $threaded = ENV["DBUS_THREADED_ACCESS"] || false
 
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
-      if($threaded)
+      if(@threaded)
         return @queue_used_by_thread[Thread.current].pop
       else
         if @socket.nil?
@@ -595,7 +594,7 @@ $threaded = ENV["DBUS_THREADED_ACCESS"] || false
     # the call will block until a reply message arrives.
     def send_sync(m, &retc) # :yields: reply/return message
       return if m.nil? #check if somethings wrong
-      if ($threaded)
+      if (@threaded)
         @queue_used_by_thread[Thread.current] = Queue.new      # Creating Queue message for return
         @thread_waiting_for_message[m.serial] = Thread.current 
       end
@@ -607,7 +606,7 @@ $threaded = ENV["DBUS_THREADED_ACCESS"] || false
       return if retm.nil? #check if somethings wrong
       
       process(retm)
-      if ($threaded)
+      if (@threaded)
         @queue_used_by_thread.delete(Thread.current)
       else
         until [DBus::Message::ERROR,
@@ -763,7 +762,7 @@ $threaded = ENV["DBUS_THREADED_ACCESS"] || false
 
     # Get the the default session bus.
     def initialize
-      super(ENV["DBUS_SESSION_BUS_ADDRESS"] || address_from_file)
+      super(ENV["DBUS_SESSION_BUS_ADDRESS"] || address_from_file, ENV["DBUS_THREADED_ACCESS"] || false)
       connect
       send_hello
     end
@@ -790,7 +789,7 @@ $threaded = ENV["DBUS_THREADED_ACCESS"] || false
 
     # Get the default system bus.
     def initialize
-      super(SystemSocketName)
+      super(SystemSocketName, ENV["DBUS_THREADED_ACCESS"] || false)
       connect
       send_hello
     end
@@ -874,8 +873,8 @@ $threaded = ENV["DBUS_THREADED_ACCESS"] || false
       @buses_thread = Array.new
       @thread_as_quit = Queue.new
 
-      if($threaded)
-        @buses.each_value do |b|
+      if(ENV["DBUS_THREADED_ACCESS"] || false)
+        @uses.each_value do |b|
           
           b.rescuemethod = self.method(:quit_imediately)
           th= Thread.new{
