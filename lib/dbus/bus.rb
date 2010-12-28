@@ -874,7 +874,7 @@ module DBus
       @thread_as_quit = Queue.new
 
       if(ENV["DBUS_THREADED_ACCESS"] || false)
-        @uses.each_value do |b|
+        @buses.each_value do |b|
           
           b.rescuemethod = self.method(:quit_imediately)
           th= Thread.new{
