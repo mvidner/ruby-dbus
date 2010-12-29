@@ -9,7 +9,7 @@ end
 
 class BusDriverTest < Test::Unit::TestCase
   def setup
-    @bus = DBus::SessionBus.instance
+    @bus = DBus::ASessionBus.new
     @svc = @bus.service("org.ruby.service")
     @svc.object("/").introspect
   end

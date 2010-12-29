@@ -695,10 +695,10 @@ module DBus
   # = D-Bus session bus class
   #
   # The session bus is a session specific bus (mostly for desktop use).
-  # This is a singleton class.
-  class SessionBus < Connection
-    include Singleton
-
+  #
+  # Use SessionBus, the non-singleton ASessionBus is
+  # for the test suite.
+  class ASessionBus < Connection
     # Get the the default session bus.
     def initialize
       super(ENV["DBUS_SESSION_BUS_ADDRESS"] || address_from_file)
@@ -719,13 +719,20 @@ module DBus
     end
   end
 
+  # See ASessionBus
+  class SessionBus < ASessionBus
+    include Singleton
+  end
+
+
   # = D-Bus system bus class
   #
   # The system bus is a system-wide bus mostly used for global or
-  # system usages.  This is a singleton class.
-  class SystemBus < Connection
-    include Singleton
-
+  # system usages.
+  #
+  # Use SystemBus, the non-singleton ASystemBus is
+  # for the test suite.
+  class ASystemBus < Connection
     # Get the default system bus.
     def initialize
       super(SystemSocketName)
@@ -753,6 +760,11 @@ module DBus
       connect
       send_hello
     end
+  end
+
+  # See ASystemBus
+  class SystemBus < ASystemBus
+    include Singleton
   end
 
   # Shortcut for the SystemBus instance

@@ -5,7 +5,7 @@ require "dbus"
 
 class BindingTest < Test::Unit::TestCase
   def setup
-    @bus = DBus::SessionBus.instance
+    @bus = DBus::ASessionBus.new
     @svc = @bus.service("org.ruby.service")
     @base = @svc.object "/org/ruby/MyInstance"
     @base.introspect

@@ -9,7 +9,7 @@ end
 
 class SignalHandlerTest < Test::Unit::TestCase
   def setup
-    @session_bus = DBus::SessionBus.instance
+    @session_bus = DBus::ASessionBus.new
     svc = @session_bus.service("org.ruby.service")
     @obj = svc.object("/org/ruby/MyInstance")
     @obj.introspect                  # necessary

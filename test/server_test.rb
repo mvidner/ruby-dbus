@@ -25,7 +25,7 @@ end
 
 class ServerTest < Test::Unit::TestCase
   def setup
-    @bus = DBus::SessionBus.instance
+    @bus = DBus::ASessionBus.new
     @svc = @bus.request_service "org.ruby.server-test"
   end
 

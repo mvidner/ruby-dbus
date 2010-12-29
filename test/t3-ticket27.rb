@@ -2,7 +2,7 @@
 # Test passing a particular struct array through a variant
 # https://trac.luon.net/ruby-dbus/ticket/27
 require "dbus"
-session_bus = DBus::SessionBus.instance
+session_bus = DBus::ASessionBus.new
 svc = session_bus.service("org.ruby.service")
 obj = svc.object("/org/ruby/MyInstance")
 obj.introspect                  # necessary

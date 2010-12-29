@@ -5,7 +5,7 @@ require "dbus"
 
 class ServerRobustnessTest < Test::Unit::TestCase
   def setup
-    @bus = DBus::SessionBus.instance
+    @bus = DBus::ASessionBus.new
     @svc = @bus.service("org.ruby.service")
   end
 
