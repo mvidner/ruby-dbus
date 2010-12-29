@@ -80,7 +80,7 @@ module DBus
       obj.service = nil
       parent_node.delete(node_name)
     end
-    
+
     # Get the object node corresponding to the given _path_. if _create_ is
     # true, the the nodes in the path are created if they do not already exist.
     def get_node(path, create = false)
@@ -188,7 +188,16 @@ module DBus
     attr_reader :unique_name
     # The socket that is used to connect with the bus.
     attr_reader :socket
-    attr_accessor :main_message_queue, :main_thread, :queue_used_by_thread, :thread_waiting_for_message, :rescuemethod
+    # Queue[Message]
+    attr_accessor :main_message_queue
+    # Boolean - is there a thread for the main loop?
+    attr_accessor :main_thread
+    # Hash: Thread => Queue[Message]
+    attr_accessor :queue_used_by_thread
+    # Hash: message serial => Thread
+    attr_accessor :thread_waiting_for_message
+    # Method called on EOF
+    attr_accessor :rescuemethod
 
     # Create a new connection to the bus for a given connect _path_. _path_
     # format is described in the D-Bus specification:
@@ -215,10 +224,9 @@ module DBus
     end
 
     def start_read_thread
-      @thread = Thread.new{
+      @thread = Thread.new do
         puts "start the reading thread on socket #{@socket}" if $DEBUG
         loop do #loop to read
-          
           if @socket.nil?
             puts "ERROR: Can't wait for messages, @socket is nil."
             return
@@ -233,7 +241,7 @@ module DBus
           end
           case ret.message_type
           when Message::ERROR, Message::METHOD_RETURN
-            if ( @thread_waiting_for_message[ret.reply_serial].nil?)
+            if @thread_waiting_for_message[ret.reply_serial].nil?
               process(ret) # there is no thread, process the message
             else
               thread_in_wait = @thread_waiting_for_message[ret.reply_serial]
@@ -247,7 +255,7 @@ module DBus
             end
           end
         end
-      }
+      end
     end
 
     # Connect to the bus and initialize the connection.
@@ -272,7 +280,7 @@ module DBus
           # ignore, report?
         end
       end
-      if (@threaded)
+      if @threaded
         start_read_thread
       end
       worked
@@ -479,7 +487,7 @@ module DBus
         end
       end
     end
-    
+
     # Exception raised when a service name is requested that is not available.
     class NameRequestError < Exception
     end
@@ -521,7 +529,7 @@ module DBus
     def update_buffer
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
     rescue EOFError
-      if (@threaded)
+      if @threaded
         @rescuemethod.call
       end
       raise # the caller expects it
@@ -571,7 +579,7 @@ module DBus
 
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
-      if(@threaded)
+      if @threaded
         return @queue_used_by_thread[Thread.current].pop
       else
         if @socket.nil?
@@ -594,7 +602,7 @@ module DBus
     # the call will block until a reply message arrives.
     def send_sync(m, &retc) # :yields: reply/return message
       return if m.nil? #check if somethings wrong
-      if (@threaded)
+      if @threaded
         @queue_used_by_thread[Thread.current] = Queue.new      # Creating Queue message for return
         @thread_waiting_for_message[m.serial] = Thread.current 
       end
@@ -606,7 +614,7 @@ module DBus
       return if retm.nil? #check if somethings wrong
       
       process(retm)
-      if (@threaded)
+      if @threaded
         @queue_used_by_thread.delete(Thread.current)
       else
         until [DBus::Message::ERROR,
@@ -847,6 +855,7 @@ module DBus
     # Create a new main event loop.
     def initialize
       @buses = Hash.new
+      # acts as a Semaphore
       @quit_queue = Queue.new
       @quitting = false
       $mainclass = self
@@ -879,18 +888,16 @@ module DBus
 
     # Run the main loop. This is a blocking call!
     def run
-      # before blocking, empty the buffers
-      # https://bugzilla.novell.com/show_bug.cgi?id=537401
       @buses_thread_id = Array.new
-      @buses_thread = Array.new
+      @buses_thread = Array.new # Threads to terminate when the bus disconnects
       @thread_as_quit = Queue.new
 
-      if(ENV["DBUS_THREADED_ACCESS"] || false)
+      if ENV["DBUS_THREADED_ACCESS"] || false
         @buses.each_value do |b|
-          
           b.rescuemethod = self.method(:quit_imediately)
-          th= Thread.new{
+          th = Thread.new do
             b.main_thread = true
+            # before blocking, empty the buffers
             while m = b.pop_message
               b.process(m)
             end
@@ -901,7 +908,7 @@ module DBus
             end
 
             @thread_as_quit << Thread.current.object_id
-          }
+          end
           @buses_thread_id.push th.object_id
           @buses_thread.push th
         end
@@ -912,8 +919,8 @@ module DBus
           id = @thread_as_quit.pop
           @buses_thread_id.delete(id)
         end
-
       else
+        # before blocking, empty the buffers
         @buses.each_value do |b|
           while m = b.pop_message
             b.process(m)
@@ -934,10 +941,9 @@ module DBus
             end
           end
         end
-        
-      end # if($threaded)
+      end # not threaded
     end # run
-    
+
   end # class Main
-  
+
 end # module DBus
