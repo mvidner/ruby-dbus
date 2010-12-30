@@ -57,7 +57,7 @@ class ServerRobustnessTest < Test::Unit::TestCase
     ifc.not_the_answer
     assert false, "should have raised"
   rescue DBus::Error => e
-    assert_no_match(/timeout/, e)
+    assert_no_match(/timeout/, e.to_s)
   end
 
   def test_no_such_interface_without_introspection
@@ -67,6 +67,6 @@ class ServerRobustnessTest < Test::Unit::TestCase
     ifc.the_answer
     assert false, "should have raised"
   rescue DBus::Error => e
-    assert_no_match(/timeout/, e)
+    assert_no_match(/timeout/, e.to_s)
   end
 end
