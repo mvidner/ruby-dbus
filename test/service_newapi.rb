@@ -191,7 +191,7 @@ bus.add_match(mr) do |msg|
   end
 end
 
-puts "listening"
+puts "listening, with ruby-#{RUBY_VERSION}"
 main = DBus::Main.new
 main << bus
 begin

@@ -273,7 +273,7 @@ module DBus
     # Append the the string _str_ itself to the packet.
     def append_string(str)
       align(4)
-      @packet += [str.bytesize].pack("L") + str + "\0"
+      @packet += [str.bytesize].pack("L") + [str].pack("Z*")
     end
 
     # Append the the signature _signature_ itself to the packet.
