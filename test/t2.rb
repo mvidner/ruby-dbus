@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
 require "test/unit"
 require "dbus"
 
@@ -62,5 +63,11 @@ class ValueTest < Test::Unit::TestCase
   def test_service_returning_nonarray
     # "warning: default `to_a' will be obsolete"
     @obj.the_answer
+  end
+
+  def test_multibyte_string
+    str = @obj.multibyte_string[0]
+    str.force_encoding('UTF-8') if RUBY_VERSION >= '1.9'
+    assert_equal "あいうえお", str
   end
 end

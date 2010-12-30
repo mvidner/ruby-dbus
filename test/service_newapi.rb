@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
 
 # find the library without external help
 $:.unshift File.expand_path("../../lib", __FILE__)
@@ -55,6 +56,10 @@ class Test < DBus::Object
 
     dbus_method :Error, "in name:s, in description:s" do |name, description|
       raise DBus.error(name), description
+    end
+
+    dbus_method :multibyte_string, "out string:s" do
+      "あいうえお"
     end
 
     dbus_signal :SomethingJustHappened, "toto:s, tutu:u"
