@@ -67,7 +67,6 @@ class ValueTest < Test::Unit::TestCase
 
   def test_multibyte_string
     str = @obj.multibyte_string[0]
-    str.force_encoding('UTF-8') if RUBY_VERSION >= '1.9'
     assert_equal "あいうえお", str
   end
 end

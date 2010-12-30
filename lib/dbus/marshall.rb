@@ -223,6 +223,7 @@ module DBus
         packet = get_string
       when Type::STRING
         packet = get_string
+        packet.force_encoding('UTF-8') if RUBY_VERSION >= '1.9'
       when Type::SIGNATURE
         packet = get_signature
       when Type::DICT_ENTRY
