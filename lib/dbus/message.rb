@@ -152,7 +152,7 @@ module DBus
       @params.each do |param|
         params.append(param[0], param[1])
       end
-      @body_length = params.packet.length
+      @body_length = params.packet.bytesize
 
       marshaller = PacketMarshaller.new
       marshaller.append(Type::BYTE, HOST_END)

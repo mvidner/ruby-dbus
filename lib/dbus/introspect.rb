@@ -47,7 +47,7 @@ module DBus
 
     # Validates a service _name_.
     def validate_name(name)
-      raise InvalidIntrospectionData if name.size > 255
+      raise InvalidIntrospectionData if name.bytesize > 255
       raise InvalidIntrospectionData if name =~ /^\./ or name =~ /\.$/
       raise InvalidIntrospectionData if name =~ /\.\./
       raise InvalidIntrospectionData if not name =~ /\./
@@ -107,7 +107,7 @@ module DBus
 
     # Validates element _name_.
     def validate_name(name)
-      if (not name =~ MethodSignalRE) or (name.size > 255)
+      if (not name =~ MethodSignalRE) or (name.bytesize > 255)
         raise InvalidMethodName, name
       end
     end

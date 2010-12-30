@@ -62,7 +62,7 @@ module DBus
       # name of cookie file, id of cookie in file, servers random challenge  
       context, id, s_challenge = data.split(' ')
       # Random client challenge        
-      c_challenge = Array.new(s_challenge.length/2).map{|obj|obj=rand(255).to_s}.join
+      c_challenge = Array.new(s_challenge.bytesize/2).map{|obj|obj=rand(255).to_s}.join
       # Search cookie file for id
       path = File.join(ENV['HOME'], '.dbus-keyrings', context)
       puts "DEBUG: path: #{path.inspect}" if $debug
@@ -161,7 +161,7 @@ module DBus
       while left > 0
         buf = @socket.read( left > 1 ? 1 : left )
         break if buf.nil?
-        left -= buf.size
+        left -= buf.bytesize
         data += buf
         break if data.include? crlf #crlf means line finished, the TCP socket keeps on listening, so we break 
       end
