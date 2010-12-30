@@ -11,7 +11,6 @@
 require 'socket'
 require 'thread'
 require 'singleton'
-require 'fcntl'
 
 # = D-Bus main module
 #
@@ -184,10 +183,10 @@ module DBus
   # Main class that maintains a connection to a bus and can handle incoming
   # and outgoing messages.
   class Connection
+    # ConnectionQueue
+    attr_reader :cq
     # The unique name (by specification) of the message.
     attr_reader :unique_name
-    # The socket that is used to connect with the bus.
-    attr_reader :socket
     # Queue[Message]
     attr_accessor :main_message_queue
     # Boolean - is there a thread for the main loop?
@@ -196,8 +195,6 @@ module DBus
     attr_accessor :queue_used_by_thread
     # Hash: message serial => Thread
     attr_accessor :thread_waiting_for_message
-    # Method called on EOF
-    attr_accessor :rescuemethod
 
     # Create a new connection to the bus for a given connect _path_. _path_
     # format is described in the D-Bus specification:
@@ -206,16 +203,14 @@ module DBus
     # "transport1:key1=value1,key2=value2;transport2:key1=value1,key2=value2"
     # e.g. "unix:path=/tmp/dbus-test" or "tcp:host=localhost,port=2687"
     def initialize(path, threaded_access)
-      @path = path
+      @cq = ConnectionQueue.new(path, threaded_access)
+
       @unique_name = nil
-      @buffer = ""
-      @rescuemethod = nil
       @method_call_replies = Hash.new
       @method_call_msgs = Hash.new
       @signal_matchrules = Hash.new
       @proxy = nil
       @object_root = Node.new("/")
-      @is_tcp = false
       @queue_used_by_thread       = Hash.new
       @thread_waiting_for_message = Hash.new
       @main_message_queue = Queue.new
@@ -231,12 +226,12 @@ module DBus
             puts "ERROR: Can't wait for messages, @socket is nil."
             return
           end
-          ret = pop_message
+          ret = poll_message_from_buffer
           while ret == nil
             r, d, d = IO.select([@socket])
             if r and r[0] == @socket
               update_buffer
-              ret = pop_message
+              ret = poll_message_from_buffer
             end
           end
           case ret.message_type
@@ -256,78 +251,6 @@ module DBus
           end
         end
       end
-    end
-
-    # Connect to the bus and initialize the connection.
-    def connect
-      addresses = @path.split ";"
-      # connect to first one that succeeds
-      worked = addresses.find do |a|
-        transport, keyvaluestring = a.split ":"
-        kv_list = keyvaluestring.split ","
-        kv_hash = Hash.new
-        kv_list.each do |kv|
-          key, escaped_value = kv.split "="
-          value = escaped_value.gsub(/%(..)/) {|m| [$1].pack "H2" }
-          kv_hash[key] = value
-        end
-        case transport
-        when "unix"
-          connect_to_unix kv_hash
-        when "tcp"
-          connect_to_tcp kv_hash
-        else
-          # ignore, report?
-        end
-      end
-      if @threaded
-        start_read_thread
-      end
-      worked
-      # returns the address that worked or nil.
-      # how to report failure?
-    end
-
-    # Connect to a bus over tcp and initialize the connection.
-    def connect_to_tcp(params)
-      #check if the path is sufficient
-      if params.key?("host") and params.key?("port")
-        begin
-          #initialize the tcp socket
-          @socket = TCPSocket.new(params["host"],params["port"].to_i)
-          @socket.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
-          init_connection
-          @is_tcp = true
-        rescue
-          puts "Error: Could not establish connection to: #{@path}, will now exit."
-          exit(0) #a little harsh
-        end
-      else
-        #Danger, Will Robinson: the specified "path" is not usable
-        puts "Error: supplied path: #{@path}, unusable! sorry."
-      end
-    end
-
-    # Connect to an abstract unix bus and initialize the connection.
-    def connect_to_unix(params)
-      @socket = Socket.new(Socket::Constants::PF_UNIX,Socket::Constants::SOCK_STREAM, 0)
-      @socket.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
-      if ! params['abstract'].nil?
-        if HOST_END == LIL_END
-          sockaddr = "\1\0\0#{params['abstract']}"
-        else
-          sockaddr = "\0\1\0#{params['abstract']}"
-        end
-      elsif ! params['path'].nil?
-        sockaddr = Socket.pack_sockaddr_un(params['path'])
-      end
-      @socket.connect(sockaddr)
-      init_connection
-    end
-
-    # Send the buffer _buf_ to the bus using Connection#writel.
-    def send(buf)
-      @socket.write(buf) unless @socket.nil?
     end
 
     # Tell a bus to register itself on the glib main loop
@@ -455,7 +378,7 @@ module DBus
           end
         end
       else
-        send(m.marshall)
+        @cq.push m
         on_return(m) do |rmsg|
           if rmsg.is_a?(Error)
             yield rmsg
@@ -524,77 +447,12 @@ module DBus
       @proxy
     end
 
-    # Fill (append) the buffer from data that might be available on the
-    # socket.
-    def update_buffer
-      @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
-    rescue EOFError
-      if @threaded
-        @rescuemethod.call
-      end
-      raise # the caller expects it
-    rescue Exception => e
-      puts "Oops:", e
-      raise if @is_tcp          # why?
-      puts "WARNING: read_nonblock failed, falling back to .recv"
-      @buffer += @socket.recv(MSG_BUF_SIZE)  
-    end
-
-    # Get one message from the bus and remove it from the buffer.
-    # Return the message.
-    def pop_message
-      return nil if @buffer.empty?
-      ret = nil
-      begin
-        ret, size = Message.new.unmarshall_buffer(@buffer)
-        @buffer.slice!(0, size)
-      rescue IncompleteBufferException => e
-        # fall through, let ret be null
-      end
-      ret
-    end
-
-    # Retrieve all the messages that are currently in the buffer.
-    def messages
-      ret = Array.new
-      while msg = pop_message
-        ret << msg
-      end
-      ret
-    end
-
-    # The buffer size for messages.
-    MSG_BUF_SIZE = 4096
-
-    # Update the buffer and retrieve all messages using Connection#messages.
-    # Return the messages.
-    def poll_messages
-      ret = nil
-      r, d, d = IO.select([@socket], nil, nil, 0)
-      if r and r.size > 0
-        update_buffer
-      end
-      messages
-    end
-
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
       if @threaded
-        return @queue_used_by_thread[Thread.current].pop
+        @queue_used_by_thread[Thread.current].pop
       else
-        if @socket.nil?
-          puts "ERROR: Can't wait for messages, @socket is nil."
-          return
-        end
-        ret = pop_message
-        while ret == nil
-          r, d, d = IO.select([@socket])
-          if r and r[0] == @socket
-            update_buffer
-            ret = pop_message
-          end
-        end
-        ret
+        @cq.wait_for_message
       end
     end
 
@@ -606,7 +464,7 @@ module DBus
         @queue_used_by_thread[Thread.current] = Queue.new      # Creating Queue message for return
         @thread_waiting_for_message[m.serial] = Thread.current 
       end
-      send(m.marshall)
+      @cq.push m
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
 
@@ -687,17 +545,17 @@ module DBus
         if not node
           reply = Message.error(m, "org.freedesktop.DBus.Error.UnknownObject",
                                 "Object #{m.path} doesn't exist")
-          send(reply.marshall)
+          @cq.push reply
           # handle introspectable as an exception:
         elsif m.interface == "org.freedesktop.DBus.Introspectable" and
             m.member == "Introspect"
           reply = Message.new(Message::METHOD_RETURN).reply_to(m)
           reply.sender = @unique_name
           reply.add_param(Type::STRING, node.to_xml)
-          send(reply.marshall)
+          @cq.push reply
         else
           obj = node.object
-          return if obj.nil?    # FIXME, sends no reply
+          return if obj.nil?    # FIXME, pushes no reply
           obj.dispatch(m) if obj
         end
       when DBus::Message::SIGNAL
@@ -733,7 +591,7 @@ module DBus
         m.add_param(par.type, args[i])
         i += 1
       end
-      send(m.marshall)
+      @cq.push m
     end
 
     ###########################################################################
@@ -752,12 +610,6 @@ module DBus
       end
       @service = Service.new(@unique_name, self)
     end
-
-    # Initialize the connection to the bus.
-    def init_connection
-      @client = Client.new(@socket)
-      @client.authenticate
-    end
   end # class Connection
 
 
@@ -771,7 +623,6 @@ module DBus
     # Get the the default session bus.
     def initialize
       super(ENV["DBUS_SESSION_BUS_ADDRESS"] || address_from_file, ENV["DBUS_THREADED_ACCESS"] || false)
-      connect
       send_hello
     end
 
@@ -805,7 +656,6 @@ module DBus
     # Get the default system bus.
     def initialize
       super(SystemSocketName, ENV["DBUS_THREADED_ACCESS"] || false)
-      connect
       send_hello
     end
   end
@@ -826,7 +676,6 @@ module DBus
     # Get the remote bus.
     def initialize socket_name
       super(socket_name)
-      connect
       send_hello
     end
   end
@@ -894,11 +743,11 @@ module DBus
 
       if ENV["DBUS_THREADED_ACCESS"] || false
         @buses.each_value do |b|
-          b.rescuemethod = self.method(:quit_imediately)
+          b.cq.rescuemethod = self.method(:quit_imediately)
           th = Thread.new do
             b.main_thread = true
             # before blocking, empty the buffers
-            while m = b.pop_message
+            while m = b.poll_message_from_buffer
               b.process(m)
             end
 
@@ -922,7 +771,7 @@ module DBus
       else
         # before blocking, empty the buffers
         @buses.each_value do |b|
-          while m = b.pop_message
+          while m = b.poll_message_from_buffer
             b.process(m)
           end
         end
@@ -936,7 +785,7 @@ module DBus
               @buses.delete socket # this bus died
               next
             end
-            while m = b.pop_message
+            while m = b.poll_message_from_buffer
               b.process(m)
             end
           end
