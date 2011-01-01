@@ -700,7 +700,7 @@ module DBus
   # Class that takes care of handling message and signal events
   # asynchronously.  *Note:* This is a native implement and therefore does
   # not integrate with a graphical widget set main loop.
-  class Main
+  class OldMain
     # Create a new main event loop.
     def initialize
       @buses = Hash.new
