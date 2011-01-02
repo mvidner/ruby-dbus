@@ -21,7 +21,7 @@ module DBus
   # Translates between a socket and Message objects
   class ConnectionQueue
     # The socket that is used to connect with the bus.
-#    attr_reader :socket
+    attr_reader :socket
     # Method called on EOF
     attr_accessor :rescuemethod
 
@@ -35,13 +35,25 @@ module DBus
       # @client - unneeded? should be a local var
     end
 
+    # TODO failure modes
+    #
+    # If _non_block_ is true, return nil instead of waiting
+    # (not used, just for Queue compatibility)
     def pop(non_block = false)
-      msg = poll_message_from_buffer
+      buffer_from_socket_nonblock
+      msg = message_from_buffer_nonblock
       if non_block
         return msg
       end
-
-      #...
+      # we can block
+      while msg.nil?
+        r, d, d = IO.select([@socket])
+        if r and r[0] == @socket
+          buffer_from_socket_nonblock
+          msg = message_from_buffer_nonblock
+        end
+      end
+      msg
     end
 
     def push(message)
@@ -123,8 +135,8 @@ module DBus
 
     # Get and remove one message from the buffer.
     # Return the message or nil.
-    # poll_message_from_buffer
-    def poll_message_from_buffer
+    # FIXME poll implies waiting, rename to _non_block
+    def message_from_buffer_nonblock
       return nil if @buffer.empty?
       ret = nil
       begin
@@ -139,7 +151,7 @@ module DBus
     # Retrieve all the messages that are currently in the buffer.
     def messages
       ret = Array.new
-      while msg = poll_message_from_buffer
+      while msg = message_from_buffer_nonblock
         ret << msg
       end
       ret
@@ -150,8 +162,10 @@ module DBus
 
     # Fill (append) the buffer from data that might be available on the
     # socket.
-    def update_buffer
+    def buffer_from_socket_nonblock
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
+    rescue Errno::EAGAIN
+      # fine, would block
     rescue EOFError
       if @threaded
         @rescuemethod.call
@@ -170,29 +184,10 @@ module DBus
       ret = nil
       r, d, d = IO.select([@socket], nil, nil, 0)
       if r and r.size > 0
-        update_buffer
+        buffer_from_socket_nonblock
       end
       messages
     end
-
-    # Wait for a message to arrive. Return it once it is available.
-    def wait_for_message
-      # FIXME failure modes
-      if @socket.nil?
-        puts "ERROR: Can't wait for messages, @socket is nil."
-        return
-      end
-      ret = poll_message_from_buffer
-      while ret == nil
-        r, d, d = IO.select([@socket])
-        if r and r[0] == @socket
-          update_buffer
-          ret = poll_message_from_buffer
-        end
-      end
-      ret
-    end
-
   end # class ConnectionQueue
 
 end # module DBus

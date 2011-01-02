@@ -452,7 +452,7 @@ module DBus
       if @threaded
         @queue_used_by_thread[Thread.current].pop
       else
-        @cq.wait_for_message
+        @cq.pop
       end
     end
 

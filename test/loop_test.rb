@@ -34,10 +34,10 @@ class MainLoopTest < Test::Unit::TestCase
   end
 
   def test_main_run_and_quit_methods_1
-    main_run_and_quit_methods [DBus::ASessionBus.new]
+    test_main_run_and_quit_methods [DBus::ASessionBus.new]
   end
 
   def test_main_run_and_quit_methods_2
-    main_run_and_quit_methods [DBus::ASessionBus.new, DBus::ASessionBus.new]
+    test_main_run_and_quit_methods [DBus::ASessionBus.new, DBus::ASessionBus.new]
   end
 end

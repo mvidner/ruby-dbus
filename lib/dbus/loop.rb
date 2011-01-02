@@ -29,7 +29,7 @@ module DBus
 
     # Add a _connection_ to the list of where to watch for events.
     def <<(connection)
-      @buses[bus.socket] = connection
+      @sockets[connection.cq.socket] = connection
       add(connection.cq.socket) { |socket| connection.cq.feed(socket) }
     end
 
