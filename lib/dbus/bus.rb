@@ -226,12 +226,12 @@ module DBus
             puts "ERROR: Can't wait for messages, @socket is nil."
             return
           end
-          ret = poll_message_from_buffer
+          ret = message_from_buffer_nonblock
           while ret == nil
             r, d, d = IO.select([@socket])
             if r and r[0] == @socket
-              update_buffer
-              ret = poll_message_from_buffer
+              buffer_from_socket_nonblock
+              ret = message_from_buffer_nonblock
             end
           end
           case ret.message_type
@@ -253,19 +253,25 @@ module DBus
       end
     end
 
+    # Dispatch all messages that are available in the queue,
+    # but do not block on the queue.
+    # Called by a main loop when something is available in the queue
+    def dispatch_cq
+      while (msg = @cq.pop :non_block)
+        process msg
+      end
+    end
+
     # Tell a bus to register itself on the glib main loop
     def glibize
       require 'glib2'
       # Circumvent a ruby-glib bug
       @channels ||= Array.new
 
-      gio = GLib::IOChannel.new(@socket.fileno)
+      gio = GLib::IOChannel.new(@cq.socket.fileno)
       @channels << gio
       gio.add_watch(GLib::IOChannel::IN) do |c, ch|
-        update_buffer
-        messages.each do |msg|
-          process(msg)
-        end
+        dispatch_cq
         true
       end
     end
@@ -747,7 +753,7 @@ module DBus
           th = Thread.new do
             b.main_thread = true
             # before blocking, empty the buffers
-            while m = b.poll_message_from_buffer
+            while m = b.message_from_buffer_nonblock
               b.process(m)
             end
 
@@ -771,7 +777,7 @@ module DBus
       else
         # before blocking, empty the buffers
         @buses.each_value do |b|
-          while m = b.poll_message_from_buffer
+          while m = b.message_from_buffer_nonblock
             b.process(m)
           end
         end
@@ -780,12 +786,12 @@ module DBus
           ready.each do |socket|
             b = @buses[socket]
             begin
-              b.update_buffer
+              b.buffer_from_socket_nonblock
             rescue EOFError, SystemCallError
               @buses.delete socket # this bus died
               next
             end
-            while m = b.poll_message_from_buffer
+            while m = b.message_from_buffer_nonblock
               b.process(m)
             end
           end

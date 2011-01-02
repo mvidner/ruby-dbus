@@ -10,7 +10,6 @@
 
 require 'socket'
 require 'thread'
-require 'singleton'
 require 'fcntl'
 
 # = D-Bus main module

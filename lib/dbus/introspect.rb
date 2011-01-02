@@ -374,7 +374,7 @@ module DBus
               yield(rmsg, *rmsg.params)
             end
           end
-          @object.bus.send(msg.marshall)
+          @object.bus.cq.push msg
         else
           @object.bus.send_sync(msg) do |rmsg|
             if rmsg.is_a?(Error)

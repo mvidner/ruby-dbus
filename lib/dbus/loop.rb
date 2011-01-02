@@ -30,7 +30,7 @@ module DBus
     # Add a _connection_ to the list of where to watch for events.
     def <<(connection)
       @sockets[connection.cq.socket] = connection
-      add(connection.cq.socket) { |socket| connection.cq.feed(socket) }
+      add(connection.cq.socket) { |socket| connection.dispatch_cq }
     end
 
     def add(socket, &handler)
@@ -48,7 +48,7 @@ module DBus
         watch_to_read = @sockets.keys << @quit_pipe_reader
         # errors? dbus disconnection is abnormal
         ready_to_read, dummy, dummy = IO.select(watch_to_read)
-        break if @quit_pipe_reader.eof?
+        break if ready_to_read.include? @quit_pipe_reader
 
         ready_to_read.each do |socket|
           @sockets[socket].call(socket)

@@ -33,7 +33,7 @@ class SignalHandlerTest < Test::Unit::TestCase
     end
 
     d "will begin"
-    @obj.LongTaskBegin 3
+    @obj.LongTaskBegin 1
 
     quitter = Thread.new do
       d "sleep before quit"
@@ -41,7 +41,8 @@ class SignalHandlerTest < Test::Unit::TestCase
       # the socket will be drained and we deadlock in a select.
       # It could be worked around by sending ourselves a Unix signal
       # (with a dummy handler) to interrupt the select
-      sleep 1
+      # YAY, no more. announce that and note that it now behaves like quit_immediately
+      sleep 2
       d "will quit"
       @loop.quit
     end
