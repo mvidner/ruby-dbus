@@ -487,6 +487,10 @@ module DBus
           retm = wait_for_message
           process(retm)
         end
+        # now process what's in the buffer.
+        # don't leave the buffer stale
+        # because Main may block on the drained socket
+        dispatch_cq
       end        
     end
 
