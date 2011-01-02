@@ -3,16 +3,8 @@
 require "test/unit"
 require "dbus"
 
-class MainLoopTest < Test::Unit::TestCase
+class LoopTest < Test::Unit::TestCase
   def setup
-  end
-
-  def test_main_and_quit_functions
-    Thread.new do
-      sleep 1
-      DBus.main_quit
-    end
-    DBus.main
   end
 
   def test_main_and_quit_functions
