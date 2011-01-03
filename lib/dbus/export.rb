@@ -73,8 +73,10 @@ module DBus
     # belong to.
     def self.dbus_interface(s)
       @@intfs_mutex.synchronize do
-        @@cur_intf = Interface.new(s)
-        self.intfs = (self.intfs || {}).merge({s => @@cur_intf})
+        unless @@cur_intf = (self.intfs && self.intfs[s])
+          @@cur_intf = Interface.new(s)
+          self.intfs = (self.intfs || {}).merge({s => @@cur_intf})
+        end
         yield
         @@cur_intf = nil
       end
