@@ -57,7 +57,10 @@ class Test < DBus::Object
     dbus_method :Error, "in name:s, in description:s" do |name, description|
       raise DBus.error(name), description
     end
+  end
 
+  # closing and reopening the same interface
+  dbus_interface INTERFACE do
     dbus_method :multibyte_string, "out string:s" do
       "あいうえお"
     end
