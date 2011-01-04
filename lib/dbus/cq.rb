@@ -9,7 +9,6 @@
 # See the file "COPYING" for the exact licensing terms.
 
 require 'socket'
-require 'thread'
 require 'fcntl'
 
 # = D-Bus main module
@@ -21,15 +20,11 @@ module DBus
   class ConnectionQueue
     # The socket that is used to connect with the bus.
     attr_reader :socket
-    # Method called on EOF
-    attr_accessor :rescuemethod
 
-    def initialize(address, threaded)
+    def initialize(address)
       @address = address
-      @threaded = threaded
       @buffer = ""
       @is_tcp = false
-      @rescuemethod = nil
       connect                   # initializes @socket
       # @client - unneeded? should be a local var
     end
@@ -37,7 +32,7 @@ module DBus
     # TODO failure modes
     #
     # If _non_block_ is true, return nil instead of waiting
-    # (not used, just for Queue compatibility)
+    # EOFError may be raised
     def pop(non_block = false)
       buffer_from_socket_nonblock
       msg = message_from_buffer_nonblock
@@ -83,9 +78,6 @@ module DBus
         else
           # ignore, report?
         end
-      end
-      if @threaded
-        start_read_thread
       end
       worked
       # returns the address that worked or nil.
@@ -147,45 +139,21 @@ module DBus
       ret
     end
 
-    # Retrieve all the messages that are currently in the buffer.
-    def messages
-      ret = Array.new
-      while msg = message_from_buffer_nonblock
-        ret << msg
-      end
-      ret
-    end
-
     # The buffer size for messages.
     MSG_BUF_SIZE = 4096
 
     # Fill (append) the buffer from data that might be available on the
     # socket.
+    # EOFError may be raised
     def buffer_from_socket_nonblock
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
     rescue Errno::EAGAIN
       # fine, would block
-    rescue EOFError
-      if @threaded
-        @rescuemethod.call
-      end
-      raise # the caller expects it
     rescue Exception => e
       puts "Oops:", e
       raise if @is_tcp          # why?
       puts "WARNING: read_nonblock failed, falling back to .recv"
       @buffer += @socket.recv(MSG_BUF_SIZE)  
-    end
-
-    # Update the buffer and retrieve all messages using Connection#messages.
-    # Return the messages.
-    def poll_messages
-      ret = nil
-      r, d, d = IO.select([@socket], nil, nil, 0)
-      if r and r.size > 0
-        buffer_from_socket_nonblock
-      end
-      messages
     end
   end # class ConnectionQueue
 

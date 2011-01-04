@@ -203,7 +203,7 @@ module DBus
     # "transport1:key1=value1,key2=value2;transport2:key1=value1,key2=value2"
     # e.g. "unix:path=/tmp/dbus-test" or "tcp:host=localhost,port=2687"
     def initialize(path, threaded_access)
-      @cq = ConnectionQueue.new(path, threaded_access)
+      @cq = ConnectionQueue.new(path)
 
       @unique_name = nil
       @method_call_replies = Hash.new
@@ -216,30 +216,22 @@ module DBus
       @main_message_queue = Queue.new
       @main_thread = nil
       @threaded = threaded_access
+      if @threaded
+        start_read_thread
+      end
     end
 
     def start_read_thread
       @thread = Thread.new do
         puts "start the reading thread on socket #{@socket}" if $DEBUG
         loop do #loop to read
-          if @socket.nil?
-            puts "ERROR: Can't wait for messages, @socket is nil."
-            return
-          end
-          ret = message_from_buffer_nonblock
-          while ret == nil
-            r, d, d = IO.select([@socket])
-            if r and r[0] == @socket
-              buffer_from_socket_nonblock
-              ret = message_from_buffer_nonblock
-            end
-          end
+          ret = @cq.pop         # FIXME EOFError
           case ret.message_type
           when Message::ERROR, Message::METHOD_RETURN
-            if @thread_waiting_for_message[ret.reply_serial].nil?
+            thread_in_wait = @thread_waiting_for_message[ret.reply_serial]
+            if thread_in_wait.nil?
               process(ret) # there is no thread, process the message
             else
-              thread_in_wait = @thread_waiting_for_message[ret.reply_serial]
               @queue_used_by_thread[thread_in_wait] << ret # puts the message in the queue
             end
           else
@@ -257,7 +249,7 @@ module DBus
     # but do not block on the queue.
     # Called by a main loop when something is available in the queue
     def dispatch_cq
-      while (msg = @cq.pop :non_block)
+      while (msg = @cq.pop :non_block) # FIXME EOFError
         process msg
       end
     end
@@ -458,7 +450,7 @@ module DBus
       if @threaded
         @queue_used_by_thread[Thread.current].pop
       else
-        @cq.pop
+        @cq.pop                 # FIXME EOFError
       end
     end
 
