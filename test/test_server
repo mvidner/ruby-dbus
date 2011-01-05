@@ -1,8 +1,37 @@
 #! /bin/sh
 # A wrapper for DBus tests
 # Run a server (directly or by dbus activation) and then the test
-# $0 server [args...] -- test [args...]
 set -o errexit
+
+# TODO an option to choose between direct or by activation
+
+USAGE=false
+NAME=
+QUIT_OBJ=/
+QUITTER=
+while getopts hn:Q:q: FLAG; do
+    case $FLAG in
+	h) USAGE=true;;
+	n) NAME="$OPTARG";;
+	Q) QUIT_OBJ="$OPTARG";;
+	q) QUITTER="$OPTARG";;
+	*) USAGE=true; RC=1;;
+    esac
+done
+shift `expr $OPTIND - 1`
+
+if [ -z "$NAME" ]; then
+    echo "Mandatory option missing: -n service_name"
+    USAGE=true; RC=1
+fi
+if $USAGE; then
+    echo "Usage: $0 -n service_name [-q quit_interface_and_method] server [args...] -- client [args...]"
+    echo " -h  Help"
+    echo " -n:  DBus service name, eg. org.example.MyService"
+    echo " -Q:  object to send the quit message, eg. /Main, default: /"
+    echo " -q:  quit message, eg. org.example.MyInterface.Quit"
+    exit $RC
+fi
 
 while [ "$1" != "--" ]; do
   SERVER="$SERVER $1"
@@ -10,15 +39,25 @@ while [ "$1" != "--" ]; do
 done
 shift # --
 
+dbus_call () {
+    dbus-send --type=method_call --print-reply "$@"
+}
+
 setup_activation () {
-    SDIR=$XDG_DATA_DIRS/dbus-1/services
-    mkdir -p $SDIR
-    # FIXME Name is hardcoded
-    cat <<EOF > $SDIR/test.service
+    SDIR="$XDG_DATA_HOME/dbus-1/services"
+    mkdir -p "$SDIR"
+    SFILE="$SDIR/$NAME.service"
+    if [ -f "$SFILE" ]; then
+	echo >&2 "Service file $SFILE already exists, skipping"
+    else
+	RM_FILES="$RM_FILES $SFILE"
+	cat <<EOF > "$SFILE"
 [D-BUS Service]
-Name=org.ruby.service
+Name=$NAME
 Exec=$SERVER
 EOF
+    fi
+    dbus_call --session --dest=org.freedesktop.DBus / org.freedesktop.DBus.ReloadConfig
 }
 
 run_server () {
@@ -28,12 +67,17 @@ run_server () {
     echo "off we go!"
 }
 
-export XDG_DATA_DIRS=`mktemp -d dbus.activation.XXXXXX`
-RM_FILES="$RM_FILES $XDG_DATA_DIRS"
+at_exit () {
+    if [ -n $QUITTER ]; then
+	dbus_call --session --dest=$NAME $QUIT_OBJ $QUITTER
+    fi
+    rm -rf $RM_FILES
+}
+
 setup_activation
 #run_server
 
 # Clean up at exit.
-trap "rm -rf \$RM_FILES" EXIT TERM INT
+trap at_exit EXIT TERM INT
 
 "$@"

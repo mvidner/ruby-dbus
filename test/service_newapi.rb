@@ -57,6 +57,10 @@ class Test < DBus::Object
       raise DBus.error(name), description
     end
 
+    dbus_method :Quit, "" do
+      $main.quit
+    end
+
     dbus_signal :SomethingJustHappened, "toto:s, tutu:u"
   end
 
@@ -189,9 +193,5 @@ end
 puts "listening"
 main = DBus::Main.new
 main << bus
-begin
-  main.run
-rescue SystemCallError
-  # the test driver will kill the bus, that's OK
-end
-
+$main = main
+$main.run
