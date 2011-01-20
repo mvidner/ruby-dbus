@@ -521,10 +521,9 @@ module DBus
         rescue NameError => e
           # interesting, foo.method("unknown")
           # raises NameError, not NoMethodError
-          match = /undefined method `([^']*)' for class `([^']*)'/.match e.to_s
-          raise unless match and match[2] == "DBus::ProxyObjectInterface"
+          raise unless e.to_s =~ /undefined method `#{name}'/
           # BTW e.exception("...") would preserve the class.
-          raise NoMethodError,"undefined method `#{match[1]}' for DBus interface `#{@default_iface}' on object `#{@path}'"
+          raise NoMethodError,"undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
         end
       else
         # TODO distinguish:
