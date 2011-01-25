@@ -344,7 +344,7 @@ module DBus
       methdef = "def #{m.name}("
       methdef += (0..(m.params.size - 1)).to_a.collect { |n|
         "arg#{n}"
-      }.join(", ")
+      }.push("&reply_handler").join(", ")
       methdef += %{)
               msg = Message.new(Message::METHOD_CALL)
               msg.path = @object.path
@@ -367,26 +367,7 @@ module DBus
         idx += 1
       end
       methdef += "
-        ret = nil
-        if block_given?
-          @object.bus.on_return(msg) do |rmsg|
-            if rmsg.is_a?(Error)
-              yield(rmsg)
-            else
-              yield(rmsg, *rmsg.params)
-            end
-          end
-          @object.bus.send(msg.marshall)
-        else
-          @object.bus.send_sync(msg) do |rmsg|
-            if rmsg.is_a?(Error)
-              raise rmsg
-            else
-              ret = rmsg.params
-            end
-          end
-        end
-        ret
+        @object.bus.send_sync_or_async(msg, &reply_handler)
       end
       "
       singleton_class.class_eval(methdef)
