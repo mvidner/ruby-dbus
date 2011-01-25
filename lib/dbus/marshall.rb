@@ -241,7 +241,7 @@ module DBus
 
   # D-Bus packet marshaller class
   #
-  # Class that handles the conversion (unmarshalling) of Ruby objects to
+  # Class that handles the conversion (marshalling) of Ruby objects to
   # (binary) payload data.
   class PacketMarshaller
     # The current or result packet.
@@ -309,6 +309,8 @@ module DBus
     end
 
     # Append a value _val_ to the packet based on its _type_.
+    #
+    # Host native endianness is used, declared in Message#marshall
     def append(type, val)
       raise TypeException, "Cannot send nil" if val.nil?
 

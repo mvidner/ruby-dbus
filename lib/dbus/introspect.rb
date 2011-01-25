@@ -8,6 +8,7 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
+# TODO check if it is slow, make replaceable
 require 'rexml/document'
 
 module DBus
@@ -27,15 +28,16 @@ module DBus
   # = D-Bus interface class
   #
   # This class is the interface descriptor.  In most cases, the Introspect()
-  # method call instanciates and configures this class for us.
+  # method call instantiates and configures this class for us.
   #
   # It also is the local definition of interface exported by the program.
+  # At the client side, see ProxyObjectInterface
   class Interface
-    # The name of the interface.
+    # The name of the interface. String
     attr_reader :name
-    # The methods that are part of the interface.
+    # The methods that are part of the interface. Hash: Symbol => DBus::Method
     attr_reader :methods
-    # The signals that are part of the interface.
+    # The signals that are part of the interface. Hash: Symbol => Signal
     attr_reader :signals
 
     # Creates a new interface with a given _name_.
@@ -100,9 +102,9 @@ module DBus
   # This is a generic class for entities that are part of the interface
   # such as methods and signals.
   class InterfaceElement
-    # The name of the interface element.
+    # The name of the interface element. Symbol
     attr_reader :name
-    # The parameters of the interface element
+    # The parameters of the interface element. Array: FormalParameter
     attr_reader :params
 
     # Validates element _name_.
@@ -135,7 +137,7 @@ module DBus
   #
   # This is a class representing methods that are part of an interface.
   class Method < InterfaceElement
-    # The list of return values for the method.
+    # The list of return values for the method. Array: FormalParameter
     attr_reader :rets
 
     # Creates a new method interface element with the given _name_.
