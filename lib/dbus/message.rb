@@ -101,6 +101,10 @@ module DBus
       end
     end
 
+    def to_s
+      "#{message_type} sender=#{sender} -> dest=#{destination} serial=#{serial} reply_serial=#{reply_serial} path=#{path}; interface=#{interface}; member=#{member} error_name=#{error_name}"
+    end
+
     # Create a regular reply to a message _m_.
     def self.method_return(m)
       MethodReturnMessage.new.reply_to(m)
