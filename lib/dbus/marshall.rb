@@ -42,9 +42,7 @@ module DBus
         @uint16 = "v"
         @double = "E"
       else
-        # FIXME: shouldn't a more special exception be raised here?
-        # yes, idea for a good name ? :)
-        raise Exception, "Incorrect endianness"
+        raise InvalidPacketException, "Incorrect endianness #{@endianness}"
       end
       @idx = 0
     end
