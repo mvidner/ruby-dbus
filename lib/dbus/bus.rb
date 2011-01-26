@@ -203,7 +203,11 @@ module DBus
     # and is something like:
     # "transport1:key1=value1,key2=value2;transport2:key1=value1,key2=value2"
     # e.g. "unix:path=/tmp/dbus-test" or "tcp:host=localhost,port=2687"
-    def initialize(path, threaded_access)
+    # _options_ are a hash:
+    # :threaded => boolean, defaults to
+    #              checking if ENV["DBUS_THREADED_ACCESS"] is set.
+    def initialize(path, options={})
+      options = { :threaded => ENV.member?("DBUS_THREADED_ACCESS")}.merge(options)
       @connection_queue = ConnectionQueue.new(path)
 
       @unique_name = nil
@@ -216,7 +220,7 @@ module DBus
       @thread_waiting_for_message = Hash.new
       @main_message_queue = Queue.new
       @main_thread = nil
-      @threaded = threaded_access
+      @threaded = options[:threaded]
       if @threaded
         start_read_thread
       end
@@ -648,8 +652,8 @@ module DBus
   # for the test suite.
   class ASessionBus < Connection
     # Get the the default session bus.
-    def initialize
-      super(ENV["DBUS_SESSION_BUS_ADDRESS"] || address_from_file, ENV["DBUS_THREADED_ACCESS"] || false)
+    def initialize(options={})
+      super(ENV["DBUS_SESSION_BUS_ADDRESS"] || address_from_file, options)
       send_hello
     end
 
@@ -681,8 +685,8 @@ module DBus
   # for the test suite.
   class ASystemBus < Connection
     # Get the default system bus.
-    def initialize
-      super(SystemSocketName, ENV["DBUS_THREADED_ACCESS"] || false)
+    def initialize(options={})
+      super(SystemSocketName, options)
       send_hello
     end
   end
@@ -701,8 +705,8 @@ module DBus
   class RemoteBus < Connection
 
     # Get the remote bus.
-    def initialize socket_name
-      super(socket_name)
+    def initialize(socket_name, options={})
+      super(socket_name, options)
       send_hello
     end
   end
