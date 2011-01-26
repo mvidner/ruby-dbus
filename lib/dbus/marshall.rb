@@ -42,9 +42,7 @@ module DBus
         @uint16 = "v"
         @double = "E"
       else
-        # FIXME: shouldn't a more special exception be raised here?
-        # yes, idea for a good name ? :)
-        raise Exception, "Incorrect endianness"
+        raise InvalidPacketException, "Incorrect endianness #{@endianness}"
       end
       @idx = 0
     end
@@ -53,7 +51,7 @@ module DBus
     # Return an array of unmarshalled objects
     def unmarshall(signature, len = nil)
       if len != nil
-        if @buffy.size < @idx + len
+        if @buffy.bytesize < @idx + len
           raise IncompleteBufferException
         end
       end
@@ -73,7 +71,7 @@ module DBus
       when 2, 4, 8
         bits = a - 1
         @idx = @idx + bits & ~bits
-        raise IncompleteBufferException if @idx > @buffy.size
+        raise IncompleteBufferException if @idx > @buffy.bytesize
       else
         raise "Unsupported alignment #{a}"
       end
@@ -86,7 +84,7 @@ module DBus
 
     # Retrieve the next _nbytes_ number of bytes from the buffer.
     def get(nbytes)
-      raise IncompleteBufferException if @idx + nbytes > @buffy.size
+      raise IncompleteBufferException if @idx + nbytes > @buffy.bytesize
       ret = @buffy.slice(@idx, nbytes)
       @idx += nbytes
       ret
@@ -96,8 +94,8 @@ module DBus
     def get_nul_terminated
       raise IncompleteBufferException if not @buffy[@idx..-1] =~ /^([^\0]*)\0/
       str = $1
-      raise IncompleteBufferException if @idx + str.size + 1 > @buffy.size
-      @idx += str.size + 1
+      raise IncompleteBufferException if @idx + str.bytesize + 1 > @buffy.bytesize
+      @idx += str.bytesize + 1
       str
     end
 
@@ -107,7 +105,7 @@ module DBus
       align(4)
       str_sz = get(4).unpack(@uint32)[0]
       ret = @buffy.slice(@idx, str_sz)
-      raise IncompleteBufferException if @idx + str_sz + 1 > @buffy.size
+      raise IncompleteBufferException if @idx + str_sz + 1 > @buffy.bytesize
       @idx += str_sz
       if @buffy[@idx].ord != 0
         raise InvalidPacketException, "String is not nul-terminated"
@@ -122,7 +120,7 @@ module DBus
     def get_signature
       str_sz = get(1).unpack('C')[0]
       ret = @buffy.slice(@idx, str_sz)
-      raise IncompleteBufferException if @idx + str_sz + 1 >= @buffy.size
+      raise IncompleteBufferException if @idx + str_sz + 1 >= @buffy.bytesize
       @idx += str_sz
       if @buffy[@idx].ord != 0
         raise InvalidPacketException, "Type is not nul-terminated"
@@ -193,7 +191,7 @@ module DBus
         raise InvalidPacketException if array_sz > 67108864
 
         align(signature.child.alignment)
-        raise IncompleteBufferException if @idx + array_sz > @buffy.size
+        raise IncompleteBufferException if @idx + array_sz > @buffy.bytesize
 
         packet = Array.new
         start_idx = @idx
@@ -223,6 +221,7 @@ module DBus
         packet = get_string
       when Type::STRING
         packet = get_string
+        packet.force_encoding('UTF-8') if RUBY_VERSION >= '1.9'
       when Type::SIGNATURE
         packet = get_signature
       when Type::DICT_ENTRY
@@ -240,7 +239,7 @@ module DBus
 
   # D-Bus packet marshaller class
   #
-  # Class that handles the conversion (unmarshalling) of Ruby objects to
+  # Class that handles the conversion (marshalling) of Ruby objects to
   # (binary) payload data.
   class PacketMarshaller
     # The current or result packet.
@@ -267,18 +266,18 @@ module DBus
 
     # Align the buffer with NULL (\0) bytes on a byte length of _a_.
     def align(a)
-      @packet = @packet.ljust(num_align(@offset + @packet.length, a) - @offset, 0.chr)
+      @packet = @packet.ljust(num_align(@offset + @packet.bytesize, a) - @offset, 0.chr)
     end
 
     # Append the the string _str_ itself to the packet.
     def append_string(str)
       align(4)
-      @packet += [str.length].pack("L") + str + "\0"
+      @packet += [str.bytesize].pack("L") + [str].pack("Z*")
     end
 
     # Append the the signature _signature_ itself to the packet.
     def append_signature(str)
-      @packet += str.length.chr + str + "\0"
+      @packet += str.bytesize.chr + str + "\0"
     end
 
     # Append the array type _type_ to the packet and allow for appending
@@ -286,12 +285,12 @@ module DBus
     def array(type)
       # Thanks to Peter Rullmann for this line
       align(4)
-      sizeidx = @packet.size
+      sizeidx = @packet.bytesize
       @packet += "ABCD"
       align(type.alignment)
-      contentidx = @packet.size
+      contentidx = @packet.bytesize
       yield
-      sz = @packet.size - contentidx
+      sz = @packet.bytesize - contentidx
       raise InvalidPacketException if sz > 67108864
       @packet[sizeidx...sizeidx + 4] = [sz].pack("L")
     end
@@ -308,6 +307,8 @@ module DBus
     end
 
     # Append a value _val_ to the packet based on its _type_.
+    #
+    # Host native endianness is used, declared in Message#marshall
     def append(type, val)
       raise TypeException, "Cannot send nil" if val.nil?
 
@@ -372,7 +373,7 @@ module DBus
 
         append_signature(vartype.to_s)
         align(vartype.alignment)
-        sub = PacketMarshaller.new(@offset + @packet.length)
+        sub = PacketMarshaller.new(@offset + @packet.bytesize)
         sub.append(vartype, vardata)
         @packet += sub.packet
       when Type::ARRAY

@@ -8,6 +8,7 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
+# TODO check if it is slow, make replaceable
 require 'rexml/document'
 
 module DBus
@@ -27,15 +28,16 @@ module DBus
   # = D-Bus interface class
   #
   # This class is the interface descriptor.  In most cases, the Introspect()
-  # method call instanciates and configures this class for us.
+  # method call instantiates and configures this class for us.
   #
   # It also is the local definition of interface exported by the program.
+  # At the client side, see ProxyObjectInterface
   class Interface
-    # The name of the interface.
+    # The name of the interface. String
     attr_reader :name
-    # The methods that are part of the interface.
+    # The methods that are part of the interface. Hash: Symbol => DBus::Method
     attr_reader :methods
-    # The signals that are part of the interface.
+    # The signals that are part of the interface. Hash: Symbol => Signal
     attr_reader :signals
 
     # Creates a new interface with a given _name_.
@@ -47,7 +49,7 @@ module DBus
 
     # Validates a service _name_.
     def validate_name(name)
-      raise InvalidIntrospectionData if name.size > 255
+      raise InvalidIntrospectionData if name.bytesize > 255
       raise InvalidIntrospectionData if name =~ /^\./ or name =~ /\.$/
       raise InvalidIntrospectionData if name =~ /\.\./
       raise InvalidIntrospectionData if not name =~ /\./
@@ -100,14 +102,14 @@ module DBus
   # This is a generic class for entities that are part of the interface
   # such as methods and signals.
   class InterfaceElement
-    # The name of the interface element.
+    # The name of the interface element. Symbol
     attr_reader :name
-    # The parameters of the interface element
+    # The parameters of the interface element. Array: FormalParameter
     attr_reader :params
 
     # Validates element _name_.
     def validate_name(name)
-      if (not name =~ MethodSignalRE) or (name.size > 255)
+      if (not name =~ MethodSignalRE) or (name.bytesize > 255)
         raise InvalidMethodName, name
       end
     end
@@ -135,7 +137,7 @@ module DBus
   #
   # This is a class representing methods that are part of an interface.
   class Method < InterfaceElement
-    # The list of return values for the method.
+    # The list of return values for the method. Array: FormalParameter
     attr_reader :rets
 
     # Creates a new method interface element with the given _name_.
@@ -227,10 +229,9 @@ module DBus
       @xml = xml
     end
 
-    # Recursively parses the subnodes, constructing the tree.
+    # return the names of direct subnodes
     def parse_subnodes
       subnodes = Array.new
-      t = Time.now
       d = REXML::Document.new(@xml)
       d.elements.each("node/node") do |e|
         subnodes << e.attributes["name"]
@@ -238,9 +239,9 @@ module DBus
       subnodes
     end
 
-    # Parses the XML, constructing the tree.
+    # return a pair: [list of Interfaces, list of direct subnode names]
     def parse
-      ret = Array.new
+      interfaces = Array.new
       subnodes = Array.new
       t = Time.now
       d = REXML::Document.new(@xml)
@@ -259,13 +260,13 @@ module DBus
           parse_methsig(se, s)
           i << s
         end
-        ret << i
+        interfaces << i
       end
       d = Time.now - t
       if d > 2
         puts "Some XML took more that two secs to parse. Optimize me!" if $DEBUG
       end
-      [ret, subnodes]
+      [interfaces, subnodes]
     end
 
     ######################################################################
@@ -342,7 +343,7 @@ module DBus
       methdef = "def #{m.name}("
       methdef += (0..(m.params.size - 1)).to_a.collect { |n|
         "arg#{n}"
-      }.join(", ")
+      }.push("&reply_handler").join(", ")
       methdef += %{)
               msg = Message.new(Message::METHOD_CALL)
               msg.path = @object.path
@@ -365,26 +366,7 @@ module DBus
         idx += 1
       end
       methdef += "
-        ret = nil
-        if block_given?
-          @object.bus.on_return(msg) do |rmsg|
-            if rmsg.is_a?(Error)
-              yield(rmsg)
-            else
-              yield(rmsg, *rmsg.params)
-            end
-          end
-          @object.bus.connection_queue.push msg
-        else
-          @object.bus.send_sync(msg) do |rmsg|
-            if rmsg.is_a?(Error)
-              raise rmsg
-            else
-              ret = rmsg.params
-            end
-          end
-        end
-        ret
+        @object.bus.send_sync_or_async(msg, &reply_handler)
       end
       "
       singleton_class.class_eval(methdef)
@@ -448,7 +430,7 @@ module DBus
   # over the bus so that the method is executed remotely on the correctponding
   # object.
   class ProxyObject
-    # The subnodes of the object in the tree.
+    # The names of direct subnodes of the object in the tree.
     attr_accessor :subnodes
     # Flag determining whether the object has been introspected.
     attr_accessor :introspected
@@ -458,7 +440,7 @@ module DBus
     attr_reader :path
     # The bus the object is reachable via.
     attr_reader :bus
-    # The default interface of the object.
+    # The default interface of the object, as String.
     attr_accessor :default_iface
 
     # Creates a new proxy object living on the given _bus_ at destination _dest_
@@ -495,11 +477,12 @@ module DBus
 
     # Returns whether the object has an interface with the given _name_.
     def has_iface?(name)
-      raise "Cannot call has_iface? is not introspected" if not @introspected
+      raise "Cannot call has_iface? if not introspected" if not @introspected
       @interfaces.member?(name)
     end
 
     # Registers a handler, the code block, for a signal with the given _name_.
+    # It uses _default_iface_ which must have been set.
     def on_signal(name, &block)
       if @default_iface and has_iface?(@default_iface)
         @interfaces[@default_iface].on_signal(@bus, name, &block)
@@ -521,10 +504,9 @@ module DBus
         rescue NameError => e
           # interesting, foo.method("unknown")
           # raises NameError, not NoMethodError
-          match = /undefined method `([^']*)' for class `([^']*)'/.match e.to_s
-          raise unless match and match[2] == "DBus::ProxyObjectInterface"
+          raise unless e.to_s =~ /undefined method `#{name}'/
           # BTW e.exception("...") would preserve the class.
-          raise NoMethodError,"undefined method `#{match[1]}' for DBus interface `#{@default_iface}' on object `#{@path}'"
+          raise NoMethodError,"undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
         end
       else
         # TODO distinguish:

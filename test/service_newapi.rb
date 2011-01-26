@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
 
 # find the library without external help
 $:.unshift File.expand_path("../../lib", __FILE__)
@@ -55,6 +56,13 @@ class Test < DBus::Object
 
     dbus_method :Error, "in name:s, in description:s" do |name, description|
       raise DBus.error(name), description
+    end
+  end
+
+  # closing and reopening the same interface
+  dbus_interface INTERFACE do
+    dbus_method :multibyte_string, "out string:s" do
+      "あいうえお"
     end
 
     dbus_method :Quit, "" do
@@ -190,7 +198,7 @@ bus.add_match(mr) do |msg|
   end
 end
 
-puts "listening"
+puts "listening, with ruby-#{RUBY_VERSION}"
 main = DBus::Main.new
 main << bus
 $main = main

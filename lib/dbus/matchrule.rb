@@ -15,7 +15,7 @@ module DBus
   #
   # FIXME
   class MatchRule
-    # The list of possible match filters.
+    # The list of possible match filters. TODO argN, argNpath
     FILTERS = [:sender, :interface, :member, :path, :destination, :type]
     # The sender filter.
     attr_accessor :sender
@@ -94,6 +94,7 @@ module DBus
       return false if @interface and @interface != msg.interface
       return false if @member and @member != msg.member
       return false if @path and @path != msg.path
+      # FIXME sender and destination are ignored
       true
     end
   end # class MatchRule

@@ -15,4 +15,5 @@ GEMSPEC = Gem::Specification.new do |s|
   s.require_path = "lib"
   s.has_rdoc = true
   s.extra_rdoc_files = ["COPYING", "README", "NEWS"]
+  s.required_ruby_version = ">= 1.8.7"
 end

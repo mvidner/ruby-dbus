@@ -140,6 +140,7 @@ module DBus
     end
 
     # Return an XML string representation of the node.
+    # It is shallow, not recursing into subnodes
     def to_xml
       xml = '<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
@@ -364,33 +365,52 @@ module DBus
 '
     # This apostroph is for syntax highlighting editors confused by above xml: "
 
-    def introspect_data(dest, path)
+    # Send a _message_.
+    # If _reply_handler_ is not given, wait for the reply
+    # and return the reply, or raise the error.
+    # If _reply_handler_ is given, it will be called when the reply
+    # eventually arrives, with the reply message as the 1st param
+    # and its params following
+    def send_sync_or_async(message, &reply_handler)
+      ret = nil
+      if reply_handler.nil?
+        send_sync(message) do |rmsg|
+          if rmsg.is_a?(Error)
+            raise rmsg
+          else
+            ret = rmsg.params
+          end
+        end
+      else
+        on_return(message) do |rmsg|
+          if rmsg.is_a?(Error)
+            reply_handler.call(rmsg)
+          else
+            reply_handler.call(rmsg, * rmsg.params)
+          end
+        end
+        @connection_queue.push message
+      end
+      ret
+    end
+
+    def introspect_data(dest, path, &reply_handler)
       m = DBus::Message.new(DBus::Message::METHOD_CALL)
       m.path = path
       m.interface = "org.freedesktop.DBus.Introspectable"
       m.destination = dest
       m.member = "Introspect"
       m.sender = unique_name
-      if not block_given?
-        # introspect in synchronous !
-        send_sync(m) do |rmsg|
-          if rmsg.is_a?(Error)
-            raise rmsg
-          else
-            return rmsg.params[0] # return value of introspect_data
-          end
-        end
+      if reply_handler.nil?
+        send_sync_or_async(m).first
       else
-        @connection_queue.push m
-        on_return(m) do |rmsg|
-          if rmsg.is_a?(Error)
-            yield rmsg
-          else
-            yield rmsg.params[0]
-          end
+        send_sync_or_async(m) do |*args|
+          # TODO test async introspection, is it used at all?
+          args.shift            # forget the message, pass only the text
+          reply_handler.call(*args)
+          nil
         end
       end
-      nil
     end
 
     # Issues a call to the org.freedesktop.DBus.Introspectable.Introspect method

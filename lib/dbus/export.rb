@@ -15,19 +15,20 @@ module DBus
   # = Exportable D-Bus object class
   #
   # Objects that are going to be exported by a D-Bus service
-  # should inherit from this class.
+  # should inherit from this class. At the client side, use ProxyObject.
   class Object
     # The path of the object.
     attr_reader :path
-    # The interfaces that the object supports.
+    # The interfaces that the object supports. Hash: String => Interface
     class_attribute :intfs
     # The service that the object is exported by.
     attr_writer :service
 
-    @@cur_intf = nil
+    @@cur_intf = nil            # Interface
     @@intfs_mutex = Mutex.new
 
     # Create a new object with a given _path_.
+    # Use Service#export to export it.
     def initialize(path)
       @path = path
       @service = nil
@@ -39,7 +40,7 @@ module DBus
       self.intfs = (self.intfs || {}).merge({intf.name => intf})
     end
 
-    # Dispatch a message _msg_.
+    # Dispatch a message _msg_ to call exported methods
     def dispatch(msg)
       case msg.message_type
       when Message::METHOD_CALL
@@ -73,8 +74,10 @@ module DBus
     # belong to.
     def self.dbus_interface(s)
       @@intfs_mutex.synchronize do
-        @@cur_intf = Interface.new(s)
-        self.intfs = (self.intfs || {}).merge({s => @@cur_intf})
+        unless @@cur_intf = (self.intfs && self.intfs[s])
+          @@cur_intf = Interface.new(s)
+          self.intfs = (self.intfs || {}).merge({s => @@cur_intf})
+        end
         yield
         @@cur_intf = nil
       end
