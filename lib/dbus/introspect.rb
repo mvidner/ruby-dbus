@@ -229,10 +229,9 @@ module DBus
       @xml = xml
     end
 
-    # Recursively parses the subnodes, constructing the tree.
+    # return the names of direct subnodes
     def parse_subnodes
       subnodes = Array.new
-      t = Time.now
       d = REXML::Document.new(@xml)
       d.elements.each("node/node") do |e|
         subnodes << e.attributes["name"]
@@ -240,9 +239,9 @@ module DBus
       subnodes
     end
 
-    # Parses the XML, constructing the tree.
+    # return a pair: [list of Interfaces, list of direct subnode names]
     def parse
-      ret = Array.new
+      interfaces = Array.new
       subnodes = Array.new
       t = Time.now
       d = REXML::Document.new(@xml)
@@ -261,13 +260,13 @@ module DBus
           parse_methsig(se, s)
           i << s
         end
-        ret << i
+        interfaces << i
       end
       d = Time.now - t
       if d > 2
         puts "Some XML took more that two secs to parse. Optimize me!" if $DEBUG
       end
-      [ret, subnodes]
+      [interfaces, subnodes]
     end
 
     ######################################################################
@@ -431,7 +430,7 @@ module DBus
   # over the bus so that the method is executed remotely on the correctponding
   # object.
   class ProxyObject
-    # The subnodes of the object in the tree.
+    # The names of direct subnodes of the object in the tree.
     attr_accessor :subnodes
     # Flag determining whether the object has been introspected.
     attr_accessor :introspected
@@ -441,7 +440,7 @@ module DBus
     attr_reader :path
     # The bus the object is reachable via.
     attr_reader :bus
-    # The default interface of the object.
+    # The default interface of the object, as String.
     attr_accessor :default_iface
 
     # Creates a new proxy object living on the given _bus_ at destination _dest_
@@ -478,11 +477,12 @@ module DBus
 
     # Returns whether the object has an interface with the given _name_.
     def has_iface?(name)
-      raise "Cannot call has_iface? is not introspected" if not @introspected
+      raise "Cannot call has_iface? if not introspected" if not @introspected
       @interfaces.member?(name)
     end
 
     # Registers a handler, the code block, for a signal with the given _name_.
+    # It uses _default_iface_ which must have been set.
     def on_signal(name, &block)
       if @default_iface and has_iface?(@default_iface)
         @interfaces[@default_iface].on_signal(@bus, name, &block)

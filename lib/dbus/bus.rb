@@ -140,6 +140,7 @@ module DBus
     end
 
     # Return an XML string representation of the node.
+    # It is shallow, not recursing into subnodes
     def to_xml
       xml = '<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
