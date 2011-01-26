@@ -69,6 +69,7 @@ run_server () {
 
 at_exit () {
     if [ -n $QUITTER ]; then
+	echo -n "Telling server to quit: "
 	dbus_call --session --dest=$NAME $QUIT_OBJ $QUITTER
     fi
     rm -rf $RM_FILES

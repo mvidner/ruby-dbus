@@ -195,3 +195,5 @@ main = DBus::Main.new
 main << bus
 $main = main
 $main.run
+puts "service disconnecting"
+bus.close

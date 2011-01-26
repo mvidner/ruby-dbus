@@ -221,6 +221,11 @@ module DBus
       end
     end
 
+    def close
+      # FIXME cleanup
+      @cq.close
+    end
+
     def start_read_thread
       @thread = Thread.new do
         puts "start the reading thread on socket #{@socket}" if $DEBUG

@@ -29,6 +29,10 @@ module DBus
       # @client - unneeded? should be a local var
     end
 
+    def close
+      @socket.close
+    end
+
     # TODO failure modes
     #
     # If _non_block_ is true, return nil instead of waiting
