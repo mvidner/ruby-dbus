@@ -29,8 +29,10 @@ module DBus
 
     # Add a _connection_ to the list of where to watch for events.
     def <<(connection)
-      @sockets[connection.cq.socket] = connection
-      add(connection.cq.socket) { |socket| connection.dispatch_cq }
+      @sockets[connection.connection_queue.socket] = connection
+      add(connection.connection_queue.socket) do |socket|
+        connection.dispatch_connection_queue
+      end
     end
 
     def add(socket, &handler)

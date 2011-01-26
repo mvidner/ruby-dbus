@@ -65,7 +65,7 @@ module DBus
         rescue => ex
           reply = ErrorMessage.from_exception(ex).reply_to(msg)
         end
-        @service.bus.cq.push reply
+        @service.bus.connection_queue.push reply
       end
     end
 

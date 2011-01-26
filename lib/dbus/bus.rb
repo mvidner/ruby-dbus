@@ -184,7 +184,7 @@ module DBus
   # and outgoing messages.
   class Connection
     # ConnectionQueue
-    attr_reader :cq
+    attr_reader :connection_queue
     # The unique name (by specification) of the message.
     attr_reader :unique_name
     # Queue[Message]
@@ -203,7 +203,7 @@ module DBus
     # "transport1:key1=value1,key2=value2;transport2:key1=value1,key2=value2"
     # e.g. "unix:path=/tmp/dbus-test" or "tcp:host=localhost,port=2687"
     def initialize(path, threaded_access)
-      @cq = ConnectionQueue.new(path)
+      @connection_queue = ConnectionQueue.new(path)
 
       @unique_name = nil
       @method_call_replies = Hash.new
@@ -223,14 +223,14 @@ module DBus
 
     def close
       # FIXME cleanup
-      @cq.close
+      @connection_queue.close
     end
 
     def start_read_thread
       @thread = Thread.new do
         puts "start the reading thread on socket #{@socket}" if $DEBUG
         loop do #loop to read
-          ret = @cq.pop         # FIXME EOFError
+          ret = @connection_queue.pop         # FIXME EOFError
           case ret.message_type
           when Message::ERROR, Message::METHOD_RETURN
             thread_in_wait = @thread_waiting_for_message[ret.reply_serial]
@@ -253,8 +253,8 @@ module DBus
     # Dispatch all messages that are available in the queue,
     # but do not block on the queue.
     # Called by a main loop when something is available in the queue
-    def dispatch_cq
-      while (msg = @cq.pop :non_block) # FIXME EOFError
+    def dispatch_connection_queue
+      while (msg = @connection_queue.pop :non_block) # FIXME EOFError
         process msg
       end
     end
@@ -265,10 +265,10 @@ module DBus
       # Circumvent a ruby-glib bug
       @channels ||= Array.new
 
-      gio = GLib::IOChannel.new(@cq.socket.fileno)
+      gio = GLib::IOChannel.new(@connection_queue.socket.fileno)
       @channels << gio
       gio.add_watch(GLib::IOChannel::IN) do |c, ch|
-        dispatch_cq
+        dispatch_connection_queue
         true
       end
     end
@@ -381,7 +381,7 @@ module DBus
           end
         end
       else
-        @cq.push m
+        @connection_queue.push m
         on_return(m) do |rmsg|
           if rmsg.is_a?(Error)
             yield rmsg
@@ -455,7 +455,7 @@ module DBus
       if @threaded
         @queue_used_by_thread[Thread.current].pop
       else
-        @cq.pop                 # FIXME EOFError
+        @connection_queue.pop                 # FIXME EOFError
       end
     end
 
@@ -467,7 +467,7 @@ module DBus
         @queue_used_by_thread[Thread.current] = Queue.new      # Creating Queue message for return
         @thread_waiting_for_message[m.serial] = Thread.current 
       end
-      @cq.push m
+      @connection_queue.push m
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
 
@@ -487,7 +487,7 @@ module DBus
         # now process what's in the buffer.
         # don't leave the buffer stale
         # because Main may block on the drained socket
-        dispatch_cq
+        dispatch_connection_queue
       end        
     end
 
@@ -552,14 +552,14 @@ module DBus
         if not node
           reply = Message.error(m, "org.freedesktop.DBus.Error.UnknownObject",
                                 "Object #{m.path} doesn't exist")
-          @cq.push reply
+          @connection_queue.push reply
           # handle introspectable as an exception:
         elsif m.interface == "org.freedesktop.DBus.Introspectable" and
             m.member == "Introspect"
           reply = Message.new(Message::METHOD_RETURN).reply_to(m)
           reply.sender = @unique_name
           reply.add_param(Type::STRING, node.to_xml)
-          @cq.push reply
+          @connection_queue.push reply
         else
           obj = node.object
           return if obj.nil?    # FIXME, pushes no reply
@@ -598,7 +598,7 @@ module DBus
         m.add_param(par.type, args[i])
         i += 1
       end
-      @cq.push m
+      @connection_queue.push m
     end
 
     ###########################################################################
@@ -750,7 +750,7 @@ module DBus
 
       if ENV["DBUS_THREADED_ACCESS"] || false
         @buses.each_value do |b|
-          b.cq.rescuemethod = self.method(:quit_imediately)
+          b.connection_queue.rescuemethod = self.method(:quit_imediately)
           th = Thread.new do
             b.main_thread = true
             # before blocking, empty the buffers
