@@ -11,7 +11,7 @@ task :default => "env:test"
 
 def common_test_task(t)
     t.libs << "lib"
-    t.test_files = FileList['test/*_test.rb', 'test/t*.rb']
+    t.test_files = FileList['test/*_test.rb', 'test/t[0-9]*.rb']
     t.verbose = true
 end
 Rake::TestTask.new {|t| common_test_task t }
