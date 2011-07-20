@@ -148,12 +148,12 @@ module DBus
     # Try authentication using the next authenticator.
     def next_authenticator
       begin
-        raise AuthException if @auth_list.size == 0
+        raise AuthenticationFailed if @auth_list.size == 0
         @authenticator = @auth_list.shift.new
         auth_msg = ["AUTH", @authenticator.name, @authenticator.authenticate]
         puts "DEBUG: auth_msg: #{auth_msg.inspect}" if $debug
         send(auth_msg)
-      rescue AuthException
+      rescue AuthenticationFailed
         @socket.close
         raise
       end
