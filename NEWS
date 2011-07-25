@@ -5,6 +5,21 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.7.0 - 2011-07-..
+
+Features:
+ * Added ASystemBus and ASessionBus, non-singletons useful in tests
+   and threads.
+
+Bug fixes:
+ * Fixed handling of multibyte strings (Issue#8, by Takayuki YAMAGUCHI).
+ * Allow reopening of a dbus_interface declaration (Issue#9, by T. YAMAGUCHI).
+ * Fixed ruby-1.9.2 compatibility again (Issue#12).
+ * Fixed authentication on BSD (Issue#11, by Jonathan Walker)
+ * Fixed exiting a nested event loop for synchronous calls
+   (reported by Timo Warns).
+ * Fixed introspection calls leaking reply handlers.
+
 == Ruby D-Bus 0.6.0 - 2010-12-11
 
 Features:
