@@ -5,7 +5,7 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
-== Ruby D-Bus 0.7.0 - 2011-07-..
+== Ruby D-Bus 0.7.0 - 2011-07-26
 
 Features:
  * Added ASystemBus and ASessionBus, non-singletons useful in tests

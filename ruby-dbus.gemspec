@@ -8,6 +8,7 @@ GEMSPEC = Gem::Specification.new do |s|
   s.summary = "Ruby module for interaction with D-Bus"
   # s.description = FIXME
   s.version = File.read("VERSION").strip
+  s.license = "LGPL v2.1"
   s.author = "Ruby DBus Team"
   s.email = "ruby-dbus-devel@lists.luon.net"
   s.homepage = "https://trac.luon.net/ruby-dbus"
