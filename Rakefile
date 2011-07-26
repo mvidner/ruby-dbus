@@ -3,6 +3,7 @@ require 'rake'
 require 'rake/gempackagetask'
 require 'fileutils'
 include FileUtils
+require 'tmpdir'
 require 'rake/rdoctask'
 require 'rake/testtask'
 
@@ -38,6 +39,17 @@ load "ruby-dbus.gemspec"
 
 Rake::GemPackageTask.new(GEMSPEC) do |pkg|
   # no other formats needed
+end
+
+desc "Build a package from a clone of the local Git repo"
+task :package_git do |t|
+  Dir.mktmpdir do |temp|
+    sh "git clone . #{temp}"
+    cd temp do
+      sh "rake package"
+    end
+    cp_r "#{temp}/pkg", "."
+  end
 end
 
 Rake::RDocTask.new do |rd|
