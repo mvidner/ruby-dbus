@@ -19,6 +19,7 @@ Bug fixes:
  * Fixed exiting a nested event loop for synchronous calls
    (reported by Timo Warns).
  * Fixed introspection calls leaking reply handlers.
+ * "rake test" now works, doing what was called "rake env:test"
 
 == Ruby D-Bus 0.6.0 - 2010-12-11
 

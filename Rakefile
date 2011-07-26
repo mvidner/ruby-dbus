@@ -8,29 +8,27 @@ require 'rake/rdoctask'
 require 'rake/testtask'
 
 desc 'Default: run tests in the proper environment'
-task :default => "env:test"
+task :default => :test
 
 def common_test_task(t)
     t.libs << "lib"
     t.test_files = FileList['test/*_test.rb', 'test/t[0-9]*.rb']
     t.verbose = true
 end
-Rake::TestTask.new {|t| common_test_task t }
+Rake::TestTask.new("bare:test") {|t| common_test_task t }
 
 begin
   require 'rcov/rcovtask'
-  Rcov::RcovTask.new {|t| common_test_task t }
+  Rcov::RcovTask.new("bare:rcov") {|t| common_test_task t }
 rescue LoadError
   # no rcov, never mind
 end
 
 %w(test rcov).each do |tname|
-  namespace :env do
-    desc "Run #{tname} in the proper environment"
-    task tname do |t|
-      cd "test" do
-        system "./test_env rake #{tname}"
-      end
+  desc "Run bare:#{tname} in the proper environment"
+  task tname do |t|
+    cd "test" do
+      system "./test_env rake bare:#{tname}"
     end
   end
 end
