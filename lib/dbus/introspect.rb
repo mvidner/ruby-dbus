@@ -497,10 +497,10 @@ module DBus
 
     # Handles all unkown methods, mostly to route method calls to the
     # default interface.
-    def method_missing(name, *args)
+    def method_missing(name, *args, &reply_handler)
       if @default_iface and has_iface?(@default_iface)
         begin
-          @interfaces[@default_iface].method(name).call(*args)
+          @interfaces[@default_iface].method(name).call(*args, &reply_handler)
         rescue NameError => e
           # interesting, foo.method("unknown")
           # raises NameError, not NoMethodError
