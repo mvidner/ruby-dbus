@@ -74,7 +74,6 @@ class Test < DBus::Object
     end
     dbus_method :Reverse, "in instr:s, out outstr:s" do |instr|
       outstr = instr.split(//).reverse.join
-      puts "got: #{instr}, replying: #{outstr}"
       [outstr]
     end
   end
