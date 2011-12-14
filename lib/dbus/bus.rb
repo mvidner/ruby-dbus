@@ -827,8 +827,9 @@ module DBus
         end
       end
       while not @quitting and not @buses.empty?
-        ready, dum, dum = IO.select(@buses.keys)
-        ready.each do |socket|
+        ready = IO.select(@buses.keys,[],[],5) #timeout 5 seconds
+        continue unless ready #timeout exceed so continue unless quitting
+        ready.first.each do |socket|
           b = @buses[socket]
           begin
             b.update_buffer
