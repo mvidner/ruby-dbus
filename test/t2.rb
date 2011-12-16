@@ -20,6 +20,13 @@ class ValueTest < Test::Unit::TestCase
     @obj.test_variant(["saint", "was that a word or a signature?"])
   end
 
+  def test_default_for_nil
+    assert_nothing_raised do
+      @obj.masked_nil_simple
+      @obj.masked_nil_variant
+    end
+  end
+
   def test_bouncing_a_variant
     assert_equal "cuckoo", @obj.bounce_variant("cuckoo")[0]
     assert_equal ["coucou", "kuku"], @obj.bounce_variant(["coucou", "kuku"])[0]
