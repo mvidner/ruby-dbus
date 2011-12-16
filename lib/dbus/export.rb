@@ -40,6 +40,12 @@ module DBus
       self.intfs = (self.intfs || {}).merge({intf.name => intf})
     end
 
+    # The default value if nil is in response 
+    def self.default_for_nil(value=nil)
+      @@default_for_nil = value if value
+      @@default_for_nil
+    end
+
     # Dispatch a message _msg_ to call exported methods
     def dispatch(msg)
       case msg.message_type
@@ -66,7 +72,7 @@ module DBus
         rescue => ex
           reply = ErrorMessage.from_exception(ex).reply_to(msg)
         end
-        @service.bus.send(reply.marshall)
+        @service.bus.send(reply.marshall(:default_for_nil => self.class.default_for_nil))
       end
     end
 

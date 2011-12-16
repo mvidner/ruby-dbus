@@ -143,14 +143,15 @@ module DBus
 
     # Marshall the message with its current set parameters and return
     # it in a packet form.
-    def marshall
+    def marshall options={}
       if @path == "/org/freedesktop/DBus/Local"
         raise InvalidDestinationName
       end
 
+      #FIXME ineffective to pack body twice can we just grab packet and append it on second call?
       params = PacketMarshaller.new
       @params.each do |param|
-        params.append(param[0], param[1])
+        params.append(param[0], param[1],options)
       end
       @body_length = params.packet.bytesize
 
@@ -221,7 +222,7 @@ module DBus
       end
       marshaller.align(8)
       @params.each do |param|
-        marshaller.append(param[0], param[1])
+        marshaller.append(param[0], param[1],options)
       end
       marshaller.packet
     end
