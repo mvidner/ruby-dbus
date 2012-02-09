@@ -309,7 +309,8 @@ module DBus
     # Append a value _val_ to the packet based on its _type_.
     #
     # Host native endianness is used, declared in Message#marshall
-    def append(type, val)
+    def append(type, val, options={})
+      val = options[:default_for_nil] if val.nil?
       raise TypeException, "Cannot send nil" if val.nil?
 
       type = type.chr if type.kind_of?(Fixnum)
@@ -367,14 +368,14 @@ module DBus
           end
         end
         if vartype.nil?
-          vartype, vardata = PacketMarshaller.make_variant(val)
+          vartype, vardata = PacketMarshaller.make_variant(val,options)
           vartype = Type::Parser.new(vartype).parse[0]
         end
 
         append_signature(vartype.to_s)
         align(vartype.alignment)
         sub = PacketMarshaller.new(@offset + @packet.bytesize)
-        sub.append(vartype, vardata)
+        sub.append(vartype, vardata,options)
         @packet += sub.packet
       when Type::ARRAY
         if val.kind_of?(Hash)
@@ -387,7 +388,7 @@ module DBus
         end
         array(type.child) do
           val.each do |elem|
-            append(type.child, elem)
+            append(type.child, elem,options)
           end
         end
       when Type::STRUCT, Type::DICT_ENTRY
@@ -401,7 +402,7 @@ module DBus
         end
         struct do
           type.members.zip(val).each do |t, v|
-            append(t, v)
+            append(t, v,options)
           end
         end
       else
@@ -411,13 +412,14 @@ module DBus
     end # def append
 
     # Make a [signature, value] pair for a variant
-    def self.make_variant(value)
+    def self.make_variant(value,options={})
+      value = options[:default_for_nil] if value.nil?
       # TODO: mix in _make_variant to String, Integer...
       if value == true
         ["b", true]
       elsif value == false
         ["b", false]
-      elsif value.nil?
+      elsif value.nil? #FIXME this is obviosly wrong, we cannot handle nil
         ["b", nil]
       elsif value.is_a? Float
         ["d", value]

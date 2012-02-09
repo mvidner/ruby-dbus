@@ -21,6 +21,8 @@ module DBus
     attr_reader :path
     # The interfaces that the object supports. Hash: String => Interface
     class_attribute :intfs
+    # Represents default value for nil value
+    class_attribute :default_for_nil
     # The service that the object is exported by.
     attr_writer :service
 
@@ -66,7 +68,7 @@ module DBus
         rescue => ex
           reply = ErrorMessage.from_exception(ex).reply_to(msg)
         end
-        @service.bus.send(reply.marshall)
+        @service.bus.send(reply.marshall(:default_for_nil => self.class.default_for_nil))
       end
     end
 
