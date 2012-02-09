@@ -5,6 +5,8 @@ require 'thread'
 Thread.abort_on_exception = true
 
 class Test < DBus::Object
+  # replace all nil values by empty string. Useful mainly for variants.
+  self.default_for_nil = ""
   # Create an interface aggregating all upcoming dbus_method defines.
   dbus_interface "org.ruby.SampleInterface" do
     dbus_method :hello, "in name:s, in name2:s" do |name, name2|
