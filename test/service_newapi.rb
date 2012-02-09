@@ -20,7 +20,7 @@ class Test < DBus::Object
     @read_or_write_me = "READ OR WRITE ME"
   end
 
-  default_for_nil ""
+  self.default_for_nil = ""
   # Create an interface aggregating all upcoming dbus_method defines.
   dbus_interface INTERFACE do
     dbus_method :hello, "in name:s, in name2:s" do |name, name2|

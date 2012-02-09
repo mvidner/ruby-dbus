@@ -21,6 +21,8 @@ module DBus
     attr_reader :path
     # The interfaces that the object supports. Hash: String => Interface
     class_attribute :intfs
+    # Represents default value for nil value
+    class_attribute :default_for_nil
     # The service that the object is exported by.
     attr_writer :service
 
@@ -38,12 +40,6 @@ module DBus
     def implements(intf)
       # use a setter
       self.intfs = (self.intfs || {}).merge({intf.name => intf})
-    end
-
-    # The default value if nil is in response 
-    def self.default_for_nil(value=nil)
-      @@default_for_nil = value if value
-      @@default_for_nil
     end
 
     # Dispatch a message _msg_ to call exported methods
