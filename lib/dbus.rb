@@ -8,7 +8,6 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
-require 'dbus/core_ext/class/attribute'
 require 'dbus/type'
 require 'dbus/introspect'
 require 'dbus/error'
