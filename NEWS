@@ -5,6 +5,14 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.7.2 - 2012-04-05
+
+A brown-paper-bag release.
+
+Bug fixes:
+ * Fixed "undefined local variable or method `continue'" in
+   DBus::Main#run when a service becomes idle (by Ravil Bayramgalin)
+
 == Ruby D-Bus 0.7.1 - 2012-04-04
 
 Bug fixes:

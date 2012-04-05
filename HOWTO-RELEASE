@@ -3,12 +3,12 @@ rake # and also for Ruby 1.9.1
 edit VERSION
 edit NEWS
 git commit
-git tag
-rake package
+cat VERSION && git tag v`cat VERSION`
+rake package_git
 osc build
 git push
 git push --tags
-upload pkg/*.{tgz, gem} (to github)
+gem push pkg/ruby-dbus-`cat VERSION`.gem
 osc ci
 osc sr
 edit homepage
