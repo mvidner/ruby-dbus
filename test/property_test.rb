@@ -27,6 +27,15 @@ class PropertyTest < Test::Unit::TestCase
     assert_equal "VALUE", @iface["ReadOrWriteMe"]
   end
 
+  # https://github.com/mvidner/ruby-dbus/pull/19
+  def test_service_select_timeout
+    @iface["ReadOrWriteMe"] = "VALUE"
+    assert_equal "VALUE", @iface["ReadOrWriteMe"]
+    # wait for the service to become idle
+    sleep 6
+    assert_equal "VALUE", @iface["ReadOrWriteMe"], "Property value changed; perhaps the service died and got restarted"
+  end
+
   def test_property_nonwriting
     e = assert_raises DBus::Error do
       @iface["ReadMe"] = "WROTE"
