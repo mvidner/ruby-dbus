@@ -49,11 +49,21 @@ module DBus
     end
 
     def intfs
-      self.class.intfs
+      #check if singleton class is defined
+      if self.singleton_methods.empty?
+        self.class.intfs
+      else
+        self.singleton_class.intfs
+      end
     end
 
     def intfs= param
-      self.class.intfs = param
+      #check if singleton class is defined
+      if self.singleton_methods.empty?
+        self.class.intfs = param
+      else
+        self.singleton_class.intfs = param
+      end
     end
 
     # State that the object implements the given _intf_.
