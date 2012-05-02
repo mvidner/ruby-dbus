@@ -67,8 +67,9 @@ class BindingTest < Test::Unit::TestCase
       end
     end
     
-    # object should have the iface
-    assert derived.intfs.include?("org.ruby.DynamicInterface")
+    # the object should have the new iface
+    ifaces = derived.intfs
+    assert ifaces and ifaces.include?("org.ruby.DynamicInterface")
   end
     
 end
