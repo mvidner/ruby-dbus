@@ -53,4 +53,22 @@ class BindingTest < Test::Unit::TestCase
     assert_equal "org.freedesktop.DBus.Error.Failed", e.name
     assert_equal "failed as designed", e.message
   end
+  
+  def test_dynamic_interface_definition
+    # interfaces can be defined dynamicaly
+    derived = DBus::Object.new "/org/ruby/MyDerivedInstance"
+    
+    #define a new interface
+    derived.singleton_class.instance_eval do
+      dbus_interface "org.ruby.DynamicInterface" do
+        dbus_method :hello2, "in name:s, in name2:s" do |name, name2|
+          puts "hello(#{name}, #{name2})"
+        end
+      end
+    end
+    
+    # object should have the iface
+    assert derived.intfs.include?("org.ruby.DynamicInterface")
+  end
+    
 end
