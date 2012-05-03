@@ -225,6 +225,8 @@ module DBus
           connect_to_unix kv_hash
           when "tcp"
           connect_to_tcp kv_hash
+          when "launchd"
+          connect_to_launchd kv_hash
           else
           # ignore, report?
         end
@@ -269,6 +271,12 @@ module DBus
       end
       @socket.connect(sockaddr)
       init_connection
+    end
+
+    def connect_to_launchd(params)
+      socket_var = params['env']
+      socket = `launchctl getenv #{socket_var}`.chomp
+      connect_to_unix 'path' => socket
     end
 
     # Send the buffer _buf_ to the bus using Connection#writel.
@@ -719,7 +727,7 @@ module DBus
   class ASessionBus < Connection
     # Get the the default session bus.
     def initialize
-      super(ENV["DBUS_SESSION_BUS_ADDRESS"] || address_from_file)
+      super(ENV["DBUS_SESSION_BUS_ADDRESS"] || address_from_file || "launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET")
       connect
       send_hello
     end
@@ -734,6 +742,8 @@ module DBus
           return $1
         end
       end
+    rescue Errno::ENOENT
+      nil
     end
   end
 
