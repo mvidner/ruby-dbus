@@ -49,7 +49,8 @@ module DBus
       self
     end
 
-    # Retrieves an object (ProxyObject) at the given _path_.
+    # Retrieves an object at the given _path_.
+    # @return [ProxyObject]
     def object(path)
       node = get_node(path, true)
       if node.object.nil?
@@ -469,6 +470,7 @@ module DBus
     #
     # FIXME, NameRequestError cannot really be rescued as it will be raised
     # when dispatching a later call. Rework the API to better match the spec.
+    # @return [Service]
     def request_service(name)
       # Use RequestName, but asynchronously!
       # A synchronous call would not work with service activation, where
@@ -669,6 +671,7 @@ module DBus
     end
 
     # Retrieves the Service with the given _name_.
+    # @return [Service]
     def service(name)
       # The service might not exist at this time so we cannot really check
       # anything
