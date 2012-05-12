@@ -146,7 +146,7 @@ module DBus
         if (packet & 0x8000) != 0
           packet -= 0x10000
         end
-      when Type::UINT32
+      when Type::UINT32, Type::UNIX_FD
         align(4)
         packet = get(4).unpack(@uint32)[0]
       when Type::INT32
@@ -317,7 +317,7 @@ module DBus
       case type.sigtype
       when Type::BYTE
         @packet += val.chr
-      when Type::UINT32
+      when Type::UINT32, Type::UNIX_FD
         align(4)
         @packet += [val].pack("L")
       when Type::UINT64

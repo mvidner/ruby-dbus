@@ -33,6 +33,7 @@ module Type
   STRING = ?s
   SIGNATURE = ?g
   DICT_ENTRY = ?e
+  UNIX_FD = ?h
 
   # Mapping from type number to name.
   TypeName = {
@@ -52,7 +53,8 @@ module Type
     OBJECT_PATH => "OBJECT_PATH",
     STRING => "STRING",
     SIGNATURE => "SIGNATURE",
-    DICT_ENTRY => "DICT_ENTRY"
+    DICT_ENTRY => "DICT_ENTRY",
+    UNIX_FD => "UNIX_FD"
   }
 
   # Exception raised when an unknown/incorrect type is encountered.
@@ -96,6 +98,7 @@ module Type
         OBJECT_PATH => 4,
         STRING => 4,
         SIGNATURE => 1,
+        UNIX_FD => 4,
       }[@sigtype]
     end
 
