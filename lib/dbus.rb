@@ -17,6 +17,7 @@ require 'dbus/marshall'
 require 'dbus/message'
 require 'dbus/matchrule'
 require 'dbus/auth'
+require 'dbus/xml'
 
 require 'socket'
 require 'thread'
