@@ -10,6 +10,10 @@
 
 # TODO check if it is slow, make replaceable
 require 'rexml/document'
+begin
+require 'nokogiri'
+rescue LoadError
+end
 
 module DBus
   # Regular expressions that should match all method names.
@@ -224,19 +228,77 @@ module DBus
   # This class parses introspection XML of an object and constructs a tree
   # of Node, Interface, Method, Signal instances.
   class IntrospectXMLParser
+    class << self
+      attr_accessor :backend
+    end
     # Creates a new parser for XML data in string _xml_.
     def initialize(xml)
       @xml = xml
     end
 
-    # return the names of direct subnodes
-    def parse_subnodes
-      subnodes = Array.new
-      d = REXML::Document.new(@xml)
-      d.elements.each("node/node") do |e|
-        subnodes << e.attributes["name"]
+    class AbstractXML
+      def self.have_nokogiri?
+        Object.const_defined?('Nokogiri')
       end
-      subnodes
+      class Node
+        def initialize(node)
+          @node = node
+        end
+        # required methods
+        # returns node attribute value
+        def [](key)
+        end
+        # yields child nodes which match xpath of type AbstractXML::Node
+        def each(xpath)
+        end
+      end
+      # required methods
+      # initialize parser with xml string
+      def initialize(xml)
+      end
+      # yields nodes which match xpath of type AbstractXML::Node
+      def each(xpath)
+      end
+    end
+
+    class NokogiriParser < AbstractXML
+      class NokogiriNode < AbstractXML::Node
+        def [](key)
+          @node[key]
+        end
+        def each(path, &block)
+          @node.search(path).each { |node| block.call NokogiriNode.new(node) }
+        end
+      end
+      def initialize(xml)
+        @doc = Nokogiri.XML(xml)
+      end
+      def each(path, &block)
+        @doc.search("//#{path}").each { |node| block.call NokogiriNode.new(node) }
+      end
+    end
+
+    class REXMLParser < AbstractXML
+      class REXMLNode < AbstractXML::Node
+        def [](key)
+          @node.attributes[key]
+        end
+        def each(path, &block)
+          @node.elements.each(path) { |node| block.call REXMLNode.new(node) }
+        end
+      end
+      def initialize(xml)
+        @doc = REXML::Document.new(xml)
+      end
+      def each(path, &block)
+        @doc.elements.each(path) { |node| block.call REXMLNode.new(node) }
+      end
+    end
+
+    if AbstractXML.have_nokogiri?
+      @backend = NokogiriParser
+    else
+      @backend = REXMLParser
     end
 
     # return a pair: [list of Interfaces, list of direct subnode names]
@@ -244,19 +306,19 @@ module DBus
       interfaces = Array.new
       subnodes = Array.new
       t = Time.now
-      d = REXML::Document.new(@xml)
-      d.elements.each("node/node") do |e|
-        subnodes << e.attributes["name"]
+      d = IntrospectXMLParser.backend.new(@xml)
+      d.each("node/node") do |e|
+        subnodes << e["name"]
       end
-      d.elements.each("node/interface") do |e|
-        i = Interface.new(e.attributes["name"])
-        e.elements.each("method") do |me|
-          m = Method.new(me.attributes["name"])
+      d.each("node/interface") do |e|
+        i = Interface.new(e["name"])
+        e.each("method") do |me|
+          m = Method.new(me["name"])
           parse_methsig(me, m)
           i << m
         end
-        e.elements.each("signal") do |se|
-          s = Signal.new(se.attributes["name"])
+        e.each("signal") do |se|
+          s = Signal.new(se["name"])
           parse_methsig(se, s)
           i << s
         end
@@ -275,10 +337,10 @@ module DBus
     # Parses a method signature XML element _e_ and initialises
     # method/signal _m_.
     def parse_methsig(e, m)
-      e.elements.each("arg") do |ae|
-        name = ae.attributes["name"]
-        dir = ae.attributes["direction"]
-        sig = ae.attributes["type"]
+      e.each("arg") do |ae|
+        name = ae["name"]
+        dir = ae["direction"]
+        sig = ae["type"]
 	if m.is_a?(DBus::Signal)
           m.add_fparam(name, sig)
 	elsif m.is_a?(DBus::Method)
