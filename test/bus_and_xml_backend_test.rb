@@ -5,7 +5,7 @@ require 'rubygems'
 require 'nokogiri'
 require "dbus"
 
-class BusTest < Test::Unit::TestCase
+class BusAndXmlBackendTest < Test::Unit::TestCase
   def setup
     @bus = DBus::ASessionBus.new
   end
