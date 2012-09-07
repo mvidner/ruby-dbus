@@ -23,6 +23,13 @@ module DBus
     end
   end
 
+  # = Anonymous authentication class
+  class Anonymous < Authenticator
+    def authenticate
+      '527562792044427573' # Hex encoded version of "Ruby DBus"
+    end
+  end
+
   # = External authentication class 
   #
   # Class for 'external' type authentication.
@@ -115,7 +122,7 @@ module DBus
     def initialize(socket)
       @socket = socket
       @state = nil
-      @auth_list = [External,DBusCookieSHA1]
+      @auth_list = [External,DBusCookieSHA1,Anonymous]
     end
 
     # Start the authentication process.
