@@ -240,7 +240,7 @@ module DBus
       end
       pu = PacketUnmarshaller.new(buf, endianness)
       mdata = pu.unmarshall(MESSAGE_SIGNATURE)
-      dummy, @message_type, @flags, @protocol, @body_length, @serial, 
+      _, @message_type, @flags, @protocol, @body_length, @serial, 
         headers = mdata
 
       headers.each do |struct|
@@ -274,7 +274,7 @@ module DBus
     # Message#unmarshall_buf.
     # Return the message.
     def unmarshall(buf)
-      ret, size = unmarshall_buffer(buf)
+      ret, _ = unmarshall_buffer(buf)
       ret
     end
   end # class Message

@@ -518,7 +518,7 @@ module DBus
       begin
         ret, size = Message.new.unmarshall_buffer(@buffer)
         @buffer.slice!(0, size)
-      rescue IncompleteBufferException => e
+      rescue IncompleteBufferException
         # fall through, let ret be null
       end
       ret
@@ -539,7 +539,6 @@ module DBus
     # Update the buffer and retrieve all messages using Connection#messages.
     # Return the messages.
     def poll_messages
-      ret = nil
       r, d, d = IO.select([@socket], nil, nil, 0)
       if r and r.size > 0
         update_buffer

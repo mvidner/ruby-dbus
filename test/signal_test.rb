@@ -46,6 +46,7 @@ class SignalHandlerTest < Test::Unit::TestCase
       @loop.quit
     end
     @loop.run
+    quitter.join
 
     assert_equal 1, counter
   end

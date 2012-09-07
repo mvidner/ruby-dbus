@@ -10,7 +10,7 @@ class Foo < DBus::Object
   end
 
   dbus_signal :signal_without_interface
-rescue DBus::Object::UndefinedInterface => e
+rescue DBus::Object::UndefinedInterface
   # raised by the preceding signal declaration
 end
 
