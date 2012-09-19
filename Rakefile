@@ -28,7 +28,7 @@ end
   desc "Run bare:#{tname} in the proper environment"
   task tname do |t|
     cd "test" do
-      system "./test_env rake bare:#{tname}"
+      sh "./test_env rake bare:#{tname}"
     end
   end
 end
