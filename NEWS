@@ -5,6 +5,25 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.8.0 - 2012-09-20
+
+Features:
+ * Add Anonymous authentication (Issue#27, by Walter Brebels).
+ * Use Nokogiri for XML parsing when available (Issue#24, by Geoff Youngs).
+
+Bug fixes:
+ * Use SCM_CREDS authentication only on FreeBSD, not on OpenBSD (Issue#21,
+   reported by Adde Nilsson).
+ * Recognize signature "h" (UNIX_FD) used eg. by Upstart (Issue#23,
+   by Bernd Ahlers).
+ * Find the session bus also via launchd, on OS X (Issue#20, reported
+   by Paul Sturgess).
+
+Other:
+ * Now doing continuous integration with Travis:
+     http://travis-ci.org/#!/mvidner/ruby-dbus
+
+
 == Ruby D-Bus 0.7.2 - 2012-04-05
 
 A brown-paper-bag release.
