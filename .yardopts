@@ -1,0 +1,4 @@
+lib/**/*.rb
+-
+doc/Reference.md
+doc/ex-*.rb
