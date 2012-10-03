@@ -1,6 +1,5 @@
 #! /usr/bin/env ruby
 require 'rake'
-require 'rake/gempackagetask'
 require 'fileutils'
 include FileUtils
 require 'tmpdir'
@@ -33,10 +32,9 @@ end
   end
 end
 
-load "ruby-dbus.gemspec"
-
-Rake::GemPackageTask.new(GEMSPEC) do |pkg|
-  # no other formats needed
+desc "Build the gem file"
+task :package do
+  sh "gem build ruby-dbus.gemspec"
 end
 
 desc "Build a package from a clone of the local Git repo"
@@ -46,7 +44,7 @@ task :package_git do |t|
     cd temp do
       sh "rake package"
     end
-    cp_r "#{temp}/pkg", "."
+    cp Dir.glob("#{temp}/*.gem"), "."
   end
 end
 
