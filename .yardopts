@@ -1,4 +1,6 @@
 lib/**/*.rb
 -
+README.md
 doc/Reference.md
 doc/ex-*.rb
+doc/Tutorial.md

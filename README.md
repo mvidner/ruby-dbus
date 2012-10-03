@@ -1,17 +1,17 @@
-= Ruby D-Bus README
+# Ruby D-Bus README
 
 Ruby D-Bus provides an implementation of the D-Bus protocol such that the
 D-Bus system can be used in the Ruby programming language.
 
-== Requirements
+## Requirements
 
- * Ruby 1.8.7 or 1.9
+- Ruby 1.8.7 or 1.9
 
-== Installation
+## Installation
 
- * gem install ruby-dbus
+- `gem install ruby-dbus`
 
-== Feature
+## Features
 
 Ruby D-Bus currently supports the following features:
 
@@ -27,14 +27,14 @@ Ruby D-Bus currently supports the following features:
    allows for introspection.
  * Emitting signals on exported objects.
 
-== Usage
+## Usage
 
  See some of the examples in the examples/ subdirectory of the tarball.
- Also, check out the included tutorial (in Markdown format) in doc/tutorial/
+ Also, check out the included tutorial (in Markdown format) in doc/Tutorial.md
  or view it online on
- https://github.com/mvidner/ruby-dbus/blob/master/doc/tutorial/index.markdown .
+ <https://github.com/mvidner/ruby-dbus/blob/master/doc/Tutorial.md> .
 
-== License
+## License
 
  Ruby D-Bus is free software; you can redistribute it and/or modify it
  under the terms of the GNU Lesser General Public License as published by the
