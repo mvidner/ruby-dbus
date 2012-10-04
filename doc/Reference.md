@@ -91,8 +91,59 @@ To receive signals for a specific object and interface, use
 
 ### Intermediate Concepts
 #### Names
-#### Types
+#### Types and Values, D-Bus -> Ruby
+
+D-Bus booleans, numbers, strings, arrays and dictionaries become their straightforward Ruby counterparts.
+
+Structs become arrays.
+
+Object paths become strings.
+
+Variants are simply unpacked to become their contained type.
+(ISSUE: prevents proper round-tripping!)
+
+#### Types and Values, Ruby -> D-Bus
+
+D-Bus has stricter typing than Ruby, so the library must decide
+which D-Bus type to choose. Most of the time the choice is dictated
+by the D-Bus signature. However if the signature expects a Variant
+(which is the case for all Properties!) then an explicit mechanism is needed.
+
+1. A pair [{DBus::Type::Type}, value] specifies to marshall *value* as
+   that specified type.
+   The pair can be produced by {DBus.variant}(signature, value) which
+   gives the  same result as [{DBus.type}(signature), value].
+
+   ISSUE: using something else than cryptic signatures is even more painful
+   than remembering the signatures!
+
+2. Other values are tried to fit one of these:
+   Boolean, Double, Array of Variants, Hash of String keyed Variants,
+   String, Int32, Int64.
+
+3. **Deprecated:** A pair [String, value], where String is a valid
+   signature of a single complete type, marshalls value as that
+   type. This will hit you when you rely on method (2) but happen to have
+   a particular string value in an array.
+
+
+`nil` is not allowed by D-Bus and attempting to send it raises an exception
+(but see [I#16](https://github.com/mvidner/ruby-dbus/issues/16)).
+
+    foo_i['Bar'] = DBus.variant("au", [0, 1, 1, 2, 3, 5, 8])
+
+
 #### Errors
+
+D-Bus calls can reply with an error instead of a return value. An error is
+translated to a Ruby exception, an instance of {DBus::Error}.
+
+    begin
+        network_manager.sleep
+    rescue DBus::Error => e
+        puts e unless e.name == "org.freedesktop.NetworkManager.AlreadyAsleepOrAwake"
+    end
+
 #### Interfaces
 #### Thread Safety
 Not there. An [incomplete attempt] was made.
