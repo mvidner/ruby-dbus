@@ -797,12 +797,14 @@ module DBus
     include Singleton
   end
 
-  # Shortcut for the SystemBus instance
+  # Shortcut for the {SystemBus} instance
+  # @return [Connection]
   def DBus.system_bus
     SystemBus.instance
   end
 
-  # Shortcut for the SessionBus instance
+  # Shortcut for the {SessionBus} instance
+  # @return [Connection]
   def DBus.session_bus
     SessionBus.instance
   end

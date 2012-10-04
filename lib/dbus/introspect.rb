@@ -339,6 +339,7 @@ module DBus
     end
 
     # Read all properties at once, as a hash.
+    # @return [Hash{String}]
     def all_properties
       self.object[PROPERTY_INTERFACE].GetAll(self.name)[0]
     end
@@ -377,12 +378,16 @@ module DBus
       @interfaces.keys
     end
 
-    # Retrieves an interface of the proxy object (ProxyObjectInterface instance).
+    # Retrieves an interface of the proxy object
+    # @return [ProxyObjectInterface]
     def [](intfname)
       @interfaces[intfname]
     end
 
     # Maps the given interface name _intfname_ to the given interface _intf.
+    # @param [String] intfname
+    # @param [ProxyObjectInterface] intf
+    # @return [ProxyObjectInterface]
     def []=(intfname, intf)
       @interfaces[intfname] = intf
     end

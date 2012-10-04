@@ -20,13 +20,15 @@ The following code is assumed as a prolog to all following ones
 
 #### Calling Methods
 
-1. Connect to the session bus; get the screensaver service and its
-screensaver object.
-2. Perform explicit introspection to define the interfaces and methods
-on the {DBus::ProxyObject object proxy}
-({https://github.com/mvidner/ruby-dbus/issues/28 I#28}).
-3. Get the screensaver interface
-({https://github.com/mvidner/ruby-dbus/issues/29 I#29}).
+1. {DBus.session_bus Connect to the session bus};
+   {DBus::Connection#[] get the screensaver service}
+   {DBus::Service#object and its screensaver object}.
+2. Perform {DBus::ProxyObject#introspect explicit introspection}
+   to define the interfaces and methods
+   on the {DBus::ProxyObject object proxy}
+[I#28](https://github.com/mvidner/ruby-dbus/issues/28).
+3. Get the screensaver {DBus::ProxyObject#[] interface}
+[I#29](https://github.com/mvidner/ruby-dbus/issues/29).
 4. Call one of its methods in a loop, solving [xkcd#196](http://xkcd.com/196).
 
 {include:file:doc/ex-calling-methods.body.rb}
@@ -37,7 +39,7 @@ A method proxy always returns an array of values. This is to
 accomodate the rare cases of a DBus method specifying more than one
 *out* parameter. For nearly all methods you should use `Method[0]` or
 `Method.first`
-({https://github.com/mvidner/ruby-dbus/issues/30 I#30}).
+[I#30](https://github.com/mvidner/ruby-dbus/issues/30).
 
     
     # wrong
@@ -52,13 +54,40 @@ accomodate the rare cases of a DBus method specifying more than one
 
 #### Accessing Properties
 
+To access properties, think of the {DBus::ProxyObjectInterface interface} as a
+{DBus::ProxyObjectInterface#[] hash} keyed by strings,
+or use {DBus::ProxyObjectInterface#all_properties} to get
+an actual Hash of them.
+
 {include:file:doc/ex-properties.body.rb}
+
+(TODO a writable property example)
+
+#### Asynchronous Operation
+
+If a method call has a block attached, it is asynchronous and the block
+is invoked on receiving a method_return message or an error message
+
+##### Main Loop
+
+For asynchronous operation an event loop is necessary. Use {DBus::Main}:
+
+    # [set up signal handlers...]
+    main = DBus::Main.new
+    main << mybus
+    main.run
+
+Alternately, run the GLib main loop and add your DBus connections to it via
+{DBus::Connection#glibize}.
 
 #### Receiving Signals
 
+To receive signals for a specific object and interface, use
+{DBus::ProxyObjectInterface#on\_signal}(bus, name, &block) or
+{DBus::ProxyObject#on_signal}(name, &block), for the default interface.
+[I#31](https://github.com/mvidner/ruby-dbus/issues/31)
 
-#### Asynchronous Operation
-##### Main Loop
+{include:file:doc/ex-signal.body.rb}
 
 ### Intermediate Concepts
 #### Names
