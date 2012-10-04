@@ -26,9 +26,9 @@ The following code is assumed as a prolog to all following ones
 2. Perform {DBus::ProxyObject#introspect explicit introspection}
    to define the interfaces and methods
    on the {DBus::ProxyObject object proxy}
-[I#28](https://github.com/mvidner/ruby-dbus/issues/28).
+([I#28](https://github.com/mvidner/ruby-dbus/issues/28)).
 3. Get the screensaver {DBus::ProxyObject#[] interface}
-[I#29](https://github.com/mvidner/ruby-dbus/issues/29).
+([I#29](https://github.com/mvidner/ruby-dbus/issues/29)).
 4. Call one of its methods in a loop, solving [xkcd#196](http://xkcd.com/196).
 
 {include:file:doc/ex-calling-methods.body.rb}
@@ -39,7 +39,7 @@ A method proxy always returns an array of values. This is to
 accomodate the rare cases of a DBus method specifying more than one
 *out* parameter. For nearly all methods you should use `Method[0]` or
 `Method.first`
-[I#30](https://github.com/mvidner/ruby-dbus/issues/30).
+([I#30](https://github.com/mvidner/ruby-dbus/issues/30)).
 
     
     # wrong
@@ -85,7 +85,7 @@ Alternately, run the GLib main loop and add your DBus connections to it via
 To receive signals for a specific object and interface, use
 {DBus::ProxyObjectInterface#on\_signal}(bus, name, &block) or
 {DBus::ProxyObject#on_signal}(name, &block), for the default interface.
-[I#31](https://github.com/mvidner/ruby-dbus/issues/31)
+([I#31](https://github.com/mvidner/ruby-dbus/issues/31))
 
 {include:file:doc/ex-signal.body.rb}
 
