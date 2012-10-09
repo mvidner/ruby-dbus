@@ -3,10 +3,6 @@
 require "test/unit"
 require "dbus"
 
-def d(msg)
-  puts "#{$$} #{msg}" if $DEBUG
-end
-
 class ThreadSafetyTest < Test::Unit::TestCase
   def test_thread_competition
     print "Thread competition: "

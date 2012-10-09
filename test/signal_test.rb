@@ -3,10 +3,6 @@
 require "test/unit"
 require "dbus"
 
-def d(msg)
-  puts "#{$$} #{msg}" if $DEBUG
-end
-
 class SignalHandlerTest < Test::Unit::TestCase
   def setup
     @session_bus = DBus::ASessionBus.new
@@ -24,25 +20,25 @@ class SignalHandlerTest < Test::Unit::TestCase
     counter = 0
 
     @obj.on_signal "LongTaskEnd" do
-      d "+10"
+      DBus.logger.debug "+10"
       counter += 10
     end
     @obj.on_signal "LongTaskEnd" do
-      d "+1"
+      DBus.logger.debug "+1"
       counter += 1
     end
 
-    d "will begin"
+    DBus.logger.debug "will begin"
     @obj.LongTaskBegin 3
 
     quitter = Thread.new do
-      d "sleep before quit"
+      DBus.logger.debug "sleep before quit"
       # FIXME if we sleep for too long
       # the socket will be drained and we deadlock in a select.
       # It could be worked around by sending ourselves a Unix signal
       # (with a dummy handler) to interrupt the select
       sleep 1
-      d "will quit"
+      DBus.logger.debug "will quit"
       @loop.quit
     end
     @loop.run

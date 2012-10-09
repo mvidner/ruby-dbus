@@ -6,10 +6,6 @@ $:.unshift File.expand_path("../../lib", __FILE__)
 
 require 'dbus'
 
-def d(msg)
-  puts "#{$$} #{msg}" if $DEBUG
-end
-
 PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
 
 class Test < DBus::Object
@@ -89,11 +85,11 @@ class Test < DBus::Object
     # and sends a signal when done
     dbus_method :LongTaskBegin, 'in delay:i' do |delay|
 # FIXME did not complain about mismatch between signature and block args
-      d "Long task began"
+      DBus.logger.debug "Long task began"
       task = Thread.new do
-        d "Long task thread started (#{delay}s)"
+        DBus.logger.debug "Long task thread started (#{delay}s)"
         sleep delay
-        d "Long task will signal end"
+        DBus.logger.debug "Long task will signal end"
         self.LongTaskEnd
       end
       task.abort_on_exception = true # protect from test case bugs
@@ -186,7 +182,7 @@ mr = DBus::MatchRule.new.from_s "type='signal',interface='org.freedesktop.DBus',
 bus.add_match(mr) do |msg|
   new_unique_name = msg.params[2]
   unless new_unique_name.empty?
-    d "RRRING #{new_unique_name}"
+    DBus.logger.debug "RRRING #{new_unique_name}"
     bus.introspect_data(new_unique_name, "/") do
       # ignore the result
     end

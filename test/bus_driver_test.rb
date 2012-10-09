@@ -3,10 +3,6 @@
 require "test/unit"
 require "dbus"
 
-def d(msg)
-  puts msg if $DEBUG
-end
-
 class BusDriverTest < Test::Unit::TestCase
   def setup
     @bus = DBus::ASessionBus.new

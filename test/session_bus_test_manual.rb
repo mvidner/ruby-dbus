@@ -2,10 +2,6 @@
 require "test/unit"
 require "dbus"
 
-def d(msg)
-  puts msg if $DEBUG
-end
-
 class SessionBusAddressTest < Test::Unit::TestCase
   def setup
     # test getting the session bus address even if unset in ENV (Issue#4)

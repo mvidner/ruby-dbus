@@ -3,7 +3,7 @@
 # This file is part of the ruby-dbus project
 # Copyright (C) 2007 Arnaud Cornet and Paul van Tilburg
 #
-# This library is free software; you can redistribute it and/or
+# This library is free software; you caan redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
@@ -96,7 +96,7 @@ module DBus
         n = n[elem]
       end
       if n.nil?
-        puts "Warning, unknown object #{path}" if $DEBUG
+        DBus.logger.debug "Warning, unknown object #{path}"
       end
       n
     end
@@ -600,10 +600,10 @@ module DBus
     def add_match(mr, &slot)
       # check this is a signal.
       mrs = mr.to_s
-      puts "#{@signal_matchrules.size} rules, adding #{mrs.inspect}" if $DEBUG
+      DBus.logger.debug "#{@signal_matchrules.size} rules, adding #{mrs.inspect}"
       # don't ask for the same match if we override it
       unless @signal_matchrules.key?(mrs)
-        puts "Asked for a new match" if $DEBUG
+        DBus.logger.debug "Asked for a new match"
         proxy.AddMatch(mrs)
       end
       @signal_matchrules[mrs] = slot
@@ -627,7 +627,7 @@ module DBus
         raise InvalidPacketException if m.reply_serial == nil
         mcs = @method_call_replies[m.reply_serial]
         if not mcs
-          puts "DEBUG: no return code for mcs: #{mcs.inspect} m: #{m.inspect}" if $DEBUG
+          DBus.logger.debug "no return code for mcs: #{mcs.inspect} m: #{m.inspect}"
         else
           if m.message_type == Message::ERROR
             mcs.call(Error.new(m))
@@ -639,7 +639,7 @@ module DBus
         end
       when DBus::Message::METHOD_CALL
         if m.path == "/org/freedesktop/DBus"
-          puts "DEBUG: Got method call on /org/freedesktop/DBus" if $DEBUG
+          DBus.logger.debug "Got method call on /org/freedesktop/DBus"
         end
         node = @service.get_node(m.path)
         if not node
@@ -666,7 +666,7 @@ module DBus
           end
         end
       else
-        puts "DEBUG: Unknown message type: #{m.message_type}" if $DEBUG
+        DBus.logger.debug "Unknown message type: #{m.message_type}"
       end
     end
 
@@ -707,7 +707,7 @@ module DBus
       m.member = "Hello"
       send_sync(m) do |rmsg|
         @unique_name = rmsg.destination
-        puts "Got hello reply. Our unique_name is #{@unique_name}" if $DEBUG
+        DBus.logger.debug "Got hello reply. Our unique_name is #{@unique_name}"
       end
       @service = Service.new(@unique_name, self)
     end
