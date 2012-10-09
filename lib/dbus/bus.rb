@@ -249,7 +249,7 @@ module DBus
           @is_tcp = true
         rescue
           puts "Error: Could not establish connection to: #{@path}, will now exit."
-          exit(0) #a little harsh
+          exit(1) #a little harsh
         end
       else
         #Danger, Will Robinson: the specified "path" is not usable
