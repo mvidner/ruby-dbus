@@ -258,7 +258,7 @@ module DBus
       singleton_class.class_eval do
         define_method m.name do |*args, &reply_handler|
           if m.params.size != args.size
-            raise InvalidParameters, "Wrong number of arguments"
+            raise ArgumentError, "wrong number of arguments (#{args.size} for #{m.params.size})"
           end
 
           msg = Message.new(Message::METHOD_CALL)
