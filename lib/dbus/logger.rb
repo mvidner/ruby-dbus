@@ -11,9 +11,21 @@
 require 'logger'
 
 module DBus
+  # Get the logger for the DBus module.
+  # The default one logs to STDERR,
+  # with DEBUG if $DEBUG is set, otherwise INFO.
   def logger
-    @logger ||= Logger.new(STDERR)
+    unless @logger
+      @logger = Logger.new(STDERR)
+      @logger.level = $DEBUG ? Logger::DEBUG : Logger::INFO
+    end
+    @logger
   end
-
   module_function :logger
+
+  # Set the logger for the DBus module
+  def logger=(logger)
+    @logger = logger
+  end
+  module_function :logger=
 end
