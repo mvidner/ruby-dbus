@@ -247,50 +247,34 @@ module DBus
       (class << self ; self ; end)
     end
 
-    # FIXME
-    def check_for_eval(s)
-      raise RuntimeError, "invalid internal data '#{s}'" if not s.to_s =~ /^[A-Za-z0-9_]*$/
-    end
-
-    # FIXME
-    def check_for_quoted_eval(s)
-      raise RuntimeError, "invalid internal data '#{s}'" if not s.to_s =~ /^[^"]+$/
-    end
-
     # Defines a method on the interface from the Method descriptor _m_.
     def define_method_from_descriptor(m)
-      check_for_eval(m.name)
-      check_for_quoted_eval(@name)
-      methdef = "def #{m.name}("
-      methdef += (0..(m.params.size - 1)).to_a.collect { |n|
-        "arg#{n}"
-      }.push("&reply_handler").join(", ")
-      methdef += %{)
-              msg = Message.new(Message::METHOD_CALL)
-              msg.path = @object.path
-              msg.interface = "#{@name}"
-              msg.destination = @object.destination
-              msg.member = "#{m.name}"
-              msg.sender = @object.bus.unique_name
-            }
-      idx = 0
       m.params.each do |fpar|
         par = fpar.type
-        check_for_quoted_eval(par)
-
         # This is the signature validity check
         Type::Parser.new(par).parse
+      end
 
-        methdef += %{
-          msg.add_param("#{par}", arg#{idx})
-        }
-        idx += 1
+      singleton_class.class_eval do
+        define_method m.name do |*args, &reply_handler|
+          if m.params.size != args.size
+            raise ArgumentError, "wrong number of arguments (#{args.size} for #{m.params.size})"
+          end
+
+          msg = Message.new(Message::METHOD_CALL)
+          msg.path = @object.path
+          msg.interface = @name
+          msg.destination = @object.destination
+          msg.member = m.name
+          msg.sender = @object.bus.unique_name
+          m.params.each do |fpar|
+            par = fpar.type
+            msg.add_param(par, args.shift)
+          end
+          @object.bus.send_sync_or_async(msg, &reply_handler)
+        end
       end
-      methdef += "
-        @object.bus.send_sync_or_async(msg, &reply_handler)
-      end
-      "
-      singleton_class.class_eval(methdef)
+
       @methods[m.name] = m
     end
 
