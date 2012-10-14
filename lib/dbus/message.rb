@@ -165,64 +165,18 @@ module DBus
       marshaller.append(Type::BYTE, @protocol)
       marshaller.append(Type::UINT32, @body_length)
       marshaller.append(Type::UINT32, @serial)
-      marshaller.array(Type::Parser.new("y").parse[0]) do
-        if @path
-          marshaller.struct do
-            marshaller.append(Type::BYTE, PATH)
-            marshaller.append(Type::BYTE, 1)
-            marshaller.append_simple_string("o")
-            marshaller.append(Type::OBJECT_PATH, @path)
-          end
-        end
-        if @interface
-          marshaller.struct do
-            marshaller.append(Type::BYTE, INTERFACE)
-            marshaller.append(Type::BYTE, 1)
-            marshaller.append_simple_string("s")
-            marshaller.append(Type::STRING, @interface)
-          end
-        end
-        if @member
-          marshaller.struct do
-            marshaller.append(Type::BYTE, MEMBER)
-            marshaller.append(Type::BYTE, 1)
-            marshaller.append_simple_string("s")
-            marshaller.append(Type::STRING, @member)
-          end
-        end
-        if @error_name
-          marshaller.struct do
-            marshaller.append(Type::BYTE, ERROR_NAME)
-            marshaller.append(Type::BYTE, 1)
-            marshaller.append_simple_string("s")
-            marshaller.append(Type::STRING, @error_name)
-          end
-        end
-        if @reply_serial
-          marshaller.struct do
-            marshaller.append(Type::BYTE, REPLY_SERIAL)
-            marshaller.append(Type::BYTE, 1)
-            marshaller.append_simple_string("u")
-            marshaller.append(Type::UINT32, @reply_serial)
-          end
-        end
-        if @destination
-          marshaller.struct do
-            marshaller.append(Type::BYTE, DESTINATION)
-            marshaller.append(Type::BYTE, 1)
-            marshaller.append_simple_string("s")
-            marshaller.append(Type::STRING, @destination)
-          end
-        end
-        if @signature != ""
-          marshaller.struct do
-            marshaller.append(Type::BYTE, SIGNATURE)
-            marshaller.append(Type::BYTE, 1)
-            marshaller.append_simple_string("g")
-            marshaller.append(Type::SIGNATURE, @signature)
-          end
-        end
-      end
+
+      headers = []
+      headers << [PATH,         ["o", @path]]         if @path
+      headers << [INTERFACE,    ["s", @interface]]    if @interface
+      headers << [MEMBER,       ["s", @member]]       if @member
+      headers << [ERROR_NAME,   ["s", @error_name]]   if @error_name
+      headers << [REPLY_SERIAL, ["u", @reply_serial]] if @reply_serial
+      headers << [DESTINATION,  ["s", @destination]]  if @destination
+      #           SENDER is not sent, the message bus fills it in instead
+      headers << [SIGNATURE,    ["g", @signature]]    if @signature != ""
+      marshaller.append("a(yv)", headers)
+
       marshaller.align(8)
       @params.each do |param|
         marshaller.append(param[0], param[1])
