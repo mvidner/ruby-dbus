@@ -80,6 +80,15 @@ class Test < DBus::Object
     end
   end
 
+  dbus_interface "org.ruby.Duplicates" do
+    dbus_method :the_answer, "out answer:i" do
+      [0]
+    end
+    dbus_method :interfaces, "out answer:i" do
+      raise "Raising"
+    end
+  end
+
   dbus_interface "org.ruby.Loop" do
     # starts doing something long, but returns immediately
     # and sends a signal when done
@@ -172,7 +181,7 @@ service.export(myobj)
 derived = Derived.new "/org/ruby/MyDerivedInstance"
 service.export derived
 test2 = Test2.new "/org/ruby/MyInstance2"
-service.export test2 
+service.export test2
 
 # introspect every other connection, Ticket #34
 #  (except the one that activates us - it has already emitted

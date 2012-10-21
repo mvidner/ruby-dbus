@@ -376,13 +376,52 @@ module DBus
       @interfaces[intfname] = intf
     end
 
-    # Introspects the remote object.  Allows you to find and select
+    # Introspects the remote object. Allows you to find and select
     # interfaces on the object.
     def introspect
       # Synchronous call here.
       xml = @bus.introspect_data(@destination, @path)
       ProxyObjectFactory.introspect_into(self, xml)
+      define_shortcut_methods()
       xml
+    end
+
+    # For each non duplicated method name in any interface present on the
+    # caller, defines a shortcut method dynamically.
+    # This function is automatically called when a {ProxyObject} is
+    # introspected.
+    def define_shortcut_methods
+      # builds a list of duplicated methods
+      dup_meths, univocal_meths = [],{}
+      @interfaces.each_value do |intf|
+        intf.methods.each_value do |meth|
+          # Module#instance_methods give us an array of symbols or strings,
+          # depending on which version
+          name = if RUBY_VERSION >= "1.9"
+                   meth.name.to_sym
+                 else
+                   meth.name
+                 end
+          # don't overwrite instance methods!
+          if dup_meths.include? name or self.class.instance_methods.include? name
+            next
+          elsif univocal_meths.include? name
+            univocal_meths.delete name
+            dup_meths << name
+          else
+            univocal_meths[name] = intf
+          end
+        end
+      end
+      univocal_meths.each do |name, intf|
+        # creates a shortcut function that forwards each call to the method on
+        # the appropriate intf
+        singleton_class.class_eval do
+          define_method name do |*args, &reply_handler|
+            intf.method(name).call(*args, &reply_handler)
+          end
+        end
+      end
     end
 
     # Returns whether the object has an interface with the given _name_.
@@ -425,6 +464,11 @@ module DBus
         # - di is specified but not found in introspection data
         raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
       end
+    end
+
+    # Returns the singleton class of the object.
+    def singleton_class
+      (class << self ; self ; end)
     end
   end # class ProxyObject
 
