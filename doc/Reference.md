@@ -27,9 +27,7 @@ The following code is assumed as a prolog to all following ones
    to define the interfaces and methods
    on the {DBus::ProxyObject object proxy}
 ([I#28](https://github.com/mvidner/ruby-dbus/issues/28)).
-3. Get the screensaver {DBus::ProxyObject#[] interface}
-([I#29](https://github.com/mvidner/ruby-dbus/issues/29)).
-4. Call one of its methods in a loop, solving [xkcd#196](http://xkcd.com/196).
+3. Call one of its methods in a loop, solving [xkcd#196](http://xkcd.com/196).
 
 {include:file:doc/ex-calling-methods.body.rb}
 
@@ -62,6 +60,11 @@ an actual Hash of them.
 {include:file:doc/ex-properties.body.rb}
 
 (TODO a writable property example)
+
+Note that unlike for methods where the interface is inferred if unambiguous,
+for properties the interface must be explicitly chosen.
+That is because {DBus::ProxyObject} uses the {DBus::ProxyObject Hash#[]} API
+to provide the {DBus::ProxyObjectInterface interfaces}, not the properties.
 
 #### Asynchronous Operation
 
@@ -145,6 +148,19 @@ translated to a Ruby exception, an instance of {DBus::Error}.
     end
 
 #### Interfaces
+
+Methods, properties and signals of a D-Bus object always belong to one of its interfaces.
+
+Methods can be called without specifying their interface, as long as there is no ambiguity.
+There are two ways to resolve ambiguities:
+
+1. assign an interface name to {DBus::ProxyObject#default_iface}.
+
+2. get a specific {DBus::ProxyObjectInterface interface} of the object,
+with {DBus::ProxyObject#[]} and call methods from there.
+
+Signals and properties only work with a specific interface.
+
 #### Thread Safety
 Not there. An [incomplete attempt] was made.
 ### Advanced Concepts

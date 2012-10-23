@@ -85,7 +85,7 @@ class Test < DBus::Object
       [0]
     end
     dbus_method :interfaces, "out answer:i" do
-      raise "Raising"
+      raise "This DBus method is currently shadowed by ProxyObject#interfaces"
     end
   end
 

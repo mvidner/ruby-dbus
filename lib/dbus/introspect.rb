@@ -346,7 +346,7 @@ module DBus
     attr_reader :path
     # The bus the object is reachable via.
     attr_reader :bus
-    # The default interface of the object, as String.
+    # @return [String] The name of the default interface of the object.
     attr_accessor :default_iface
 
     # Creates a new proxy object living on the given _bus_ at destination _dest_
@@ -363,6 +363,7 @@ module DBus
     end
 
     # Retrieves an interface of the proxy object
+    # @param [String] intfname
     # @return [ProxyObjectInterface]
     def [](intfname)
       @interfaces[intfname]
