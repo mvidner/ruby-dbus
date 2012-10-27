@@ -138,15 +138,21 @@ module DBus
         dir = ae["direction"]
         sig = ae["type"]
 	if m.is_a?(DBus::Signal)
+          if(dir.nil?)
+            dir = "out"
+          end
           m.add_fparam(name, sig)
 	elsif m.is_a?(DBus::Method)
           case dir
           when "in"
             m.add_fparam(name, sig)
           when "out"
-	    m.add_return(name, sig)
-	  end
-        else
+            m.add_return(name, sig)
+          else
+            # This is a method, so dir defaults to "in"
+            m.add_fparam(name, sig)
+	    end
+    else
           raise NotImplementedError, dir
         end
       end

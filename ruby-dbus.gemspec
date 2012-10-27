@@ -15,6 +15,6 @@ GEMSPEC = Gem::Specification.new do |s|
   s.files = FileList["{doc/tutorial,examples,lib,test}/**/*", "Rakefile", "ruby-dbus.gemspec", "VERSION"].to_a.sort
   s.require_path = "lib"
   s.has_rdoc = true
-  s.extra_rdoc_files = ["COPYING", "README", "NEWS"]
+  s.extra_rdoc_files = ["COPYING", "README.md", "NEWS"]
   s.required_ruby_version = ">= 1.8.7"
 end
