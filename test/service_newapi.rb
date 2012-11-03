@@ -94,6 +94,7 @@ class Test < DBus::Object
     # and sends a signal when done
     dbus_method :LongTaskBegin, 'in delay:i' do |delay|
 # FIXME did not complain about mismatch between signature and block args
+      self.LongTaskStart
       DBus.logger.debug "Long task began"
       task = Thread.new do
         DBus.logger.debug "Long task thread started (#{delay}s)"
@@ -104,6 +105,7 @@ class Test < DBus::Object
       task.abort_on_exception = true # protect from test case bugs
     end
 
+    dbus_signal :LongTaskStart
     dbus_signal :LongTaskEnd
   end
 

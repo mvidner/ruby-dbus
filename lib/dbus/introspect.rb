@@ -299,9 +299,24 @@ module DBus
       define(m)
     end
 
+    # @overload on_signal(name, &block)
+    # @overload on_signal(bus, name, &block)
     # Registers a handler (code block) for a signal with _name_ arriving
     # over the given _bus_. If no block is given, the signal is unregistered.
-    def on_signal(bus, name, &block)
+    # Note that specifying _bus_ is discouraged and the option is kept only for
+    # backward compatibility.
+    def on_signal(*args, &block)
+      # Since we must function under ruby 1.8.7, it isn't possible to define the
+      # function as on_signal(bus = nil, name, &block)
+      bus = case args.size
+              when 1
+                @object.bus
+              when 2
+                args.shift
+              else
+                raise ArgumentError, "wrong number of arguments (#{args.size} for 1-2)"
+            end
+      name = args.shift
       mr = DBus::MatchRule.new.from_signal(self, name)
       if block.nil?
         bus.remove_match(mr)
@@ -435,7 +450,7 @@ module DBus
     # It uses _default_iface_ which must have been set.
     def on_signal(name, &block)
       if @default_iface and has_iface?(@default_iface)
-        @interfaces[@default_iface].on_signal(@bus, name, &block)
+        @interfaces[@default_iface].on_signal(name, &block)
       else
         # TODO improve
         raise NoMethodError
