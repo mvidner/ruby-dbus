@@ -49,9 +49,13 @@ class SignalHandlerTest < Test::Unit::TestCase
     assert_equal 1, counter
   end
 
-  def test_on_signal_backward_compatibility
-    DBus.logger.debug "Inside test_on_signal_backward_compatibility"
+  def test_on_signal_overload
+    DBus.logger.debug "Inside test_on_signal_overload"
     counter = 0
+    started = false
+    @intf.on_signal "LongTaskStart" do
+      started = true
+    end
     # Same as intf.on_signal("LongTaskEnd"), just the old way
     @intf.on_signal @obj.bus, "LongTaskEnd" do
       counter += 1
@@ -66,10 +70,8 @@ class SignalHandlerTest < Test::Unit::TestCase
     @loop.run
     quitter.join
 
+    assert_equal true, started
     assert_equal 1, counter
-  end
-
-  def test_on_signal_args_check
     assert_raise(ArgumentError) {@intf.on_signal } # not enough
     assert_raise(ArgumentError) {@intf.on_signal 'to', 'many', 'yarrrrr!'}
   end
