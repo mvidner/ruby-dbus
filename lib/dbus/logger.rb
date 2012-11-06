@@ -15,7 +15,7 @@ module DBus
   # The default one logs to STDERR,
   # with DEBUG if $DEBUG is set, otherwise INFO.
   def logger
-    unless @logger
+    unless defined? @logger
       @logger = Logger.new(STDERR)
       @logger.level = $DEBUG ? Logger::DEBUG : Logger::INFO
     end
