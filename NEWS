@@ -5,6 +5,19 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.9.0 - 2012-11-06
+
+Features:
+ * When calling methods, the interface can be left unspecified if unambiguous
+  (Damiano Stoffie)
+ * YARD documentation, Reference.md
+
+Bug fixes:
+ * Introspection attribute "direction" can be omitted
+   as allowed by the specification (Noah Meyerhans).
+ * ProxyObjectInterface#on_signal no longer needs the "bus" parameter
+   (Issue#31, by Damiano Stoffie)
+
 == Ruby D-Bus 0.8.0 - 2012-09-20
 
 Features:
