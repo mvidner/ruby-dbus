@@ -305,6 +305,7 @@ module DBus
     # over the given _bus_. If no block is given, the signal is unregistered.
     # Note that specifying _bus_ is discouraged and the option is kept only for
     # backward compatibility.
+    # @return [void]
     def on_signal(*args, &block)
       # Since we must function under ruby 1.8.7, it isn't possible to define the
       # function as on_signal(bus = nil, name, &block)
@@ -448,6 +449,7 @@ module DBus
 
     # Registers a handler, the code block, for a signal with the given _name_.
     # It uses _default_iface_ which must have been set.
+    # @return [void]
     def on_signal(name, &block)
       if @default_iface and has_iface?(@default_iface)
         @interfaces[@default_iface].on_signal(name, &block)

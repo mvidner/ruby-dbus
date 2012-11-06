@@ -86,9 +86,8 @@ Alternately, run the GLib main loop and add your DBus connections to it via
 #### Receiving Signals
 
 To receive signals for a specific object and interface, use
-{DBus::ProxyObjectInterface#on\_signal}(bus, name, &block) or
+{DBus::ProxyObjectInterface#on\_signal}(name, &block) or
 {DBus::ProxyObject#on_signal}(name, &block), for the default interface.
-([I#31](https://github.com/mvidner/ruby-dbus/issues/31))
 
 {include:file:doc/ex-signal.body.rb}
 
