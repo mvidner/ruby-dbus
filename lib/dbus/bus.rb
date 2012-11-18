@@ -735,17 +735,22 @@ module DBus
     end
 
     def address_from_file
-      f = File.new("/var/lib/dbus/machine-id")
-      machine_id = f.readline.chomp
-      f.close
-      display = ENV["DISPLAY"].gsub(/.*:([0-9]*).*/, '\1')
-      File.open(ENV["HOME"] + "/.dbus/session-bus/#{machine_id}-#{display}").each do |line|
+      # systemd uses /etc/machine-id
+      # traditional dbus uses /var/lib/dbus/machine-id
+      machine_id_path = Dir['{/etc,/var/lib/dbus}/machine-id'].first
+      return nil unless machine_id_path
+      machine_id = File.read(machine_id_path).chomp
+
+      display = ENV["DISPLAY"].gsub(/.*:([0-9]*)\.*/, '\1')
+
+      bus_file_path = File.join(ENV["HOME"], "/.dbus/session-bus/#{machine_id}-#{display}")
+      return nil unless File.exists?(bus_file_path)
+
+      File.open(bus_file_path).lines do |line|
         if line =~ /^DBUS_SESSION_BUS_ADDRESS=(.*)/
           return $1
         end
       end
-    rescue Errno::ENOENT
-      nil
     end
   end
 
