@@ -735,17 +735,12 @@ module DBus
     end
 
     def address_from_file
-      f = File.new("/var/lib/dbus/machine-id")
-      machine_id = f.readline.chomp
-      f.close
-      display = ENV["DISPLAY"].gsub(/.*:([0-9]*).*/, '\1')
-      File.open(ENV["HOME"] + "/.dbus/session-bus/#{machine_id}-#{display}").each do |line|
-        if line =~ /^DBUS_SESSION_BUS_ADDRESS=(.*)/
-          return $1
+      path = Dir[File.join(ENV['HOME'], ".dbus/session-bus/*#{ENV['DISPLAY'].sub(':', '').to_i}")].first
+      if path
+        File.open(path).lines do |line|
+          return $1 if line =~ /^DBUS_SESSION_BUS_ADDRESS=(.*)/
         end
       end
-    rescue Errno::ENOENT
-      nil
     end
   end
 
