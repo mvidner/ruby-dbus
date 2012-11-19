@@ -741,7 +741,7 @@ module DBus
       return nil unless machine_id_path
       machine_id = File.read(machine_id_path).chomp
 
-      display = ENV["DISPLAY"].gsub(/.*:([0-9]*)\.*/, '\1')
+      display = ENV["DISPLAY"][/:(\d+)\.?/, 1]
 
       bus_file_path = File.join(ENV["HOME"], "/.dbus/session-bus/#{machine_id}-#{display}")
       return nil unless File.exists?(bus_file_path)
