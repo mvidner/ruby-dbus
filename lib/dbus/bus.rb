@@ -746,7 +746,7 @@ module DBus
       bus_file_path = File.join(ENV["HOME"], "/.dbus/session-bus/#{machine_id}-#{display}")
       return nil unless File.exists?(bus_file_path)
 
-      File.open(bus_file_path).lines do |line|
+      File.open(bus_file_path).each_line do |line|
         if line =~ /^DBUS_SESSION_BUS_ADDRESS=(.*)/
           return $1
         end
