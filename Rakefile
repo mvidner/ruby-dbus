@@ -3,7 +3,6 @@ require 'rake'
 require 'fileutils'
 include FileUtils
 require 'tmpdir'
-require 'rake/rdoctask'
 require 'rake/testtask'
 
 desc 'Default: run tests in the proper environment'
@@ -46,11 +45,4 @@ task :package_git do |t|
     end
     cp Dir.glob("#{temp}/*.gem"), "."
   end
-end
-
-Rake::RDocTask.new do |rd|
-  rd.rdoc_dir = 'doc/rdoc'
-  rd.rdoc_files.include("README", "lib/**/*.rb")
-#  rd.options << "--diagram"
-#  rd.options << "--all"
 end
