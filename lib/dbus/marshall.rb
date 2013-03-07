@@ -391,7 +391,7 @@ module DBus
           val = val.bytes
         end
         if not val.kind_of?(Array)
-          raise TypeException, "Expected an Array but got a #{val.class}"
+          raise TypeException, "Expected an Array of #{type.members.first.inspect} but got a #{val.class}"
         end
         array(type.child) do
           val.each do |elem|
