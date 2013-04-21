@@ -15,7 +15,6 @@ begin
 require 'nokogiri'
 rescue LoadError
 end
-require 'pp'
 
 module DBus
   # = D-Bus introspect XML parser class
@@ -108,7 +107,9 @@ module DBus
         subnodes << e["name"]
       end
       d.each("node/interface") do |e|
-        i = Interface.new(e["name"])
+        # find by name already existing interface or create new one
+        i = interfaces.find { |interface| interface.name == e["name"] } || Interface.new(e["name"])
+
         e.each("method") do |me|
           m = Method.new(me["name"])
           parse_methsig(me, m)
@@ -119,14 +120,13 @@ module DBus
           parse_methsig(se, s)
           i << s
         end
+
         interfaces << i
-        puts ""
       end
       d = Time.now - t
       if d > 2
         DBus.logger.debug "Some XML took more that two secs to parse. Optimize me!"
       end
-      pp interfaces
       [interfaces, subnodes]
     end
 
