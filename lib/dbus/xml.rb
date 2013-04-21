@@ -15,6 +15,7 @@ begin
 require 'nokogiri'
 rescue LoadError
 end
+require 'pp'
 
 module DBus
   # = D-Bus introspect XML parser class
@@ -119,11 +120,13 @@ module DBus
           i << s
         end
         interfaces << i
+        puts ""
       end
       d = Time.now - t
       if d > 2
         DBus.logger.debug "Some XML took more that two secs to parse. Optimize me!"
       end
+      pp interfaces
       [interfaces, subnodes]
     end
 
