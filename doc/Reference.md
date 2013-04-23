@@ -134,6 +134,12 @@ If the signature expects a Variant
    type. This will hit you when you rely on method (2) but happen to have
    a particular string value in an array.
 
+##### Byte Arrays
+
+If a byte array (`ay`) is expected you can pass a String too.
+The bytes sent are according to the string's
+[encoding](http://ruby-doc.org/core-1.9.3/Encoding.html).
+
 ##### nil
 
 `nil` is not allowed by D-Bus and attempting to send it raises an exception
