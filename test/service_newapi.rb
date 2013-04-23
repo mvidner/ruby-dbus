@@ -53,6 +53,10 @@ class Test < DBus::Object
     dbus_method :Error, "in name:s, in description:s" do |name, description|
       raise DBus.error(name), description
     end
+
+    dbus_method :mirror_byte_array, "in bytes:ay, out mirrored:ay" do |bytes|
+      [bytes]
+    end
   end
 
   # closing and reopening the same interface
