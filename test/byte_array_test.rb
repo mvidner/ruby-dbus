@@ -33,7 +33,7 @@ class ByteArrayTest < Test::Unit::TestCase
   end
 
   def test_passing_byte_array_from_nonenumerable
-    data = Complex::I
+    data = Time.now
     assert_raises DBus::TypeException do
        @obj.mirror_byte_array(data).first
     end
