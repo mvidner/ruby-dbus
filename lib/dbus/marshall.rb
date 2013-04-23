@@ -382,8 +382,12 @@ module DBus
           # Damn ruby rocks here
           val = val.to_a
         end
-        if not val.kind_of?(Array)
-          raise TypeException, "Expected an Array but got a #{val.class}"
+        # If string is recieved and ay is expected, explode the string
+        if val.kind_of?(String) && type.child.sigtype == Type::BYTE
+          val = val.bytes
+        end
+        if not val.kind_of?(Enumerable)
+          raise TypeException, "Expected an Enumerable of #{type.child.inspect} but got a #{val.class}"
         end
         array(type.child) do
           val.each do |elem|
