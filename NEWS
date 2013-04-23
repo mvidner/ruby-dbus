@@ -5,6 +5,12 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.9.1 - 2013-04-23
+
+Bug fixes:
+ * Prefer /etc/machine-id to /var/lib/dbus/machine-id
+   when DBUS_SESSION_BUS_ADDRESS is unset (Issue#39, by WU Jun).
+
 == Ruby D-Bus 0.9.0 - 2012-11-06
 
 Features:
