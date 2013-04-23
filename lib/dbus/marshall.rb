@@ -383,15 +383,11 @@ module DBus
           val = val.to_a
         end
         # If string is recieved and ay is expected, explode the string
-        if val.kind_of?(String) &&
-          type.sigtype == Type::ARRAY &&
-          type.members.size == 1 &&
-          type.members.first.sigtype == Type::BYTE
-
+        if val.kind_of?(String) && type.child.sigtype == Type::BYTE
           val = val.bytes
         end
         if not val.kind_of?(Enumerable)
-          raise TypeException, "Expected an Enumerable of #{type.members.first.inspect} but got a #{val.class}"
+          raise TypeException, "Expected an Enumerable of #{type.child.inspect} but got a #{val.class}"
         end
         array(type.child) do
           val.each do |elem|
