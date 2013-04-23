@@ -23,4 +23,19 @@ class ByteArrayTest < Test::Unit::TestCase
     result = @obj.mirror_byte_array(data).first
     assert_equal [65, 65, 65], result
   end
+
+  def test_passing_byte_array_from_hash
+    # Hash is an Enumerable, but is caught earlier
+    data = { "this will" => "fail" }
+    assert_raises DBus::TypeException do
+      @obj.mirror_byte_array(data).first
+    end
+  end
+
+  def test_passing_byte_array_from_nonenumerable
+    data = Complex::I
+    assert_raises DBus::TypeException do
+       @obj.mirror_byte_array(data).first
+    end
+  end
 end
