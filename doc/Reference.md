@@ -108,7 +108,11 @@ Variants are simply unpacked to become their contained type.
 
 D-Bus has stricter typing than Ruby, so the library must decide
 which D-Bus type to choose. Most of the time the choice is dictated
-by the D-Bus signature. However if the signature expects a Variant
+by the D-Bus signature.
+
+##### Variants
+
+If the signature expects a Variant
 (which is the case for all Properties!) then an explicit mechanism is needed.
 
 1. A pair [{DBus::Type::Type}, value] specifies to marshall *value* as
@@ -119,6 +123,8 @@ by the D-Bus signature. However if the signature expects a Variant
    ISSUE: using something else than cryptic signatures is even more painful
    than remembering the signatures!
 
+        foo_i['Bar'] = DBus.variant("au", [0, 1, 1, 2, 3, 5, 8])
+
 2. Other values are tried to fit one of these:
    Boolean, Double, Array of Variants, Hash of String keyed Variants,
    String, Int32, Int64.
@@ -128,11 +134,10 @@ by the D-Bus signature. However if the signature expects a Variant
    type. This will hit you when you rely on method (2) but happen to have
    a particular string value in an array.
 
+##### nil
 
 `nil` is not allowed by D-Bus and attempting to send it raises an exception
 (but see [I#16](https://github.com/mvidner/ruby-dbus/issues/16)).
-
-    foo_i['Bar'] = DBus.variant("au", [0, 1, 1, 2, 3, 5, 8])
 
 
 #### Errors
