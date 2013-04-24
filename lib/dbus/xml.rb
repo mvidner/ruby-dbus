@@ -97,8 +97,12 @@ module DBus
 
     # return a pair: [list of Interfaces, list of direct subnode names]
     def parse
-      interfaces = Array.new
-      subnodes = Array.new
+      # Using a Hash instead of a list helps merge split-up interfaces,
+      # a quirk observed in ModemManager (I#41).
+      interfaces = Hash.new do |hash, missing_key|
+        hash[missing_key] = Interface.new(missing_key)
+      end
+      subnodes = []
       t = Time.now
 
 
@@ -107,7 +111,7 @@ module DBus
         subnodes << e["name"]
       end
       d.each("node/interface") do |e|
-        i = Interface.new(e["name"])
+        i = interfaces[e["name"]]
         e.each("method") do |me|
           m = Method.new(me["name"])
           parse_methsig(me, m)
@@ -118,13 +122,12 @@ module DBus
           parse_methsig(se, s)
           i << s
         end
-        interfaces << i
       end
       d = Time.now - t
       if d > 2
         DBus.logger.debug "Some XML took more that two secs to parse. Optimize me!"
       end
-      [interfaces, subnodes]
+      [interfaces.values, subnodes]
     end
 
     ######################################################################
