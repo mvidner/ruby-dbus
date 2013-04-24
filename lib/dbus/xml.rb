@@ -107,7 +107,9 @@ module DBus
         subnodes << e["name"]
       end
       d.each("node/interface") do |e|
-        i = Interface.new(e["name"])
+        # find by name already existing interface or create new one
+        i = interfaces.find { |interface| interface.name == e["name"] } || Interface.new(e["name"])
+
         e.each("method") do |me|
           m = Method.new(me["name"])
           parse_methsig(me, m)
@@ -118,6 +120,7 @@ module DBus
           parse_methsig(se, s)
           i << s
         end
+
         interfaces << i
       end
       d = Time.now - t
