@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # Test passing a particular struct array through a variant
 # https://trac.luon.net/ruby-dbus/ticket/27
+require File.expand_path("../test_helper", __FILE__)
 require "dbus"
 session_bus = DBus::ASessionBus.new
 svc = session_bus.service("org.ruby.service")

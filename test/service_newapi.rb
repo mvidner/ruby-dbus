@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 
+require File.expand_path("../test_helper", __FILE__)
+SimpleCov.command_name 'Unit Tests' if Object.const_defined? "SimpleCov"
 # find the library without external help
 $:.unshift File.expand_path("../../lib", __FILE__)
 

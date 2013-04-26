@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # Test that a server survives various error cases
+require File.expand_path("../test_helper", __FILE__)
 require "test/unit"
 require "dbus"
 
