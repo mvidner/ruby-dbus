@@ -4,4 +4,8 @@
 /doc/css
 /doc/js
 /pkg
+.yardoc/
+# Rubinius
+.rbx/
+# emacs backups
 *~
