@@ -5,6 +5,17 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.9.2 - 2013-05-08
+
+Features:
+ * Ruby strings can be passed where byte arrays ("ay") are expected 
+   (Issue#40, by Jesper B. Rosenkilde)
+
+Bug fixes:
+ * Fixed accessing ModemManager properties (Issue#41, reported
+   by Ernest Bursa). MM introspection produces two elements
+   for a single interface; merge them.
+
 == Ruby D-Bus 0.9.1 - 2013-04-23
 
 Bug fixes:
