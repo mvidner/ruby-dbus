@@ -25,7 +25,7 @@ class Test < DBus::Object
     end
 
     dbus_method :test_variant, "in stuff:v" do |variant|
-      p variant
+      DBus.logger.debug variant.inspect
     end
 
     dbus_method :bounce_variant, "in stuff:v, out chaff:v" do |variant|
