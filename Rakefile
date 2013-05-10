@@ -25,7 +25,7 @@ end
 %w(test rcov).each do |tname|
   desc "Run bare:#{tname} in the proper environment"
   task tname do |t|
-    cd "test" do
+    cd "test/tools" do
       sh "./test_env rake bare:#{tname}"
     end
   end
