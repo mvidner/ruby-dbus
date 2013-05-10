@@ -10,7 +10,7 @@ task :default => :test
 
 def common_test_task(t)
     t.libs << "lib"
-    t.test_files = FileList['test/*_test.rb', 'test/t[0-9]*.rb']
+    t.test_files = FileList['test/*_test.rb']
     t.verbose = true
 end
 Rake::TestTask.new("bare:test") {|t| common_test_task t }

@@ -13,6 +13,15 @@ class ValueTest < Test::Unit::TestCase
     @obj.default_iface = "org.ruby.SampleInterface"
   end
 
+  def test_passing_an_array_of_structs_through_a_variant
+    triple = ['a(uuu)', []]
+    @obj.test_variant(triple)
+    quadruple = ['a(uuuu)', []]     # a(uuu) works fine
+    # The bus disconnects us because of malformed message,
+    # code 12: DBUS_INVALID_TOO_MUCH_DATA
+    @obj.test_variant(quadruple)
+  end
+
   def test_passing_an_array_through_a_variant
     # old explicit typing
     @obj.test_variant(["as", ["coucou", "kuku"]])
