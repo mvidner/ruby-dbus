@@ -5,7 +5,7 @@ D-Bus system can be used in the Ruby programming language.
 
 ## Requirements
 
-- Ruby 1.8.7 or 1.9
+- Ruby 1.8.7, 1.9 or 2.0
 
 ## Installation
 
