@@ -90,15 +90,6 @@ module DBus
       ret
     end
 
-    # Retrieve the series of bytes until the next NULL (\0) byte.
-    def get_nul_terminated
-      raise IncompleteBufferException if not @buffy[@idx..-1] =~ /^([^\0]*)\0/
-      str = $1
-      raise IncompleteBufferException if @idx + str.bytesize + 1 > @buffy.bytesize
-      @idx += str.bytesize + 1
-      str
-    end
-
     # Get the string length and string itself from the buffer.
     # Return the string.
     def get_string
@@ -299,11 +290,6 @@ module DBus
     def struct
       align(8)
       yield
-    end
-
-    # Append a string of bytes without type.
-    def append_simple_string(s)
-      @packet += s + "\0"
     end
 
     # Append a value _val_ to the packet based on its _type_.
