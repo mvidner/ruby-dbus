@@ -1,4 +1,0 @@
-#! /bin/sh
-SEND0="dbus-send  --session --dest=org.ruby.service"
-CALL="$SEND0 --type=method_call --print-reply"
-$CALL /org/ruby/MyInstance org.ruby.AnotherInterface.Reverse string:Hello
