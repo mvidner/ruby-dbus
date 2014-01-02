@@ -505,6 +505,9 @@ module DBus
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
     rescue EOFError
       raise                     # the caller expects it
+    rescue Errno::EWOULDBLOCK
+      # simply fail the read if it would block
+      return
     rescue Exception => e
       puts "Oops:", e
       raise if @is_tcp          # why?
