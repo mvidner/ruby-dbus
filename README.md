@@ -7,6 +7,8 @@ D-Bus system can be used in the Ruby programming language.
 
 - Ruby 1.9.3 or 2.0
 
+[![Build Status](https://travis-ci.org/mvidner/ruby-dbus.png)](https://travis-ci.org/mvidner/ruby-dbus)
+
 ## Installation
 
 - `gem install ruby-dbus`
