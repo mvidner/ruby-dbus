@@ -3,11 +3,10 @@
 /doc/*.html
 /doc/css
 /doc/js
-/pkg
 .yardoc/
 # Rubinius
 .rbx/
-# emacs backups
-*~
 # SimpleCov
 coverage/
+# packaging
+ruby-dbus-*.gem
