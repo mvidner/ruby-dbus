@@ -10,6 +10,7 @@ require "packaging"
 Packaging.configuration do |conf|
   conf.obs_project = "devel:languages:ruby:extensions"
   conf.package_name = "rubygem-ruby-dbus"
+  conf.obs_sr_project = "openSUSE:Factory"
   conf.skip_license_check << /^[^\/]*$/
   conf.skip_license_check << /^(doc|examples|test)\/.*/
 end
