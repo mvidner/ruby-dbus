@@ -17,7 +17,7 @@
 
 # norootforbuild
 Name:           rubygem-ruby-dbus
-Version:        0.9.2
+Version:        0.9.3
 Release:        0
 %define mod_name ruby-dbus
 %define mod_full_name %{mod_name}-%{version}

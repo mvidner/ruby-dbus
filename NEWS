@@ -5,6 +5,15 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.9.3 - 2014-01-02
+
+Bug fixes:
+ * re-added COPYING, NEWS, README.md to the gem (Issue#47,
+   by Cédric Boutillier)
+
+Packaging:
+ * use packaging_rake_tasks
+
 == Ruby D-Bus 0.9.2 - 2013-05-08
 
 Features:
