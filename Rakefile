@@ -13,6 +13,9 @@ Packaging.configuration do |conf|
   conf.obs_sr_project = "openSUSE:Factory"
   conf.skip_license_check << /^[^\/]*$/
   conf.skip_license_check << /^(doc|examples|test)\/.*/
+  # "Ruby on Rails is released under the MIT License."
+  # but the files are missing copyright headers
+  conf.skip_license_check << /^lib\/dbus\/core_ext\//
 end
 
 desc 'Default: run tests in the proper environment'

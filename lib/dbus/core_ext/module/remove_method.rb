@@ -1,8 +1,10 @@
 # copied from activesupport/core_ext from Rails, MIT license
+# https://github.com/rails/rails/tree/5aa869861c192daceafe3a3ee50eb93f5a2b7bd2/activesupport/lib/active_support/core_ext
 class Module
   def remove_possible_method(method)
-    remove_method(method)
-  rescue NameError
+    if method_defined?(method) || private_method_defined?(method)
+      undef_method(method)
+    end
   end
 
   def redefine_method(method, &block)
