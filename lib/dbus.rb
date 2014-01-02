@@ -23,13 +23,6 @@ require 'dbus/xml'
 require 'socket'
 require 'thread'
 
-unless 0.respond_to?(:ord)
-  # Backward compatibility with Ruby 1.8.6, see http://www.pubbs.net/ruby/200907/65871/
-  class Integer
-    def ord; self; end
-  end
-end
-
 # = D-Bus main module
 #
 # Module containing all the D-Bus modules and classes.
