@@ -1,0 +1,254 @@
+-------------------------------------------------------------------
+Wed May  8 15:46:08 UTC 2013 - mvidner@suse.com
+
+- 0.9.2
+ Features:
+ * Ruby strings can be passed where byte arrays ("ay") are expected 
+   (Issue#40, by Jesper B. Rosenkilde)
+
+ Bug fixes:
+ * Fixed accessing ModemManager properties (Issue#41, reported
+   by Ernest Bursa). MM introspection produces two elements
+   for a single interface; merge them.
+
+-------------------------------------------------------------------
+Mon Apr 29 21:31:03 UTC 2013 - mvidner@suse.cz
+
+- fixed build: unspecify port and address family
+
+-------------------------------------------------------------------
+Tue Apr 23 15:25:17 UTC 2013 - mvidner@suse.cz
+
+- 0.9.1
+ Bug fixes:
+ * Prefer /etc/machine-id to /var/lib/dbus/machine-id
+   when DBUS_SESSION_BUS_ADDRESS is unset (Issue#39, by WU Jun).
+- BTW netcfg did not help. Using 127.0.0.1 in upstream now.
+
+-------------------------------------------------------------------
+Tue Apr 16 19:42:21 UTC 2013 - mvidner@suse.cz
+
+- BuildRequire netcfg to fix tests failing with
+  'Failed to lookup host/port: "localhost:0"'
+
+-------------------------------------------------------------------
+Tue Nov  6 21:55:37 UTC 2012 - mvidner@suse.cz
+
+- 0.9.0
+ Features:
+ * When calling methods, the interface can be left unspecified if unambiguous
+  (Damiano Stoffie)
+ * YARD documentation, Reference.md
+ Bug fixes:
+ * Introspection attribute "direction" can be omitted
+   as allowed by the specification (Noah Meyerhans).
+ * ProxyObjectInterface#on_signal no longer needs the "bus" parameter
+   (Issue#31, by Damiano Stoffie)
+
+-------------------------------------------------------------------
+Thu Sep 20 20:09:41 UTC 2012 - mvidner@suse.cz
+
+- 0.8.0
+ Features:
+ * Add Anonymous authentication (Issue#27, by Walter Brebels).
+ * Use Nokogiri for XML parsing when available (Issue#24, by Geoff Youngs).
+ Bug fixes:
+ * Use SCM_CREDS authentication only on FreeBSD, not on OpenBSD (Issue#21,
+   reported by Adde Nilsson).
+ * Recognize signature "h" (UNIX_FD) used eg. by Upstart (Issue#23,
+   by Bernd Ahlers).
+ * Find the session bus also via launchd, on OS X (Issue#20, reported
+   by Paul Sturgess).
+
+-------------------------------------------------------------------
+Thu Apr  5 13:01:43 UTC 2012 - mvidner@suse.cz
+
+- 0.7.2, a bugfix release
+ * Fixed "undefined local variable or method `continue'" in
+   DBus::Main#run when a service becomes idle (by Ravil Bayramgalin)
+
+-------------------------------------------------------------------
+Wed Apr  4 09:00:04 UTC 2012 - mvidner@suse.cz
+
+- 0.7.1, a bugfix release
+ * Fixed calling asynchronous methods on the default interface (Issue#13,
+   by Eugene Korbut). 
+ * Fixed Main#quit to really quit the loop (by Josef Reidinger)
+ * Unbundled files from Active Support (by Bohuslav Kabrda)
+
+-------------------------------------------------------------------
+Mon Feb 13 10:55:13 UTC 2012 - coolo@suse.com
+
+- patch license to follow spdx.org standard
+
+-------------------------------------------------------------------
+Mon Jul 25 19:57:35 CEST 2011 - mvidner@suse.cz
+
+- 0.7.0, a bugfix release
+ * Added ASystemBus and ASessionBus, non-singletons useful in tests
+   and threads.
+ * Fixed handling of multibyte strings (Issue#8, by Takayuki YAMAGUCHI).
+ * Allow reopening of a dbus_interface declaration (Issue#9, by T. YAMAGUCHI).
+ * Fixed ruby-1.9.2 compatibility again (Issue#12).
+ * Fixed authentication on BSD (Issue#11, by Jonathan Walker).
+ * Fixed exiting a nested event loop for synchronous calls
+   (reported by Timo Warns).
+ * Fixed introspection calls leaking reply handlers.
+ * "rake test" now works, doing what was called "rake env:test"
+- updated the spec from a current template to build doc and
+  testsuite subpackages
+
+-------------------------------------------------------------------
+Fri Dec 10 22:35:40 UTC 2010 - mvidner@suse.cz
+
+- 0.6.0
+ * Clients can access properties conveniently (Ticket#28).
+ * Service won't crash whan handling an unknown method or interface (Ticket#31).
+ * Don't send an invalid error name when it originates from a NameError.
+
+-------------------------------------------------------------------
+Wed Nov 10 11:00:04 UTC 2010 - mvidner@suse.cz
+
+- really Provide+Obsolete ruby-dbus.rpm.
+
+-------------------------------------------------------------------
+Sun Nov  7 22:42:18 UTC 2010 - mvidner@suse.cz
+
+- 0.5.0
+ * Better binding of Ruby Exceptions to D-Bus Errors.
+ * Converted the package to a Gem (Issue#6).
+ * Converted the tutorial from Webgen to Markdown.
+ * Don't pass file descriptors to subprocesses.
+ * Fixed InterfaceElement::validate_name (Ticket#38, by Herwin Weststrate).
+ * Fixed a typo in InvalidDestinationName description (Ticket#40).
+- rubygem-ruby-dbus.rpm obsoletes ruby-dbus.rpm
+
+-------------------------------------------------------------------
+Fri Aug 20 10:57:46 UTC 2010 - mvidner@suse.cz
+
+- 0.4.0
+ * TCP transport (by pangdudu)
+ * Enabled test code coverage report (rcov)
+ * Classes should not share all interfaces (Ticket#36/Issue#5)
+ * Ruby 1.9 compatibility (Ticket#37, by Myra Nelson)
+- require rake for building
+
+-------------------------------------------------------------------
+Thu Jul 22 13:40:33 CEST 2010 - mvidner@suse.cz
+
+- 0.3.1
+ * Many on_signal could cause DBus.Error.LimitsExceeded bnc#617350).
+   Don't add a match rule that already exists, enable removing match
+   rules. Now only one handler for a rule is called (but it is possible
+   for one signal to match more rules). This reverts the half-fix done
+   to fix Issue#3
+ * Re-added InterfaceElement#add_param for compatibility.
+ * Handle more ways which tell us that a bus connection has died.
+
+-------------------------------------------------------------------
+Sun Mar 28 08:48:57 UTC 2010 - mvidner@novell.com
+
+- 0.3.0
+ * Automatic signature inference for variants.
+ * Introduced FormalParameter where a plain pair had been used.
+ * Fixed "undefined method `get_node' for nil:NilClass"
+   on Ubuntu Karmic (Ticket#34).
+ * Get the session bus address even if unset in ENV (Issue#4).
+ * Avoid needless DBus::IncompleteBufferException (Ticket#33).
+ * Don't ignore DBus Errors in request_service, raise them (Ticket#32).
+- took the patches upstream
+
+-------------------------------------------------------------------
+Tue Feb 23 10:43:56 UTC 2010 - kkaempf@novell.com
+
+- bump version to 0.2.12.1
+
+-------------------------------------------------------------------
+Fri Feb 19 13:23:31 UTC 2010 - kkaempf@novell.com
+
+- add the name in error to InvalidMethodName
+- make the signal dispatcher call all handlers (bnc#580935)
+- don't process an empty buffer
+
+-------------------------------------------------------------------
+Thu Feb  4 11:02:46 UTC 2010 - kkaempf@novell.com
+
+- Define Integer.ord for Ruby < 1.8.7
+
+-------------------------------------------------------------------
+Sun Jan 24 10:07:39 UTC 2010 - mvidner@suse.cz
+                                                      
+- 0.2.12
+  * Fixed a long-standing bug where a service activated by the bus
+    would fail with "undefined method get_node' for nil:NilClass"
+    (Tickets#25 and #29).
+
+-------------------------------------------------------------------
+Thu Nov 12 10:39:34 CET 2009 - mvidner@suse.cz
+
+- 0.2.11
+ * Added DBus::Service#unexport (da1l6).
+ * Return org.freedesktop.DBus.Error.UnknownObject instead of crashing
+   (Ticket#31).
+ * Rescue exceptions in dbus_methods and reply with DBus errors instead of
+   crashing (da1l6).
+ * Better exception messages when sending nil, or mismatched structs.
+ * Call mktemp without --tmpdir, to build on older distros.
+- Undo the misguided BuildRequires dbus-1-devel
+
+-------------------------------------------------------------------
+Sat Sep 26 21:18:59 CEST 2009 - kkaempf@suse.de
+
+- BuildRequires dbus-1-devel
+
+-------------------------------------------------------------------
+Thu Sep 10 15:55:41 CEST 2009 - mvidner@suse.cz
+
+- DBus::Service.exists? fixed (Murat Demirten).
+- Ruby 1.9 fixes (Jedediah Smith).
+- Fixed an endless sleep in DBus::Main.run (bnc#537401).
+- Added details to PacketMarshaller exceptions (bnc#538050).
+- 0.2.10
+
+-------------------------------------------------------------------
+Wed Aug 26 09:54:13 CEST 2009 - mvidner@suse.cz
+
+- Released a new tarball. New changes:
+  - Added DBus::Main.quit.
+  - Mention the DBus interface in a NameError for an unknown method.
+  - Fixed ruby-1.9 "warning: default `to_a' will be obsolete".
+- 0.2.9
+
+-------------------------------------------------------------------
+Tue Jul  7 13:54:31 CEST 2009 - mvidner@suse.cz
+
+- added patch from http://github.com/mvidner/ruby-dbus, since r160
+  to yesterday, obsoleting the Jun 18 patch.
+  - Fixed passing an array through a variant.
+  - Fixed marshalling "av" (Ticket #30).
+  - Fixed variant alignment (Ticket #27).
+- 0.2.1.3
+
+-------------------------------------------------------------------
+Mon Jun 29 12:55:26 CEST 2009 - jreidinger@suse.cz
+
+- increase version to 0.2.1.2 to use this package instead from one
+  from another repository that just rebuild due to dependencies
+- 0.2.1.2
+
+-------------------------------------------------------------------
+Thu Jun 18 16:19:01 CEST 2009 - jreidinger@suse.cz
+
+- add patch that prevent crash during  receiving array of variants 
+
+-------------------------------------------------------------------
+Mon Sep  8 17:51:48 CEST 2008 - mrueckert@suse.de
+
+- added ruby-dbus-0.2.1_to_trunk.patch:
+  pull in latest changes from trunk
+
+-------------------------------------------------------------------
+Mon Sep  8 14:53:09 CEST 2008 - mrueckert@suse.de
+
+- initial package of version 0.2.1
+
