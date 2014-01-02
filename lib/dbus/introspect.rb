@@ -306,18 +306,7 @@ module DBus
     # Note that specifying _bus_ is discouraged and the option is kept only for
     # backward compatibility.
     # @return [void]
-    def on_signal(*args, &block)
-      # Since we must function under ruby 1.8.7, it isn't possible to define the
-      # function as on_signal(bus = nil, name, &block)
-      bus = case args.size
-              when 1
-                @object.bus
-              when 2
-                args.shift
-              else
-                raise ArgumentError, "wrong number of arguments (#{args.size} for 1-2)"
-            end
-      name = args.shift
+    def on_signal(bus = @object.bus, name, &block)
       mr = DBus::MatchRule.new.from_signal(self, name)
       if block.nil?
         bus.remove_match(mr)

@@ -37,8 +37,8 @@ BuildRequires:  netcfg
 
 %rubygems_requires
 
-Requires:       ruby >= 1.8.7
-BuildRequires:  ruby-devel >= 1.8.7
+Requires:       ruby >= 1.9.3
+BuildRequires:  ruby-devel >= 1.9.3
 #
 Url:            https://trac.luon.net/ruby-dbus
 Source:         %{mod_full_name}.gem
