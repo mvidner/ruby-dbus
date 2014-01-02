@@ -172,7 +172,7 @@ with {DBus::ProxyObject#[]} and call methods from there.
 Signals and properties only work with a specific interface.
 
 #### Thread Safety
-Not there. An [incomplete attempt] was made.
+Not there. An [incomplete attempt](https://github.com/mvidner/ruby-dbus/tree/multithreading) was made.
 ### Advanced Concepts
 #### Bus Addresses
 #### Without Introspection
