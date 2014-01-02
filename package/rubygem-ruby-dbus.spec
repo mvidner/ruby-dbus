@@ -30,6 +30,7 @@ License:        LGPL-2.1
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  rubygems_with_buildroot_patch
 BuildRequires:  rubygem-rake
+BuildRequires:  rubygem-packaging_rake_tasks
 BuildRequires:  rubygem-nokogiri
 BuildRequires:  dbus-1
 BuildRequires:  netcfg
