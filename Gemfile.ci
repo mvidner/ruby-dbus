@@ -1,3 +1,4 @@
 source "http://rubygems.org"
 gem "rake"
+gem "packaging_rake_tasks"
 gem "nokogiri"
