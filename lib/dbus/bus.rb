@@ -247,7 +247,8 @@ module DBus
           @socket.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
           init_connection
           @is_tcp = true
-        rescue
+        rescue Exception => e
+          puts "Oops:", e
           puts "Error: Could not establish connection to: #{@path}, will now exit."
           exit(1) #a little harsh
         end
