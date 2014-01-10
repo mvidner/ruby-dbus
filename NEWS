@@ -5,6 +5,15 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.10.0 - 2014-01-10
+
+Bug fixes:
+ * fixed "Interfaces added with singleton_class.instance_eval aren't
+   exported" (Issue#22, by miaoufkirsh)
+
+Requirements:
+ * Require ruby 1.9.3, stopped supporting 1.8.7.
+
 == Ruby D-Bus 0.9.3 - 2014-01-02
 
 Bug fixes:
