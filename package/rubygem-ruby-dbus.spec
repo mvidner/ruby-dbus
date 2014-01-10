@@ -72,7 +72,7 @@ Test::Unit or RSpec files, useful for developers.
 
 %check
 cd %{buildroot}/%{_libdir}/ruby/gems/%{rb_ver}/gems/%{mod_name}-%{version}/test
-rake test
+rake test TESTOPTS=-v
 
 %clean
 %{__rm} -rf %{buildroot}

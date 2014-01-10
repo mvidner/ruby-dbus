@@ -11,3 +11,5 @@ matrix:
   allow_failures:
     - rvm: ruby-head
     - rvm: rbx
+env:
+  - TESTOPTS=-v
