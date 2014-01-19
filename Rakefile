@@ -23,26 +23,18 @@ end
 desc 'Default: run specs and tests in the proper environment'
 task :default => [:spec, :test]
 
-def common_test_task(t)
-    t.libs << "lib"
-    t.test_files = FileList['test/*_test.rb']
-    t.verbose = true
+Rake::TestTask.new("bare:test") do |t|
+  t.libs << "lib"
+  t.test_files = FileList['test/*_test.rb']
+  t.verbose = true
 end
-Rake::TestTask.new("bare:test") {|t| common_test_task t }
 
 RSpec::Core::RakeTask.new("bare:spec") do |t|
   t.pattern = "**/test/**/*_spec.rb"
   t.rspec_opts = "--color --format doc"
 end
 
-begin
-  require 'rcov/rcovtask'
-  Rcov::RcovTask.new("bare:rcov") {|t| common_test_task t }
-rescue LoadError
-  # no rcov, never mind
-end
-
-%w(test rcov spec).each do |tname|
+%w(test spec).each do |tname|
   desc "Run bare:#{tname} in the proper environment"
   task tname do |t|
     cd "test/tools" do
