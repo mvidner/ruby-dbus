@@ -4,6 +4,8 @@ require 'fileutils'
 include FileUtils
 require 'tmpdir'
 require 'rake/testtask'
+require 'rspec/core/rake_task'
+# TODO "rake" must always run all tests+specs, even  while migrating
 
 require "packaging"
 
@@ -28,6 +30,17 @@ def common_test_task(t)
 end
 Rake::TestTask.new("bare:test") {|t| common_test_task t }
 
+RSpec::Core::RakeTask.new("bare:spec")
+
+namespace :bare do
+  desc "runs specs like yast does"
+  task "yastspec" do
+    Dir["**/test/**/*_spec.rb"].each do |f|
+      sh "rspec --color --format doc '#{f}'"
+    end
+  end
+end
+
 begin
   require 'rcov/rcovtask'
   Rcov::RcovTask.new("bare:rcov") {|t| common_test_task t }
@@ -35,7 +48,7 @@ rescue LoadError
   # no rcov, never mind
 end
 
-%w(test rcov).each do |tname|
+%w(test rcov spec yastspec).each do |tname|
   desc "Run bare:#{tname} in the proper environment"
   task tname do |t|
     cd "test/tools" do
