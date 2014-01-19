@@ -20,8 +20,8 @@ Packaging.configuration do |conf|
   conf.skip_license_check << /^lib\/dbus\/core_ext\//
 end
 
-desc 'Default: run tests in the proper environment'
-task :default => :test
+desc 'Default: run specs and tests in the proper environment'
+task :default => [:spec, :test]
 
 def common_test_task(t)
     t.libs << "lib"
@@ -30,15 +30,9 @@ def common_test_task(t)
 end
 Rake::TestTask.new("bare:test") {|t| common_test_task t }
 
-RSpec::Core::RakeTask.new("bare:spec")
-
-namespace :bare do
-  desc "runs specs like yast does"
-  task "yastspec" do
-    Dir["**/test/**/*_spec.rb"].each do |f|
-      sh "rspec --color --format doc '#{f}'"
-    end
-  end
+RSpec::Core::RakeTask.new("bare:spec") do |t|
+  t.pattern = "**/test/**/*_spec.rb"
+  t.rspec_opts = "--color --format doc"
 end
 
 begin
@@ -48,7 +42,7 @@ rescue LoadError
   # no rcov, never mind
 end
 
-%w(test rcov spec yastspec).each do |tname|
+%w(test rcov spec).each do |tname|
   desc "Run bare:#{tname} in the proper environment"
   task tname do |t|
     cd "test/tools" do
