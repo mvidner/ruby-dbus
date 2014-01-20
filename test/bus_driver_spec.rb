@@ -1,5 +1,5 @@
 #!/usr/bin/env rspec
-
+require_relative "spec_helper"
 require "dbus"
 
 describe DBus::Service do
