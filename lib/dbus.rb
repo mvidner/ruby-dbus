@@ -8,21 +8,21 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
-require 'dbus/auth'
-require 'dbus/bus'
-require 'dbus/core_ext/class/attribute'
-require 'dbus/error'
-require 'dbus/export'
-require 'dbus/introspect'
-require 'dbus/logger'
-require 'dbus/marshall'
-require 'dbus/matchrule'
-require 'dbus/message'
-require 'dbus/type'
-require 'dbus/xml'
+require_relative "dbus/auth"
+require_relative "dbus/bus"
+require_relative "dbus/core_ext/class/attribute"
+require_relative "dbus/error"
+require_relative "dbus/export"
+require_relative "dbus/introspect"
+require_relative "dbus/logger"
+require_relative "dbus/marshall"
+require_relative "dbus/matchrule"
+require_relative "dbus/message"
+require_relative "dbus/type"
+require_relative "dbus/xml"
 
-require 'socket'
-require 'thread'
+require "socket"
+require "thread"
 
 # = D-Bus main module
 #
