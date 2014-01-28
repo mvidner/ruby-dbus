@@ -8,17 +8,17 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
+require 'dbus/auth'
+require 'dbus/bus'
 require 'dbus/core_ext/class/attribute'
-require 'dbus/type'
-require 'dbus/introspect'
 require 'dbus/error'
 require 'dbus/export'
-require 'dbus/bus'
+require 'dbus/introspect'
 require 'dbus/logger'
 require 'dbus/marshall'
-require 'dbus/message'
 require 'dbus/matchrule'
-require 'dbus/auth'
+require 'dbus/message'
+require 'dbus/type'
 require 'dbus/xml'
 
 require 'socket'
