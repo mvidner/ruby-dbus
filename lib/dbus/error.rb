@@ -34,8 +34,10 @@ module DBus
     end
   end # class Error
 
-  # raise DBus.error, "message"
-  # raise DBus.error("org.example.Error.SeatOccupied"), "Seat #{n} is occupied"
+  # @example raise a generic error
+  #   raise DBus.error, "message"
+  # @example raise a specific error
+  #   raise DBus.error("org.example.Error.SeatOccupied"), "Seat #{n} is occupied"
   def error(name = "org.freedesktop.DBus.Error.Failed")
     # message will be set by Kernel.raise
     DBus::Error.new(nil, name)
