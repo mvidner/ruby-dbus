@@ -61,14 +61,14 @@ module DBus
           retdata = method(methname).call(*msg.params)
           retdata =  [*retdata]
 
-          reply = Message.method_return(msg)
+          reply = Message.method_return(msg, :default_for_nil => self.class.default_for_nil)
           meth.rets.zip(retdata).each do |rsig, rdata|
             reply.add_param(rsig.type, rdata)
           end
         rescue => ex
           reply = ErrorMessage.from_exception(ex).reply_to(msg)
         end
-        @service.bus.message_queue.push(reply) # FIXME reply.marshall(:default_for_nil => self.class.default_for_nil)
+        @service.bus.message_queue.push(reply)
       end
     end
 

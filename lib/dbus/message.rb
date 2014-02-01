@@ -49,6 +49,8 @@ module DBus
     # performed.
     NO_AUTO_START = 0x2
 
+    # FIXME rename to marshall_options
+    attr_reader :options
     # The type of the message.
     attr_reader :message_type
     # The path of the object instance the message must be sent to/is sent from.
@@ -77,7 +79,8 @@ module DBus
 
     # Create a message with message type _mtype_ with default values and a
     # unique serial number.
-    def initialize(mtype = INVALID)
+    def initialize(mtype = INVALID, options = {})
+      @options = options
       @message_type = mtype
 
       @flags = 0
@@ -106,8 +109,8 @@ module DBus
     end
 
     # Create a regular reply to a message _m_.
-    def self.method_return(m)
-      MethodReturnMessage.new.reply_to(m)
+    def self.method_return(m, options = {})
+      MethodReturnMessage.new(options).reply_to(m)
     end
 
     # Create an error reply to a message _m_.
@@ -147,7 +150,7 @@ module DBus
 
     # Marshall the message with its current set parameters and return
     # it in a packet form.
-    def marshall options={}
+    def marshall
       if @path == "/org/freedesktop/DBus/Local"
         raise InvalidDestinationName
       end
@@ -239,8 +242,8 @@ module DBus
   end # class Message
 
   class MethodReturnMessage < Message
-    def initialize
-      super(METHOD_RETURN)
+    def initialize(options = {})
+      super(METHOD_RETURN, options)
     end
   end
 
