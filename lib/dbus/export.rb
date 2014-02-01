@@ -66,7 +66,8 @@ module DBus
             reply.add_param(rsig.type, rdata)
           end
         rescue => ex
-          reply = ErrorMessage.from_exception(ex).reply_to(msg)
+          dbus_msg_exc = msg.annotate_exception(ex)
+          reply = ErrorMessage.from_exception(dbus_msg_exc).reply_to(msg)
         end
         @service.bus.message_queue.push(reply)
       end

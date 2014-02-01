@@ -43,7 +43,7 @@ class BindingTest < Test::Unit::TestCase
     assert false, "should have raised"
   rescue DBus::Error => e
     assert_equal "org.example.Fail", e.name
-    assert_equal "as you wish", e.message
+    assert_match(/as you wish/, e.message)
   end
 
   def test_generic_dbus_error
@@ -52,7 +52,7 @@ class BindingTest < Test::Unit::TestCase
     assert false, "should have raised"
   rescue DBus::Error => e
     assert_equal "org.freedesktop.DBus.Error.Failed", e.name
-    assert_equal "failed as designed", e.message
+    assert_match(/failed as designed/, e.message)
   end
   
   def test_dynamic_interface_definition
