@@ -42,7 +42,7 @@ class Test < DBus::Object
     end
 
     dbus_method :masked_nil_variant, "out val:v" do
-      { "test" => [nil,"test"], "lest" => {nil => nil} }
+      { "test" => [nil, "test"], "lest" => {nil => nil} }
     end
 
     dbus_method :the_answer, "out answer:i" do

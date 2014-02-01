@@ -354,14 +354,14 @@ module DBus
           end
         end
         if vartype.nil?
-          vartype, vardata = PacketMarshaller.make_variant(val,options)
+          vartype, vardata = PacketMarshaller.make_variant(val, options)
           vartype = Type::Parser.new(vartype).parse[0]
         end
 
         append_signature(vartype.to_s)
         align(vartype.alignment)
         sub = PacketMarshaller.new(@offset + @packet.bytesize)
-        sub.append(vartype, vardata,options)
+        sub.append(vartype, vardata, options)
         @packet += sub.packet
       when Type::ARRAY
         if val.kind_of?(Hash)
@@ -378,7 +378,7 @@ module DBus
         end
         array(type.child) do
           val.each do |elem|
-            append(type.child, elem,options)
+            append(type.child, elem, options)
           end
         end
       when Type::STRUCT, Type::DICT_ENTRY
@@ -392,7 +392,7 @@ module DBus
         end
         struct do
           type.members.zip(val).each do |t, v|
-            append(t, v,options)
+            append(t, v, options)
           end
         end
       else
@@ -402,7 +402,7 @@ module DBus
     end # def append
 
     # Make a [signature, value] pair for a variant
-    def self.make_variant(value,options={})
+    def self.make_variant(value, options = {})
       value = options[:default_for_nil] if value.nil?
       # TODO: mix in _make_variant to String, Integer...
       if value == true

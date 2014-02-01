@@ -158,7 +158,7 @@ module DBus
       #FIXME ineffective to pack body twice can we just grab packet and append it on second call?
       params = PacketMarshaller.new
       @params.each do |param|
-        params.append(param[0], param[1],options)
+        params.append(param[0], param[1], options)
       end
       @body_length = params.packet.bytesize
 
@@ -183,7 +183,7 @@ module DBus
 
       marshaller.align(8)
       @params.each do |param|
-        marshaller.append(param[0], param[1],options)
+        marshaller.append(param[0], param[1], options)
       end
       marshaller.packet
     end
