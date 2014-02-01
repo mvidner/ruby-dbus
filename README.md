@@ -9,20 +9,18 @@ Ruby D-Bus is a pure Ruby library for writing clients and services for D-Bus.
 Check whether the system is on battery power
 via [UPower](http://upower.freedesktop.org/docs/UPower.html#UPower:OnBattery)
 
-```ruby
-require "dbus"
-sysbus = DBus.system_bus
-upower_service   = sysbus["org.freedesktop.UPower"]
-upower_object    = upower_service.object "/org/freedesktop/UPower"
-upower_object.introspect
-upower_interface = upower_object["org.freedesktop.UPower"]
-on_battery       = upower_interface["OnBattery"]
-if on_battery
-  puts "The computer IS on battery power."
-else
-  puts "The computer IS NOT on battery power."
-end
-```
+    require "dbus"
+    sysbus = DBus.system_bus
+    upower_service   = sysbus["org.freedesktop.UPower"]
+    upower_object    = upower_service.object "/org/freedesktop/UPower"
+    upower_object.introspect
+    upower_interface = upower_object["org.freedesktop.UPower"]
+    on_battery       = upower_interface["OnBattery"]
+    if on_battery
+      puts "The computer IS on battery power."
+    else
+      puts "The computer IS NOT on battery power."
+    end
 
 ## Requirements
 
