@@ -235,6 +235,14 @@ module DBus
       ret, _ = unmarshall_buffer(buf)
       ret
     end
+
+    # Make a new exception from ex, mark it as being caused by this message
+    # @api private
+    def annotate_exception(ex)
+      new_ex = ex.exception("#{ex}; caused by #{self}")
+      new_ex.set_backtrace(ex.backtrace)
+      new_ex
+    end
   end # class Message
 
   class MethodReturnMessage < Message

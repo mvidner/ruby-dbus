@@ -532,6 +532,8 @@ module DBus
       else
         DBus.logger.debug "Unknown message type: #{m.message_type}"
       end
+    rescue Exception => ex
+      raise m.annotate_exception(ex)
     end
 
     # Retrieves the Service with the given _name_.
