@@ -7,7 +7,7 @@
 #export RUBYOPT="-d"
 export RUBYOPT="$RUBYOPT -w"
 ./test_server \
-	./service_newapi.rb \
+	../service_newapi.rb \
 	-- \
 	./dbus-launch-simple \
 	"$@"

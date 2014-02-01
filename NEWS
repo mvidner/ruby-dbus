@@ -5,6 +5,89 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.10.0 - 2014-01-10
+
+Bug fixes:
+ * fixed "Interfaces added with singleton_class.instance_eval aren't
+   exported" (Issue#22, by miaoufkirsh)
+
+Requirements:
+ * Require ruby 1.9.3, stopped supporting 1.8.7.
+
+== Ruby D-Bus 0.9.3 - 2014-01-02
+
+Bug fixes:
+ * re-added COPYING, NEWS, README.md to the gem (Issue#47,
+   by Cédric Boutillier)
+
+Packaging:
+ * use packaging_rake_tasks
+
+== Ruby D-Bus 0.9.2 - 2013-05-08
+
+Features:
+ * Ruby strings can be passed where byte arrays ("ay") are expected 
+   (Issue#40, by Jesper B. Rosenkilde)
+
+Bug fixes:
+ * Fixed accessing ModemManager properties (Issue#41, reported
+   by Ernest Bursa). MM introspection produces two elements
+   for a single interface; merge them.
+
+== Ruby D-Bus 0.9.1 - 2013-04-23
+
+Bug fixes:
+ * Prefer /etc/machine-id to /var/lib/dbus/machine-id
+   when DBUS_SESSION_BUS_ADDRESS is unset (Issue#39, by WU Jun).
+
+== Ruby D-Bus 0.9.0 - 2012-11-06
+
+Features:
+ * When calling methods, the interface can be left unspecified if unambiguous
+  (Damiano Stoffie)
+ * YARD documentation, Reference.md
+
+Bug fixes:
+ * Introspection attribute "direction" can be omitted
+   as allowed by the specification (Noah Meyerhans).
+ * ProxyObjectInterface#on_signal no longer needs the "bus" parameter
+   (Issue#31, by Damiano Stoffie)
+
+== Ruby D-Bus 0.8.0 - 2012-09-20
+
+Features:
+ * Add Anonymous authentication (Issue#27, by Walter Brebels).
+ * Use Nokogiri for XML parsing when available (Issue#24, by Geoff Youngs).
+
+Bug fixes:
+ * Use SCM_CREDS authentication only on FreeBSD, not on OpenBSD (Issue#21,
+   reported by Adde Nilsson).
+ * Recognize signature "h" (UNIX_FD) used eg. by Upstart (Issue#23,
+   by Bernd Ahlers).
+ * Find the session bus also via launchd, on OS X (Issue#20, reported
+   by Paul Sturgess).
+
+Other:
+ * Now doing continuous integration with Travis:
+     http://travis-ci.org/#!/mvidner/ruby-dbus
+
+
+== Ruby D-Bus 0.7.2 - 2012-04-05
+
+A brown-paper-bag release.
+
+Bug fixes:
+ * Fixed "undefined local variable or method `continue'" in
+   DBus::Main#run when a service becomes idle (by Ravil Bayramgalin)
+
+== Ruby D-Bus 0.7.1 - 2012-04-04
+
+Bug fixes:
+ * Fixed calling asynchronous methods on the default interface (Issue#13,
+   by Eugene Korbut). 
+ * Fixed Main#quit to really quit the loop (by Josef Reidinger)
+ * Unbundled files from Active Support (by Bohuslav Kabrda)
+
 == Ruby D-Bus 0.7.0 - 2011-07-26
 
 Features:

@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # Test that a server survives various error cases
+require File.expand_path("../test_helper", __FILE__)
 require "test/unit"
 require "dbus"
 
@@ -10,7 +11,7 @@ class Foo < DBus::Object
   end
 
   dbus_signal :signal_without_interface
-rescue DBus::Object::UndefinedInterface => e
+rescue DBus::Object::UndefinedInterface
   # raised by the preceding signal declaration
 end
 

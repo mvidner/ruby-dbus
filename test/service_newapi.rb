@@ -1,14 +1,12 @@
 #!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 
+require_relative "test_helper"
+SimpleCov.command_name "Service Tests" if Object.const_defined? "SimpleCov"
 # find the library without external help
 $:.unshift File.expand_path("../../lib", __FILE__)
 
 require 'dbus'
-
-def d(msg)
-  puts "#{$$} #{msg}" if $DEBUG
-end
 
 PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
 
@@ -28,7 +26,7 @@ class Test < DBus::Object
     end
 
     dbus_method :test_variant, "in stuff:v" do |variant|
-      p variant
+      DBus.logger.debug variant.inspect
     end
 
     dbus_method :bounce_variant, "in stuff:v, out chaff:v" do |variant|
@@ -66,6 +64,10 @@ class Test < DBus::Object
     dbus_method :Error, "in name:s, in description:s" do |name, description|
       raise DBus.error(name), description
     end
+
+    dbus_method :mirror_byte_array, "in bytes:ay, out mirrored:ay" do |bytes|
+      [bytes]
+    end
   end
 
   # closing and reopening the same interface
@@ -93,21 +95,32 @@ class Test < DBus::Object
     end
   end
 
+  dbus_interface "org.ruby.Duplicates" do
+    dbus_method :the_answer, "out answer:i" do
+      [0]
+    end
+    dbus_method :interfaces, "out answer:i" do
+      raise "This DBus method is currently shadowed by ProxyObject#interfaces"
+    end
+  end
+
   dbus_interface "org.ruby.Loop" do
     # starts doing something long, but returns immediately
     # and sends a signal when done
     dbus_method :LongTaskBegin, 'in delay:i' do |delay|
 # FIXME did not complain about mismatch between signature and block args
-      d "Long task began"
+      self.LongTaskStart
+      DBus.logger.debug "Long task began"
       task = Thread.new do
-        d "Long task thread started (#{delay}s)"
+        DBus.logger.debug "Long task thread started (#{delay}s)"
         sleep delay
-        d "Long task will signal end"
+        DBus.logger.debug "Long task will signal end"
         self.LongTaskEnd
       end
       task.abort_on_exception = true # protect from test case bugs
     end
 
+    dbus_signal :LongTaskStart
     dbus_signal :LongTaskEnd
   end
 
@@ -185,7 +198,7 @@ service.export(myobj)
 derived = Derived.new "/org/ruby/MyDerivedInstance"
 service.export derived
 test2 = Test2.new "/org/ruby/MyInstance2"
-service.export test2 
+service.export test2
 
 # introspect every other connection, Ticket #34
 #  (except the one that activates us - it has already emitted
@@ -195,7 +208,7 @@ mr = DBus::MatchRule.new.from_s "type='signal',interface='org.freedesktop.DBus',
 bus.add_match(mr) do |msg|
   new_unique_name = msg.params[2]
   unless new_unique_name.empty?
-    d "RRRING #{new_unique_name}"
+    DBus.logger.debug "RRRING #{new_unique_name}"
     bus.introspect_data(new_unique_name, "/") do
       # ignore the result
     end

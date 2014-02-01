@@ -90,15 +90,6 @@ module DBus
       ret
     end
 
-    # Retrieve the series of bytes until the next NULL (\0) byte.
-    def get_nul_terminated
-      raise IncompleteBufferException if not @buffy[@idx..-1] =~ /^([^\0]*)\0/
-      str = $1
-      raise IncompleteBufferException if @idx + str.bytesize + 1 > @buffy.bytesize
-      @idx += str.bytesize + 1
-      str
-    end
-
     # Get the string length and string itself from the buffer.
     # Return the string.
     def get_string
@@ -146,7 +137,7 @@ module DBus
         if (packet & 0x8000) != 0
           packet -= 0x10000
         end
-      when Type::UINT32
+      when Type::UINT32, Type::UNIX_FD
         align(4)
         packet = get(4).unpack(@uint32)[0]
       when Type::INT32
@@ -301,11 +292,6 @@ module DBus
       yield
     end
 
-    # Append a string of bytes without type.
-    def append_simple_string(s)
-      @packet += s + "\0"
-    end
-
     # Append a value _val_ to the packet based on its _type_.
     #
     # Host native endianness is used, declared in Message#marshall
@@ -318,7 +304,7 @@ module DBus
       case type.sigtype
       when Type::BYTE
         @packet += val.chr
-      when Type::UINT32
+      when Type::UINT32, Type::UNIX_FD
         align(4)
         @packet += [val].pack("L")
       when Type::UINT64
@@ -383,8 +369,12 @@ module DBus
           # Damn ruby rocks here
           val = val.to_a
         end
-        if not val.kind_of?(Array)
-          raise TypeException, "Expected an Array but got a #{val.class}"
+        # If string is recieved and ay is expected, explode the string
+        if val.kind_of?(String) && type.child.sigtype == Type::BYTE
+          val = val.bytes
+        end
+        if not val.kind_of?(Enumerable)
+          raise TypeException, "Expected an Enumerable of #{type.child.inspect} but got a #{val.class}"
         end
         array(type.child) do
           val.each do |elem|

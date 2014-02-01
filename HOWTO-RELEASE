@@ -1,16 +1,34 @@
-osc build # for the previous release, in advance, to cache the current packages
-rake # and also for Ruby 1.9.1
-edit VERSION
-edit NEWS
-git commit
-git tag
-rake package
-osc build
-git push
-git push --tags
-upload pkg/*.{tgz, gem} (to github)
-osc ci
-osc sr
-edit homepage
-mail to ML
-post to blog
+Check that it builds: locally and in OBS.
+Do it already for the previous release, in advance, to cache
+the current packages
+
+    rake osc:build
+
+Push, and check the Travis CI results.
+
+    git push
+
+Edit VERSION NEWS package/rubygem-ruby-dbus.spec
+
+    osc vc package
+    git commit
+
+Build, and submit + SR to OBS
+
+    rake osc:sr
+
+Push the versioned commit; tag
+
+    cat VERSION && git tag v`cat VERSION`
+    git push
+    git push --tags
+
+Push gem
+
+    gem push package/ruby-dbus-`cat VERSION`.gem
+
+Publicize
+
+- edit homepage
+- mail to ML
+- post to blog, twitter

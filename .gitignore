@@ -1,4 +1,12 @@
-/doc/rdoc
 /doc/tutorial/index.html
-/pkg
-*~
+/doc/DBus
+/doc/*.html
+/doc/css
+/doc/js
+.yardoc/
+# Rubinius
+.rbx/
+# SimpleCov
+coverage/
+# packaging
+ruby-dbus-*.gem

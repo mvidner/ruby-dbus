@@ -8,26 +8,25 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
-require 'dbus/core_ext/class/attribute'
-require 'dbus/type'
-require 'dbus/introspect'
-require 'dbus/error'
-require 'dbus/export'
-require 'dbus/bus.rb'
-require 'dbus/marshall'
-require 'dbus/message'
-require 'dbus/matchrule'
-require 'dbus/auth'
+require_relative "dbus/auth"
+require_relative "dbus/bus"
+require_relative "dbus/core_ext/class/attribute"
+require_relative "dbus/error"
+require_relative "dbus/export"
+require_relative "dbus/introspect"
+require_relative "dbus/logger"
+require_relative "dbus/marshall"
+require_relative "dbus/matchrule"
+require_relative "dbus/message"
+require_relative "dbus/message_queue"
+require_relative "dbus/proxy_object"
+require_relative "dbus/proxy_object_factory"
+require_relative "dbus/proxy_object_interface"
+require_relative "dbus/type"
+require_relative "dbus/xml"
 
-require 'socket'
-require 'thread'
-
-unless 0.respond_to?(:ord)
-  # Backward compatibility with Ruby 1.8.6, see http://www.pubbs.net/ruby/200907/65871/
-  class Integer
-    def ord; self; end
-  end
-end
+require "socket"
+require "thread"
 
 # = D-Bus main module
 #

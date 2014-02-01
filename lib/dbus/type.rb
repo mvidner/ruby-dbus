@@ -15,45 +15,31 @@ module DBus
 # This module containts the constants of the types specified in the D-Bus
 # protocol.
 module Type
-  # The types.
-  INVALID = 0
-  BYTE = ?y
-  BOOLEAN = ?b
-  INT16 = ?n
-  UINT16 = ?q
-  INT32 = ?i
-  UINT32 = ?u
-  INT64 = ?x
-  UINT64 = ?t
-  DOUBLE = ?d
-  STRUCT = ?r
-  ARRAY = ?a
-  VARIANT = ?v
-  OBJECT_PATH = ?o
-  STRING = ?s
-  SIGNATURE = ?g
-  DICT_ENTRY = ?e
-
-  # Mapping from type number to name.
-  TypeName = {
-    INVALID => "INVALID",
-    BYTE => "BYTE",
-    BOOLEAN => "BOOLEAN",
-    INT16 => "INT16",
-    UINT16 => "UINT16",
-    INT32 => "INT32",
-    UINT32 => "UINT32",
-    INT64 => "INT64",
-    UINT64 => "UINT64",
-    DOUBLE => "DOUBLE",
-    STRUCT => "STRUCT",
-    ARRAY => "ARRAY",
-    VARIANT => "VARIANT",
-    OBJECT_PATH => "OBJECT_PATH",
-    STRING => "STRING",
-    SIGNATURE => "SIGNATURE",
-    DICT_ENTRY => "DICT_ENTRY"
+  # Mapping from type number to name and alignment.
+  TypeMapping = {
+    0 => ["INVALID", nil],
+    ?y => ["BYTE", 1],
+    ?b => ["BOOLEAN", 4],
+    ?n => ["INT16", 2],
+    ?q => ["UINT16", 2],
+    ?i => ["INT32", 4],
+    ?u => ["UINT32", 4],
+    ?x => ["INT64", 8],
+    ?t => ["UINT64", 8],
+    ?d => ["DOUBLE", 8],
+    ?r => ["STRUCT", 8],
+    ?a => ["ARRAY", 4],
+    ?v => ["VARIANT", 1],
+    ?o => ["OBJECT_PATH", 4],
+    ?s => ["STRING", 4],
+    ?g => ["SIGNATURE", 1],
+    ?e => ["DICT_ENTRY", 8],
+    ?h => ["UNIX_FD", 4],
   }
+  # Defines the set of constants
+  TypeMapping.each_pair do |key, value|
+    Type.const_set(value.first, key)
+  end
 
   # Exception raised when an unknown/incorrect type is encountered.
   class SignatureException < Exception
@@ -70,7 +56,7 @@ module Type
 
     # Create a new type instance for type number _sigtype_.
     def initialize(sigtype)
-      if not TypeName.keys.member?(sigtype)
+      if not TypeMapping.keys.member?(sigtype)
         raise SignatureException, "Unknown key in signature: #{sigtype.chr}"
       end
       @sigtype = sigtype
@@ -79,24 +65,7 @@ module Type
 
     # Return the required alignment for the type.
     def alignment
-      {
-        BYTE => 1,
-        BOOLEAN => 4,
-        INT16 => 2,
-        UINT16 => 2,
-        INT32 => 4,
-        UINT32 => 4,
-        INT64 => 8,
-        UINT64 => 8,
-        STRUCT => 8,
-        DICT_ENTRY => 8,
-        DOUBLE => 8,
-        ARRAY => 4,
-        VARIANT => 1,
-        OBJECT_PATH => 4,
-        STRING => 4,
-        SIGNATURE => 1,
-      }[@sigtype]
+      TypeMapping[@sigtype].last
     end
 
     # Return a string representation of the type according to the
@@ -110,7 +79,7 @@ module Type
       when DICT_ENTRY
         "{" + @members.collect { |t| t.to_s }.join + "}"
       else
-        if not TypeName.keys.member?(@sigtype)
+        if not TypeMapping.keys.member?(@sigtype)
           raise NotImplementedError
         end
         @sigtype.chr
@@ -120,7 +89,7 @@ module Type
     # Add a new member type _a_.
     def <<(a)
       if not [STRUCT, ARRAY, DICT_ENTRY].member?(@sigtype)
-        raise SignatureException 
+        raise SignatureException
       end
       raise SignatureException if @sigtype == ARRAY and @members.size > 0
       if @sigtype == DICT_ENTRY
@@ -142,7 +111,7 @@ module Type
     end
 
     def inspect
-      s = TypeName[@sigtype]
+      s = TypeMapping[@sigtype].first
       if [STRUCT, ARRAY].member?(@sigtype)
         s += ": " + @members.inspect
       end
@@ -173,7 +142,9 @@ module Type
       case c
       when ?a
         res = Type.new(ARRAY)
-        child = parse_one(nextchar)
+        c = nextchar
+        raise SignatureException, "Parse error in #{@signature}" if c == nil
+        child = parse_one(c)
         res << child
       when ?(
         res = Type.new(STRUCT)

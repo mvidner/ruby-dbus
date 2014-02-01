@@ -3,7 +3,7 @@
 # This file is part of the ruby-dbus project
 # Copyright (C) 2007 Arnaud Cornet and Paul van Tilburg
 #
-# This library is free software; you can redistribute it and/or
+# This library is free software; you caan redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
@@ -11,7 +11,6 @@
 require 'socket'
 require 'thread'
 require 'singleton'
-require 'fcntl'
 
 # = D-Bus main module
 #
@@ -49,7 +48,8 @@ module DBus
       self
     end
 
-    # Retrieves an object (ProxyObject) at the given _path_.
+    # Retrieves an object at the given _path_.
+    # @return [ProxyObject]
     def object(path)
       node = get_node(path, true)
       if node.object.nil?
@@ -95,7 +95,7 @@ module DBus
         n = n[elem]
       end
       if n.nil?
-        puts "Warning, unknown object #{path}" if $DEBUG
+        DBus.logger.debug "Warning, unknown object #{path}"
       end
       n
     end
@@ -186,8 +186,8 @@ module DBus
   class Connection
     # The unique name (by specification) of the message.
     attr_reader :unique_name
-    # The socket that is used to connect with the bus.
-    attr_reader :socket
+    # pop and push messages here
+    attr_reader :message_queue
 
     # Create a new connection to the bus for a given connect _path_. _path_
     # format is described in the D-Bus specification:
@@ -196,84 +196,22 @@ module DBus
     # "transport1:key1=value1,key2=value2;transport2:key1=value1,key2=value2"
     # e.g. "unix:path=/tmp/dbus-test" or "tcp:host=localhost,port=2687"
     def initialize(path)
-      @path = path
+      @message_queue = MessageQueue.new(path)
       @unique_name = nil
-      @buffer = ""
       @method_call_replies = Hash.new
       @method_call_msgs = Hash.new
       @signal_matchrules = Hash.new
       @proxy = nil
       @object_root = Node.new("/")
-      @is_tcp = false
     end
 
-    # Connect to the bus and initialize the connection.
-    def connect
-      addresses = @path.split ";"
-      # connect to first one that succeeds
-      worked = addresses.find do |a|
-        transport, keyvaluestring = a.split ":"
-        kv_list = keyvaluestring.split ","
-        kv_hash = Hash.new
-        kv_list.each do |kv|
-          key, escaped_value = kv.split "="
-          value = escaped_value.gsub(/%(..)/) {|m| [$1].pack "H2" }
-          kv_hash[key] = value
-        end
-        case transport
-          when "unix"
-          connect_to_unix kv_hash
-          when "tcp"
-          connect_to_tcp kv_hash
-          else
-          # ignore, report?
-        end
+    # Dispatch all messages that are available in the queue,
+    # but do not block on the queue.
+    # Called by a main loop when something is available in the queue
+    def dispatch_message_queue
+      while (msg = @message_queue.pop(:non_block)) # FIXME EOFError
+        process(msg)
       end
-      worked
-      # returns the address that worked or nil.
-      # how to report failure?
-    end
-
-    # Connect to a bus over tcp and initialize the connection.
-    def connect_to_tcp(params)
-      #check if the path is sufficient
-      if params.key?("host") and params.key?("port")
-        begin
-          #initialize the tcp socket
-          @socket = TCPSocket.new(params["host"],params["port"].to_i)
-          @socket.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
-          init_connection
-          @is_tcp = true
-        rescue
-          puts "Error: Could not establish connection to: #{@path}, will now exit."
-          exit(0) #a little harsh
-        end
-      else
-        #Danger, Will Robinson: the specified "path" is not usable
-        puts "Error: supplied path: #{@path}, unusable! sorry."
-      end
-    end
-
-    # Connect to an abstract unix bus and initialize the connection.
-    def connect_to_unix(params)
-      @socket = Socket.new(Socket::Constants::PF_UNIX,Socket::Constants::SOCK_STREAM, 0)
-      @socket.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
-      if ! params['abstract'].nil?
-        if HOST_END == LIL_END
-          sockaddr = "\1\0\0#{params['abstract']}"
-        else
-          sockaddr = "\0\1\0#{params['abstract']}"
-        end
-      elsif ! params['path'].nil?
-        sockaddr = Socket.pack_sockaddr_un(params['path'])
-      end
-      @socket.connect(sockaddr)
-      init_connection
-    end
-
-    # Send the buffer _buf_ to the bus using Connection#writel.
-    def send(buf)
-      @socket.write(buf) unless @socket.nil?
     end
 
     # Tell a bus to register itself on the glib main loop
@@ -282,13 +220,10 @@ module DBus
       # Circumvent a ruby-glib bug
       @channels ||= Array.new
 
-      gio = GLib::IOChannel.new(@socket.fileno)
+      gio = GLib::IOChannel.new(@message_queue.socket.fileno)
       @channels << gio
       gio.add_watch(GLib::IOChannel::IN) do |c, ch|
-        update_buffer
-        messages.each do |msg|
-          process(msg)
-        end
+        dispatch_message_queue
         true
       end
     end
@@ -408,7 +343,7 @@ module DBus
             reply_handler.call(rmsg, * rmsg.params)
           end
         end
-        send(message.marshall)
+        @message_queue.push(message)
       end
       ret
     end
@@ -461,6 +396,7 @@ module DBus
     #
     # FIXME, NameRequestError cannot really be rescued as it will be raised
     # when dispatching a later call. Rework the API to better match the spec.
+    # @return [Service]
     def request_service(name)
       # Use RequestName, but asynchronously!
       # A synchronous call would not work with service activation, where
@@ -489,83 +425,20 @@ module DBus
       @proxy
     end
 
-    # Fill (append) the buffer from data that might be available on the
-    # socket.
-    def update_buffer
-      @buffer += @socket.read_nonblock(MSG_BUF_SIZE)  
-    rescue EOFError
-      raise                     # the caller expects it
-    rescue Exception => e
-      puts "Oops:", e
-      raise if @is_tcp          # why?
-      puts "WARNING: read_nonblock failed, falling back to .recv"
-      @buffer += @socket.recv(MSG_BUF_SIZE)  
-    end
-
-    # Get one message from the bus and remove it from the buffer.
-    # Return the message.
-    def pop_message
-      return nil if @buffer.empty?
-      ret = nil
-      begin
-        ret, size = Message.new.unmarshall_buffer(@buffer)
-        @buffer.slice!(0, size)
-      rescue IncompleteBufferException => e
-        # fall through, let ret be null
-      end
-      ret
-    end
-
-    # Retrieve all the messages that are currently in the buffer.
-    def messages
-      ret = Array.new
-      while msg = pop_message
-        ret << msg
-      end
-      ret
-    end
-
-    # The buffer size for messages.
-    MSG_BUF_SIZE = 4096
-
-    # Update the buffer and retrieve all messages using Connection#messages.
-    # Return the messages.
-    def poll_messages
-      ret = nil
-      r, d, d = IO.select([@socket], nil, nil, 0)
-      if r and r.size > 0
-        update_buffer
-      end
-      messages
-    end
-
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
-      if @socket.nil?
-        puts "ERROR: Can't wait for messages, @socket is nil."
-        return
-      end
-      ret = pop_message
-      while ret == nil
-        r, d, d = IO.select([@socket])
-        if r and r[0] == @socket
-          update_buffer
-          ret = pop_message
-        end
-      end
-      ret
+      @message_queue.pop                 # FIXME EOFError
     end
 
     # Send a message _m_ on to the bus. This is done synchronously, thus
     # the call will block until a reply message arrives.
     def send_sync(m, &retc) # :yields: reply/return message
       return if m.nil? #check if somethings wrong
-      send(m.marshall)
+      @message_queue.push(m)
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
 
       retm = wait_for_message
-      
       return if retm.nil? #check if somethings wrong
       
       process(retm)
@@ -591,10 +464,10 @@ module DBus
     def add_match(mr, &slot)
       # check this is a signal.
       mrs = mr.to_s
-      puts "#{@signal_matchrules.size} rules, adding #{mrs.inspect}" if $DEBUG
+      DBus.logger.debug "#{@signal_matchrules.size} rules, adding #{mrs.inspect}"
       # don't ask for the same match if we override it
       unless @signal_matchrules.key?(mrs)
-        puts "Asked for a new match" if $DEBUG
+        DBus.logger.debug "Asked for a new match"
         proxy.AddMatch(mrs)
       end
       @signal_matchrules[mrs] = slot
@@ -618,7 +491,7 @@ module DBus
         raise InvalidPacketException if m.reply_serial == nil
         mcs = @method_call_replies[m.reply_serial]
         if not mcs
-          puts "DEBUG: no return code for mcs: #{mcs.inspect} m: #{m.inspect}" if $DEBUG
+          DBus.logger.debug "no return code for mcs: #{mcs.inspect} m: #{m.inspect}"
         else
           if m.message_type == Message::ERROR
             mcs.call(Error.new(m))
@@ -630,23 +503,23 @@ module DBus
         end
       when DBus::Message::METHOD_CALL
         if m.path == "/org/freedesktop/DBus"
-          puts "DEBUG: Got method call on /org/freedesktop/DBus" if $DEBUG
+          DBus.logger.debug "Got method call on /org/freedesktop/DBus"
         end
         node = @service.get_node(m.path)
         if not node
           reply = Message.error(m, "org.freedesktop.DBus.Error.UnknownObject",
                                 "Object #{m.path} doesn't exist")
-          send(reply.marshall)
+          @message_queue.push(reply)
         # handle introspectable as an exception:
         elsif m.interface == "org.freedesktop.DBus.Introspectable" and
             m.member == "Introspect"
           reply = Message.new(Message::METHOD_RETURN).reply_to(m)
           reply.sender = @unique_name
           reply.add_param(Type::STRING, node.to_xml)
-          send(reply.marshall)
+          @message_queue.push(reply)
         else
           obj = node.object
-          return if obj.nil?    # FIXME, sends no reply
+          return if obj.nil?    # FIXME, pushes no reply
           obj.dispatch(m) if obj
         end
       when DBus::Message::SIGNAL
@@ -657,11 +530,12 @@ module DBus
           end
         end
       else
-        puts "DEBUG: Unknown message type: #{m.message_type}" if $DEBUG
+        DBus.logger.debug "Unknown message type: #{m.message_type}"
       end
     end
 
     # Retrieves the Service with the given _name_.
+    # @return [Service]
     def service(name)
       # The service might not exist at this time so we cannot really check
       # anything
@@ -682,7 +556,7 @@ module DBus
         m.add_param(par.type, args[i])
         i += 1
       end
-      send(m.marshall)
+      @message_queue.push(m)
     end
 
     ###########################################################################
@@ -697,15 +571,9 @@ module DBus
       m.member = "Hello"
       send_sync(m) do |rmsg|
         @unique_name = rmsg.destination
-        puts "Got hello reply. Our unique_name is #{@unique_name}" if $DEBUG
+        DBus.logger.debug "Got hello reply. Our unique_name is #{@unique_name}"
       end
       @service = Service.new(@unique_name, self)
-    end
-
-    # Initialize the connection to the bus.
-    def init_connection
-      @client = Client.new(@socket)
-      @client.authenticate
     end
   end # class Connection
 
@@ -719,17 +587,23 @@ module DBus
   class ASessionBus < Connection
     # Get the the default session bus.
     def initialize
-      super(ENV["DBUS_SESSION_BUS_ADDRESS"] || address_from_file)
-      connect
+      super(ENV["DBUS_SESSION_BUS_ADDRESS"] || address_from_file || "launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET")
       send_hello
     end
 
     def address_from_file
-      f = File.new("/var/lib/dbus/machine-id")
-      machine_id = f.readline.chomp
-      f.close
-      display = ENV["DISPLAY"].gsub(/.*:([0-9]*).*/, '\1')
-      File.open(ENV["HOME"] + "/.dbus/session-bus/#{machine_id}-#{display}").each do |line|
+      # systemd uses /etc/machine-id
+      # traditional dbus uses /var/lib/dbus/machine-id
+      machine_id_path = Dir['{/etc,/var/lib/dbus}/machine-id'].first
+      return nil unless machine_id_path
+      machine_id = File.read(machine_id_path).chomp
+
+      display = ENV["DISPLAY"][/:(\d+)\.?/, 1]
+
+      bus_file_path = File.join(ENV["HOME"], "/.dbus/session-bus/#{machine_id}-#{display}")
+      return nil unless File.exists?(bus_file_path)
+
+      File.open(bus_file_path).each_line do |line|
         if line =~ /^DBUS_SESSION_BUS_ADDRESS=(.*)/
           return $1
         end
@@ -754,7 +628,6 @@ module DBus
     # Get the default system bus.
     def initialize
       super(SystemSocketName)
-      connect
       send_hello
     end
   end
@@ -775,7 +648,6 @@ module DBus
     # Get the remote bus.
     def initialize socket_name
       super(socket_name)
-      connect
       send_hello
     end
   end
@@ -785,12 +657,14 @@ module DBus
     include Singleton
   end
 
-  # Shortcut for the SystemBus instance
+  # Shortcut for the {SystemBus} instance
+  # @return [Connection]
   def DBus.system_bus
     SystemBus.instance
   end
 
-  # Shortcut for the SessionBus instance
+  # Shortcut for the {SessionBus} instance
+  # @return [Connection]
   def DBus.session_bus
     SessionBus.instance
   end
@@ -809,7 +683,7 @@ module DBus
 
     # Add a _bus_ to the list of buses to watch for events.
     def <<(bus)
-      @buses[bus.socket] = bus
+      @buses[bus.message_queue.socket] = bus
     end
 
     # Quit a running main loop, to be used eg. from a signal handler
@@ -822,22 +696,22 @@ module DBus
       # before blocking, empty the buffers
       # https://bugzilla.novell.com/show_bug.cgi?id=537401
       @buses.each_value do |b|
-        while m = b.pop_message
+        while m = b.message_queue.message_from_buffer_nonblock
           b.process(m)
         end
       end
       while not @quitting and not @buses.empty?
-        ready = IO.select(@buses.keys,[],[],5) #timeout 5 seconds
-        continue unless ready #timeout exceed so continue unless quitting
+        ready = IO.select(@buses.keys, [], [], 5) # timeout 5 seconds
+        next unless ready # timeout exceeds so continue unless quitting
         ready.first.each do |socket|
           b = @buses[socket]
           begin
-            b.update_buffer
+            b.message_queue.buffer_from_socket_nonblock
           rescue EOFError, SystemCallError
             @buses.delete socket # this bus died
             next
           end
-          while m = b.pop_message
+          while m = b.message_queue.message_from_buffer_nonblock
             b.process(m)
           end
         end

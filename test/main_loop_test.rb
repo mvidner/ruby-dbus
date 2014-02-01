@@ -1,11 +1,8 @@
 #!/usr/bin/env ruby
 # Test the main loop
+require File.expand_path("../test_helper", __FILE__)
 require "test/unit"
 require "dbus"
-
-def d(msg)
-  puts "#{$$} #{msg}" if $DEBUG
-end
 
 class MainLoopTest < Test::Unit::TestCase
   def setup
@@ -26,7 +23,7 @@ class MainLoopTest < Test::Unit::TestCase
     class << @session_bus
       alias :wait_for_message_orig :wait_for_message
       def wait_for_message_lazy
-        d "I am so lazy"
+        DBus.logger.debug "I am so lazy"
         sleep 1    # Give the server+bus a chance to join the messages
         wait_for_message_orig
       end
@@ -45,7 +42,7 @@ class MainLoopTest < Test::Unit::TestCase
 
   def test_loop_quit(delay = 1)
     @obj.on_signal "LongTaskEnd" do
-      d "Telling loop to quit"
+      DBus.logger.debug "Telling loop to quit"
       @loop.quit
     end
 
@@ -57,9 +54,9 @@ class MainLoopTest < Test::Unit::TestCase
 
     # this thread will make the test fail if @loop.run does not return
     dynamite = Thread.new do
-      d "Dynamite burning"
+      DBus.logger.debug "Dynamite burning"
       sleep 2
-      d "Dynamite explodes"
+      DBus.logger.debug "Dynamite explodes"
       # We need to raise in the main thread.
       # Simply raising here means the exception is ignored
       # (until dynamite.join which we don't call) or
@@ -68,7 +65,7 @@ class MainLoopTest < Test::Unit::TestCase
     end
 
     @loop.run
-    d "Defusing dynamite"
+    DBus.logger.debug "Defusing dynamite"
     # if we get here, defuse the bomb
     dynamite.exit
     # remove signal handler

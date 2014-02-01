@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # should report it missing on org.ruby.SampleInterface
 # (on object...) instead of on DBus::Proxy::ObjectInterface
+require File.expand_path("../test_helper", __FILE__)
 require "test/unit"
 require "dbus"
 

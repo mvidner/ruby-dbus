@@ -68,7 +68,7 @@ module DBus
         rescue => ex
           reply = ErrorMessage.from_exception(ex).reply_to(msg)
         end
-        @service.bus.send(reply.marshall(:default_for_nil => self.class.default_for_nil))
+        @service.bus.message_queue.push(reply) # FIXME reply.marshall(:default_for_nil => self.class.default_for_nil)
       end
     end
 

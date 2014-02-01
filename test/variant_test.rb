@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # Test marshalling variants according to ruby types
+require File.expand_path("../test_helper", __FILE__)
 require "test/unit"
 require "dbus"
 

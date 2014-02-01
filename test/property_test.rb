@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+require File.expand_path("../test_helper", __FILE__)
 require "test/unit"
 require "dbus"
 
@@ -25,6 +26,15 @@ class PropertyTest < Test::Unit::TestCase
   def test_property_writing
     @iface["ReadOrWriteMe"] = "VALUE"
     assert_equal "VALUE", @iface["ReadOrWriteMe"]
+  end
+
+  # https://github.com/mvidner/ruby-dbus/pull/19
+  def test_service_select_timeout
+    @iface["ReadOrWriteMe"] = "VALUE"
+    assert_equal "VALUE", @iface["ReadOrWriteMe"]
+    # wait for the service to become idle
+    sleep 6
+    assert_equal "VALUE", @iface["ReadOrWriteMe"], "Property value changed; perhaps the service died and got restarted"
   end
 
   def test_property_nonwriting

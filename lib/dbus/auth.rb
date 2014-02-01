@@ -6,8 +6,6 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
-$debug = $DEBUG #it's all over the state machine
-
 require 'rbconfig'
 
 module DBus
@@ -20,6 +18,13 @@ module DBus
     # Returns the name of the authenticator.
     def name
       self.class.to_s.upcase.sub(/.*::/, "")
+    end
+  end
+
+  # = Anonymous authentication class
+  class Anonymous < Authenticator
+    def authenticate
+      '527562792044427573' # Hex encoded version of "Ruby DBus"
     end
   end
 
@@ -67,12 +72,12 @@ module DBus
       c_challenge = Array.new(s_challenge.bytesize/2).map{|obj|obj=rand(255).to_s}.join
       # Search cookie file for id
       path = File.join(ENV['HOME'], '.dbus-keyrings', context)
-      puts "DEBUG: path: #{path.inspect}" if $debug
+      DBus.logger.debug "path: #{path.inspect}"
       File.foreach(path) do |line|
         if line.index(id) == 0
           # Right line of file, read cookie
           cookie = line.split(' ')[2].chomp
-          puts "DEBUG: cookie: #{cookie.inspect}" if $debug
+          DBus.logger.debug "cookie: #{cookie.inspect}"
           # Concatenate and encrypt
           to_encrypt = [s_challenge, c_challenge, cookie].join(':')
           sha = Digest::SHA1.hexdigest(to_encrypt)
@@ -115,12 +120,12 @@ module DBus
     def initialize(socket)
       @socket = socket
       @state = nil
-      @auth_list = [External,DBusCookieSHA1]
+      @auth_list = [External,DBusCookieSHA1,Anonymous]
     end
 
     # Start the authentication process.
     def authenticate
-      if (RbConfig::CONFIG["target_os"] =~ /bsd/)
+      if (RbConfig::CONFIG["target_os"] =~ /freebsd/)
         @socket.sendmsg(0.chr, 0, nil, [:SOCKET, :SCM_CREDS, ""])
       else
         @socket.write(0.chr)
@@ -151,7 +156,7 @@ module DBus
         raise AuthenticationFailed if @auth_list.size == 0
         @authenticator = @auth_list.shift.new
         auth_msg = ["AUTH", @authenticator.name, @authenticator.authenticate]
-        puts "DEBUG: auth_msg: #{auth_msg.inspect}" if $debug
+        DBus.logger.debug "auth_msg: #{auth_msg.inspect}"
         send(auth_msg)
       rescue AuthenticationFailed
         @socket.close
@@ -172,7 +177,7 @@ module DBus
         break if data.include? crlf #crlf means line finished, the TCP socket keeps on listening, so we break 
       end
       readline = data.chomp.split(" ")
-      puts "DEBUG: readline: #{readline.inspect}" if $debug
+      DBus.logger.debug "readline: #{readline.inspect}"
       return readline
     end
 
@@ -188,7 +193,7 @@ module DBus
     def next_state
       msg = next_msg
       if @state == :Starting
-        puts "DEBUG: :Starting msg: #{msg[0].inspect}" if $debug
+        DBus.logger.debug ":Starting msg: #{msg[0].inspect}"
         case msg[0]
         when "OK"
           @state = :WaitingForOk    
@@ -198,15 +203,15 @@ module DBus
           @state = :WaitingForData
         end
       end
-      puts "DEBUG: state: #{@state}" if $debug
+      DBus.logger.debug "state: #{@state}"
       case @state
       when :WaitingForData
-        puts "DEBUG: :WaitingForData msg: #{msg[0].inspect}" if $debug
+        DBus.logger.debug ":WaitingForData msg: #{msg[0].inspect}"
         case msg[0]
         when "DATA"
           chall = msg[1]
           resp, chall = @authenticator.data(chall)
-          puts "DEBUG: :WaitingForData/DATA resp: #{resp.inspect}" if $debug
+          DBus.logger.debug ":WaitingForData/DATA resp: #{resp.inspect}"
           case resp
           when :AuthContinue
             send("DATA", chall)
@@ -232,7 +237,7 @@ module DBus
           @state = :WaitingForData
         end
       when :WaitingForOk
-        puts "DEBUG: :WaitingForOk msg: #{msg[0].inspect}" if $debug
+        DBus.logger.debug ":WaitingForOk msg: #{msg[0].inspect}"
         case msg[0]
         when "OK"
           send("BEGIN")
@@ -248,7 +253,7 @@ module DBus
           @state = :WaitingForOk
         end
       when :WaitingForReject
-        puts "DEBUG: :WaitingForReject msg: #{msg[0].inspect}" if $debug
+        DBus.logger.debug ":WaitingForReject msg: #{msg[0].inspect}"
         case msg[0]
         when "REJECT"
           next_authenticator
