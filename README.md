@@ -1,8 +1,27 @@
-# Ruby D-Bus README
+# Ruby D-Bus
 
 [D-Bus](http://dbus.freedesktop.org) is an interprocess communication
 mechanism for Linux.
 Ruby D-Bus is a pure Ruby library for writing clients and services for D-Bus.
+
+[![Gem Version][GV img]][Gem Version]
+[![Build Status][BS img]][Build Status]
+[![Dependency Status][DS img]][Dependency Status]
+[![Code Climate][CC img]][Code Climate]
+[![Coverage Status][CS img]][Coverage Status]
+
+[Gem Version]: https://rubygems.org/gems/ruby-dbus
+[Build Status]: https://travis-ci.org/mvidner/ruby-dbus
+[travis pull requests]: https://travis-ci.org/mvidner/ruby-dbus/pull_requests
+[Dependency Status]: https://gemnasium.com/mvidner/ruby-dbus
+[Code Climate]: https://codeclimate.com/github/mvidner/ruby-dbus
+[Coverage Status]: https://coveralls.io/r/mvidner/ruby-dbus
+
+[GV img]: https://badge.fury.io/rb/ruby-dbus.png
+[BS img]: https://travis-ci.org/mvidner/ruby-dbus.png
+[DS img]: https://gemnasium.com/mvidner/ruby-dbus.png
+[CC img]: https://codeclimate.com/github/mvidner/ruby-dbus.png
+[CS img]: https://coveralls.io/repos/mvidner/ruby-dbus/badge.png?branch=master
 
 ## Example
 
@@ -26,8 +45,6 @@ via [UPower](http://upower.freedesktop.org/docs/UPower.html#UPower:OnBattery)
 
 - Ruby 1.9.3 or 2.0
 
-[![Build Status](https://travis-ci.org/mvidner/ruby-dbus.png)](https://travis-ci.org/mvidner/ruby-dbus)
-[![Code Climate](https://codeclimate.com/github/mvidner/ruby-dbus.png)](https://codeclimate.com/github/mvidner/ruby-dbus)
 
 ## Installation
 
