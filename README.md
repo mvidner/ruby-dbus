@@ -29,6 +29,7 @@ end
 - Ruby 1.9.3 or 2.0
 
 [![Build Status](https://travis-ci.org/mvidner/ruby-dbus.png)](https://travis-ci.org/mvidner/ruby-dbus)
+[![Code Climate](https://codeclimate.com/github/mvidner/ruby-dbus.png)](https://codeclimate.com/github/mvidner/ruby-dbus)
 
 ## Installation
 
