@@ -21,6 +21,8 @@ module DBus
     attr_reader :path
     # The interfaces that the object supports. Hash: String => Interface
     class_attribute :intfs
+    # Represents default value for nil value
+    class_attribute :default_for_nil
     # The service that the object is exported by.
     attr_writer :service
 
@@ -59,7 +61,7 @@ module DBus
           retdata = method(methname).call(*msg.params)
           retdata =  [*retdata]
 
-          reply = Message.method_return(msg)
+          reply = Message.method_return(msg, :default_for_nil => self.class.default_for_nil)
           meth.rets.zip(retdata).each do |rsig, rdata|
             reply.add_param(rsig.type, rdata)
           end

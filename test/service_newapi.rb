@@ -18,6 +18,7 @@ class Test < DBus::Object
     @read_or_write_me = "READ OR WRITE ME"
   end
 
+  self.default_for_nil = ""
   # Create an interface aggregating all upcoming dbus_method defines.
   dbus_interface INTERFACE do
     dbus_method :hello, "in name:s, in name2:s" do |name, name2|
@@ -34,6 +35,14 @@ class Test < DBus::Object
 
     dbus_method :variant_size, "in stuff:v, out size:u" do |variant|
       [variant.size]
+    end
+
+    dbus_method :masked_nil_simple, "out val:s" do
+      nil
+    end
+
+    dbus_method :masked_nil_variant, "out val:v" do
+      { "test" => [nil, "test"], "lest" => {nil => nil} }
     end
 
     dbus_method :the_answer, "out answer:i" do

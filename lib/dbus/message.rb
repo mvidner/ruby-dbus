@@ -49,6 +49,8 @@ module DBus
     # performed.
     NO_AUTO_START = 0x2
 
+    # FIXME rename to marshall_options
+    attr_reader :options
     # The type of the message.
     attr_reader :message_type
     # The path of the object instance the message must be sent to/is sent from.
@@ -77,7 +79,8 @@ module DBus
 
     # Create a message with message type _mtype_ with default values and a
     # unique serial number.
-    def initialize(mtype = INVALID)
+    def initialize(mtype = INVALID, options = {})
+      @options = options
       @message_type = mtype
 
       @flags = 0
@@ -106,8 +109,8 @@ module DBus
     end
 
     # Create a regular reply to a message _m_.
-    def self.method_return(m)
-      MethodReturnMessage.new.reply_to(m)
+    def self.method_return(m, options = {})
+      MethodReturnMessage.new(options).reply_to(m)
     end
 
     # Create an error reply to a message _m_.
@@ -152,9 +155,10 @@ module DBus
         raise InvalidDestinationName
       end
 
+      #FIXME ineffective to pack body twice can we just grab packet and append it on second call?
       params = PacketMarshaller.new
       @params.each do |param|
-        params.append(param[0], param[1])
+        params.append(param[0], param[1], options)
       end
       @body_length = params.packet.bytesize
 
@@ -179,7 +183,7 @@ module DBus
 
       marshaller.align(8)
       @params.each do |param|
-        marshaller.append(param[0], param[1])
+        marshaller.append(param[0], param[1], options)
       end
       marshaller.packet
     end
@@ -246,8 +250,8 @@ module DBus
   end # class Message
 
   class MethodReturnMessage < Message
-    def initialize
-      super(METHOD_RETURN)
+    def initialize(options = {})
+      super(METHOD_RETURN, options)
     end
   end
 
