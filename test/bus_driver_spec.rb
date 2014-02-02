@@ -37,12 +37,11 @@ end
 def teardown_private_bus
   Process.kill("TERM", $pid)
   FileUtils.rm_rf $temp_dir
- end
+end
 
 def setup_service_by_activation
   name = "org.ruby.service"
   exec = "#{TOPDIR}/test/service_newapi.rb"
-  $name = name
   $exec = exec
 
   service_dir = "#{$temp_dir}/dbus-1/services"
@@ -58,23 +57,8 @@ EOS
   end
 end
 
-def service_pid(name)
-  # use dbus_send, not the lib being tested
-  output = `dbus-send --print-reply=literal --dest=org.freedesktop.DBus / org.freedesktop.DBus.GetConnectionUnixProcessID string:#{name}`
-  output =~ /uint32 (\d+)/
-  $1.to_i
-end
-
 def teardown_service
-  kill_pid = service_pid($name)
-  if kill_pid != 0
-    Process.kill("TERM", kill_pid)
-  else
-    # for TCP connections; may be a bug, should get an error
-    # "Could not determine PID for '%s'"
-    puts "WTF"
-    system "pkill -f #{$exec}"
-  end
+  system "pkill -f #{$exec}"
 end
 
 describe DBus::Service do
