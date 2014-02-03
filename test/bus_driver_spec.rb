@@ -11,15 +11,23 @@ def config_file_path
   "#{TOPDIR}/test/tools/dbus-limited-session.conf"
 end
 
-def setup_private_bus
-  $temp_dir = Dir.mktmpdir
-  ENV["XDG_DATA_DIRS"] = $temp_dir
+# set ENV[variable] to value and restore it after block is done
+def with_env(variable, value, &block)
+  old_value = ENV[variable]
+  ENV[variable] = value
+  block.call
+  ENV[variable] = old_value  
+end
 
+def with_private_bus(&block)
   address_file = Tempfile.new("dbus-address")
   pid_file     = Tempfile.new("dbus-pid")
 
-  cmd = "dbus-daemon --nofork --config-file=#{config_file_path} --print-address=3 3>#{address_file.path} --print-pid=4 4>#{pid_file.path} &"
-  system cmd
+  $temp_dir = Dir.mktmpdir
+  with_env("XDG_DATA_DIRS", $temp_dir) do
+    cmd = "dbus-daemon --nofork --config-file=#{config_file_path} --print-address=3 3>#{address_file.path} --print-pid=4 4>#{pid_file.path} &"
+    system cmd
+  end
 
   # wait until dbus-daemon writes the info
   Timeout.timeout(10) do
@@ -31,18 +39,17 @@ def setup_private_bus
   address = address_file.read.chomp
   $pid = pid_file.read.chomp.to_i
 
-  ENV["DBUS_SESSION_BUS_ADDRESS"] = address
-end
+  with_env("DBUS_SESSION_BUS_ADDRESS", address) do
+    block.call
+  end
 
-def teardown_private_bus
   Process.kill("TERM", $pid)
   FileUtils.rm_rf $temp_dir
 end
 
-def setup_service_by_activation
+def with_service_by_activation(&block)
   name = "org.ruby.service"
   exec = "#{TOPDIR}/test/service_newapi.rb"
-  $exec = exec
 
   service_dir = "#{$temp_dir}/dbus-1/services"
   FileUtils.mkdir_p service_dir
@@ -55,21 +62,18 @@ Exec=#{exec}
 EOS
     f.write(s)
   end
-end
 
-def teardown_service
-  system "pkill -f #{$exec}"
+  block.call
+
+  system "pkill -f #{exec}"
 end
 
 describe DBus::Service do
   context "when a private bus is set up" do
-    before(:all) do
-      setup_private_bus
-      setup_service_by_activation
-    end
-    after(:all) do
-      teardown_service
-      teardown_private_bus
+    around(:each) do |example|
+      with_private_bus do
+        with_service_by_activation(&example)
+      end
     end
 
     let(:bus) { DBus::ASessionBus.new }
