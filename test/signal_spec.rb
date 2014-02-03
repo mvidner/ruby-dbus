@@ -1,11 +1,10 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 # Test the signal handlers
-require File.expand_path("../test_helper", __FILE__)
-require "test/unit"
+require_relative "spec_helper"
 require "dbus"
 
-class SignalHandlerTest < Test::Unit::TestCase
-  def setup
+describe "SignalHandlerTest" do
+  before(:each) do
     @session_bus = DBus::ASessionBus.new
     svc = @session_bus.service("org.ruby.service")
     @obj = svc.object("/org/ruby/MyInstance")
@@ -18,7 +17,7 @@ class SignalHandlerTest < Test::Unit::TestCase
   end
 
   # testing for commit 017c83 (kkaempf)
-  def test_overriding_a_handler
+  it "tests overriding a handler" do
     DBus.logger.debug "Inside test_overriding_a_handler"
     counter = 0
 
@@ -47,10 +46,10 @@ class SignalHandlerTest < Test::Unit::TestCase
     @loop.run
     quitter.join
 
-    assert_equal 1, counter
+    expect(counter).to eq(1)
   end
 
-  def test_on_signal_overload
+  it "tests on signal overload" do
     DBus.logger.debug "Inside test_on_signal_overload"
     counter = 0
     started = false
@@ -71,13 +70,13 @@ class SignalHandlerTest < Test::Unit::TestCase
     @loop.run
     quitter.join
 
-    assert_equal true, started
-    assert_equal 1, counter
-    assert_raise(ArgumentError) {@intf.on_signal } # not enough
-    assert_raise(ArgumentError) {@intf.on_signal 'to', 'many', 'yarrrrr!'}
+    expect(started).to eq(true)
+    expect(counter).to eq(1)
+    expect { @intf.on_signal }.to raise_error(ArgumentError) # not enough
+    expect { @intf.on_signal 'to', 'many', 'yarrrrr!' }.to raise_error(ArgumentError)
   end
 
-  def test_too_many_rules
+  it "tests too many rules" do
     100.times do
       @obj.on_signal "Whichever" do
         puts "not called"
@@ -85,7 +84,7 @@ class SignalHandlerTest < Test::Unit::TestCase
     end
   end
 
-  def test_removing_a_nonexistent_rule
+  it "tests removing a nonexistent rule" do
     @obj.on_signal "DoesNotExist"
   end
 end

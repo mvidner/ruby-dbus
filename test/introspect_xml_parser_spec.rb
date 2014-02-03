@@ -1,10 +1,9 @@
-#!/usr/bin/env ruby
-require File.expand_path("../test_helper", __FILE__)
-require "test/unit"
+#!/usr/bin/env rspec
+require_relative "spec_helper"
 require "dbus"
 
-class IntrospectXMLParserTest < Test::Unit::TestCase
-  def test_split_interfaces
+describe "IntrospectXMLParserTest" do
+  it "tests split interfaces" do
     xml = <<EOS
 <node>
    <interface name="org.example.Foo">
@@ -22,6 +21,6 @@ EOS
     interfaces, _ = DBus::IntrospectXMLParser.new(xml).parse
 
     foo = interfaces.find {|i| i.name == "org.example.Foo" }
-    assert_equal 2, foo.methods.keys.size
+    expect(foo.methods.keys.size).to eq(2)
   end
 end

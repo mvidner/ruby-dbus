@@ -1,11 +1,10 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 # Test the main loop
-require File.expand_path("../test_helper", __FILE__)
-require "test/unit"
+require_relative "spec_helper"
 require "dbus"
 
-class MainLoopTest < Test::Unit::TestCase
-  def setup
+describe "MainLoopTest" do
+  before(:each) do
     @session_bus = DBus::ASessionBus.new
     svc = @session_bus.service("org.ruby.service")
     @obj = svc.object("/org/ruby/MyInstance")
@@ -40,7 +39,7 @@ class MainLoopTest < Test::Unit::TestCase
     end
   end
 
-  def test_loop_quit(delay = 1)
+  def test_loop_quit(delay)
     @obj.on_signal "LongTaskEnd" do
       DBus.logger.debug "Telling loop to quit"
       @loop.quit
@@ -72,8 +71,12 @@ class MainLoopTest < Test::Unit::TestCase
     @obj.on_signal "LongTaskEnd"
   end
 
+  it "tests loop quit" do
+    test_loop_quit 1
+  end
+
   # https://bugzilla.novell.com/show_bug.cgi?id=537401
-  def test_loop_drained_socket
+  it "tests loop drained socket" do
     test_loop_quit 0
   end
 end

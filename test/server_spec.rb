@@ -1,7 +1,6 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 # Test that a server survives various error cases
-require File.expand_path("../test_helper", __FILE__)
-require "test/unit"
+require_relative "spec_helper"
 require "dbus"
 
 class Foo < DBus::Object
@@ -24,28 +23,28 @@ rescue DBus::InvalidMethodName
   # raised by the preceding signal declaration
 end
 
-class ServerTest < Test::Unit::TestCase
-  def setup
+describe "ServerTest" do
+  before(:each) do
     @bus = DBus::ASessionBus.new
     @svc = @bus.request_service "org.ruby.server-test"
   end
 
-  def teardown
+  after(:each) do
     @bus.proxy.ReleaseName "org.ruby.server-test"
   end
 
-  def test_unexporting_an_object
+  it "tests unexporting an object" do
     obj = Foo.new "/org/ruby/Foo"
     @svc.export obj
-    assert @svc.unexport(obj)
+    expect(@svc.unexport(obj)).to be_true
   end
 
-  def test_unexporting_an_object_not_exported
+  it "tests unexporting an object not exported" do
     obj = Foo.new "/org/ruby/Foo"
-    assert !@svc.unexport(obj)
+    expect(@svc.unexport(obj)).to be_false
   end
 
-  def test_emiting_signals
+  it "tests emiting signals" do
     obj = Foo.new "/org/ruby/Foo"
     @svc.export obj
     obj.signal_without_arguments    

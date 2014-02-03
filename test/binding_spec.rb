@@ -1,11 +1,11 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 # Test the binding of dbus concepts to ruby concepts
-require File.expand_path("../test_helper", __FILE__)
-require "test/unit"
+require_relative "spec_helper"
+
 require "dbus"
 
-class BindingTest < Test::Unit::TestCase
-  def setup
+describe "BindingTest" do
+  before(:each) do
     @bus = DBus::ASessionBus.new
     @svc = @bus.service("org.ruby.service")
     @base = @svc.object "/org/ruby/MyInstance"
@@ -14,48 +14,46 @@ class BindingTest < Test::Unit::TestCase
   end
 
   # https://trac.luon.net/ruby-dbus/ticket/36#comment:3
-  def test_class_inheritance
+  it "tests class inheritance" do
     derived = @svc.object "/org/ruby/MyDerivedInstance"
     derived.introspect
 
     # it should inherit from the parent
-    assert_not_nil derived["org.ruby.SampleInterface"]
+    expect(derived["org.ruby.SampleInterface"]).not_to be_nil
   end
 
   # https://trac.luon.net/ruby-dbus/ticket/36
   # Interfaces and methods/signals appeared on all classes
-  def test_separation_of_classes
+  it "tests separation of classes" do
     test2 = @svc.object "/org/ruby/MyInstance2"
     test2.introspect
 
     # it should have its own interface
-    assert_not_nil test2["org.ruby.Test2"]
+    expect(test2["org.ruby.Test2"]).not_to be_nil
     # but not an interface of the Test class
-    assert_nil test2["org.ruby.SampleInterface"]
+    expect(test2["org.ruby.SampleInterface"]).to be_nil
 
     # and the parent should not get polluted by the child
-    assert_nil @base["org.ruby.Test2"]
+    expect(@base["org.ruby.Test2"]).to be_nil
   end
 
-  def test_translating_errors_into_exceptions
+  it "tests translating errors into exceptions" do
     # this is a generic call that will reply with the specified error
-    @base.Error "org.example.Fail", "as you wish"
-    assert false, "should have raised"
-  rescue DBus::Error => e
-    assert_equal "org.example.Fail", e.name
-    assert_match(/as you wish/, e.message)
+    expect { @base.Error "org.example.Fail", "as you wish" }.to raise_error(DBus::Error) do |e|
+      expect(e.name).to eq("org.example.Fail")
+      expect(e.message).to match(/as you wish/)
+    end
   end
 
-  def test_generic_dbus_error
+  it "tests generic dbus error" do
     # this is a generic call that will reply with the specified error
-    @base.will_raise_error_failed
-    assert false, "should have raised"
-  rescue DBus::Error => e
-    assert_equal "org.freedesktop.DBus.Error.Failed", e.name
-    assert_match(/failed as designed/, e.message)
+    expect { @base.will_raise_error_failed }.to raise_error(DBus::Error) do |e|
+      expect(e.name).to eq("org.freedesktop.DBus.Error.Failed")
+      expect(e.message).to match(/failed as designed/)
+    end
   end
   
-  def test_dynamic_interface_definition
+  it "tests dynamic interface definition" do
     # interfaces can be defined dynamicaly
     derived = DBus::Object.new "/org/ruby/MyDerivedInstance"
     
@@ -70,7 +68,7 @@ class BindingTest < Test::Unit::TestCase
     
     # the object should have the new iface
     ifaces = derived.intfs
-    assert ifaces and ifaces.include?("org.ruby.DynamicInterface")
+    expect(ifaces && ifaces.include?("org.ruby.DynamicInterface")).to be_true
   end
     
 end

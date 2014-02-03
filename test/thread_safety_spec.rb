@@ -1,11 +1,10 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 # Test thread safety
-require File.expand_path("../test_helper", __FILE__)
-require "test/unit"
+require_relative "spec_helper"
 require "dbus"
 
-class ThreadSafetyTest < Test::Unit::TestCase
-  def test_thread_competition
+describe "ThreadSafetyTest" do
+  it "tests thread competition" do
     print "Thread competition: "
     jobs = []
     5.times do
@@ -22,7 +21,7 @@ class ThreadSafetyTest < Test::Unit::TestCase
         10.times do |i|
           print "#{i} "
           $stdout.flush
-          assert_equal 42, obj.the_answer[0]
+          expect(obj.the_answer[0]).to eq(42)
           sleep 0.1 * rand
         end
       end

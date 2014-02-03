@@ -1,11 +1,10 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 # Test the binding of dbus concepts to ruby concepts
-require File.expand_path("../test_helper", __FILE__)
-require "test/unit"
+require_relative "spec_helper"
 require "dbus"
 
-class AsyncTest < Test::Unit::TestCase
-  def setup
+describe "AsyncTest" do
+  before(:each) do
     @bus = DBus::ASessionBus.new
     @svc = @bus.service("org.ruby.service")
     @obj = @svc.object "/org/ruby/MyInstance"
@@ -14,32 +13,32 @@ class AsyncTest < Test::Unit::TestCase
   end
 
   # https://github.com/mvidner/ruby-dbus/issues/13
-  def test_async_call_to_default_interface
+  it "tests async_call_to_default_interface" do
     loop = DBus::Main.new
     loop << @bus
 
     immediate_answer = @obj.the_answer do |msg, retval|
-      assert_equal 42, retval
+      expect(retval).to eq(42)
       loop.quit
     end
 
-    assert_nil immediate_answer
+    expect(immediate_answer).to be_nil
 
     # wait for the async reply
     loop.run
   end
 
-  def test_async_call_to_explicit_interface
+  it "tests async_call_to_explicit_interface" do
     loop = DBus::Main.new
     loop << @bus
 
     ifc = @obj["org.ruby.AnotherInterface"]
     immediate_answer = ifc.Reverse("abcd") do |msg, retval|
-      assert_equal "dcba", retval
+      expect(retval).to eq("dcba")
       loop.quit
     end
 
-    assert_nil immediate_answer
+    expect(immediate_answer).to be_nil
 
     # wait for the async reply
     loop.run
