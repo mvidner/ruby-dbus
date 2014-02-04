@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 
-require_relative "test_helper"
+require_relative "spec_helper"
 SimpleCov.command_name "Service Tests" if Object.const_defined? "SimpleCov"
 # find the library without external help
 $:.unshift File.expand_path("../../lib", __FILE__)

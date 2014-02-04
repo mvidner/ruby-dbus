@@ -3,9 +3,7 @@ require 'rake'
 require 'fileutils'
 include FileUtils
 require 'tmpdir'
-require 'rake/testtask'
 require 'rspec/core/rake_task'
-# TODO "rake" must always run all tests+specs, even  while migrating
 
 require "packaging"
 
@@ -20,21 +18,15 @@ Packaging.configuration do |conf|
   conf.skip_license_check << /^lib\/dbus\/core_ext\//
 end
 
-desc 'Default: run specs and tests in the proper environment'
-task :default => [:spec, :test]
-
-Rake::TestTask.new("bare:test") do |t|
-  t.libs << "lib"
-  t.test_files = FileList['test/*_test.rb']
-  t.verbose = true
-end
+desc 'Default: run specs in the proper environment'
+task :default => :spec
 
 RSpec::Core::RakeTask.new("bare:spec") do |t|
   t.pattern = "**/test/**/*_spec.rb"
   t.rspec_opts = "--color --format doc"
 end
 
-%w(test spec).each do |tname|
+%w(spec).each do |tname|
   desc "Run bare:#{tname} in the proper environment"
   task tname do |t|
     cd "test/tools" do
