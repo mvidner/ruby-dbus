@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+test = ARGV[0]
+spec = test.sub("_test", "_spec")
+
+inf = File.open(test)
+outf = File.open(spec, "w")
+while inf.gets do
+  $_.gsub! %r{/usr/bin/env ruby}, "/usr/bin/env rspec"
+  $_.gsub! %r{require File.expand_path\("../test_helper", __FILE__\)}, 'require_relative "spec_helper"'
+  $_.gsub! %r{require "test/unit"\n}, ""
+  $_.gsub!(%r{class (\S+) < Test::Unit::TestCase}) { "describe \"#{$1}\" do" }
+  $_.gsub! %r{def setup}, "before(:each) do"
+  $_.gsub!(%r{def test_(\S+)}) { "it \"tests #{$1.gsub '_', ' '}\" do" }
+  $_.gsub!(%r{assert_nil (\S+)})     { "expect(#{$1}).to be_nil" }
+  $_.gsub!(%r{assert_not_nil (\S+)}) { "expect(#{$1}).not_to be_nil" }
+  $_.gsub!(%r{assert_equal (.+), (\S+)$}) { "expect(#{$2}).to eq(#{$1})" }
+  $_.gsub!(%r{assert_match\(([^,]+), (\S+)\)}) { "expect(#{$2}).to match(#{$1})" }
+  # halfway
+  $_.gsub!(%r{assert_raises (\S+) do}) { "expect do end.to raise_error(#{$1})" }
+  # last
+  $_.gsub!(%r{assert (.+)}) { "expect(#{$1}).to be_true" }
+
+  outf.print($_)
+end
+inf.close
+outf.close
+system "chmod +x #{spec}"
+system "git add #{spec}"
