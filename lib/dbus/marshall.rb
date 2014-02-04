@@ -23,7 +23,7 @@ module DBus
   # Class that handles the conversion (unmarshalling) of payload data
   # to Array.
   class PacketUnmarshaller
-    # Index pointer that points to the byte in the data that is 
+    # Index pointer that points to the byte in the data that is
     # currently being processed.
     #
     # Used to kown what part of the buffer has been consumed by unmarshalling.
@@ -263,6 +263,7 @@ module DBus
     # Append the the string _str_ itself to the packet.
     def append_string(str)
       align(4)
+      str = str.join if str.is_a?(Array) # hackity hack hack
       @packet += [str.bytesize].pack("L") + [str].pack("Z*")
     end
 
@@ -396,7 +397,7 @@ module DBus
         end
       else
         raise NotImplementedError,
-	  "sigtype: #{type.sigtype} (#{type.sigtype.chr})"     
+	  "sigtype: #{type.sigtype} (#{type.sigtype.chr})"
       end
     end # def append
 
@@ -429,6 +430,7 @@ module DBus
           ["x", i]
         end
       end
-    end    
+    end
   end # class PacketMarshaller
 end # module DBus
+
