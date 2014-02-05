@@ -8,6 +8,12 @@ end
 if coverage
   require "simplecov"
   SimpleCov.root File.expand_path("../..", __FILE__)
+
+  # do not cover specs
+  SimpleCov.add_filter "_spec.rb"
+  # do not cover the activesupport helpers
+  SimpleCov.add_filter "/core_ext/"
+
   # use coveralls for on-line code coverage reporting at Travis CI
   if ENV["TRAVIS"]
     require "coveralls"
