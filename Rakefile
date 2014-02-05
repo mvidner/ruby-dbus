@@ -53,6 +53,7 @@ task :tarball do |t|
     cd temp do
       sh "gem build ruby-dbus.gemspec"
     end
+    sh "rm package/*.gem"
     cp Dir.glob("#{temp}/*.gem"), "package"
   end
 end
