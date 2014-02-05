@@ -5,3 +5,6 @@ gem "nokogiri"
 gem "rspec"
 gem "simplecov"
 gem "coveralls"
+platforms :rbx do
+  gem "racc"
+end
