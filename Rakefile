@@ -35,6 +35,12 @@ end
   end
 end
 
+if ENV["TRAVIS"]
+  require "coveralls/rake/task"
+  Coveralls::RakeTask.new
+  task :default => "coveralls:push"
+end
+
 #remove tarball implementation and create gem for this gemfile
 Rake::Task[:tarball].clear
 
