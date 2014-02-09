@@ -263,7 +263,7 @@ module DBus
           return false
         end
       when :WaitingForUnixFd
-         DBus.logger.debug ":WaitingForUnixFd msg: #{msg[0].inspect}"
+        DBus.logger.debug ":WaitingForUnixFd msg: #{msg[0].inspect}"
         case msg[0]
         when "AGREE_UNIX_FD"
           send("BEGIN")
