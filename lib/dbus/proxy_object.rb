@@ -75,13 +75,7 @@ module DBus
       dup_meths, univocal_meths = [],{}
       @interfaces.each_value do |intf|
         intf.methods.each_value do |meth|
-          # Module#instance_methods give us an array of symbols or strings,
-          # depending on which version
-          name = if RUBY_VERSION >= "1.9"
-                   meth.name.to_sym
-                 else
-                   meth.name
-                 end
+          name = meth.name.to_sym
           # don't overwrite instance methods!
           if dup_meths.include? name or self.class.instance_methods.include? name
             next
