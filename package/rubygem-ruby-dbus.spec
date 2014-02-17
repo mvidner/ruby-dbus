@@ -17,7 +17,7 @@
 
 # norootforbuild
 Name:           rubygem-ruby-dbus
-Version:        0.10.0
+Version:        0.11.0
 Release:        0
 %define mod_name ruby-dbus
 %define mod_full_name %{mod_name}-%{version}
@@ -32,6 +32,7 @@ BuildRequires:  rubygems_with_buildroot_patch
 BuildRequires:  rubygem-rake
 BuildRequires:  rubygem-packaging_rake_tasks
 BuildRequires:  rubygem-nokogiri
+BuildRequires:  rubygem-rspec
 BuildRequires:  dbus-1
 BuildRequires:  netcfg
 
