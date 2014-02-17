@@ -20,6 +20,7 @@ end
 
 desc 'Default: run specs in the proper environment'
 task :default => :spec
+task :test => :spec
 
 RSpec::Core::RakeTask.new("bare:spec") do |t|
   t.pattern = "**/test/**/*_spec.rb"
