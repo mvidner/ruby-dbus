@@ -2,7 +2,7 @@
 
 ## Note
 
-This form works in the same way as [original Ruby D-Bus bindings](https://github.com/mvidner/ruby-dbus)
+This fork works in the same way as [original Ruby D-Bus bindings](https://github.com/mvidner/ruby-dbus)
 but it supports [EventMachine](http://rubyeventmachine.com).
 
 You can bind it to the EM by calling `#eventmachinize`:
