@@ -11,7 +11,7 @@ GEMSPEC = Gem::Specification.new do |s|
   s.license = "LGPL v2.1"
   s.author = "Ruby DBus Team"
   s.email = "ruby-dbus-devel@lists.luon.net"
-  s.homepage = "https://trac.luon.net/ruby-dbus"
+  s.homepage = "https://github.com/saepia/em-ruby-dbus"
   s.files = FileList["{doc,examples,lib,test}/**/*", "COPYING", "NEWS", "Rakefile", "README.md", "em-ruby-dbus.gemspec", "VERSION"].to_a.sort
   s.require_path = "lib"
   s.required_ruby_version = ">= 1.9.3"
