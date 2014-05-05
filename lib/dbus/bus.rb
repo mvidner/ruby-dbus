@@ -228,6 +228,14 @@ module DBus
       end
     end
 
+
+    def eventmachinize
+      require File.join(File.dirname(File.expand_path(__FILE__)), "loop-em")
+
+      conn = ::EventMachine.watch(@message_queue.socket, Loop::EventMachine::Reader, self)
+      conn.notify_readable = true
+    end
+
     # FIXME: describe the following names, flags and constants.
     # See DBus spec for definition
     NAME_FLAG_ALLOW_REPLACEMENT = 0x1

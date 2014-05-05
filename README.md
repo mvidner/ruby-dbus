@@ -1,4 +1,16 @@
-# Ruby D-Bus
+# Ruby D-Bus (with EventMachine support)
+
+## Note
+
+This fork works in the same way as [original Ruby D-Bus bindings](https://github.com/mvidner/ruby-dbus)
+but it supports [EventMachine](http://rubyeventmachine.com).
+
+You can bind it to the EM by calling `#eventmachinize`:
+
+    @connection = DBus::SessionBus.instance
+    @connection.eventmachinize
+
+## (Original README)
 
 [D-Bus](http://dbus.freedesktop.org) is an interprocess communication
 mechanism for Linux.
@@ -48,7 +60,7 @@ via [UPower](http://upower.freedesktop.org/docs/UPower.html#UPower:OnBattery)
 
 ## Installation
 
-- `gem install ruby-dbus`
+- `gem install em-ruby-dbus`
 
 ## Features
 
