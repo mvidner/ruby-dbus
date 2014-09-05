@@ -72,7 +72,7 @@ Test::Unit or RSpec files, useful for developers.
 %gem_install -f
 
 %check
-cd %{buildroot}/%{_libdir}/ruby/gems/%{rb_ver}/gems/%{mod_name}-%{version}/test
+cd %{buildroot}/%{_libdir}/ruby/gems/%{rb_ver}/gems/%{mod_name}-%{version}/spec
 rake test TESTOPTS=-v
 
 %clean
@@ -82,7 +82,7 @@ rake test TESTOPTS=-v
 %defattr(-,root,root,-)
 %{_libdir}/ruby/gems/%{rb_ver}/cache/%{mod_full_name}.gem
 %{_libdir}/ruby/gems/%{rb_ver}/gems/%{mod_full_name}/
-%exclude %{_libdir}/ruby/gems/%{rb_ver}/gems/%{mod_full_name}/test
+%exclude %{_libdir}/ruby/gems/%{rb_ver}/gems/%{mod_full_name}/spec
 %{_libdir}/ruby/gems/%{rb_ver}/specifications/%{mod_full_name}.gemspec
 
 %files doc
@@ -91,6 +91,6 @@ rake test TESTOPTS=-v
 
 %files testsuite
 %defattr(-,root,root,-)
-%{_libdir}/ruby/gems/%{rb_ver}/gems/%{mod_full_name}/test
+%{_libdir}/ruby/gems/%{rb_ver}/gems/%{mod_full_name}/spec
 
 %changelog
