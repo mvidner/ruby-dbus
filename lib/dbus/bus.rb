@@ -597,11 +597,17 @@ module DBus
   class ASessionBus < Connection
     # Get the the default session bus.
     def initialize
-      super(ENV["DBUS_SESSION_BUS_ADDRESS"] || address_from_file || "launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET")
+      super(self.class.session_bus_address)
       send_hello
     end
 
-    def address_from_file
+    def self.session_bus_address
+      ENV["DBUS_SESSION_BUS_ADDRESS"] ||
+        address_from_file ||
+        "launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET"
+    end
+
+    def self.address_from_file
       # systemd uses /etc/machine-id
       # traditional dbus uses /var/lib/dbus/machine-id
       machine_id_path = Dir['{/etc,/var/lib/dbus}/machine-id'].first
