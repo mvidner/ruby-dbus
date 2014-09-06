@@ -319,6 +319,7 @@ module DBus
 '
 # This apostroph is for syntax highlighting editors confused by above xml: "
 
+    # @api private
     # Send a _message_.
     # If _reply_handler_ is not given, wait for the reply
     # and return the reply, or raise the error.
@@ -348,6 +349,7 @@ module DBus
       ret
     end
 
+    # @api private
     def introspect_data(dest, path, &reply_handler)
       m = DBus::Message.new(DBus::Message::METHOD_CALL)
       m.path = path
@@ -367,6 +369,7 @@ module DBus
       end
     end
 
+    # @api private
     # Issues a call to the org.freedesktop.DBus.Introspectable.Introspect method
     # _dest_ is the service and _path_ the object path you want to introspect
     # If a code block is given, the introspect call in asynchronous. If not
@@ -425,11 +428,13 @@ module DBus
       @proxy
     end
 
+    # @api private
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
       @message_queue.pop                 # FIXME EOFError
     end
 
+    # @api private
     # Send a message _m_ on to the bus. This is done synchronously, thus
     # the call will block until a reply message arrives.
     def send_sync(m, &retc) # :yields: reply/return message
@@ -448,6 +453,7 @@ module DBus
       end
     end
 
+    # @api private
     # Specify a code block that has to be executed when a reply for
     # message _m_ is received.
     def on_return(m, &retc)
@@ -483,6 +489,7 @@ module DBus
       end
     end
 
+    # @api private
     # Process a message _m_ based on its type.
     def process(m)
       return if m.nil? #check if somethings wrong
@@ -545,6 +552,7 @@ module DBus
     end
     alias :[] :service
 
+    # @api private
     # Emit a signal event for the given _service_, object _obj_, interface
     # _intf_ and signal _sig_ with arguments _args_.
     def emit(service, obj, intf, sig, *args)
@@ -589,11 +597,17 @@ module DBus
   class ASessionBus < Connection
     # Get the the default session bus.
     def initialize
-      super(ENV["DBUS_SESSION_BUS_ADDRESS"] || address_from_file || "launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET")
+      super(self.class.session_bus_address)
       send_hello
     end
 
-    def address_from_file
+    def self.session_bus_address
+      ENV["DBUS_SESSION_BUS_ADDRESS"] ||
+        address_from_file ||
+        "launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET"
+    end
+
+    def self.address_from_file
       # systemd uses /etc/machine-id
       # traditional dbus uses /var/lib/dbus/machine-id
       machine_id_path = Dir['{/etc,/var/lib/dbus}/machine-id'].first

@@ -5,6 +5,14 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.11.0 - 2014-02-17
+
+API:
+ * Connection: split off MessageQueue, marked other methods as private.
+
+Requirements:
+ * converted tests to RSpec, rather mechanically for now
+
 == Ruby D-Bus 0.10.0 - 2014-01-10
 
 Bug fixes:
