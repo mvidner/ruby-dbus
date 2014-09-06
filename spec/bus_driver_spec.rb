@@ -8,7 +8,7 @@ require "timeout"
 TOPDIR = File.expand_path("../..", __FILE__)
 
 def config_file_path
-  "#{TOPDIR}/test/tools/dbus-limited-session.conf"
+  "#{TOPDIR}/spec/tools/dbus-limited-session.conf"
 end
 
 # set ENV[variable] to value and restore it after block is done
@@ -16,7 +16,7 @@ def with_env(variable, value, &block)
   old_value = ENV[variable]
   ENV[variable] = value
   block.call
-  ENV[variable] = old_value  
+  ENV[variable] = old_value
 end
 
 def with_private_bus(&block)
