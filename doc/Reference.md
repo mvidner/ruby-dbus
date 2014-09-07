@@ -14,16 +14,11 @@ This section should be enough if you only want to consume DBus APIs.
 
 #### Setting Up
 
-The following code is assumed as a prolog to all following ones
+Note that although the gem is named "ruby-dbus", the required name
+is simply "dbus"
 
     #! /usr/bin/env ruby
-    require 'rubygems'  # Not needed since Ruby 1.9
-    require 'dbus'      # The gem is 'ruby-dbus' but the require is 'dbus'
-
-    # Connect to a well-known address. Most apps need only one of them.
-    mybus  = DBus.session_bus
-    sysbus = DBus.system_bus
-
+    require "dbus"
 
 #### Calling Methods
 
@@ -36,6 +31,7 @@ The following code is assumed as a prolog to all following ones
 ([I#28](https://github.com/mvidner/ruby-dbus/issues/28)).
 3. Call one of its methods in a loop, solving [xkcd#196](http://xkcd.com/196).
 
+&nbsp;
     mybus = DBus.session_bus
     service = mybus['org.freedesktop.ScreenSaver']
     object = service.object '/ScreenSaver'
@@ -52,7 +48,6 @@ accomodate the rare cases of a DBus method specifying more than one
 *out* parameter. For nearly all methods you should use `Method[0]` or
 `Method.first`
 ([I#30](https://github.com/mvidner/ruby-dbus/issues/30)).
-
     
     # wrong
     if upower_i.SuspendAllowed    # [false] is true!

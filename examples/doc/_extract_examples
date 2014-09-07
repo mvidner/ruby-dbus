@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+if ARGV[0].nil?
+  puts "Usage: #{$0} file.md"
+  exit
+end
+
+File.open(ARGV[0]) do |f|
+  title = nil
+  setup = ""
+  example = ""
+  f.each_line do |line|
+    case line
+    when /^#+ *(.*)/
+      new_title = $1
+
+      # write previous example
+      unless example.empty?
+        basename = title.downcase.gsub(/ +/, "_")
+        if basename == "setting_up"
+          setup = example
+        else
+          File.open("#{basename}.rb", "w") do |e|
+            e.write setup
+            e.write example
+            e.chmod(0755)
+          end
+        end
+      end
+
+      # set new
+      title = new_title
+      example = ""
+    when /^    (.*)/
+      example << $1 << "\n"
+    end
+  end
+end

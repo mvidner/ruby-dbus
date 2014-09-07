@@ -53,3 +53,12 @@ task :tarball do |t|
     cp Dir.glob("#{temp}/*.gem"), "package"
   end
 end
+
+namespace :doc do
+  desc "Extract code examples from doc/Reference.md to examples/doc"
+  task :examples do
+    cd "examples/doc" do
+      sh "./_extract_examples ../../doc/Reference.md"
+    end
+  end
+end
