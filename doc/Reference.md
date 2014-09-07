@@ -16,7 +16,14 @@ This section should be enough if you only want to consume DBus APIs.
 
 The following code is assumed as a prolog to all following ones
 
-{include:file:doc/ex-setup.rb}    
+    #! /usr/bin/env ruby
+    require 'rubygems'  # Not needed since Ruby 1.9
+    require 'dbus'      # The gem is 'ruby-dbus' but the require is 'dbus'
+
+    # Connect to a well-known address. Most apps need only one of them.
+    mybus  = DBus.session_bus
+    sysbus = DBus.system_bus
+
 
 #### Calling Methods
 
@@ -29,7 +36,14 @@ The following code is assumed as a prolog to all following ones
 ([I#28](https://github.com/mvidner/ruby-dbus/issues/28)).
 3. Call one of its methods in a loop, solving [xkcd#196](http://xkcd.com/196).
 
-{include:file:doc/ex-calling-methods.body.rb}
+    mybus = DBus.session_bus
+    service = mybus['org.freedesktop.ScreenSaver']
+    object = service.object '/ScreenSaver'
+    object.introspect
+    loop do
+        object.SimulateUserActivity
+        sleep 5 * 60
+    end
 
 ##### Retrieving Return Values
 
@@ -57,7 +71,15 @@ To access properties, think of the {DBus::ProxyObjectInterface interface} as a
 or use {DBus::ProxyObjectInterface#all_properties} to get
 an actual Hash of them.
 
-{include:file:doc/ex-properties.body.rb}
+    sysbus = DBus.system_bus
+    upower_s = sysbus['org.freedesktop.UPower']
+    upower_o = upower_s.object '/org/freedesktop/UPower'
+    upower_o.introspect
+    upower_i = upower_o['org.freedesktop.UPower']
+
+    on_battery = upower_i['OnBattery']
+
+    puts "Is the computer on battery now? #{on_battery}"
 
 (TODO a writable property example)
 
@@ -89,7 +111,26 @@ To receive signals for a specific object and interface, use
 {DBus::ProxyObjectInterface#on\_signal}(name, &block) or
 {DBus::ProxyObject#on_signal}(name, &block), for the default interface.
 
-{include:file:doc/ex-signal.body.rb}
+    sysbus = DBus.system_bus
+    login_s = sysbus['org.freedesktop.login1'] # part of systemd
+    login_o = login_s.object '/org/freedesktop/login1'
+    login_o.introspect
+    login_o.default_iface = 'org.freedesktop.login1.Manager'
+
+    # to trigger this signal, login on the Linux console
+    login_o.on_signal("SessionNew") do |name, opath|
+      puts "New session: #{name}"
+
+      session_o = login_s.object(opath)
+      session_o.introspect
+      session_i = session_o['org.freedesktop.login1.Session']
+      uid, user_opath = session_i['User']
+      puts "Its UID: #{uid}"
+    end
+
+    main = DBus::Main.new
+    main << sysbus
+    main.run
 
 ### Intermediate Concepts
 #### Names
