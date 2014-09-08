@@ -36,18 +36,18 @@ describe "ServerTest" do
   it "tests unexporting an object" do
     obj = Foo.new "/org/ruby/Foo"
     @svc.export obj
-    expect(@svc.unexport(obj)).to be_true
+    expect(@svc.unexport(obj)).to be true
   end
 
   it "tests unexporting an object not exported" do
     obj = Foo.new "/org/ruby/Foo"
-    expect(@svc.unexport(obj)).to be_false
+    expect(@svc.unexport(obj)).to be false
   end
 
   it "tests emiting signals" do
     obj = Foo.new "/org/ruby/Foo"
     @svc.export obj
-    obj.signal_without_arguments    
+    obj.signal_without_arguments
     obj.signal_with_argument(-0.1)
   end
 end
