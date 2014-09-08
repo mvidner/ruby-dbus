@@ -77,9 +77,9 @@ module DBus
       parent_node = get_node(parent_path, false)
       return false unless parent_node
       obj.service = nil
-      parent_node.delete(node_name)
+      parent_node.delete(node_name).object
     end
-	
+
     # Get the object node corresponding to the given _path_. if _create_ is
     # true, the the nodes in the path are created if they do not already exist.
     def get_node(path, create = false)

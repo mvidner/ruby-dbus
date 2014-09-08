@@ -36,7 +36,7 @@ describe "ServerTest" do
   it "tests unexporting an object" do
     obj = Foo.new "/org/ruby/Foo"
     @svc.export obj
-    expect(@svc.unexport(obj)).to be true
+    expect(@svc.unexport(obj)).to be_a DBus::Object
   end
 
   it "tests unexporting an object not exported" do
