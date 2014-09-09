@@ -16,12 +16,12 @@ describe DBus::Service do
       it "is true for an existing service" do
         svc = bus.service("org.ruby.service")
         svc.object("/").introspect # must activate the service first :-/
-        expect(svc.exists?).to be_true
+        expect(svc.exists?).to be true
       end
 
       it "is false for a nonexisting service" do
         svc = bus.service("org.ruby.nosuchservice")
-        expect(svc.exists?).to be_false
+        expect(svc.exists?).to be false
       end
     end
   end

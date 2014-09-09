@@ -52,11 +52,11 @@ describe "BindingTest" do
       expect(e.message).to match(/failed as designed/)
     end
   end
-  
+
   it "tests dynamic interface definition" do
     # interfaces can be defined dynamicaly
     derived = DBus::Object.new "/org/ruby/MyDerivedInstance"
-    
+
     #define a new interface
     derived.singleton_class.instance_eval do
       dbus_interface "org.ruby.DynamicInterface" do
@@ -65,10 +65,10 @@ describe "BindingTest" do
         end
       end
     end
-    
+
     # the object should have the new iface
     ifaces = derived.intfs
-    expect(ifaces && ifaces.include?("org.ruby.DynamicInterface")).to be_true
+    expect(ifaces).to include "org.ruby.DynamicInterface"
   end
-    
+
 end
