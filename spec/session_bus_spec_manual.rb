@@ -9,7 +9,7 @@ describe DBus::ASessionBus do
     it "can connect" do
       bus = DBus::ASessionBus.new
       svc = bus.service("org.freedesktop.DBus")
-      expect(svc.exists?).to be_true
+      expect(svc.exists?).to be true
     end
   end
 end
