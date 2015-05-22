@@ -15,10 +15,15 @@ module DBus
     # The socket that is used to connect with the bus.
     attr_reader :socket
 
+    # @return [Numeric] Timeout for synchronous calls,
+    #   in seconds, fractions possible.
+    attr_accessor :timeout
+
     def initialize(address)
       @address = address
       @buffer = ""
       @is_tcp = false
+      @timeout = 365 * 24 * 60 * 60 # Float::INFINITY causes Range Error
       connect
     end
 
@@ -32,10 +37,12 @@ module DBus
       unless non_block
         # we can block
         while message.nil?
-          r, _d, _d = IO.select([@socket], [], [], @timeout)
-          if r && r[0] == @socket
+          read, _write, _error = IO.select([@socket], [], [], @timeout)
+          if read && read[0] == @socket
             buffer_from_socket_nonblock
             message = message_from_buffer_nonblock
+          else
+            raise DBus.error("org.freedesktop.DBus.Error.NoReply")
           end
         end
       end

@@ -193,7 +193,7 @@ module DBus
   class Connection
     # The unique name (by specification) of the message.
     attr_reader :unique_name
-    # pop and push messages here
+    # @return [MessageQueue] pop and push messages here
     attr_reader :message_queue
 
     # Create a new connection to the bus for a given connect _path_. _path_
@@ -210,6 +210,12 @@ module DBus
       @signal_matchrules = {}
       @proxy = nil
       @object_root = Node.new("/")
+    end
+
+    # @param t [Numeric] Timeout for synchronous calls,
+    #   in seconds, fractions possible. DBus::Error is raised on a timeout.
+    def timeout=(t)
+      message_queue.timeout = t
     end
 
     # Dispatch all messages that are available in the queue,

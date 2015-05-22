@@ -59,6 +59,10 @@ class Test < DBus::Object
     dbus_method :mirror_byte_array, "in bytes:ay, out mirrored:ay" do |bytes|
       [bytes]
     end
+
+    dbus_method :Sleep, "in duration:d" do |duration|
+      Kernel.sleep duration
+    end
   end
 
   # closing and reopening the same interface
