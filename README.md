@@ -31,7 +31,7 @@ via [UPower](http://upower.freedesktop.org/docs/UPower.html#UPower:OnBattery)
     require "dbus"
     sysbus = DBus.system_bus
     upower_service   = sysbus["org.freedesktop.UPower"]
-    upower_object    = upower_service.object "/org/freedesktop/UPower"
+    upower_object    = upower_service["/org/freedesktop/UPower"]
     upower_object.introspect
     upower_interface = upower_object["org.freedesktop.UPower"]
     on_battery       = upower_interface["OnBattery"]

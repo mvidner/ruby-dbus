@@ -63,7 +63,12 @@ module DBus
             par = fpar.type
             msg.add_param(par, args.shift)
           end
-          @object.bus.send_sync_or_async(msg, &reply_handler)
+          ret = @object.bus.send_sync_or_async(msg, &reply_handler)
+          if ret.nil? || @object.api.proxy_method_returns_array
+            ret
+          else
+            m.rets.size == 1 ? ret.first : ret
+          end
         end
       end
 
@@ -110,11 +115,20 @@ module DBus
     PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
 
     # Read a property.
+    # @param propname [String]
     def [](propname)
-      self.object[PROPERTY_INTERFACE].Get(self.name, propname)[0]
+      ret = self.object[PROPERTY_INTERFACE].Get(self.name, propname)
+      # this method always returns the single property
+      if @object.api.proxy_method_returns_array
+        ret[0]
+      else
+        ret
+      end
     end
 
     # Write a property.
+    # @param propname [String]
+    # @param value [Object]
     def []=(propname, value)
       self.object[PROPERTY_INTERFACE].Set(self.name, propname, value)
     end
@@ -122,7 +136,13 @@ module DBus
     # Read all properties at once, as a hash.
     # @return [Hash{String}]
     def all_properties
-      self.object[PROPERTY_INTERFACE].GetAll(self.name)[0]
+      ret = self.object[PROPERTY_INTERFACE].GetAll(self.name)
+      # this method always returns the single property
+      if @object.api.proxy_method_returns_array
+        ret[0]
+      else
+        ret
+      end
     end
   end # class ProxyObjectInterface
 end

@@ -27,13 +27,17 @@ module DBus
     attr_reader :bus
     # @return [String] The name of the default interface of the object.
     attr_accessor :default_iface
+    # @api private
+    # @return [ApiOptions]
+    attr_reader :api
 
     # Creates a new proxy object living on the given _bus_ at destination _dest_
     # on the given _path_.
-    def initialize(bus, dest, path)
+    def initialize(bus, dest, path, api: ApiOptions::CURRENT)
       @bus, @destination, @path = bus, dest, path
       @interfaces = Hash.new
       @subnodes = Array.new
+      @api = api
     end
 
     # Returns the interfaces of the object.

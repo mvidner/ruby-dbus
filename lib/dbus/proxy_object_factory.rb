@@ -14,8 +14,9 @@ module DBus
   class ProxyObjectFactory
     # Creates a new proxy object factory for the given introspection XML _xml_,
     # _bus_, destination _dest_, and _path_.
-    def initialize(xml, bus, dest, path)
+    def initialize(xml, bus, dest, path, api: ApiOptions::CURRENT)
       @xml, @bus, @path, @dest = xml, bus, path, dest
+      @api = api
     end
 
     # Investigates the sub-nodes of the proxy object _po_ based on the
@@ -33,7 +34,7 @@ module DBus
 
     # Generates, sets up and returns the proxy object.
     def build
-      po = ProxyObject.new(@bus, @dest, @path)
+      po = ProxyObject.new(@bus, @dest, @path, api: @api)
       ProxyObjectFactory.introspect_into(po, @xml)
       po
     end

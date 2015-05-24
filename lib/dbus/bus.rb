@@ -50,10 +50,20 @@ module DBus
 
     # Retrieves an object at the given _path_.
     # @return [ProxyObject]
-    def object(path)
-      node = get_node(path, true)
-      if node.object.nil?
-        node.object = ProxyObject.new(@bus, @name, path)
+    def [](path)
+      object(path, api: ApiOptions::A1)
+    end
+
+    # Retrieves an object at the given _path_
+    # whose methods always return an array.
+    # @return [ProxyObject]
+    def object(path, api: ApiOptions::A0)
+      node = get_node(path, _create = true)
+      if node.object.nil? || node.object.api != api
+        node.object = ProxyObject.new(
+          @bus, @name, path,
+          api: api
+          )
       end
       node.object
     end
@@ -417,12 +427,17 @@ module DBus
     end
 
     # Set up a ProxyObject for the bus itself, since the bus is introspectable.
+    # @return [ProxyObject] that always returns an array
+    #   ({DBus::ApiOptions#proxy_method_returns_array})
     # Returns the object.
     def proxy
       if @proxy == nil
         path = "/org/freedesktop/DBus"
         dest = "org.freedesktop.DBus"
-        pof = DBus::ProxyObjectFactory.new(DBUSXMLINTRO, self, dest, path)
+        pof = DBus::ProxyObjectFactory.new(
+          DBUSXMLINTRO, self, dest, path,
+          api: ApiOptions::A0
+          )
         @proxy = pof.build["org.freedesktop.DBus"]
       end
       @proxy

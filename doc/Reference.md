@@ -24,7 +24,7 @@ is simply "dbus"
 
 1. {DBus.session_bus Connect to the session bus};
    {DBus::Connection#[] get the screensaver service}
-   {DBus::Service#object and its screensaver object}.
+   {DBus::Service#[] and its screensaver object}.
 2. Perform {DBus::ProxyObject#introspect explicit introspection}
    to define the interfaces and methods
    on the {DBus::ProxyObject object proxy}
@@ -32,9 +32,10 @@ is simply "dbus"
 3. Call one of its methods in a loop, solving [xkcd#196](http://xkcd.com/196).
 
 &nbsp;
+
     mybus = DBus.session_bus
     service = mybus['org.freedesktop.ScreenSaver']
-    object = service.object '/ScreenSaver'
+    object = service['/ScreenSaver']
     object.introspect
     loop do
         object.SimulateUserActivity
@@ -43,16 +44,43 @@ is simply "dbus"
 
 ##### Retrieving Return Values
 
-A method proxy always returns an array of values. This is to
+A method proxy simply returns a value.
+In this example SuspendAllowed returns a boolean:
+
+    sysbus = DBus.system_bus
+    upower_s = sysbus['org.freedesktop.UPower']
+    upower_o = upower_s['/org/freedesktop/UPower']
+    upower_o.introspect
+    upower_i = upower_o['org.freedesktop.UPower']
+
+    if upower_i.SuspendAllowed
+      upower_i.Suspend
+    end
+
+###### Multiple Return Values
+
+In former versions of this library,
+a method proxy always returned an array of values. This was to
 accomodate the rare cases of a DBus method specifying more than one
-*out* parameter. For nearly all methods you should use `Method[0]` or
+*out* parameter. For compatibility, the behavior is preserved if you
+construct a {DBus::ProxyObject} with {DBus::ApiOptions::A0},
+which is what {DBus::Service#object} does.
+
+For nearly all methods you used `Method[0]` or
 `Method.first`
 ([I#30](https://github.com/mvidner/ruby-dbus/issues/30)).
     
+    sysbus = DBus.system_bus
+    upower_s = sysbus['org.freedesktop.UPower']
+    # use legacy compatibility API
+    upower_o = upower_s.object '/org/freedesktop/UPower'
+    upower_o.introspect
+    upower_i = upower_o['org.freedesktop.UPower']
+
     # wrong
-    if upower_i.SuspendAllowed    # [false] is true!
-      upower_i.Suspend
-    end
+    # if upower_i.SuspendAllowed    # [false] is true!
+    #   upower_i.Suspend
+    # end
 
     # right
     if upower_i.SuspendAllowed[0]
@@ -68,7 +96,7 @@ an actual Hash of them.
 
     sysbus = DBus.system_bus
     upower_s = sysbus['org.freedesktop.UPower']
-    upower_o = upower_s.object '/org/freedesktop/UPower'
+    upower_o = upower_s['/org/freedesktop/UPower']
     upower_o.introspect
     upower_i = upower_o['org.freedesktop.UPower']
 
