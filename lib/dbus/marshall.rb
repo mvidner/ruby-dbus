@@ -190,7 +190,7 @@ module DBus
           packet << do_parse(signature.child)
         end
 
-        if signature.child.sigtype == Type::DICT_ENTRY then
+        if signature.child.sigtype == Type::DICT_ENTRY
           packet = packet.inject(Hash.new) do |hash, pair|
             hash[pair[0]] = pair[1]
             hash
