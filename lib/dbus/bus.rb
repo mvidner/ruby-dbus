@@ -610,7 +610,7 @@ module DBus
     def self.address_from_file
       # systemd uses /etc/machine-id
       # traditional dbus uses /var/lib/dbus/machine-id
-      machine_id_path = Dir['{/etc,/var/lib/dbus}/machine-id'].first
+      machine_id_path = Dir['{/etc,/var/lib/dbus,/var/db/dbus}/machine-id'].first
       return nil unless machine_id_path
       machine_id = File.read(machine_id_path).chomp
 
