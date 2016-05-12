@@ -5,6 +5,15 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Ruby D-Bus 0.11.1 - 2016-05-12
+
+Bug fixes:
+ * Fix default path finding on FreeBSD (Greg)
+ * Service#unexport fixed to really return the unexported object
+
+Requirements:
+ * made tests compatible with RSpec 3
+
 == Ruby D-Bus 0.11.0 - 2014-02-17
 
 API:

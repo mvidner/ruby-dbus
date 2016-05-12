@@ -1,4 +1,15 @@
 -------------------------------------------------------------------
+Thu May 12 19:31:16 UTC 2016 - mvidner@suse.com
+
+- 0.11.1
+ Bug fixes:
+ * Fix default path finding on FreeBSD (Greg)
+ * Service#unexport fixed to really return the unexported object
+
+ Requirements:
+ * made tests compatible with RSpec 3
+
+-------------------------------------------------------------------
 Thu Oct 16 06:43:05 UTC 2014 - coolo@suse.com
 
 - adapt to new rubygem packaging

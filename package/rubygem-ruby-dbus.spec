@@ -24,7 +24,7 @@
 #
 
 Name:           rubygem-ruby-dbus
-Version:        0.11.0
+Version:        0.11.1
 Release:        0
 %define mod_name ruby-dbus
 %define mod_full_name %{mod_name}-%{version}
