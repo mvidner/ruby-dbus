@@ -9,6 +9,7 @@ require "packaging"
 
 Packaging.configuration do |conf|
   conf.obs_project = "devel:languages:ruby:extensions"
+  conf.obs_target = "openSUSE_Tumbleweed"
   conf.package_name = "rubygem-ruby-dbus"
   conf.obs_sr_project = "openSUSE:Factory"
   conf.skip_license_check << /^[^\/]*$/
