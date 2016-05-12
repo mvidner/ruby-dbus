@@ -1,7 +1,7 @@
 #
 # spec file for package rubygem-ruby-dbus
 #
-# Copyright (c) 2011 SUSE LINUX Products GmbH, Nuernberg, Germany.
+# Copyright (c) 2014 SUSE LINUX Products GmbH, Nuernberg, Germany.
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -15,82 +15,56 @@
 # Please submit bugfixes or comments via http://bugs.opensuse.org/
 #
 
-# norootforbuild
+
+#
+# This file was generated with a gem2rpm.yml and not just plain gem2rpm.
+# All sections marked as MANUAL, license headers, summaries and descriptions
+# can be maintained in that file. Please consult this file before editing any
+# of those fields
+#
+
 Name:           rubygem-ruby-dbus
 Version:        0.11.0
 Release:        0
 %define mod_name ruby-dbus
 %define mod_full_name %{mod_name}-%{version}
-Provides:       ruby-dbus = %{version}
-Obsoletes:      ruby-dbus < %{version}
-#
-Group:          Development/Languages/Ruby
-License:        LGPL-2.1
-#
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-BuildRequires:  rubygems_with_buildroot_patch
-BuildRequires:  rubygem-rake
-BuildRequires:  rubygem-packaging_rake_tasks
-BuildRequires:  rubygem-nokogiri
-BuildRequires:  rubygem-rspec
+# MANUAL
+BuildRequires:  %{rubygem nokogiri > 1.6}
+BuildRequires:  %{rubygem packaging_rake_tasks}
+BuildRequires:  %{rubygem rake}
+BuildRequires:  %{rubygem rspec}
 BuildRequires:  dbus-1
 BuildRequires:  netcfg
-
-%rubygems_requires
-
-Requires:       ruby >= 1.9.3
-BuildRequires:  ruby-devel >= 1.9.3
-#
+# /MANUAL
+BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+BuildRequires:  %{ruby >= 1.9.3}
+BuildRequires:  %{rubygem gem2rpm}
+BuildRequires:  ruby-macros >= 5
 Url:            https://trac.luon.net/ruby-dbus
-Source:         %{mod_full_name}.gem
-#
+Source:         http://rubygems.org/gems/%{mod_full_name}.gem
+Source1:        gem2rpm.yml
 Summary:        Ruby module for interaction with D-Bus
+License:        LGPL-2.1
+Group:          Development/Languages/Ruby
+
 %description
-Ruby module for interaction with D-Bus
-
-%package doc
-Summary:        RDoc documentation for %{mod_name}
-Group:          Development/Languages/Ruby
-Requires:       %{name} = %{version}
-%description doc
-Documentation generated at gem installation time.
-Usually in RDoc and RI formats.
-
-%package testsuite
-Summary:        Test suite for %{mod_name}
-Group:          Development/Languages/Ruby
-Requires:       %{name} = %{version}
-%description testsuite
-Test::Unit or RSpec files, useful for developers.
+Pure Ruby module for interaction with D-Bus IPC system.
 
 %prep
-%gem_unpack
-%gem_build
 
 %build
+
 %install
-%gem_install -f
+%gem_install \
+  --doc-files="COPYING README.md" \
+  -f
 
+# MANUAL
 %check
-cd %{buildroot}/%{_libdir}/ruby/gems/%{rb_ver}/gems/%{mod_name}-%{version}/spec
+cd %{buildroot}/%{gem_base}/gems//%{mod_full_name}/test
 rake test TESTOPTS=-v
+#/ MANUAL
 
-%clean
-%{__rm} -rf %{buildroot}
-
-%files
-%defattr(-,root,root,-)
-%{_libdir}/ruby/gems/%{rb_ver}/cache/%{mod_full_name}.gem
-%{_libdir}/ruby/gems/%{rb_ver}/gems/%{mod_full_name}/
-%exclude %{_libdir}/ruby/gems/%{rb_ver}/gems/%{mod_full_name}/spec
-%{_libdir}/ruby/gems/%{rb_ver}/specifications/%{mod_full_name}.gemspec
-
-%files doc
-%defattr(-,root,root,-)
-%doc %{_libdir}/ruby/gems/%{rb_ver}/doc/%{mod_full_name}/
-
-%files testsuite
-%defattr(-,root,root,-)
-%{_libdir}/ruby/gems/%{rb_ver}/gems/%{mod_full_name}/spec
+%gem_packages
 
 %changelog

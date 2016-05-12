@@ -1,0 +1,85 @@
+# ---
+# ## used by gem2rpm
+# :summary: this is a custom summary
+# ## used by gem2rpm
+# :description: |-
+#   this is a custom description
+#
+#   it can be multiline
+# ## used by gem2rpm
+:license: LGPL-2.1
+# ## used by gem2rpm and gem_packages
+# :version_suffix: -x_y
+# ## used by gem2rpm and gem_packages
+# :disable_docs: true
+# ## used by gem2rpm
+# :disable_automatic_rdoc_dep: true
+# ## used by gem2rpm
+# :preamble: |-
+#   BuildRequires: foobar
+#   Requires: foobar
+# ## used by gem2rpm
+# :patches:
+#   foo.patch: -p1
+#   bar.patch: 
+# ## used by gem2rpm
+:sources:
+# - foo.desktop
+# - bar.desktop
+# :gem_install_args: '....'
+# ## used by gem2rpm
+# :pre_install: |-
+#   %if 0%{?use_system_libev}
+#   export USE_VENDORED_LIBEV="no"
+#   %endif
+# ## used by gem2rpm
+# :post_install: |-
+#   # delete custom files here or do other fancy stuff
+#   install -D -m 0644 %{S:1} %{buildroot}%{_bindir}/gem2rpm-opensuse
+# ## used by gem2rpm
+:testsuite_command: |-
+  cd %{buildroot}/%{gem_base}/gems//%{mod_full_name}/test
+  rake test TESTOPTS=-v
+#   (pushd %{buildroot}%{gem_base}/gems/%{mod_full_name} && rake test)
+# ## used by gem2rpm
+# :filelist: |-
+#   /usr/bin/gem2rpm-opensuse
+# ## used by gem2rpm
+# :scripts:
+#   :post: |-
+#     /bin/echo foo
+# ## used by gem_packages
+# :main:
+#   :preamble: |-
+#     Requires: util-linux
+#     Recommends: pwgen
+#   :filelist: |-
+#     /usr/bin/gem2rpm-opensuse
+# ## used by gem_packages
+# :custom:
+#   apache:
+#     :preamble: |-
+#       Requires: .....
+#     :filelist: |-
+#       /etc/apache2/conf.d/passenger.conf
+#     :summary: Custom summary is optional
+#     :description: |-
+#       Custom description is optional
+#
+#       bar
+#     :post: |-
+#       /bin/echo foo
+#
+:main:
+  :preamble: |-
+    Provides:       ruby-dbus = %{version}
+    Obsoletes:      ruby-dbus < %{version}
+:preamble: |-
+  BuildRequires:  %{rubygem rake}
+  BuildRequires:  %{rubygem packaging_rake_tasks}
+  BuildRequires:  %{rubygem nokogiri}
+  BuildRequires:  %{rubygem rspec}
+  BuildRequires:  dbus-1
+  BuildRequires:  netcfg
+
+
