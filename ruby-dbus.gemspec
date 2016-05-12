@@ -12,7 +12,7 @@ GEMSPEC = Gem::Specification.new do |s|
   s.author = "Ruby DBus Team"
   s.email = "ruby-dbus-devel@lists.luon.net"
   s.homepage = "https://trac.luon.net/ruby-dbus"
-  s.files = FileList["{doc,examples,lib,spec}/**/*", "COPYING", "NEWS", "Rakefile", "README.md", "ruby-dbus.gemspec", "VERSION"].to_a.sort
+  s.files = FileList["{doc,examples,lib,spec}/**/*", "COPYING", "NEWS", "Rakefile", "README.md", "ruby-dbus.gemspec", "VERSION", ".rspec"].to_a.sort
   s.require_path = "lib"
   s.required_ruby_version = ">= 1.9.3"
   s.add_development_dependency("packaging_rake_tasks")
