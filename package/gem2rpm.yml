@@ -38,9 +38,7 @@
 #   install -D -m 0644 %{S:1} %{buildroot}%{_bindir}/gem2rpm-opensuse
 # ## used by gem2rpm
 :testsuite_command: |-
-  cd %{buildroot}/%{gem_base}/gems//%{mod_full_name}/test
-  rake test TESTOPTS=-v
-#   (pushd %{buildroot}%{gem_base}/gems/%{mod_full_name} && rake test)
+  (pushd %{buildroot}%{gem_base}/gems/%{mod_full_name} && rake test)
 # ## used by gem2rpm
 # :filelist: |-
 #   /usr/bin/gem2rpm-opensuse
@@ -75,9 +73,9 @@
     Provides:       ruby-dbus = %{version}
     Obsoletes:      ruby-dbus < %{version}
 :preamble: |-
-  BuildRequires:  %{rubygem rake}
+  BuildRequires:  %{rubygem nokogiri > 1.6}
   BuildRequires:  %{rubygem packaging_rake_tasks}
-  BuildRequires:  %{rubygem nokogiri}
+  BuildRequires:  %{rubygem rake}
   BuildRequires:  %{rubygem rspec}
   BuildRequires:  dbus-1
   BuildRequires:  netcfg

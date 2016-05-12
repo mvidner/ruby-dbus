@@ -1,7 +1,7 @@
 #
 # spec file for package rubygem-ruby-dbus
 #
-# Copyright (c) 2014 SUSE LINUX Products GmbH, Nuernberg, Germany.
+# Copyright (c) 2016 SUSE LINUX GmbH, Nuernberg, Germany.
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -37,9 +37,9 @@ BuildRequires:  dbus-1
 BuildRequires:  netcfg
 # /MANUAL
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+BuildRequires:  ruby-macros >= 5
 BuildRequires:  %{ruby >= 1.9.3}
 BuildRequires:  %{rubygem gem2rpm}
-BuildRequires:  ruby-macros >= 5
 Url:            https://trac.luon.net/ruby-dbus
 Source:         http://rubygems.org/gems/%{mod_full_name}.gem
 Source1:        gem2rpm.yml
@@ -56,13 +56,12 @@ Pure Ruby module for interaction with D-Bus IPC system.
 
 %install
 %gem_install \
-  --doc-files="COPYING README.md" \
+  --doc-files="COPYING NEWS README.md" \
   -f
 
 # MANUAL
 %check
-cd %{buildroot}/%{gem_base}/gems//%{mod_full_name}/test
-rake test TESTOPTS=-v
+(pushd %{buildroot}%{gem_base}/gems/%{mod_full_name} && rake test)
 #/ MANUAL
 
 %gem_packages
