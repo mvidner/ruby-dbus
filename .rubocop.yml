@@ -1,0 +1,15 @@
+# Do not check code borrowed from ActiveSupport
+AllCops:
+  Exclude:
+    - 'lib/dbus/core_ext/**/*.rb'
+
+# https://github.com/SUSE/style-guides/blob/master/Ruby.md#strings
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+# https://github.com/SUSE/style-guides/blob/master/Ruby.md#arrays
+Style/WordArray:
+  Enabled: false
