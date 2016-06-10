@@ -1,0 +1,14 @@
+presenter: emacs
+constant_paths:
+  DBus::Object: lib/dbus/export.rb
+  IntrospectXMLParser: lib/dbus/xml.rb
+  DBus::MatchRule: lib/dbus/matchrule.rb
+  DBus::Signal: lib/dbus/introspect.rb
+  DBus::Method: lib/dbus/introspect.rb
+  DBus::Interface: lib/dbus/introspect.rb
+  Interface: lib/dbus/introspect.rb
+  PacketMarshaller: lib/dbus/marshall.rb
+  PacketUnmarshaller: lib/dbus/marshall.rb
+  Client: lib/dbus/auth.rb
+  Error: lib/dbus/error.rb
+
