@@ -602,9 +602,11 @@ module DBus
     end
 
     def self.session_bus_address
-      ENV["DBUS_SESSION_BUS_ADDRESS"] ||
-        address_from_file ||
-        "launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET"
+      if ENV["DBUS_SESSION_BUS_ADDRESS"]
+        ENV["DBUS_SESSION_BUS_ADDRESS"].gsub(/^['"]|['"]$/, '')
+      else
+        address_from_file || "launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET"
+      end
     end
 
     def self.address_from_file
@@ -620,7 +622,7 @@ module DBus
       return nil unless File.exists?(bus_file_path)
 
       File.open(bus_file_path).each_line do |line|
-        if line =~ /^DBUS_SESSION_BUS_ADDRESS=(.*)/
+        if line =~ /^DBUS_SESSION_BUS_ADDRESS='?"?([^'"(\r?\n)]*)'?"?$/
           return $1
         end
       end
