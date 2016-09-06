@@ -9,6 +9,8 @@ rvm:
 gemfile: Gemfile.ci
 matrix:
   allow_failures:
+    - rvm: "1.9.3"
+    - rvm: jruby-19mode
     - rvm: ruby-head
     - rvm: rbx
 env:
