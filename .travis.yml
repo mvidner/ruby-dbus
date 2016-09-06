@@ -1,16 +1,18 @@
 language: ruby
 rvm:
-  - "2.1.0"
+  - "2.3.1"
+  - "2.2.5"
+  - "2.1.10"
   - "2.0.0"
   - "1.9.3"
-  - jruby-19mode
+  - jruby-9.0.5.0
   - ruby-head
   - rbx
 gemfile: Gemfile.ci
 matrix:
   allow_failures:
     - rvm: "1.9.3"
-    - rvm: jruby-19mode
+    - rvm: jruby-9.0.5.0
     - rvm: ruby-head
     - rvm: rbx
 env:
