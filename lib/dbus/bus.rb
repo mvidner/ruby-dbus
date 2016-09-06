@@ -620,8 +620,9 @@ module DBus
       return nil unless File.exists?(bus_file_path)
 
       File.open(bus_file_path).each_line do |line|
-        if line =~ /^DBUS_SESSION_BUS_ADDRESS='?"?([^'"(\r?\n)]*)'?"?$/
-          return $1
+        if line =~ /^DBUS_SESSION_BUS_ADDRESS=(.*)/
+          address = $1
+          return address[/\A'(.*)'\z/, 1] || address[/\A"(.*)"\z/, 1] || address
         end
       end
     end
