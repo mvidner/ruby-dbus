@@ -12,23 +12,9 @@ describe DBus::ASessionBus do
       ENV["DBUS_SESSION_BUS_ADDRESS"] = @original_dbus_session_bus_address
     end
 
-    context "when DBUS_SESSION_BUS_ADDRESS env is surrounded by quotation marks" do
-      it "returns session bus address without single quotation marks" do
-        ENV["DBUS_SESSION_BUS_ADDRESS"] = "'#{dbus_session_bus_address}'"
-        expect(DBus::ASessionBus.session_bus_address).to eq(dbus_session_bus_address)
-      end
-
-      it "returns session bus address without double quotation marks" do
-        ENV["DBUS_SESSION_BUS_ADDRESS"] = "\"#{dbus_session_bus_address}\""
-        expect(DBus::ASessionBus.session_bus_address).to eq(dbus_session_bus_address)
-      end
-    end
-
-    context "when DBUS_SESSION_BUS_ADDRESS env is not surrounded by any quotation marks" do
-      it "returns session bus address as it is" do
-        ENV["DBUS_SESSION_BUS_ADDRESS"] = dbus_session_bus_address
-        expect(DBus::ASessionBus.session_bus_address).to eq(dbus_session_bus_address)
-      end
+    it "returns DBUS_SESSION_BUS_ADDRESS as it is" do
+      ENV["DBUS_SESSION_BUS_ADDRESS"] = dbus_session_bus_address
+      expect(DBus::ASessionBus.session_bus_address).to eq(dbus_session_bus_address)
     end
   end
 

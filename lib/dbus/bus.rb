@@ -602,11 +602,9 @@ module DBus
     end
 
     def self.session_bus_address
-      if ENV["DBUS_SESSION_BUS_ADDRESS"]
-        ENV["DBUS_SESSION_BUS_ADDRESS"].gsub(/^['"]|['"]$/, '')
-      else
-        address_from_file || "launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET"
-      end
+      ENV["DBUS_SESSION_BUS_ADDRESS"] ||
+        address_from_file ||
+        "launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET"
     end
 
     def self.address_from_file
