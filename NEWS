@@ -5,6 +5,12 @@ Note about bug numbers:
  Issue#1  - http://github.com/mvidner/ruby-dbus/issues#issue/1
  bnc#1    - https://bugzilla.novell.com/show_bug.cgi?id=1
 
+== Unreleased
+
+Bug fixes:
+ * Fixed reading a quoted session bus address, as written by dbus-1.10.10
+   (Yasuhiro Asaka)
+
 == Ruby D-Bus 0.11.1 - 2016-05-12
 
 Bug fixes:

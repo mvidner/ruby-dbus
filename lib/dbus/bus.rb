@@ -621,7 +621,8 @@ module DBus
 
       File.open(bus_file_path).each_line do |line|
         if line =~ /^DBUS_SESSION_BUS_ADDRESS=(.*)/
-          return $1
+          address = $1
+          return address[/\A'(.*)'\z/, 1] || address[/\A"(.*)"\z/, 1] || address
         end
       end
     end
