@@ -1,3 +1,6 @@
+# Offenses still to be fixed:
+inherit_from: .rubocop_todo.yml
+
 # Do not check code borrowed from ActiveSupport
 AllCops:
   Exclude:
