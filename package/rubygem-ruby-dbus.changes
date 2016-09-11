@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Sun Sep 11 10:47:10 UTC 2016 - mvidner@suse.com
+
+- 0.11.2:
+ Bug fixes:
+ * Fixed reading a quoted session bus address, as written by dbus-1.10.10
+   (Yasuhiro Asaka)
+
+-------------------------------------------------------------------
 Thu May 12 19:31:16 UTC 2016 - mvidner@suse.com
 
 - 0.11.1
