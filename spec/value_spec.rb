@@ -6,8 +6,8 @@ require "dbus"
 describe "ValueTest" do
   before(:each) do
     session_bus = DBus::ASessionBus.new
-    svc = session_bus.service("org.ruby.service")
-    @obj = svc.object("/org/ruby/MyInstance")
+    @svc = session_bus.service("org.ruby.service")
+    @obj = @svc.object("/org/ruby/MyInstance")
     @obj.introspect                  # necessary
     @obj.default_iface = "org.ruby.SampleInterface"
   end
@@ -36,7 +36,19 @@ describe "ValueTest" do
     empty_hash = {}
     expect(@obj.bounce_variant(empty_hash)[0]).to eq(empty_hash)
   end
-  
+
+  it "retrieves a single return value with API V1" do
+    obj = @svc["/org/ruby/MyInstance"]
+    obj.introspect
+    obj.default_iface = "org.ruby.SampleInterface"
+
+    expect(obj.bounce_variant("cuckoo")).to eq("cuckoo")
+    expect(obj.bounce_variant(["coucou", "kuku"])).to eq(["coucou", "kuku"])
+    expect(obj.bounce_variant([])).to eq([])
+    empty_hash = {}
+    expect(obj.bounce_variant(empty_hash)).to eq(empty_hash)
+  end
+
   # these are ambiguous
   it "tests pairs with a string" do
     
