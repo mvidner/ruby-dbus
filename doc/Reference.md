@@ -217,8 +217,11 @@ The bytes sent are according to the string's
 D-Bus calls can reply with an error instead of a return value. An error is
 translated to a Ruby exception, an instance of {DBus::Error}.
 
+    nm_o = DBus.system_bus["org.freedesktop.NetworkManager"]["/org/freedesktop/NetworkManager"]
+    nm_o.introspect
+    nm = nm_o["org.freedesktop.NetworkManager"]
     begin
-        network_manager.sleep
+        nm.Sleep(false)
     rescue DBus::Error => e
         puts e unless e.name == "org.freedesktop.NetworkManager.AlreadyAsleepOrAwake"
     end
