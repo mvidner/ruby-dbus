@@ -140,6 +140,9 @@ To receive signals for a specific object and interface, use
     login_o.introspect
     login_o.default_iface = 'org.freedesktop.login1.Manager'
 
+    main = DBus::Main.new
+    main << sysbus
+
     # to trigger this signal, login on the Linux console
     login_o.on_signal("SessionNew") do |name, opath|
       puts "New session: #{name}"
@@ -149,10 +152,9 @@ To receive signals for a specific object and interface, use
       session_i = session_o['org.freedesktop.login1.Session']
       uid, user_opath = session_i['User']
       puts "Its UID: #{uid}"
+      main.quit
     end
 
-    main = DBus::Main.new
-    main << sysbus
     main.run
 
 ### Intermediate Concepts
