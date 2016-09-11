@@ -47,14 +47,14 @@ is simply "dbus"
 A method proxy simply returns a value.
 In this example SuspendAllowed returns a boolean:
 
-    sysbus = DBus.system_bus
-    upower_s = sysbus['org.freedesktop.UPower']
-    upower_o = upower_s['/org/freedesktop/UPower']
-    upower_o.introspect
-    upower_i = upower_o['org.freedesktop.UPower']
+    mybus = DBus.session_bus
+    pm_s = mybus['org.freedesktop.PowerManagement']
+    pm_o = pm_s['/org/freedesktop/PowerManagement']
+    pm_o.introspect
+    pm_i = pm_o['org.freedesktop.PowerManagement']
 
-    if upower_i.SuspendAllowed
-      upower_i.Suspend
+    if pm_i.CanSuspend
+      pm_i.Suspend
     end
 
 ###### Multiple Return Values
@@ -70,21 +70,21 @@ For nearly all methods you used `Method[0]` or
 `Method.first`
 ([I#30](https://github.com/mvidner/ruby-dbus/issues/30)).
     
-    sysbus = DBus.system_bus
-    upower_s = sysbus['org.freedesktop.UPower']
+    mybus = DBus.session_bus
+    pm_s = mybus['org.freedesktop.PowerManagement']
     # use legacy compatibility API
-    upower_o = upower_s.object '/org/freedesktop/UPower'
-    upower_o.introspect
-    upower_i = upower_o['org.freedesktop.UPower']
+    pm_o = pm_s.object['/org/freedesktop/PowerManagement']
+    pm_o.introspect
+    pm_i = pm_o['org.freedesktop.PowerManagement']
 
     # wrong
-    # if upower_i.SuspendAllowed    # [false] is true!
-    #   upower_i.Suspend
+    # if pm_i.CanSuspend
+    #   pm_i.Suspend                # [false] is true!
     # end
 
     # right
-    if upower_i.SuspendAllowed[0]
-      upower_i.Suspend
+    if pm_i.CanSuspend[0]
+      pm_i.Suspend
     end
 
 #### Accessing Properties
