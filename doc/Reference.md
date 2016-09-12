@@ -204,7 +204,7 @@ If the signature expects a Variant
 
 If a byte array (`ay`) is expected you can pass a String too.
 The bytes sent are according to the string's
-[encoding](http://ruby-doc.org/core-1.9.3/Encoding.html).
+[encoding](http://ruby-doc.org/core-2.0.0/Encoding.html).
 
 ##### nil
 

@@ -11,6 +11,9 @@ API:
  * Added proxy objects whose methods return single values instead of arrays
    (use Service#[] instead of Service#object; Issue#30).
 
+Requirements:
+ * Require ruby 2.0.0, stopped supporting 1.9.3.
+
 == Ruby D-Bus 0.11.2 - 2016-09-11
 
 Bug fixes:

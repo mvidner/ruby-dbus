@@ -43,7 +43,7 @@ via [UPower](http://upower.freedesktop.org/docs/UPower.html#UPower:OnBattery)
 
 ## Requirements
 
-- Ruby 1.9.3 or 2.0
+- Ruby 2.0 or newer.
 
 
 ## Installation
