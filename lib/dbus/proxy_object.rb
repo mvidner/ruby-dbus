@@ -144,10 +144,5 @@ module DBus
         raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
       end
     end
-
-    # Returns the singleton class of the object.
-    def singleton_class
-      (class << self ; self ; end)
-    end
   end # class ProxyObject
 end

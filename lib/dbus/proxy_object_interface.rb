@@ -34,11 +34,6 @@ module DBus
       @name
     end
 
-    # Returns the singleton class of the interface.
-    def singleton_class
-      (class << self ; self ; end)
-    end
-
     # Defines a method on the interface from the Method descriptor _m_.
     def define_method_from_descriptor(m)
       m.params.each do |fpar|
