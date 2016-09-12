@@ -4,7 +4,7 @@ require 'fileutils'
 include FileUtils
 require 'tmpdir'
 require 'rspec/core/rake_task'
-
+require "rubocop/rake_task"
 require "packaging"
 
 Packaging.configuration do |conf|
@@ -20,7 +20,7 @@ Packaging.configuration do |conf|
 end
 
 desc 'Default: run specs in the proper environment'
-task :default => :spec
+task :default => [:spec, :rubocop]
 task :test => :spec
 
 RSpec::Core::RakeTask.new("bare:spec")
@@ -63,3 +63,5 @@ namespace :doc do
     end
   end
 end
+
+RuboCop::RakeTask.new
