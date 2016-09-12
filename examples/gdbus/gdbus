@@ -6,7 +6,7 @@
 # -- Arnaud
 
 require 'dbus'
-require 'libglade2'
+require "gtk2"
 
 $enable_system = false
 
@@ -74,25 +74,26 @@ end
 
 class DBusUI
   def initialize
-    @glade = GladeXML.new("gdbus.glade") { |h| method(h) } # This block is like
-                                                           # black magic :)
-    @sessiontreeview = @glade.get_widget("sessiontreeview")
+    @glade = Gtk::Builder.new
+    @glade << "gdbus.glade"
+
+    @sessiontreeview = @glade.get_object("sessiontreeview")
     setup_treeview_renderer(@sessiontreeview, 'D-Bus Objects')
     @sessiontreeview.selection.signal_connect("changed") do |selection|
       on_treeview_selection_changed(selection)
     end
 
-    @systemtreeview = @glade.get_widget("systemtreeview")
+    @systemtreeview = @glade.get_object("systemtreeview")
     setup_treeview_renderer(@systemtreeview, 'D-Bus Objects')
     @systemtreeview.selection.signal_connect("changed") do |selection|
       on_treeview_selection_changed(selection)
     end
 
-    @methsigtreeview = @glade.get_widget("methsigtreeview")
+    @methsigtreeview = @glade.get_object("methsigtreeview")
     # ierk
     setup_methodview_renderer(@methsigtreeview)
 
-    @window = @glade.get_widget("window1")
+    @window = @glade.get_object("window1")
     @window.show_all
     start_buses
   end
