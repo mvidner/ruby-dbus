@@ -11,7 +11,7 @@ Push, and check the Travis CI results.
 Edit VERSION NEWS package/rubygem-ruby-dbus.spec
 
     osc vc package
-    git commit
+    git commit -m "Releasing version $(cat VERSION)."
 
 Build, and submit + SR to OBS
 

@@ -7,6 +7,8 @@ Note about bug numbers:
 
 == Unreleased
 
+== Ruby D-Bus 0.12.0 - 2016-09-12
+
 API:
  * Added proxy objects whose methods return single values instead of arrays
    (use Service#[] instead of Service#object; Issue#30).

@@ -1,4 +1,15 @@
 -------------------------------------------------------------------
+Mon Sep 12 19:51:17 UTC 2016 - mvidner@suse.com
+
+- 0.12.0
+ API:
+ * Added proxy objects whose methods return single values instead of arrays
+   (use Service#[] instead of Service#object; Issue#30).
+
+ Requirements:
+ * Require ruby 2.0.0, stopped supporting 1.9.3.
+
+-------------------------------------------------------------------
 Sun Sep 11 10:47:10 UTC 2016 - mvidner@suse.com
 
 - 0.11.2:
