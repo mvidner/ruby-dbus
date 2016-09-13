@@ -63,7 +63,7 @@ module DBus
         @signals[m.name.to_sym] = m
       end
     end
-    alias :<< :define
+    alias << define
 
     # Defines a method with name _id_ and a given _prototype_ in the
     # interface.

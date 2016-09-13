@@ -45,7 +45,7 @@ module DBus
     def push(message)
       @socket.write(message.marshall)
     end
-    alias :<< :push
+    alias << push
 
     private
 

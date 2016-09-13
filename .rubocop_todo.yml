@@ -171,17 +171,6 @@ Style/AccessorMethodName:
   Exclude:
     - 'lib/dbus/marshall.rb'
 
-# Offense count: 6
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-# SupportedStyles: prefer_alias, prefer_alias_method
-Style/Alias:
-  Exclude:
-    - 'lib/dbus/bus.rb'
-    - 'lib/dbus/introspect.rb'
-    - 'lib/dbus/message_queue.rb'
-    - 'spec/main_loop_spec.rb'
-
 # Offense count: 2
 # Cop supports --auto-correct.
 Style/AlignArray:

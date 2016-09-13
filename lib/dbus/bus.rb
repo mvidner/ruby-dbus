@@ -565,7 +565,7 @@ module DBus
       # anything
       Service.new(name, self)
     end
-    alias :[] :service
+    alias [] service
 
     # @api private
     # Emit a signal event for the given _service_, object _obj_, interface

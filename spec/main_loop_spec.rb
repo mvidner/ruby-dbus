@@ -20,13 +20,13 @@ describe "MainLoopTest" do
   # the bus has a chance to join the server messages and a race is reproducible
   def call_lazily
     class << @session_bus
-      alias :wait_for_message_orig :wait_for_message
+      alias_method :wait_for_message_orig, :wait_for_message
       def wait_for_message_lazy
         DBus.logger.debug "I am so lazy"
         sleep 1    # Give the server+bus a chance to join the messages
         wait_for_message_orig
       end
-      alias :wait_for_message :wait_for_message_lazy
+      alias_method :wait_for_message, :wait_for_message_lazy
     end
 
     yield
@@ -35,7 +35,7 @@ describe "MainLoopTest" do
     class << @session_bus
       remove_method :wait_for_message
       remove_method :wait_for_message_lazy
-      alias :wait_for_message :wait_for_message_orig
+      alias_method :wait_for_message, :wait_for_message_orig
     end
   end
 
