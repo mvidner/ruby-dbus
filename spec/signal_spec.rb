@@ -73,7 +73,7 @@ describe "SignalHandlerTest" do
     expect(started).to eq(true)
     expect(counter).to eq(1)
     expect { @intf.on_signal }.to raise_error(ArgumentError) # not enough
-    expect { @intf.on_signal 'to', 'many', 'yarrrrr!' }.to raise_error(ArgumentError)
+    expect { @intf.on_signal "to", "many", "yarrrrr!" }.to raise_error(ArgumentError)
   end
 
   it "tests too many rules" do

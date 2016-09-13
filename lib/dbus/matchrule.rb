@@ -38,7 +38,7 @@ module DBus
     # Set the message types to filter to type _t_.
     # Possible message types are: signal, method_call, method_return, and error.
     def type=(t)
-      if not ['signal', 'method_call', 'method_return', 'error'].member?(t)
+      if not ["signal", "method_call", "method_return", "error"].member?(t)
         raise MatchRuleException, t
       end
       @type = t

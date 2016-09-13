@@ -8,7 +8,7 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
-require 'socket'
+require "socket"
 
 # = D-Bus main module
 #
@@ -109,7 +109,7 @@ module DBus
     # Get the signature length and signature itself from the buffer.
     # Return the signature.
     def get_signature
-      str_sz = get(1).unpack('C')[0]
+      str_sz = get(1).unpack("C")[0]
       ret = @buffy.slice(@idx, str_sz)
       raise IncompleteBufferException if @idx + str_sz + 1 >= @buffy.bytesize
       @idx += str_sz
@@ -212,7 +212,7 @@ module DBus
         packet = get_string
       when Type::STRING
         packet = get_string
-        packet.force_encoding('UTF-8')
+        packet.force_encoding("UTF-8")
       when Type::SIGNATURE
         packet = get_signature
       when Type::DICT_ENTRY

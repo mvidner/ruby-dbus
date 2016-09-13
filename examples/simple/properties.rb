@@ -1,5 +1,5 @@
 #! /usr/bin/env ruby
-require 'dbus'
+require "dbus"
 
 bus = DBus::SystemBus.instance
 nm_service = bus["org.freedesktop.NetworkManager"]

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
-require 'dbus'
-require 'thread'
+require "dbus"
+require "thread"
 Thread.abort_on_exception = true
 
 class Test < DBus::Object

@@ -885,22 +885,6 @@ Style/SpaceInsideParens:
 Style/SpecialGlobalVars:
   EnforcedStyle: use_perl_names
 
-# Offense count: 93
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles, ConsistentQuotesInMultiline.
-# SupportedStyles: single_quotes, double_quotes
-Style/StringLiterals:
-  Enabled: false
-
-# Offense count: 3
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-# SupportedStyles: single_quotes, double_quotes
-Style/StringLiteralsInInterpolation:
-  Exclude:
-    - 'examples/gdbus/gdbus'
-    - 'lib/dbus/message_queue.rb'
-
 # Offense count: 3
 # Cop supports --auto-correct.
 # Configuration parameters: IgnoredMethods.

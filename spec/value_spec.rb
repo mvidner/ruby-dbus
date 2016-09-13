@@ -13,9 +13,9 @@ describe "ValueTest" do
   end
 
   it "tests passing an array of structs through a variant" do
-    triple = ['a(uuu)', []]
+    triple = ["a(uuu)", []]
     @obj.test_variant(triple)
-    quadruple = ['a(uuuu)', []]     # a(uuu) works fine
+    quadruple = ["a(uuuu)", []]     # a(uuu) works fine
     # The bus disconnects us because of malformed message,
     # code 12: DBUS_INVALID_TOO_MUCH_DATA
     @obj.test_variant(quadruple)
@@ -73,8 +73,8 @@ describe "ValueTest" do
     # https://trac.luon.net/ruby-dbus/ticket/30
     @obj.default_iface = "org.ruby.Ticket30"
     choices = []
-    choices << ['s', 'Plan A']
-    choices << ['s', 'Plan B']
+    choices << ["s", "Plan A"]
+    choices << ["s", "Plan B"]
     # old explicit typing
     expect(@obj.Sybilla(choices)[0]).to eq("Do Plan A")
     # automatic typing

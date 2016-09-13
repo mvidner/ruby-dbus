@@ -5,7 +5,7 @@
 # stuff.
 # -- Arnaud
 
-require 'dbus'
+require "dbus"
 require "gtk2"
 
 $enable_system = false
@@ -78,13 +78,13 @@ class DBusUI
     @glade << "gdbus.glade"
 
     @sessiontreeview = @glade.get_object("sessiontreeview")
-    setup_treeview_renderer(@sessiontreeview, 'D-Bus Objects')
+    setup_treeview_renderer(@sessiontreeview, "D-Bus Objects")
     @sessiontreeview.selection.signal_connect("changed") do |selection|
       on_treeview_selection_changed(selection)
     end
 
     @systemtreeview = @glade.get_object("systemtreeview")
-    setup_treeview_renderer(@systemtreeview, 'D-Bus Objects')
+    setup_treeview_renderer(@systemtreeview, "D-Bus Objects")
     @systemtreeview.selection.signal_connect("changed") do |selection|
       on_treeview_selection_changed(selection)
     end
@@ -153,7 +153,7 @@ class DBusUI
       mr = DBus::MatchRule.new.from_signal(intf, signal)
       puts "*** Registering matchrule: #{mr.to_s} ***"
       intf.object.bus.add_match(mr) do |sig|
-        puts "Got #{sig.member}(#{sig.params.join(',')})"
+        puts "Got #{sig.member}(#{sig.params.join(",")})"
       end
     end
   end
@@ -170,15 +170,15 @@ class DBusUI
 
   def setup_methodview_renderer(treeview)
     renderer = Gtk::CellRendererText.new
-    col_offset = treeview.insert_column(-1, "T", renderer, 'text' => 1)
-    col_offset = treeview.insert_column(-1, "Name", renderer, 'text' => 0)
+    col_offset = treeview.insert_column(-1, "T", renderer, "text" => 1)
+    col_offset = treeview.insert_column(-1, "Name", renderer, "text" => 0)
     column = treeview.get_column(col_offset - 1)
     column.clickable = true
   end
 
   def setup_treeview_renderer(treeview, str)
     renderer = Gtk::CellRendererText.new
-    col_offset = treeview.insert_column(-1, str, renderer, 'text' => 0)
+    col_offset = treeview.insert_column(-1, str, renderer, "text" => 0)
     column = treeview.get_column(col_offset - 1)
     column.clickable = true
   end

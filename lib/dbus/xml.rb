@@ -10,9 +10,9 @@
 # See the file "COPYING" for the exact licensing terms.
 
 # TODO check if it is slow, make replaceable
-require 'rexml/document'
+require "rexml/document"
 begin
-require 'nokogiri'
+require "nokogiri"
 rescue LoadError
 end
 
@@ -32,7 +32,7 @@ module DBus
 
     class AbstractXML
       def self.have_nokogiri?
-        Object.const_defined?('Nokogiri')
+        Object.const_defined?("Nokogiri")
       end
       class Node
         def initialize(node)

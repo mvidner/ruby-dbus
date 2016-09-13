@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'dbus'
+require "dbus"
 
 d = if ARGV.member?("--system")
   DBus::SystemBus.instance

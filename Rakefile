@@ -1,9 +1,9 @@
 #! /usr/bin/env ruby
-require 'rake'
-require 'fileutils'
+require "rake"
+require "fileutils"
 include FileUtils
-require 'tmpdir'
-require 'rspec/core/rake_task'
+require "tmpdir"
+require "rspec/core/rake_task"
 require "rubocop/rake_task"
 require "packaging"
 
@@ -19,7 +19,7 @@ Packaging.configuration do |conf|
   conf.skip_license_check << /^lib\/dbus\/core_ext\//
 end
 
-desc 'Default: run specs in the proper environment'
+desc "Default: run specs in the proper environment"
 task :default => [:spec, :rubocop]
 task :test => :spec
 

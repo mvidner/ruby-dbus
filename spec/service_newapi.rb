@@ -6,7 +6,7 @@ SimpleCov.command_name "Service Tests" if Object.const_defined? "SimpleCov"
 # find the library without external help
 $:.unshift File.expand_path("../../lib", __FILE__)
 
-require 'dbus'
+require "dbus"
 
 PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
 
@@ -81,7 +81,7 @@ class Test < DBus::Object
   end
 
   dbus_interface "org.ruby.Ticket30" do
-    dbus_method :Sybilla, 'in choices:av, out advice:s' do |choices|
+    dbus_method :Sybilla, "in choices:av, out advice:s" do |choices|
       ["Do #{choices[0]}"]
     end
   end
@@ -98,7 +98,7 @@ class Test < DBus::Object
   dbus_interface "org.ruby.Loop" do
     # starts doing something long, but returns immediately
     # and sends a signal when done
-    dbus_method :LongTaskBegin, 'in delay:i' do |delay|
+    dbus_method :LongTaskBegin, "in delay:i" do |delay|
 # FIXME did not complain about mismatch between signature and block args
       self.LongTaskStart
       DBus.logger.debug "Long task began"

@@ -8,9 +8,9 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
-require 'socket'
-require 'thread'
-require 'singleton'
+require "socket"
+require "thread"
+require "singleton"
 
 # = D-Bus main module
 #
@@ -167,7 +167,7 @@ module DBus
           xml +="</interface>\n"
         end
       end
-      xml += '</node>'
+      xml += "</node>"
       xml
     end
 
@@ -226,7 +226,7 @@ module DBus
 
     # Tell a bus to register itself on the glib main loop
     def glibize
-      require 'glib2'
+      require "glib2"
       # Circumvent a ruby-glib bug
       @channels ||= Array.new
 
@@ -625,7 +625,7 @@ module DBus
     def self.address_from_file
       # systemd uses /etc/machine-id
       # traditional dbus uses /var/lib/dbus/machine-id
-      machine_id_path = Dir['{/etc,/var/lib/dbus,/var/db/dbus}/machine-id'].first
+      machine_id_path = Dir["{/etc,/var/lib/dbus,/var/db/dbus}/machine-id"].first
       return nil unless machine_id_path
       machine_id = File.read(machine_id_path).chomp
 

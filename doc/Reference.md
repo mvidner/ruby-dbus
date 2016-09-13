@@ -34,12 +34,12 @@ is simply "dbus"
 &nbsp;
 
     mybus = DBus.session_bus
-    service = mybus['org.freedesktop.ScreenSaver']
-    object = service['/ScreenSaver']
+    service = mybus["org.freedesktop.ScreenSaver"]
+    object = service["/ScreenSaver"]
     object.introspect
     loop do
-        object.SimulateUserActivity
-        sleep 5 * 60
+      object.SimulateUserActivity
+      sleep 5 * 60
     end
 
 ##### Retrieving Return Values
@@ -48,10 +48,10 @@ A method proxy simply returns a value.
 In this example SuspendAllowed returns a boolean:
 
     mybus = DBus.session_bus
-    pm_s = mybus['org.freedesktop.PowerManagement']
-    pm_o = pm_s['/org/freedesktop/PowerManagement']
+    pm_s = mybus["org.freedesktop.PowerManagement"]
+    pm_o = pm_s["/org/freedesktop/PowerManagement"]
     pm_o.introspect
-    pm_i = pm_o['org.freedesktop.PowerManagement']
+    pm_i = pm_o["org.freedesktop.PowerManagement"]
 
     if pm_i.CanSuspend
       pm_i.Suspend
@@ -69,13 +69,13 @@ which is what {DBus::Service#object} does.
 For nearly all methods you used `Method[0]` or
 `Method.first`
 ([I#30](https://github.com/mvidner/ruby-dbus/issues/30)).
-    
+
     mybus = DBus.session_bus
-    pm_s = mybus['org.freedesktop.PowerManagement']
+    pm_s = mybus["org.freedesktop.PowerManagement"]
     # use legacy compatibility API
-    pm_o = pm_s.object['/org/freedesktop/PowerManagement']
+    pm_o = pm_s.object["/org/freedesktop/PowerManagement"]
     pm_o.introspect
-    pm_i = pm_o['org.freedesktop.PowerManagement']
+    pm_i = pm_o["org.freedesktop.PowerManagement"]
 
     # wrong
     # if pm_i.CanSuspend
@@ -95,12 +95,12 @@ or use {DBus::ProxyObjectInterface#all_properties} to get
 an actual Hash of them.
 
     sysbus = DBus.system_bus
-    upower_s = sysbus['org.freedesktop.UPower']
-    upower_o = upower_s['/org/freedesktop/UPower']
+    upower_s = sysbus["org.freedesktop.UPower"]
+    upower_o = upower_s["/org/freedesktop/UPower"]
     upower_o.introspect
-    upower_i = upower_o['org.freedesktop.UPower']
+    upower_i = upower_o["org.freedesktop.UPower"]
 
-    on_battery = upower_i['OnBattery']
+    on_battery = upower_i["OnBattery"]
 
     puts "Is the computer on battery now? #{on_battery}"
 
@@ -135,10 +135,10 @@ To receive signals for a specific object and interface, use
 {DBus::ProxyObject#on_signal}(name, &block), for the default interface.
 
     sysbus = DBus.system_bus
-    login_s = sysbus['org.freedesktop.login1'] # part of systemd
-    login_o = login_s.object '/org/freedesktop/login1'
+    login_s = sysbus["org.freedesktop.login1"] # part of systemd
+    login_o = login_s.object "/org/freedesktop/login1"
     login_o.introspect
-    login_o.default_iface = 'org.freedesktop.login1.Manager'
+    login_o.default_iface = "org.freedesktop.login1.Manager"
 
     main = DBus::Main.new
     main << sysbus
@@ -149,8 +149,8 @@ To receive signals for a specific object and interface, use
 
       session_o = login_s.object(opath)
       session_o.introspect
-      session_i = session_o['org.freedesktop.login1.Session']
-      uid, user_opath = session_i['User']
+      session_i = session_o["org.freedesktop.login1.Session"]
+      uid, user_opath = session_i["User"]
       puts "Its UID: #{uid}"
       main.quit
     end
@@ -189,7 +189,7 @@ If the signature expects a Variant
    ISSUE: using something else than cryptic signatures is even more painful
    than remembering the signatures!
 
-        foo_i['Bar'] = DBus.variant("au", [0, 1, 1, 2, 3, 5, 8])
+        foo_i["Bar"] = DBus.variant("au", [0, 1, 1, 2, 3, 5, 8])
 
 2. Other values are tried to fit one of these:
    Boolean, Double, Array of Variants, Hash of String keyed Variants,

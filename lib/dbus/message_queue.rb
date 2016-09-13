@@ -103,23 +103,23 @@ module DBus
     def connect_to_unix(params)
       @socket = Socket.new(Socket::Constants::PF_UNIX,Socket::Constants::SOCK_STREAM, 0)
       @socket.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
-      if ! params['abstract'].nil?
+      if ! params["abstract"].nil?
         if HOST_END == LIL_END
-          sockaddr = "\1\0\0#{params['abstract']}"
+          sockaddr = "\1\0\0#{params["abstract"]}"
         else
-          sockaddr = "\0\1\0#{params['abstract']}"
+          sockaddr = "\0\1\0#{params["abstract"]}"
         end
-      elsif ! params['path'].nil?
-        sockaddr = Socket.pack_sockaddr_un(params['path'])
+      elsif ! params["path"].nil?
+        sockaddr = Socket.pack_sockaddr_un(params["path"])
       end
       @socket.connect(sockaddr)
       init_connection
     end
 
     def connect_to_launchd(params)
-      socket_var = params['env']
+      socket_var = params["env"]
       socket = `launchctl getenv #{socket_var}`.chomp
-      connect_to_unix 'path' => socket
+      connect_to_unix "path" => socket
     end
 
     # Initialize the connection to the bus.
