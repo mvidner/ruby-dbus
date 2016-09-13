@@ -10,5 +10,5 @@ DIR=$(dirname $0)
 $DIR/test_server \
 	$DIR/../service_newapi.rb \
 	-- \
-	$DIR/dbus-launch-simple \
+	dbus-run-session --config-file=$(dirname $0)/dbus-limited-session.conf \
 	"$@"
