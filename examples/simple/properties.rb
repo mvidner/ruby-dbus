@@ -16,4 +16,4 @@ else
 end
 puts "Toggling wireless"
 # write a property
-nm_iface["WirelessEnabled"] = ! enabled
+nm_iface["WirelessEnabled"] = !enabled

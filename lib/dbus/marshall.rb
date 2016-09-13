@@ -23,7 +23,7 @@ module DBus
   # Class that handles the conversion (unmarshalling) of payload data
   # to Array.
   class PacketUnmarshaller
-    # Index pointer that points to the byte in the data that is 
+    # Index pointer that points to the byte in the data that is
     # currently being processed.
     #
     # Used to kown what part of the buffer has been consumed by unmarshalling.
@@ -194,7 +194,7 @@ module DBus
           packet = packet.inject(Hash.new) do |hash, pair|
             hash[pair[0]] = pair[1]
             hash
-	  end
+          end
         end
       when Type::STRUCT
         align(8)
@@ -222,7 +222,7 @@ module DBus
         packet = [key, value]
       else
         raise NotImplementedError,
-	  "sigtype: #{signature.sigtype} (#{signature.sigtype.chr})"
+              "sigtype: #{signature.sigtype} (#{signature.sigtype.chr})"
       end
       packet
     end # def do_parse
@@ -241,7 +241,7 @@ module DBus
     # empty packet.
     def initialize(offset = 0)
       @packet = ""
-      @offset = offset          # for correct alignment of nested marshallers
+      @offset = offset # for correct alignment of nested marshallers
     end
 
     # Round _n_ up to the specified power of two, _a_
@@ -307,11 +307,11 @@ module DBus
         align(4)
         @packet += [val].pack("L")
       when Type::UINT64
-	align(8)
-	@packet += [val].pack("Q")
+        align(8)
+        @packet += [val].pack("Q")
       when Type::INT64
-	align(8)
-	@packet += [val].pack("q")
+        align(8)
+        @packet += [val].pack("q")
       when Type::INT32
         align(4)
         @packet += [val].pack("l")
@@ -323,7 +323,7 @@ module DBus
         @packet += [val].pack("s")
       when Type::DOUBLE
         align(8)
-	@packet += [val].pack("d")
+        @packet += [val].pack("d")
       when Type::BOOLEAN
         align(4)
         if val
@@ -396,7 +396,7 @@ module DBus
         end
       else
         raise NotImplementedError,
-	  "sigtype: #{type.sigtype} (#{type.sigtype.chr})"     
+              "sigtype: #{type.sigtype} (#{type.sigtype.chr})"
       end
     end # def append
 
@@ -414,10 +414,10 @@ module DBus
       elsif value.is_a? Symbol
         ["s", value.to_s]
       elsif value.is_a? Array
-        ["av", value.map {|i| make_variant(i) }]
+        ["av", value.map { |i| make_variant(i) }]
       elsif value.is_a? Hash
         h = {}
-        value.each_key {|k| h[k] = make_variant(value[k]) }
+        value.each_key { |k| h[k] = make_variant(value[k]) }
         ["a{sv}", h]
       elsif value.respond_to? :to_str
         ["s", value.to_str]
@@ -429,6 +429,6 @@ module DBus
           ["x", i]
         end
       end
-    end    
+    end
   end # class PacketMarshaller
 end # module DBus

@@ -28,7 +28,7 @@ module DBus
     end
   end
 
-  # = External authentication class 
+  # = External authentication class
   #
   # Class for 'external' type authentication.
   class External < Authenticator
@@ -42,34 +42,33 @@ module DBus
       return Process.uid.to_s.split(//).collect { |a| "%x" % a[0].ord }.join
     end
   end
-  
-  # = Authentication class using SHA1 crypto algorithm 
+
+  # = Authentication class using SHA1 crypto algorithm
   #
   # Class for 'CookieSHA1' type authentication.
   # Implements the AUTH DBUS_COOKIE_SHA1 mechanism.
   class DBusCookieSHA1 < Authenticator
-        
-    #the autenticate method (called in stage one of authentification)    
+    # the autenticate method (called in stage one of authentification)
     def authenticate
       require "etc"
-      #number of retries we have for auth
+      # number of retries we have for auth
       @retries = 1
-      return "#{hex_encode(Etc.getlogin)}" #server expects it to be binary
+      return "#{hex_encode(Etc.getlogin)}" # server expects it to be binary
     end
 
-    #returns the modules name
+    # returns the modules name
     def name
       return "DBUS_COOKIE_SHA1"
     end
-    
-    #handles the interesting crypto stuff, check the rbus-project for more info: http://rbus.rubyforge.org/
+
+    # handles the interesting crypto stuff, check the rbus-project for more info: http://rbus.rubyforge.org/
     def data(hexdata)
       require "digest/sha1"
       data = hex_decode(hexdata)
-      # name of cookie file, id of cookie in file, servers random challenge  
+      # name of cookie file, id of cookie in file, servers random challenge
       context, id, s_challenge = data.split(" ")
-      # Random client challenge        
-      c_challenge = Array.new(s_challenge.bytesize/2).map{|obj|obj=rand(255).to_s}.join
+      # Random client challenge
+      c_challenge = Array.new(s_challenge.bytesize / 2).map { |obj| obj = rand(255).to_s }.join
       # Search cookie file for id
       path = File.join(ENV["HOME"], ".dbus-keyrings", context)
       DBus.logger.debug "path: #{path.inspect}"
@@ -81,34 +80,34 @@ module DBus
           # Concatenate and encrypt
           to_encrypt = [s_challenge, c_challenge, cookie].join(":")
           sha = Digest::SHA1.hexdigest(to_encrypt)
-          #the almighty tcp server wants everything hex encoded
+          # the almighty tcp server wants everything hex encoded
           hex_response = hex_encode("#{c_challenge} #{sha}")
           # Return response
           response = [:AuthOk, hex_response]
           return response
         end
       end
-      #a little rescue magic
+      # a little rescue magic
       unless @retries <= 0
-        puts "ERROR: Could not auth, will now exit." 
+        puts "ERROR: Could not auth, will now exit."
         puts "ERROR: Unable to locate cookie, retry in 1 second."
         @retries -= 1
         sleep 1
         data(hexdata)
       end
-    end  
-    
+    end
+
     # encode plain to hex
     def hex_encode(plain)
       return nil if plain.nil?
       plain.to_s.unpack("H*")[0]
     end
-    
+
     # decode hex to plain
     def hex_decode(encoded)
-      encoded.scan(/[[:xdigit:]]{2}/).map{|h|h.hex.chr}.join
-    end  
-  end #DBusCookieSHA1 class ends here
+      encoded.scan(/[[:xdigit:]]{2}/).map { |h| h.hex.chr }.join
+    end
+  end # DBusCookieSHA1 class ends here
 
   # Note: this following stuff is tested with External authenticator only!
 
@@ -120,7 +119,7 @@ module DBus
     def initialize(socket)
       @socket = socket
       @state = nil
-      @auth_list = [External,DBusCookieSHA1,Anonymous]
+      @auth_list = [External, DBusCookieSHA1, Anonymous]
     end
 
     # Start the authentication process.
@@ -167,14 +166,14 @@ module DBus
     # Read data (a buffer) from the bus until CR LF is encountered.
     # Return the buffer without the CR LF characters.
     def next_msg
-      data,crlf = "","\r\n"
-      left = 1024 #1024 byte, no idea if it's ever getting bigger
+      data, crlf = "", "\r\n"
+      left = 1024 # 1024 byte, no idea if it's ever getting bigger
       while left > 0
-        buf = @socket.read( left > 1 ? 1 : left )
+        buf = @socket.read(left > 1 ? 1 : left)
         break if buf.nil?
         left -= buf.bytesize
         data += buf
-        break if data.include? crlf #crlf means line finished, the TCP socket keeps on listening, so we break 
+        break if data.include? crlf # crlf means line finished, the TCP socket keeps on listening, so we break
       end
       readline = data.chomp.split(" ")
       DBus.logger.debug "readline: #{readline.inspect}"
@@ -196,10 +195,10 @@ module DBus
         DBus.logger.debug ":Starting msg: #{msg[0].inspect}"
         case msg[0]
         when "OK"
-          @state = :WaitingForOk    
+          @state = :WaitingForOk
         when "CONTINUE"
           @state = :WaitingForData
-        when "REJECTED" #needed by tcp, unix-path/abstract doesn't get here
+        when "REJECTED" # needed by tcp, unix-path/abstract doesn't get here
           @state = :WaitingForData
         end
       end

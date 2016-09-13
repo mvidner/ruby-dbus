@@ -43,10 +43,10 @@ module DBus
 
   # Byte signifying the host's endianness.
   HOST_END = if [0x01020304].pack("L").unpack("V")[0] == 0x01020304
-    LIL_END
-  else
-    BIG_END
-  end
+               LIL_END
+             else
+               BIG_END
+             end
 
   # General exceptions.
 

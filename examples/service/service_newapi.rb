@@ -37,7 +37,7 @@ service.export(myobj)
 
 Thread.new do
   i = 0
-  loop do 
+  loop do
     # Signal emission
     myobj.SomethingJustHappened("hey", i += 1)
     sleep(0.5)

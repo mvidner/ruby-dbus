@@ -45,7 +45,7 @@ module DBus
 
     # Message flag signyfing that no reply is expected.
     NO_REPLY_EXPECTED = 0x1
-    # Message flag signifying that no automatic start is required/must be 
+    # Message flag signifying that no automatic start is required/must be
     # performed.
     NO_AUTO_START = 0x2
 
@@ -111,7 +111,7 @@ module DBus
     end
 
     # Create an error reply to a message _m_.
-    def self.error(m, error_name, description=nil)
+    def self.error(m, error_name, description = nil)
       ErrorMessage.new(error_name, description).reply_to(m)
     end
 
@@ -198,7 +198,7 @@ module DBus
       end
       pu = PacketUnmarshaller.new(buf, endianness)
       mdata = pu.unmarshall(MESSAGE_SIGNATURE)
-      _, @message_type, @flags, @protocol, @body_length, @serial, 
+      _, @message_type, @flags, @protocol, @body_length, @serial,
         headers = mdata
 
       headers.each do |struct|
@@ -252,7 +252,7 @@ module DBus
   end
 
   class ErrorMessage < Message
-    def initialize(error_name, description=nil)
+    def initialize(error_name, description = nil)
       super(ERROR)
       @error_name = error_name
       unless description.nil?

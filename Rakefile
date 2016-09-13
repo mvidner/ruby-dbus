@@ -40,7 +40,7 @@ if ENV["TRAVIS"]
   task :default => "coveralls:push"
 end
 
-#remove tarball implementation and create gem for this gemfile
+# remove tarball implementation and create gem for this gemfile
 Rake::Task[:tarball].clear
 
 desc "Build a package from a clone of the local Git repo"

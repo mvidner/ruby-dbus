@@ -58,7 +58,7 @@ module DBus
     def from_s(str)
       str.split(",").each do |eq|
         if eq =~ /^(.*)='([^']*)'$/
-# "
+          # "
           name = $1
           val = $2
           if FILTERS.member?(name.to_sym)
@@ -85,9 +85,9 @@ module DBus
     # Determines whether a message _msg_ matches the match rule.
     def match(msg)
       if @type
-        if {Message::SIGNAL => "signal", Message::METHOD_CALL => "method_call",
-          Message::METHOD_RETURN => "method_return",
-          Message::ERROR => "error"}[msg.message_type] != @type
+        if { Message::SIGNAL => "signal", Message::METHOD_CALL => "method_call",
+             Message::METHOD_RETURN => "method_return",
+             Message::ERROR => "error" }[msg.message_type] != @type
           return false
         end
       end

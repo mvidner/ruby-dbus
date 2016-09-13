@@ -76,7 +76,7 @@ module DBus
     # introspected.
     def define_shortcut_methods
       # builds a list of duplicated methods
-      dup_meths, univocal_meths = [],{}
+      dup_meths, univocal_meths = [], {}
       @interfaces.each_value do |intf|
         intf.methods.each_value do |meth|
           name = meth.name.to_sym
@@ -134,12 +134,12 @@ module DBus
           # raises NameError, not NoMethodError
           raise unless e.to_s =~ /undefined method `#{name}'/
           # BTW e.exception("...") would preserve the class.
-          raise NoMethodError,"undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
+          raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
         end
       else
         # TODO distinguish:
         # - di not specified
-        #TODO
+        # TODO
         # - di is specified but not found in introspection data
         raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
       end

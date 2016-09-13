@@ -15,9 +15,9 @@ class MethodCallWindow
     @intf, @meth = intf, meth
     @entries = Array.new
     @dialog = Gtk::Dialog.new(meth.name, pwindow,
-                             Gtk::Dialog::MODAL | Gtk::Dialog::NO_SEPARATOR,
-                             [Gtk::Stock::OK, Gtk::Dialog::RESPONSE_OK],
-                             [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL])
+                              Gtk::Dialog::MODAL | Gtk::Dialog::NO_SEPARATOR,
+                              [Gtk::Stock::OK, Gtk::Dialog::RESPONSE_OK],
+                              [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL])
 
     @meth.params.each do |param|
       shbox = Gtk::HBox.new(true, 0)

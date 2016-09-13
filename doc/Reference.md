@@ -221,9 +221,9 @@ translated to a Ruby exception, an instance of {DBus::Error}.
     nm_o.introspect
     nm = nm_o["org.freedesktop.NetworkManager"]
     begin
-        nm.Sleep(false)
+      nm.Sleep(false)
     rescue DBus::Error => e
-        puts e unless e.name == "org.freedesktop.NetworkManager.AlreadyAsleepOrAwake"
+      puts e unless e.name == "org.freedesktop.NetworkManager.AlreadyAsleepOrAwake"
     end
 
 #### Interfaces

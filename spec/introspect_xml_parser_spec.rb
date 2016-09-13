@@ -20,7 +20,7 @@ EOS
 
     interfaces, _ = DBus::IntrospectXMLParser.new(xml).parse
 
-    foo = interfaces.find {|i| i.name == "org.example.Foo" }
+    foo = interfaces.find { |i| i.name == "org.example.Foo" }
     expect(foo.methods.keys.size).to eq(2)
   end
 end

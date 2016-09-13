@@ -16,28 +16,9 @@ Lint/AssignmentInCondition:
 
 # Offense count: 1
 # Cop supports --auto-correct.
-# Configuration parameters: AlignWith, SupportedStyles.
-# SupportedStyles: either, start_of_block, start_of_line
-Lint/BlockAlignment:
-  Exclude:
-    - 'lib/dbus/marshall.rb'
-
-# Offense count: 1
-# Cop supports --auto-correct.
 Lint/DeprecatedClassMethods:
   Exclude:
     - 'lib/dbus/bus.rb'
-
-# Offense count: 5
-# Cop supports --auto-correct.
-# Configuration parameters: AlignWith, SupportedStyles, AutoCorrect.
-# SupportedStyles: keyword, variable, start_of_line
-Lint/EndAlignment:
-  Exclude:
-    - 'examples/utils/listnames.rb'
-    - 'lib/dbus.rb'
-    - 'lib/dbus/bus.rb'
-    - 'lib/dbus/xml.rb'
 
 # Offense count: 1
 Lint/Eval:
@@ -171,30 +152,6 @@ Style/AccessorMethodName:
   Exclude:
     - 'lib/dbus/marshall.rb'
 
-# Offense count: 2
-# Cop supports --auto-correct.
-Style/AlignArray:
-  Exclude:
-    - 'spec/variant_spec.rb'
-
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedHashRocketStyle, EnforcedColonStyle, EnforcedLastArgumentHashStyle, SupportedLastArgumentHashStyles.
-# SupportedLastArgumentHashStyles: always_inspect, always_ignore, ignore_implicit, ignore_explicit
-Style/AlignHash:
-  Exclude:
-    - 'lib/dbus/matchrule.rb'
-
-# Offense count: 7
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles, IndentationWidth.
-# SupportedStyles: with_first_parameter, with_fixed_indentation
-Style/AlignParameters:
-  Exclude:
-    - 'examples/gdbus/gdbus'
-    - 'lib/dbus/export.rb'
-    - 'lib/dbus/marshall.rb'
-
 # Offense count: 19
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyle, SupportedStyles.
@@ -236,15 +193,6 @@ Style/BracesAroundHashParameters:
   Exclude:
     - 'lib/dbus/export.rb'
 
-# Offense count: 5
-# Cop supports --auto-correct.
-# Configuration parameters: IndentWhenRelativeTo, SupportedStyles, IndentOneStep, IndentationWidth.
-# SupportedStyles: case, end
-Style/CaseIndentation:
-  Exclude:
-    - 'lib/dbus/introspect.rb'
-    - 'lib/dbus/message_queue.rb'
-
 # Offense count: 25
 # Cop supports --auto-correct.
 Style/CharacterLiteral:
@@ -279,12 +227,6 @@ Style/ClassVars:
     - 'lib/dbus/export.rb'
     - 'lib/dbus/message.rb'
 
-# Offense count: 2
-# Cop supports --auto-correct.
-Style/ClosingParenthesisIndentation:
-  Exclude:
-    - 'lib/dbus/bus.rb'
-
 # Offense count: 3
 # Cop supports --auto-correct.
 Style/ColonMethodCall:
@@ -308,16 +250,6 @@ Style/CommentAnnotation:
     - 'spec/err_msg_spec.rb'
     - 'spec/service_newapi.rb'
     - 'spec/signal_spec.rb'
-
-# Offense count: 11
-# Cop supports --auto-correct.
-Style/CommentIndentation:
-  Exclude:
-    - 'lib/dbus/bus.rb'
-    - 'lib/dbus/matchrule.rb'
-    - 'spec/service_newapi.rb'
-    - 'spec/value_spec.rb'
-    - 'spec/variant_spec.rb'
 
 # Offense count: 7
 # Cop supports --auto-correct.
@@ -371,15 +303,6 @@ Style/DoubleNegation:
 Style/EachWithObject:
   Exclude:
     - 'lib/dbus/marshall.rb'
-
-# Offense count: 4
-# Cop supports --auto-correct.
-Style/ElseAlignment:
-  Exclude:
-    - 'examples/utils/listnames.rb'
-    - 'lib/dbus.rb'
-    - 'lib/dbus/bus.rb'
-    - 'lib/dbus/xml.rb'
 
 # Offense count: 2
 # Cop supports --auto-correct.
@@ -455,20 +378,6 @@ Style/EmptyLiteral:
     - 'lib/dbus/type.rb'
     - 'spec/bus_spec.rb'
 
-# Offense count: 17
-# Cop supports --auto-correct.
-# Configuration parameters: AllowForAlignment, ForceEqualSignAlignment.
-Style/ExtraSpacing:
-  Exclude:
-    - 'lib/dbus/bus.rb'
-    - 'lib/dbus/export.rb'
-    - 'lib/dbus/marshall.rb'
-    - 'lib/dbus/message_queue.rb'
-    - 'spec/err_msg_spec.rb'
-    - 'spec/main_loop_spec.rb'
-    - 'spec/signal_spec.rb'
-    - 'spec/value_spec.rb'
-
 # Offense count: 1
 # Configuration parameters: ExpectMatchingDefinition, Regex, IgnoreExecutableScripts.
 Style/FileName:
@@ -524,58 +433,6 @@ Style/IfUnlessModifier:
     - 'lib/dbus/type.rb'
     - 'spec/spec_helper.rb'
 
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles, IndentationWidth.
-# SupportedStyles: special_inside_parentheses, consistent, align_brackets
-Style/IndentArray:
-  Exclude:
-    - 'spec/err_msg_spec.rb'
-
-# Offense count: 4
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles, IndentationWidth.
-# SupportedStyles: special_inside_parentheses, consistent, align_braces
-Style/IndentHash:
-  Exclude:
-    - 'spec/service_newapi.rb'
-    - 'spec/variant_spec.rb'
-
-# Offense count: 3
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-# SupportedStyles: normal, rails
-Style/IndentationConsistency:
-  Exclude:
-    - 'examples/doc/variants.rb'
-    - 'lib/dbus/marshall.rb'
-    - 'lib/dbus/xml.rb'
-
-# Offense count: 17
-# Cop supports --auto-correct.
-# Configuration parameters: Width.
-Style/IndentationWidth:
-  Exclude:
-    - 'examples/doc/errors.rb'
-    - 'examples/utils/listnames.rb'
-    - 'lib/dbus.rb'
-    - 'lib/dbus/bus.rb'
-    - 'lib/dbus/marshall.rb'
-    - 'lib/dbus/message_queue.rb'
-    - 'lib/dbus/type.rb'
-    - 'lib/dbus/xml.rb'
-
-# Offense count: 22
-# Cop supports --auto-correct.
-Style/LeadingCommentSpace:
-  Exclude:
-    - 'Rakefile'
-    - 'lib/dbus/auth.rb'
-    - 'lib/dbus/bus.rb'
-    - 'lib/dbus/message_queue.rb'
-    - 'lib/dbus/proxy_object.rb'
-    - 'spec/binding_spec.rb'
-
 # Offense count: 1
 # Cop supports --auto-correct.
 Style/MethodCallParentheses:
@@ -594,14 +451,6 @@ Style/MethodDefParentheses:
 Style/MultilineBlockChain:
   Exclude:
     - 'lib/dbus/matchrule.rb'
-
-# Offense count: 1
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles, IndentationWidth.
-# SupportedStyles: aligned, indented
-Style/MultilineOperationIndentation:
-  Exclude:
-    - 'lib/dbus/bus.rb'
 
 # Offense count: 10
 # Cop supports --auto-correct.
@@ -778,95 +627,6 @@ Style/RegexpLiteral:
     - 'lib/dbus/bus.rb'
     - 'spec/session_bus_spec.rb'
 
-# Offense count: 10
-# Cop supports --auto-correct.
-Style/SpaceAfterComma:
-  Exclude:
-    - 'lib/dbus/auth.rb'
-    - 'lib/dbus/message_queue.rb'
-    - 'lib/dbus/proxy_object.rb'
-    - 'spec/introspection_spec.rb'
-
-# Offense count: 3
-# Cop supports --auto-correct.
-Style/SpaceAfterNot:
-  Exclude:
-    - 'examples/simple/properties.rb'
-    - 'lib/dbus/message_queue.rb'
-
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyleInsidePipes, SupportedStyles.
-# SupportedStyles: space, no_space
-Style/SpaceAroundBlockParameters:
-  Exclude:
-    - 'lib/dbus/auth.rb'
-
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-# SupportedStyles: space, no_space
-Style/SpaceAroundEqualsInParameterDefault:
-  Exclude:
-    - 'lib/dbus/message.rb'
-
-# Offense count: 7
-# Cop supports --auto-correct.
-# Configuration parameters: AllowForAlignment.
-Style/SpaceAroundOperators:
-  Exclude:
-    - 'lib/dbus/auth.rb'
-    - 'lib/dbus/bus.rb'
-    - 'lib/dbus/export.rb'
-    - 'spec/service_newapi.rb'
-
-# Offense count: 3
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-# SupportedStyles: space, no_space
-Style/SpaceBeforeBlockBraces:
-  Exclude:
-    - 'examples/utils/listnames.rb'
-    - 'lib/dbus/auth.rb'
-
-# Offense count: 11
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles, EnforcedStyleForEmptyBraces, SpaceBeforeBlockParameters.
-# SupportedStyles: space, no_space
-Style/SpaceInsideBlockBraces:
-  Exclude:
-    - 'lib/dbus/auth.rb'
-    - 'lib/dbus/marshall.rb'
-    - 'lib/dbus/message_queue.rb'
-    - 'spec/introspect_xml_parser_spec.rb'
-    - 'spec/session_bus_spec.rb'
-    - 'spec/type_spec.rb'
-
-# Offense count: 7
-# Cop supports --auto-correct.
-Style/SpaceInsideBrackets:
-  Exclude:
-    - 'spec/err_msg_spec.rb'
-    - 'spec/service_newapi.rb'
-
-# Offense count: 14
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBraces, SupportedStyles.
-# SupportedStyles: space, no_space, compact
-Style/SpaceInsideHashLiteralBraces:
-  Exclude:
-    - 'lib/dbus/export.rb'
-    - 'lib/dbus/matchrule.rb'
-    - 'spec/err_msg_spec.rb'
-    - 'spec/service_newapi.rb'
-    - 'spec/variant_spec.rb'
-
-# Offense count: 2
-# Cop supports --auto-correct.
-Style/SpaceInsideParens:
-  Exclude:
-    - 'lib/dbus/auth.rb'
-
 # Offense count: 4
 # Cop supports --auto-correct.
 # Configuration parameters: SupportedStyles.
@@ -882,14 +642,6 @@ Style/SymbolProc:
   Exclude:
     - 'lib/dbus/type.rb'
     - 'spec/thread_safety_spec.rb'
-
-# Offense count: 15
-# Cop supports --auto-correct.
-Style/Tab:
-  Exclude:
-    - 'lib/dbus/bus.rb'
-    - 'lib/dbus/marshall.rb'
-    - 'lib/dbus/xml.rb'
 
 # Offense count: 11
 # Cop supports --auto-correct.
@@ -927,19 +679,6 @@ Style/TrailingUnderscoreVariable:
   Exclude:
     - 'lib/dbus/message.rb'
     - 'spec/introspect_xml_parser_spec.rb'
-
-# Offense count: 31
-# Cop supports --auto-correct.
-Style/TrailingWhitespace:
-  Exclude:
-    - 'examples/service/service_newapi.rb'
-    - 'lib/dbus/auth.rb'
-    - 'lib/dbus/bus.rb'
-    - 'lib/dbus/export.rb'
-    - 'lib/dbus/marshall.rb'
-    - 'lib/dbus/message.rb'
-    - 'spec/value_spec.rb'
-    - 'spec/variant_spec.rb'
 
 # Offense count: 1
 # Cop supports --auto-correct.

@@ -16,3 +16,8 @@ Style/StringLiteralsInInterpolation:
 # https://github.com/SUSE/style-guides/blob/master/Ruby.md#arrays
 Style/WordArray:
   Enabled: false
+
+Style/IndentationConsistency:
+  Exclude:
+    # a conflict between markdown and ruby indentation
+    - examples/doc/variants.rb

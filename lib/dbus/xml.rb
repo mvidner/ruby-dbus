@@ -12,7 +12,7 @@
 # TODO check if it is slow, make replaceable
 require "rexml/document"
 begin
-require "nokogiri"
+  require "nokogiri"
 rescue LoadError
 end
 
@@ -140,17 +140,17 @@ module DBus
         name = ae["name"]
         dir = ae["direction"]
         sig = ae["type"]
-	if m.is_a?(DBus::Signal)
+        if m.is_a?(DBus::Signal)
           # Direction can only be "out", ignore it
           m.add_fparam(name, sig)
-	elsif m.is_a?(DBus::Method)
+        elsif m.is_a?(DBus::Method)
           case dir
           # This is a method, so dir defaults to "in"
           when "in", nil
             m.add_fparam(name, sig)
           when "out"
-	    m.add_return(name, sig)
-	  end
+            m.add_return(name, sig)
+          end
         else
           raise NotImplementedError, dir
         end

@@ -8,7 +8,7 @@ describe "MainLoopTest" do
     @session_bus = DBus::ASessionBus.new
     svc = @session_bus.service("org.ruby.service")
     @obj = svc.object("/org/ruby/MyInstance")
-    @obj.introspect                  # necessary
+    @obj.introspect # necessary
     @obj.default_iface = "org.ruby.Loop"
 
     @loop = DBus::Main.new
@@ -23,7 +23,7 @@ describe "MainLoopTest" do
       alias_method :wait_for_message_orig, :wait_for_message
       def wait_for_message_lazy
         DBus.logger.debug "I am so lazy"
-        sleep 1    # Give the server+bus a chance to join the messages
+        sleep 1 # Give the server+bus a chance to join the messages
         wait_for_message_orig
       end
       alias_method :wait_for_message, :wait_for_message_lazy

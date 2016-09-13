@@ -12,7 +12,7 @@ describe DBus do
 
     %w{aa (ii ii) hrmp}.each do |s|
       it "raises exception for invalid type #{s}" do
-        expect {DBus::type(s).to_s}.to raise_error DBus::Type::SignatureException
+        expect { DBus::type(s).to_s }.to raise_error DBus::Type::SignatureException
       end
     end
   end

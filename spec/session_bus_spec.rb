@@ -24,7 +24,7 @@ describe DBus::ASessionBus do
     before do
       # mocks of files for address_from_file method
       machine_id_path = File.expand_path("/etc/machine-id", __FILE__)
-      expect(Dir).to receive(:[]).with(any_args) {[machine_id_path] }
+      expect(Dir).to receive(:[]).with(any_args) { [machine_id_path] }
       expect(File).to receive(:read).with(machine_id_path) { "baz" }
       expect(File).to receive(:exists?).with(session_bus_file_path) { true }
     end

@@ -99,7 +99,7 @@ class Test < DBus::Object
     # starts doing something long, but returns immediately
     # and sends a signal when done
     dbus_method :LongTaskBegin, "in delay:i" do |delay|
-# FIXME did not complain about mismatch between signature and block args
+      # FIXME did not complain about mismatch between signature and block args
       self.LongTaskStart
       DBus.logger.debug "Long task began"
       task = Thread.new do
@@ -134,8 +134,8 @@ class Test < DBus::Object
       else
         raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"), "Interface '#{interface}' not found on object '#{@path}'"
       end
-# what should happen for unknown properties
-# plasma: InvalidArgs (propname), UnknownInterface (interface)
+      # what should happen for unknown properties
+      # plasma: InvalidArgs (propname), UnknownInterface (interface)
     end
 
     dbus_method :Set, "in interface:s, in propname:s, in  value:v" do |interface, propname, value|
@@ -144,10 +144,10 @@ class Test < DBus::Object
           raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"), "Property '#{interface}.#{propname}' (on object '#{@path}') is not writable"
         elsif propname == "ReadOrWriteMe"
           @read_or_write_me = value
-          self.PropertiesChanged(interface, {propname => value}, [])
+          self.PropertiesChanged(interface, { propname => value }, [])
         elsif propname == "WriteMe"
           @read_me = value
-          self.PropertiesChanged(interface, {"ReadMe" => value}, [])
+          self.PropertiesChanged(interface, { "ReadMe" => value }, [])
         else
           raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"), "Property '#{interface}.#{propname}' not found on object '#{@path}'"
         end
@@ -158,10 +158,10 @@ class Test < DBus::Object
 
     dbus_method :GetAll, "in interface:s, out value:a{sv}" do |interface|
       if interface == INTERFACE
-        [ {
-            "ReadMe" => @read_me,
-            "ReadOrWriteMe" =>@read_or_write_me,
-          } ]
+        [{
+          "ReadMe" => @read_me,
+          "ReadOrWriteMe" => @read_or_write_me,
+        }]
       else
         raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"), "Interface '#{interface}' not found on object '#{@path}'"
       end
