@@ -48,4 +48,3 @@ puts "listening"
 main = DBus::Main.new
 main << bus
 main.run
-

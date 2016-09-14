@@ -37,7 +37,7 @@ module DBus
     # State that the object implements the given _intf_.
     def implements(intf)
       # use a setter
-      self.intfs = (self.intfs || {}).merge({ intf.name => intf })
+      self.intfs = (intfs || {}).merge(intf.name => intf)
     end
 
     # Dispatch a message _msg_ to call exported methods
@@ -46,12 +46,12 @@ module DBus
       when Message::METHOD_CALL
         reply = nil
         begin
-          if not self.intfs[msg.interface]
+          if !intfs[msg.interface]
             raise DBus.error("org.freedesktop.DBus.Error.UnknownMethod"),
                   "Interface \"#{msg.interface}\" of object \"#{msg.path}\" doesn't exist"
           end
-          meth = self.intfs[msg.interface].methods[msg.member.to_sym]
-          if not meth
+          meth = intfs[msg.interface].methods[msg.member.to_sym]
+          if !meth
             raise DBus.error("org.freedesktop.DBus.Error.UnknownMethod"),
                   "Method \"#{msg.member}\" on interface \"#{msg.interface}\" of object \"#{msg.path}\" doesn't exist"
           end
@@ -75,9 +75,9 @@ module DBus
     # belong to.
     def self.dbus_interface(s)
       @@intfs_mutex.synchronize do
-        unless @@cur_intf = (self.intfs && self.intfs[s])
+        unless @@cur_intf = (intfs && intfs[s])
           @@cur_intf = Interface.new(s)
-          self.intfs = (self.intfs || {}).merge({ s => @@cur_intf })
+          self.intfs = (intfs || {}).merge(s => @@cur_intf)
         end
         yield
         @@cur_intf = nil

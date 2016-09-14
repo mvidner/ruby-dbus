@@ -35,5 +35,4 @@ describe "BusAndXmlBackendTest" do
     # "should work with multiple interfaces"
     expect(obj["org.ruby.AnotherInterface"].Reverse("foo")[0]).to eq("oof")
   end
-
 end

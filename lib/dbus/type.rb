@@ -9,7 +9,6 @@
 # See the file "COPYING" for the exact licensing terms.
 
 module DBus
-
   # = D-Bus type module
   #
   # This module containts the constants of the types specified in the D-Bus
@@ -18,24 +17,24 @@ module DBus
     # Mapping from type number to name and alignment.
     TypeMapping = {
       0 => ["INVALID", nil],
-      ?y => ["BYTE", 1],
-      ?b => ["BOOLEAN", 4],
-      ?n => ["INT16", 2],
-      ?q => ["UINT16", 2],
-      ?i => ["INT32", 4],
-      ?u => ["UINT32", 4],
-      ?x => ["INT64", 8],
-      ?t => ["UINT64", 8],
-      ?d => ["DOUBLE", 8],
-      ?r => ["STRUCT", 8],
-      ?a => ["ARRAY", 4],
-      ?v => ["VARIANT", 1],
-      ?o => ["OBJECT_PATH", 4],
-      ?s => ["STRING", 4],
-      ?g => ["SIGNATURE", 1],
-      ?e => ["DICT_ENTRY", 8],
-      ?h => ["UNIX_FD", 4],
-    }
+      "y" => ["BYTE", 1],
+      "b" => ["BOOLEAN", 4],
+      "n" => ["INT16", 2],
+      "q" => ["UINT16", 2],
+      "i" => ["INT32", 4],
+      "u" => ["UINT32", 4],
+      "x" => ["INT64", 8],
+      "t" => ["UINT64", 8],
+      "d" => ["DOUBLE", 8],
+      "r" => ["STRUCT", 8],
+      "a" => ["ARRAY", 4],
+      "v" => ["VARIANT", 1],
+      "o" => ["OBJECT_PATH", 4],
+      "s" => ["STRING", 4],
+      "g" => ["SIGNATURE", 1],
+      "e" => ["DICT_ENTRY", 8],
+      "h" => ["UNIX_FD", 4]
+    }.freeze
     # Defines the set of constants
     TypeMapping.each_pair do |key, value|
       Type.const_set(value.first, key)
@@ -56,11 +55,11 @@ module DBus
 
       # Create a new type instance for type number _sigtype_.
       def initialize(sigtype)
-        if not TypeMapping.keys.member?(sigtype)
+        if !TypeMapping.keys.member?(sigtype)
           raise SignatureException, "Unknown key in signature: #{sigtype.chr}"
         end
         @sigtype = sigtype
-        @members = Array.new
+        @members = []
       end
 
       # Return the required alignment for the type.
@@ -73,13 +72,13 @@ module DBus
       def to_s
         case @sigtype
         when STRUCT
-          "(" + @members.collect { |t| t.to_s }.join + ")"
+          "(" + @members.collect(&:to_s).join + ")"
         when ARRAY
           "a" + child.to_s
         when DICT_ENTRY
-          "{" + @members.collect { |t| t.to_s }.join + "}"
+          "{" + @members.collect(&:to_s).join + "}"
         else
-          if not TypeMapping.keys.member?(@sigtype)
+          if !TypeMapping.keys.member?(@sigtype)
             raise NotImplementedError
           end
           @sigtype.chr
@@ -88,15 +87,15 @@ module DBus
 
       # Add a new member type _a_.
       def <<(a)
-        if not [STRUCT, ARRAY, DICT_ENTRY].member?(@sigtype)
+        if ![STRUCT, ARRAY, DICT_ENTRY].member?(@sigtype)
           raise SignatureException
         end
-        raise SignatureException if @sigtype == ARRAY and @members.size > 0
+        raise SignatureException if @sigtype == ARRAY && !@members.empty?
         if @sigtype == DICT_ENTRY
           if @members.size == 2
             raise SignatureException, "Dict entries have exactly two members"
           end
-          if @members.size == 0
+          if @members.empty?
             if [STRUCT, ARRAY, DICT_ENTRY].member?(a.sigtype)
               raise SignatureException, "Dict entry keys must be basic types"
             end
@@ -140,24 +139,24 @@ module DBus
       def parse_one(c)
         res = nil
         case c
-        when ?a
+        when "a"
           res = Type.new(ARRAY)
           c = nextchar
-          raise SignatureException, "Parse error in #{@signature}" if c == nil
+          raise SignatureException, "Parse error in #{@signature}" if c.nil?
           child = parse_one(c)
           res << child
-        when ?(
+        when "("
           res = Type.new(STRUCT)
-          while (c = nextchar) != nil and c != ?)
+          while (c = nextchar) != nil && c != ")"
             res << parse_one(c)
           end
-          raise SignatureException, "Parse error in #{@signature}" if c == nil
-        when ?{
+          raise SignatureException, "Parse error in #{@signature}" if c.nil?
+        when "{"
           res = Type.new(DICT_ENTRY)
-          while (c = nextchar) != nil and c != ?}
+          while (c = nextchar) != nil && c != "}"
             res << parse_one(c)
           end
-          raise SignatureException, "Parse error in #{@signature}" if c == nil
+          raise SignatureException, "Parse error in #{@signature}" if c.nil?
         else
           res = Type.new(c)
         end
@@ -167,7 +166,7 @@ module DBus
       # Parse the entire signature, return a DBus::Type object.
       def parse
         @idx = 0
-        ret = Array.new
+        ret = []
         while (c = nextchar)
           ret << parse_one(c)
         end
@@ -189,5 +188,4 @@ module DBus
     [type(string_type), value]
   end
   module_function :variant
-
 end # module DBus

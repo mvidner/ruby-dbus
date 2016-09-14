@@ -51,14 +51,13 @@ describe "VariantTest" do
                                            ["i", 3]]])
     a0 = []
     expect(make_variant(a0)).to eq(["av", []])
-
   end
 
   it "tests make variant hash" do
     h = { "k1" => "v1", "k2" => "v2" }
     expect(make_variant(h)).to eq(["a{sv}", {
                                     "k1" => ["s", "v1"],
-                                    "k2" => ["s", "v2"],
+                                    "k2" => ["s", "v2"]
                                   }])
     h0 = {}
     expect(make_variant(h0)).to eq(["a{sv}", {}])

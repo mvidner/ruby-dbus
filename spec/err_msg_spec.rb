@@ -31,10 +31,10 @@ describe "ErrMsgTest" do
     nils = [
       ["(s)", [nil]], # would get disconnected
       ["i", nil],
-      ["a{ss}", { "foo" => nil }],
+      ["a{ss}", { "foo" => nil }]
     ]
     nils.each do |has_nil|
-      # TODO want backtrace from the perspective of the caller:
+      # TODO: want backtrace from the perspective of the caller:
       # rescue/reraise in send_sync?
       expect { @obj.test_variant has_nil }.to raise_error(DBus::TypeException, /Cannot send nil/)
     end

@@ -12,8 +12,9 @@ $enable_system = false
 
 class MethodCallWindow
   def initialize(pwindow, intf, meth)
-    @intf, @meth = intf, meth
-    @entries = Array.new
+    @intf = intf
+    @meth = meth
+    @entries = []
     @dialog = Gtk::Dialog.new(meth.name, pwindow,
                               Gtk::Dialog::MODAL | Gtk::Dialog::NO_SEPARATOR,
                               [Gtk::Stock::OK, Gtk::Dialog::RESPONSE_OK],
@@ -101,10 +102,10 @@ class DBusUI
   def beautify_method(meth)
     # Damn, this need to be rewritten :p
     s = meth.name + "("
-    if meth.kind_of?(DBus::Method)
+    if meth.is_a?(DBus::Method)
       s += (meth.params.collect { |a| "in #{a[0]}:#{a[1]}" } +
             meth.rets.collect { |a| "out #{a[0]}:#{a[1]}" }).join(", ")
-    elsif meth.kind_of?(DBus::Signal)
+    elsif meth.is_a?(DBus::Signal)
       s += (meth.params.collect { |a| "in #{a[0]}:#{a[1]}" }).join(", ")
     end
     s += ")"
@@ -138,7 +139,7 @@ class DBusUI
     end
   end
 
-  def on_method_activated(view, path, column)
+  def on_method_activated(view, path, _column)
     name = view.model.get_iter(path)[0]
     puts "Clicked on: #{name.inspect}"
     type = view.model.get_iter(path)[1]
@@ -151,20 +152,20 @@ class DBusUI
       signal = view.model.get_iter(path)[2]
       intf = view.model.get_iter(path)[3]
       mr = DBus::MatchRule.new.from_signal(intf, signal)
-      puts "*** Registering matchrule: #{mr.to_s} ***"
+      puts "*** Registering matchrule: #{mr} ***"
       intf.object.bus.add_match(mr) do |sig|
         puts "Got #{sig.member}(#{sig.params.join(",")})"
       end
     end
   end
 
-  def on_sessiontreeview_row_activated(view, path, column)
+  def on_sessiontreeview_row_activated(view, path, _column)
     name = view.model.get_iter(path)[0]
     puts "Clicked on: #{name.inspect}"
     intf = view.model.get_iter(path)[1]
   end
 
-  def on_window_delete_event(window, event)
+  def on_window_delete_event(_window, _event)
     Gtk.main_quit
   end
 
@@ -198,11 +199,11 @@ class DBusUI
     DBus::SessionBus.instance.glibize
     DBus::SystemBus.instance.glibize if $enable_system
 
-    DBus::SessionBus.instance.proxy.ListNames do |msg, names|
+    DBus::SessionBus.instance.proxy.ListNames do |_msg, names|
       fill_treeview(DBus::SessionBus.instance, @sessiontreeview, names)
     end
     if $enable_system
-      DBus::SystemBus.instance.proxy.ListNames do |msg, names|
+      DBus::SystemBus.instance.proxy.ListNames do |_msg, names|
         fill_treeview(DBus::SystemBus.instance, @systemtreeview, names)
       end
     end
@@ -225,7 +226,7 @@ class DBusUI
 
   def introspect_services(model, bus)
     el = @introspect_array.shift
-    if not el =~ /^:/
+    if !(el =~ /^:/)
       iter = model.append(nil)
       iter[0] = el
       puts "introspecting: #{el}"
@@ -238,14 +239,14 @@ class DBusUI
       end
     end
 
-    not @introspect_array.empty?
+    !@introspect_array.empty?
   end
 
   def fill_treeview(bus, treeview, array)
     model = Gtk::TreeStore.new(String, DBus::ProxyObjectInterface)
     treeview.model = model
     @introspect_array = array.sort
-    Gtk::idle_add { introspect_services(model, bus) }
+    Gtk.idle_add { introspect_services(model, bus) }
   end
 
   def main

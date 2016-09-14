@@ -27,7 +27,7 @@ module DBus
     # Mutex that protects updates on the serial number.
     @@serial_mutex = Mutex.new
     # Type of a message (by specification).
-    MESSAGE_SIGNATURE = "yyyyuua(yv)"
+    MESSAGE_SIGNATURE = "yyyyuua(yv)".freeze
 
     # FIXME: following message type constants should be under Message::Type IMO
     # well, yeah sure
@@ -83,12 +83,12 @@ module DBus
       @flags = 0
       @protocol = 1
       @body_length = 0
-      @signature = String.new
+      @signature = ""
       @@serial_mutex.synchronize do
         @serial = @@serial
         @@serial += 1
       end
-      @params = Array.new
+      @params = []
       @destination = nil
       @interface = nil
       @error_name = nil
@@ -126,7 +126,7 @@ module DBus
 
     # Add a parameter _val_ of type _type_ to the message.
     def add_param(type, val)
-      type = type.chr if type.kind_of?(Fixnum)
+      type = type.chr if type.is_a?(Fixnum)
       @signature += type.to_s
       @params << [type, val]
     end
@@ -191,11 +191,11 @@ module DBus
     # the message data ended.
     def unmarshall_buffer(buf)
       buf = buf.dup
-      if buf[0] == ?l
-        endianness = LIL_END
-      else
-        endianness = BIG_END
-      end
+      endianness = if buf[0] == "l"
+                     LIL_END
+                   else
+                     BIG_END
+                   end
       pu = PacketUnmarshaller.new(buf, endianness)
       mdata = pu.unmarshall(MESSAGE_SIGNATURE)
       _, @message_type, @flags, @protocol, @body_length, @serial,
@@ -222,7 +222,7 @@ module DBus
         end
       end
       pu.align(8)
-      if @body_length > 0 and @signature
+      if @body_length > 0 && @signature
         @params = pu.unmarshall(@signature, @body_length)
       end
       [self, pu.idx]
@@ -232,7 +232,7 @@ module DBus
     # Message#unmarshall_buf.
     # Return the message.
     def unmarshall(buf)
-      ret, _ = unmarshall_buffer(buf)
+      ret, = unmarshall_buffer(buf)
       ret
     end
 
@@ -268,7 +268,7 @@ module DBus
                # ex.class.to_s # RuntimeError is not a valid name, has no dot
              end
       description = ex.message
-      msg = self.new(name, description)
+      msg = new(name, description)
       msg.add_param(DBus.type("as"), ex.backtrace)
       msg
     end

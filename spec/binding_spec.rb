@@ -70,5 +70,4 @@ describe "BindingTest" do
     ifaces = derived.intfs
     expect(ifaces).to include "org.ruby.DynamicInterface"
   end
-
 end

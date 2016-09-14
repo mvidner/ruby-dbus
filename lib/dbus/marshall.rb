@@ -32,7 +32,8 @@ module DBus
 
     # Create a new unmarshaller for the given data _buffer_ and _endianness_.
     def initialize(buffer, endianness)
-      @buffy, @endianness = buffer.dup, endianness
+      @buffy = buffer.dup
+      @endianness = endianness
       if @endianness == BIG_END
         @uint32 = "N"
         @uint16 = "n"
@@ -50,13 +51,13 @@ module DBus
     # Unmarshall the buffer for a given _signature_ and length _len_.
     # Return an array of unmarshalled objects
     def unmarshall(signature, len = nil)
-      if len != nil
+      if !len.nil?
         if @buffy.bytesize < @idx + len
           raise IncompleteBufferException
         end
       end
       sigtree = Type::Parser.new(signature).parse
-      ret = Array.new
+      ret = []
       sigtree.each do |elem|
         ret << do_parse(elem)
       end
@@ -150,20 +151,20 @@ module DBus
         align(8)
         packet_l = get(4).unpack(@uint32)[0]
         packet_h = get(4).unpack(@uint32)[0]
-        if @endianness == LIL_END
-          packet = packet_l + packet_h * 2**32
-        else
-          packet = packet_l * 2**32 + packet_h
-        end
+        packet = if @endianness == LIL_END
+                   packet_l + packet_h * 2**32
+                 else
+                   packet_l * 2**32 + packet_h
+                 end
       when Type::INT64
         align(8)
         packet_l = get(4).unpack(@uint32)[0]
         packet_h = get(4).unpack(@uint32)[0]
-        if @endianness == LIL_END
-          packet = packet_l + packet_h * 2**32
-        else
-          packet = packet_l * 2**32 + packet_h
-        end
+        packet = if @endianness == LIL_END
+                   packet_l + packet_h * 2**32
+                 else
+                   packet_l * 2**32 + packet_h
+                 end
         if (packet & 0x8000000000000000) != 0
           packet -= 0x10000000000000000
         end
@@ -173,32 +174,32 @@ module DBus
       when Type::BOOLEAN
         align(4)
         v = get(4).unpack(@uint32)[0]
-        raise InvalidPacketException if not [0, 1].member?(v)
+        raise InvalidPacketException if ![0, 1].member?(v)
         packet = (v == 1)
       when Type::ARRAY
         align(4)
         # checks please
         array_sz = get(4).unpack(@uint32)[0]
-        raise InvalidPacketException if array_sz > 67108864
+        raise InvalidPacketException if array_sz > 67_108_864
 
         align(signature.child.alignment)
         raise IncompleteBufferException if @idx + array_sz > @buffy.bytesize
 
-        packet = Array.new
+        packet = []
         start_idx = @idx
         while @idx - start_idx < array_sz
           packet << do_parse(signature.child)
         end
 
         if signature.child.sigtype == Type::DICT_ENTRY
-          packet = packet.inject(Hash.new) do |hash, pair|
+          packet = packet.inject({}) do |hash, pair|
             hash[pair[0]] = pair[1]
             hash
           end
         end
       when Type::STRUCT
         align(8)
-        packet = Array.new
+        packet = []
         signature.members.each do |elem|
           packet << do_parse(elem)
         end
@@ -282,7 +283,7 @@ module DBus
       contentidx = @packet.bytesize
       yield
       sz = @packet.bytesize - contentidx
-      raise InvalidPacketException if sz > 67108864
+      raise InvalidPacketException if sz > 67_108_864
       @packet[sizeidx...sizeidx + 4] = [sz].pack("L")
     end
 
@@ -298,8 +299,8 @@ module DBus
     def append(type, val)
       raise TypeException, "Cannot send nil" if val.nil?
 
-      type = type.chr if type.kind_of?(Fixnum)
-      type = Type::Parser.new(type).parse[0] if type.kind_of?(String)
+      type = type.chr if type.is_a?(Fixnum)
+      type = Type::Parser.new(type).parse[0] if type.is_a?(String)
       case type.sigtype
       when Type::BYTE
         @packet += val.chr
@@ -326,11 +327,11 @@ module DBus
         @packet += [val].pack("d")
       when Type::BOOLEAN
         align(4)
-        if val
-          @packet += [1].pack("L")
-        else
-          @packet += [0].pack("L")
-        end
+        @packet += if val
+                     [1].pack("L")
+                   else
+                     [0].pack("L")
+                   end
       when Type::OBJECT_PATH
         append_string(val)
       when Type::STRING
@@ -339,7 +340,7 @@ module DBus
         append_signature(val)
       when Type::VARIANT
         vartype = nil
-        if val.is_a?(Array) and val.size == 2
+        if val.is_a?(Array) && val.size == 2
           if val[0].is_a?(DBus::Type::Type)
             vartype, vardata = val
           elsif val[0].is_a?(String)
@@ -363,16 +364,16 @@ module DBus
         sub.append(vartype, vardata)
         @packet += sub.packet
       when Type::ARRAY
-        if val.kind_of?(Hash)
+        if val.is_a?(Hash)
           raise TypeException, "Expected an Array but got a Hash" if type.child.sigtype != Type::DICT_ENTRY
           # Damn ruby rocks here
           val = val.to_a
         end
         # If string is recieved and ay is expected, explode the string
-        if val.kind_of?(String) && type.child.sigtype == Type::BYTE
+        if val.is_a?(String) && type.child.sigtype == Type::BYTE
           val = val.bytes
         end
-        if not val.kind_of?(Enumerable)
+        if !val.is_a?(Enumerable)
           raise TypeException, "Expected an Enumerable of #{type.child.inspect} but got a #{val.class}"
         end
         array(type.child) do
@@ -381,9 +382,9 @@ module DBus
           end
         end
       when Type::STRUCT, Type::DICT_ENTRY
-        # TODO use duck typing, val.respond_to?
-        raise TypeException, "Struct/DE expects an Array" if not val.kind_of?(Array)
-        if type.sigtype == Type::DICT_ENTRY and val.size != 2
+        # TODO: use duck typing, val.respond_to?
+        raise TypeException, "Struct/DE expects an Array" if !val.is_a?(Array)
+        if type.sigtype == Type::DICT_ENTRY && val.size != 2
           raise TypeException, "Dict entry expects a pair"
         end
         if type.members.size != val.size

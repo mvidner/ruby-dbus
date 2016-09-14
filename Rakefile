@@ -20,14 +20,14 @@ Packaging.configuration do |conf|
 end
 
 desc "Default: run specs in the proper environment"
-task :default => [:spec, :rubocop]
-task :test => :spec
+task default: [:spec, :rubocop]
+task test: :spec
 
 RSpec::Core::RakeTask.new("bare:spec")
 
 %w(spec).each do |tname|
   desc "Run bare:#{tname} in the proper environment"
-  task tname do |t|
+  task tname do |_t|
     cd "spec/tools" do
       sh "./test_env rake bare:#{tname}"
     end
@@ -37,14 +37,14 @@ end
 if ENV["TRAVIS"]
   require "coveralls/rake/task"
   Coveralls::RakeTask.new
-  task :default => "coveralls:push"
+  task default: "coveralls:push"
 end
 
 # remove tarball implementation and create gem for this gemfile
 Rake::Task[:tarball].clear
 
 desc "Build a package from a clone of the local Git repo"
-task :tarball do |t|
+task :tarball do |_t|
   Dir.mktmpdir do |temp|
     sh "git clone . #{temp}"
     cd temp do

@@ -9,7 +9,7 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
-# TODO check if it is slow, make replaceable
+# TODO: check if it is slow, make replaceable
 require "rexml/document"
 begin
   require "nokogiri"
@@ -38,10 +38,12 @@ module DBus
         def initialize(node)
           @node = node
         end
+
         # required methods
         # returns node attribute value
         def [](key)
         end
+
         # yields child nodes which match xpath of type AbstractXML::Node
         def each(xpath)
         end
@@ -50,6 +52,7 @@ module DBus
       # initialize parser with xml string
       def initialize(xml)
       end
+
       # yields nodes which match xpath of type AbstractXML::Node
       def each(xpath)
       end
@@ -60,6 +63,7 @@ module DBus
         def [](key)
           @node[key]
         end
+
         def each(path, &block)
           @node.search(path).each { |node| block.call NokogiriNode.new(node) }
         end
@@ -67,6 +71,7 @@ module DBus
       def initialize(xml)
         @doc = Nokogiri.XML(xml)
       end
+
       def each(path, &block)
         @doc.search("//#{path}").each { |node| block.call NokogiriNode.new(node) }
       end
@@ -77,6 +82,7 @@ module DBus
         def [](key)
           @node.attributes[key]
         end
+
         def each(path, &block)
           @node.elements.each(path) { |node| block.call REXMLNode.new(node) }
         end
@@ -84,16 +90,17 @@ module DBus
       def initialize(xml)
         @doc = REXML::Document.new(xml)
       end
+
       def each(path, &block)
         @doc.elements.each(path) { |node| block.call REXMLNode.new(node) }
       end
     end
 
-    if AbstractXML.have_nokogiri?
-      @backend = NokogiriParser
-    else
-      @backend = REXMLParser
-    end
+    @backend = if AbstractXML.have_nokogiri?
+                 NokogiriParser
+               else
+                 REXMLParser
+               end
 
     # return a pair: [list of Interfaces, list of direct subnode names]
     def parse
@@ -104,7 +111,6 @@ module DBus
       end
       subnodes = []
       t = Time.now
-
 
       d = IntrospectXMLParser.backend.new(@xml)
       d.each("node/node") do |e|
@@ -158,4 +164,3 @@ module DBus
     end
   end # class IntrospectXMLParser
 end # module DBus
-

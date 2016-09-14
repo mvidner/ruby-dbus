@@ -22,4 +22,3 @@ proxyi.playPause(true)
 main = DBus::Main.new
 main << bus
 main.run
-

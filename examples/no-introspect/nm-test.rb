@@ -17,5 +17,3 @@ rescue Exception
   poi.define_method("GetDevices", "") # NM 0.7
   p poi.GetDevices
 end
-
-

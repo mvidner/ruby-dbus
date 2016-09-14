@@ -16,7 +16,7 @@ module DBus
   # FIXME
   class MatchRule
     # The list of possible match filters. TODO argN, argNpath
-    FILTERS = [:sender, :interface, :member, :path, :destination, :type]
+    FILTERS = [:sender, :interface, :member, :path, :destination, :type].freeze
     # The sender filter.
     attr_accessor :sender
     # The interface filter.
@@ -38,7 +38,7 @@ module DBus
     # Set the message types to filter to type _t_.
     # Possible message types are: signal, method_call, method_return, and error.
     def type=(t)
-      if not ["signal", "method_call", "method_return", "error"].member?(t)
+      if !["signal", "method_call", "method_return", "error"].member?(t)
         raise MatchRuleException, t
       end
       @type = t
@@ -48,24 +48,23 @@ module DBus
     # E.g.:  "type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='Foo',path='/bar/foo',destination=':452345.34',arg2='bar'"
     def to_s
       FILTERS.select do |sym|
-        not method(sym).call.nil?
+        !method(sym).call.nil?
       end.collect do |sym|
-        "#{sym.to_s}='#{method(sym).call}'"
+        "#{sym}='#{method(sym).call}'"
       end.join(",")
     end
 
     # Parses a match rule string _s_ and sets the filters on the object.
     def from_s(str)
       str.split(",").each do |eq|
-        if eq =~ /^(.*)='([^']*)'$/
-          # "
-          name = $1
-          val = $2
-          if FILTERS.member?(name.to_sym)
-            method(name + "=").call(val)
-          else
-            raise MatchRuleException, name
-          end
+        next unless eq =~ /^(.*)='([^']*)'$/
+        # "
+        name = Regexp.last_match(1)
+        val = Regexp.last_match(2)
+        if FILTERS.member?(name.to_sym)
+          method(name + "=").call(val)
+        else
+          raise MatchRuleException, name
         end
       end
       self
@@ -91,10 +90,10 @@ module DBus
           return false
         end
       end
-      return false if @interface and @interface != msg.interface
-      return false if @member and @member != msg.member
-      return false if @path and @path != msg.path
-      # FIXME sender and destination are ignored
+      return false if @interface && @interface != msg.interface
+      return false if @member && @member != msg.member
+      return false if @path && @path != msg.path
+      # FIXME: sender and destination are ignored
       true
     end
   end # class MatchRule

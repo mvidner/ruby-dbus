@@ -22,7 +22,7 @@ module DBus
       connect
     end
 
-    # TODO failure modes
+    # TODO: failure modes
     #
     # If _non_block_ is true, return nil instead of waiting
     # EOFError may be raised
@@ -33,7 +33,7 @@ module DBus
         # we can block
         while message.nil?
           r, d, d = IO.select([@socket])
-          if r and r[0] == @socket
+          if r && r[0] == @socket
             buffer_from_socket_nonblock
             message = message_from_buffer_nonblock
           end
@@ -56,10 +56,10 @@ module DBus
       worked = addresses.find do |a|
         transport, keyvaluestring = a.split ":"
         kv_list = keyvaluestring.split ","
-        kv_hash = Hash.new
+        kv_hash = {}
         kv_list.each do |kv|
           key, escaped_value = kv.split "="
-          value = escaped_value.gsub(/%(..)/) { |m| [$1].pack "H2" }
+          value = escaped_value.gsub(/%(..)/) { |_m| [Regexp.last_match(1)].pack "H2" }
           kv_hash[key] = value
         end
         case transport
@@ -81,7 +81,7 @@ module DBus
     # Connect to a bus over tcp and initialize the connection.
     def connect_to_tcp(params)
       # check if the path is sufficient
-      if params.key?("host") and params.key?("port")
+      if params.key?("host") && params.key?("port")
         begin
           # initialize the tcp socket
           @socket = TCPSocket.new(params["host"], params["port"].to_i)
@@ -104,11 +104,11 @@ module DBus
       @socket = Socket.new(Socket::Constants::PF_UNIX, Socket::Constants::SOCK_STREAM, 0)
       @socket.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
       if !params["abstract"].nil?
-        if HOST_END == LIL_END
-          sockaddr = "\1\0\0#{params["abstract"]}"
-        else
-          sockaddr = "\0\1\0#{params["abstract"]}"
-        end
+        sockaddr = if HOST_END == LIL_END
+                     "\1\0\0#{params["abstract"]}"
+                   else
+                     "\0\1\0#{params["abstract"]}"
+                   end
       elsif !params["path"].nil?
         sockaddr = Socket.pack_sockaddr_un(params["path"])
       end

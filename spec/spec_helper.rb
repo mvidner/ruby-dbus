@@ -21,7 +21,7 @@ if coverage
   SimpleCov.start
 end
 
-$:.unshift File.expand_path("../../lib", __FILE__)
+$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
 if Object.const_defined? "RSpec"
   # http://betterspecs.org/#expect
@@ -64,7 +64,7 @@ def with_private_bus(&block)
 
   # wait until dbus-daemon writes the info
   Timeout.timeout(10) do
-    until File.size?(address_file) and File.size?(pid_file) do
+    until File.size?(address_file) && File.size?(pid_file)
       sleep 0.1
     end
   end

@@ -36,7 +36,6 @@ describe DBus::ASessionBus do
     end
 
     context "when DBUS_SESSION_BUS_ADDRESS from file is surrounded by quotation marks" do
-
       it "returns session bus address without single quotation marks" do
         expect(File).to receive(:open).with(session_bus_file_path) { <<-EOS.gsub(/^\s*/, "") }
           DBUS_SESSION_BUS_ADDRESS='#{dbus_session_bus_address}'

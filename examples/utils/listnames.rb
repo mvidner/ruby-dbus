@@ -8,4 +8,3 @@ d = if ARGV.member?("--system")
       DBus::SessionBus.instance
     end
 d.proxy.ListNames[0].each { |n| puts "\t#{n}" }
-

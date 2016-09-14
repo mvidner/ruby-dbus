@@ -35,7 +35,7 @@ describe "SignalHandlerTest" do
 
     quitter = Thread.new do
       DBus.logger.debug "sleep before quit"
-      # FIXME if we sleep for too long
+      # FIXME: if we sleep for too long
       # the socket will be drained and we deadlock in a select.
       # It could be worked around by sending ourselves a Unix signal
       # (with a dummy handler) to interrupt the select

@@ -39,7 +39,7 @@ module DBus
       # obtain for "1000" => 31303030 This is what the server is expecting.
       # Why? I dunno. How did I come to that conclusion? by looking at rbus
       # code. I have no idea how he found that out.
-      return Process.uid.to_s.split(//).collect { |a| "%x" % a[0].ord }.join
+      Process.uid.to_s.split(//).collect { |a| "%x" % a[0].ord }.join
     end
   end
 
@@ -53,12 +53,12 @@ module DBus
       require "etc"
       # number of retries we have for auth
       @retries = 1
-      return "#{hex_encode(Etc.getlogin)}" # server expects it to be binary
+      hex_encode(Etc.getlogin).to_s # server expects it to be binary
     end
 
     # returns the modules name
     def name
-      return "DBUS_COOKIE_SHA1"
+      "DBUS_COOKIE_SHA1"
     end
 
     # handles the interesting crypto stuff, check the rbus-project for more info: http://rbus.rubyforge.org/
@@ -68,7 +68,7 @@ module DBus
       # name of cookie file, id of cookie in file, servers random challenge
       context, id, s_challenge = data.split(" ")
       # Random client challenge
-      c_challenge = Array.new(s_challenge.bytesize / 2).map { |obj| obj = rand(255).to_s }.join
+      c_challenge = Array.new(s_challenge.bytesize / 2).map { |_obj| obj = rand(255).to_s }.join
       # Search cookie file for id
       path = File.join(ENV["HOME"], ".dbus-keyrings", context)
       DBus.logger.debug "path: #{path.inspect}"
@@ -124,7 +124,7 @@ module DBus
 
     # Start the authentication process.
     def authenticate
-      if (RbConfig::CONFIG["target_os"] =~ /freebsd/)
+      if RbConfig::CONFIG["target_os"] =~ /freebsd/
         @socket.sendmsg(0.chr, 0, nil, [:SOCKET, :SCM_CREDS, ""])
       else
         @socket.write(0.chr)
@@ -133,13 +133,15 @@ module DBus
       @state = :Starting
       while @state != :Authenticated
         r = next_state
-        return r if not r
+        return r if !r
       end
       true
     end
 
     ##########
+
     private
+
     ##########
 
     # Send an authentication method _meth_ with arguments _args_ to the
@@ -151,22 +153,21 @@ module DBus
 
     # Try authentication using the next authenticator.
     def next_authenticator
-      begin
-        raise AuthenticationFailed if @auth_list.size == 0
-        @authenticator = @auth_list.shift.new
-        auth_msg = ["AUTH", @authenticator.name, @authenticator.authenticate]
-        DBus.logger.debug "auth_msg: #{auth_msg.inspect}"
-        send(auth_msg)
-      rescue AuthenticationFailed
-        @socket.close
-        raise
-      end
+      raise AuthenticationFailed if @auth_list.empty?
+      @authenticator = @auth_list.shift.new
+      auth_msg = ["AUTH", @authenticator.name, @authenticator.authenticate]
+      DBus.logger.debug "auth_msg: #{auth_msg.inspect}"
+      send(auth_msg)
+    rescue AuthenticationFailed
+      @socket.close
+      raise
     end
 
     # Read data (a buffer) from the bus until CR LF is encountered.
     # Return the buffer without the CR LF characters.
     def next_msg
-      data, crlf = "", "\r\n"
+      data = ""
+      crlf = "\r\n"
       left = 1024 # 1024 byte, no idea if it's ever getting bigger
       while left > 0
         buf = @socket.read(left > 1 ? 1 : left)
@@ -177,16 +178,14 @@ module DBus
       end
       readline = data.chomp.split(" ")
       DBus.logger.debug "readline: #{readline.inspect}"
-      return readline
+      readline
     end
 
-=begin
-    # Read data (a buffer) from the bus until CR LF is encountered.
-    # Return the buffer without the CR LF characters.
-    def next_msg
-      @socket.readline.chomp.split(" ")
-    end
-=end
+    #     # Read data (a buffer) from the bus until CR LF is encountered.
+    #     # Return the buffer without the CR LF characters.
+    #     def next_msg
+    #       @socket.readline.chomp.split(" ")
+    #     end
 
     # Try to reach the next state based on the current state.
     def next_state
@@ -262,7 +261,7 @@ module DBus
           return false
         end
       end
-      return true
+      true
     end # def next_state
   end # class Client
 end # module D-Bus

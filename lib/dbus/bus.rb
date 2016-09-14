@@ -28,7 +28,8 @@ module DBus
 
     # Create a new service with a given _name_ on a given _bus_.
     def initialize(name, bus)
-      @name, @bus = name, bus
+      @name = name
+      @bus = bus
       @root = Node.new("/")
     end
 
@@ -78,7 +79,7 @@ module DBus
     # Raises ArgumentError if it is not a DBus::Object.
     # Returns the object, or false if _obj_ was not exported.
     def unexport(obj)
-      raise ArgumentError.new("DBus::Service#unexport() expects a DBus::Object argument") unless obj.kind_of?(DBus::Object)
+      raise ArgumentError, "DBus::Service#unexport() expects a DBus::Object argument" unless obj.is_a?(DBus::Object)
       return false unless obj.path
       pathSep = obj.path.rindex("/") # last path seperator
       parent_path = obj.path[1..pathSep - 1]
@@ -95,8 +96,8 @@ module DBus
     def get_node(path, create = false)
       n = @root
       path.sub(/^\//, "").split("/").each do |elem|
-        if not n[elem]
-          if not create
+        if !(n[elem])
+          if !create
             return nil
           else
             n[elem] = Node.new(elem)
@@ -111,7 +112,9 @@ module DBus
     end
 
     #########
+
     private
+
     #########
 
     # Perform a recursive retrospection on the given current _node_
@@ -121,14 +124,14 @@ module DBus
       intfs, subnodes = IntrospectXMLParser.new(xml).parse
       subnodes.each do |nodename|
         subnode = node[nodename] = Node.new(nodename)
-        if path == "/"
-          subpath = "/" + nodename
-        else
-          subpath = path + "/" + nodename
-        end
+        subpath = if path == "/"
+                    "/" + nodename
+                  else
+                    path + "/" + nodename
+                  end
         rec_introspect(subnode, subpath)
       end
-      if intfs.size > 0
+      if !intfs.empty?
         node.object = ProxyObjectFactory.new(xml, @bus, @name, path).build
       end
     end
@@ -156,12 +159,12 @@ module DBus
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
 '
-      self.each_pair do |k, v|
+      each_pair do |k, _v|
         xml += "<node name=\"#{k}\" />"
       end
       if @object
-        @object.intfs.each_pair do |k, v|
-          xml += %{<interface name="#{v.name}">\n}
+        @object.intfs.each_pair do |_k, v|
+          xml += %(<interface name="#{v.name}">\n)
           v.methods.each_value { |m| xml += m.to_xml }
           v.signals.each_value { |m| xml += m.to_xml }
           xml += "</interface>\n"
@@ -180,7 +183,7 @@ module DBus
     # Return instance inspect information, used by Node#inspect.
     def sub_inspect
       s = ""
-      if not @object.nil?
+      if !@object.nil?
         s += "%x " % @object.object_id
       end
       s + "{" + keys.collect { |k| "#{k} => #{self[k].sub_inspect}" }.join(",") + "}"
@@ -208,9 +211,9 @@ module DBus
     def initialize(path)
       @message_queue = MessageQueue.new(path)
       @unique_name = nil
-      @method_call_replies = Hash.new
-      @method_call_msgs = Hash.new
-      @signal_matchrules = Hash.new
+      @method_call_replies = {}
+      @method_call_msgs = {}
+      @signal_matchrules = {}
       @proxy = nil
       @object_root = Node.new("/")
     end
@@ -219,7 +222,7 @@ module DBus
     # but do not block on the queue.
     # Called by a main loop when something is available in the queue
     def dispatch_message_queue
-      while (msg = @message_queue.pop(:non_block)) # FIXME EOFError
+      while (msg = @message_queue.pop(:non_block)) # FIXME: EOFError
         process(msg)
       end
     end
@@ -228,11 +231,11 @@ module DBus
     def glibize
       require "glib2"
       # Circumvent a ruby-glib bug
-      @channels ||= Array.new
+      @channels ||= []
 
       gio = GLib::IOChannel.new(@message_queue.socket.fileno)
       @channels << gio
-      gio.add_watch(GLib::IOChannel::IN) do |c, ch|
+      gio.add_watch(GLib::IOChannel::IN) do |_c, _ch|
         dispatch_message_queue
         true
       end
@@ -326,7 +329,7 @@ module DBus
     </signal>
   </interface>
 </node>
-'
+'.freeze
     # This apostroph is for syntax highlighting editors confused by above xml: "
 
     # @api private
@@ -371,7 +374,7 @@ module DBus
         send_sync_or_async(m).first
       else
         send_sync_or_async(m) do |*args|
-          # TODO test async introspection, is it used at all?
+          # TODO: test async introspection, is it used at all?
           args.shift # forget the message, pass only the text
           reply_handler.call(*args)
           nil
@@ -389,7 +392,7 @@ module DBus
     # The returned object is a ProxyObject that has methods you can call to
     # issue somme METHOD_CALL messages, and to setup to receive METHOD_RETURN
     def introspect(dest, path)
-      if not block_given?
+      if !block_given?
         # introspect in synchronous !
         data = introspect_data(dest, path)
         pof = DBus::ProxyObjectFactory.new(data, self, dest, path)
@@ -431,7 +434,7 @@ module DBus
     #   ({DBus::ApiOptions#proxy_method_returns_array})
     # Returns the object.
     def proxy
-      if @proxy == nil
+      if @proxy.nil?
         path = "/org/freedesktop/DBus"
         dest = "org.freedesktop.DBus"
         pof = DBus::ProxyObjectFactory.new(
@@ -446,7 +449,7 @@ module DBus
     # @api private
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
-      @message_queue.pop # FIXME EOFError
+      @message_queue.pop # FIXME: EOFError
     end
 
     # @api private
@@ -462,7 +465,7 @@ module DBus
       return if retm.nil? # check if somethings wrong
 
       process(retm)
-      while @method_call_replies.has_key? m.serial
+      while @method_call_replies.key? m.serial
         retm = wait_for_message
         process(retm)
       end
@@ -510,9 +513,9 @@ module DBus
       return if m.nil? # check if somethings wrong
       case m.message_type
       when Message::ERROR, Message::METHOD_RETURN
-        raise InvalidPacketException if m.reply_serial == nil
+        raise InvalidPacketException if m.reply_serial.nil?
         mcs = @method_call_replies[m.reply_serial]
-        if not mcs
+        if !mcs
           DBus.logger.debug "no return code for mcs: #{mcs.inspect} m: #{m.inspect}"
         else
           if m.message_type == Message::ERROR
@@ -528,12 +531,12 @@ module DBus
           DBus.logger.debug "Got method call on /org/freedesktop/DBus"
         end
         node = @service.get_node(m.path)
-        if not node
+        if !node
           reply = Message.error(m, "org.freedesktop.DBus.Error.UnknownObject",
                                 "Object #{m.path} doesn't exist")
           @message_queue.push(reply)
         # handle introspectable as an exception:
-        elsif m.interface == "org.freedesktop.DBus.Introspectable" and
+        elsif m.interface == "org.freedesktop.DBus.Introspectable" &&
               m.member == "Introspect"
           reply = Message.new(Message::METHOD_RETURN).reply_to(m)
           reply.sender = @unique_name
@@ -602,7 +605,6 @@ module DBus
     end
   end # class Connection
 
-
   # = D-Bus session bus class
   #
   # The session bus is a session specific bus (mostly for desktop use).
@@ -632,11 +634,11 @@ module DBus
       display = ENV["DISPLAY"][/:(\d+)\.?/, 1]
 
       bus_file_path = File.join(ENV["HOME"], "/.dbus/session-bus/#{machine_id}-#{display}")
-      return nil unless File.exists?(bus_file_path)
+      return nil unless File.exist?(bus_file_path)
 
       File.open(bus_file_path).each_line do |line|
         if line =~ /^DBUS_SESSION_BUS_ADDRESS=(.*)/
-          address = $1
+          address = Regexp.last_match(1)
           return address[/\A'(.*)'\z/, 1] || address[/\A"(.*)"\z/, 1] || address
         end
       end
@@ -647,7 +649,6 @@ module DBus
   class SessionBus < ASessionBus
     include Singleton
   end
-
 
   # = D-Bus system bus class
   #
@@ -676,9 +677,8 @@ module DBus
   # you'll need to take care about authentification then, more info here:
   # http://github.com/pangdudu/ruby-dbus/blob/master/README.rdoc
   class RemoteBus < Connection
-
     # Get the remote bus.
-    def initialize socket_name
+    def initialize(socket_name)
       super(socket_name)
       send_hello
     end
@@ -691,13 +691,13 @@ module DBus
 
   # Shortcut for the {SystemBus} instance
   # @return [Connection]
-  def DBus.system_bus
+  def self.system_bus
     SystemBus.instance
   end
 
   # Shortcut for the {SessionBus} instance
   # @return [Connection]
-  def DBus.session_bus
+  def self.session_bus
     SessionBus.instance
   end
 
@@ -709,7 +709,7 @@ module DBus
   class Main
     # Create a new main event loop.
     def initialize
-      @buses = Hash.new
+      @buses = {}
       @quitting = false
     end
 
@@ -732,7 +732,7 @@ module DBus
           b.process(m)
         end
       end
-      while not @quitting and not @buses.empty?
+      while !@quitting && !@buses.empty?
         ready = IO.select(@buses.keys, [], [], 5) # timeout 5 seconds
         next unless ready # timeout exceeds so continue unless quitting
         ready.first.each do |socket|

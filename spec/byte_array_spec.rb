@@ -12,7 +12,6 @@ describe "ByteArrayTest" do
     @obj.default_iface = "org.ruby.SampleInterface"
   end
 
-
   it "tests passing byte array" do
     data = [0, 77, 255]
     result = @obj.mirror_byte_array(data).first

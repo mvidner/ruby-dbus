@@ -41,25 +41,26 @@ module DBus
     def initialize(name)
       validate_name(name)
       @name = name
-      @methods, @signals = Hash.new, Hash.new
+      @methods = {}
+      @signals = {}
     end
 
     # Validates a service _name_.
     def validate_name(name)
       raise InvalidIntrospectionData if name.bytesize > 255
-      raise InvalidIntrospectionData if name =~ /^\./ or name =~ /\.$/
+      raise InvalidIntrospectionData if name =~ /^\./ || name =~ /\.$/
       raise InvalidIntrospectionData if name =~ /\.\./
-      raise InvalidIntrospectionData if not name =~ /\./
+      raise InvalidIntrospectionData if !(name =~ /\./)
       name.split(".").each do |element|
-        raise InvalidIntrospectionData if not element =~ InterfaceElementRE
+        raise InvalidIntrospectionData if !(element =~ InterfaceElementRE)
       end
     end
 
     # Helper method for defining a method _m_.
     def define(m)
-      if m.kind_of?(Method)
+      if m.is_a?(Method)
         @methods[m.name.to_sym] = m
-      elsif m.kind_of?(Signal)
+      elsif m.is_a?(Signal)
         @signals[m.name.to_sym] = m
       end
     end
@@ -89,7 +90,6 @@ module DBus
       case index
       when 0 then name
       when 1 then type
-      else nil
       end
     end
   end
@@ -106,7 +106,7 @@ module DBus
 
     # Validates element _name_.
     def validate_name(name)
-      if (not name =~ MethodSignalRE) or (name.bytesize > 255)
+      if !(name =~ MethodSignalRE) || (name.bytesize > 255)
         raise InvalidMethodName, name
       end
     end
@@ -115,7 +115,7 @@ module DBus
     def initialize(name)
       validate_name(name.to_s)
       @name = name
-      @params = Array.new
+      @params = []
     end
 
     # Adds a formal parameter with _name_ and _signature_
@@ -140,7 +140,7 @@ module DBus
     # Creates a new method interface element with the given _name_.
     def initialize(name)
       super(name)
-      @rets = Array.new
+      @rets = []
     end
 
     # Add a return value _name_ and _signature_.
@@ -172,16 +172,16 @@ module DBus
 
     # Return an XML string representation of the method interface elment.
     def to_xml
-      xml = %{<method name="#{@name}">\n}
+      xml = %(<method name="#{@name}">\n)
       @params.each do |param|
-        name = param.name ? %{name="#{param.name}" } : ""
-        xml += %{<arg #{name}direction="in" type="#{param.type}"/>\n}
+        name = param.name ? %(name="#{param.name}" ) : ""
+        xml += %(<arg #{name}direction="in" type="#{param.type}"/>\n)
       end
       @rets.each do |param|
-        name = param.name ? %{name="#{param.name}" } : ""
-        xml += %{<arg #{name}direction="out" type="#{param.type}"/>\n}
+        name = param.name ? %(name="#{param.name}" ) : ""
+        xml += %(<arg #{name}direction="out" type="#{param.type}"/>\n)
       end
-      xml += %{</method>\n}
+      xml += %(</method>\n)
       xml
     end
   end # class Method
@@ -206,14 +206,13 @@ module DBus
 
     # Return an XML string representation of the signal interface elment.
     def to_xml
-      xml = %{<signal name="#{@name}">\n}
+      xml = %(<signal name="#{@name}">\n)
       @params.each do |param|
-        name = param.name ? %{name="#{param.name}" } : ""
-        xml += %{<arg #{name}type="#{param.type}"/>\n}
+        name = param.name ? %(name="#{param.name}" ) : ""
+        xml += %(<arg #{name}type="#{param.type}"/>\n)
       end
-      xml += %{</signal>\n}
+      xml += %(</signal>\n)
       xml
     end
   end # class Signal
 end # module DBus
-

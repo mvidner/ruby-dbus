@@ -26,6 +26,6 @@ describe "ThreadSafetyTest" do
         end
       end
     end
-    jobs.each do |thread| thread.join end
+    jobs.each(&:join)
   end
 end

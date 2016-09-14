@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 if ARGV[0].nil?
-  puts "Usage: #{$0} file.md"
+  puts "Usage: #{$PROGRAM_NAME} file.md"
   exit
 end
 
@@ -11,7 +11,7 @@ File.open(ARGV[0]) do |f|
   f.each_line do |line|
     case line
     when /^#+ *(.*)/
-      new_title = $1
+      new_title = Regexp.last_match(1)
 
       # write previous example
       unless example.empty?
@@ -22,7 +22,7 @@ File.open(ARGV[0]) do |f|
           File.open("#{basename}.rb", "w") do |e|
             e.write setup
             e.write example
-            e.chmod(0755)
+            e.chmod(0o755)
           end
         end
       end
@@ -31,7 +31,7 @@ File.open(ARGV[0]) do |f|
       title = new_title
       example = ""
     when /^    (.*)/
-      example << $1 << "\n"
+      example << Regexp.last_match(1) << "\n"
     end
   end
 end

@@ -4,14 +4,14 @@
 require_relative "spec_helper"
 SimpleCov.command_name "Service Tests" if Object.const_defined? "SimpleCov"
 # find the library without external help
-$:.unshift File.expand_path("../../lib", __FILE__)
+$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
 require "dbus"
 
-PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
+PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties".freeze
 
 class Test < DBus::Object
-  INTERFACE = "org.ruby.SampleInterface"
+  INTERFACE = "org.ruby.SampleInterface".freeze
   def initialize(path)
     super path
     @read_me = "READ ME"
@@ -99,7 +99,7 @@ class Test < DBus::Object
     # starts doing something long, but returns immediately
     # and sends a signal when done
     dbus_method :LongTaskBegin, "in delay:i" do |delay|
-      # FIXME did not complain about mismatch between signature and block args
+      # FIXME: did not complain about mismatch between signature and block args
       self.LongTaskStart
       DBus.logger.debug "Long task began"
       task = Thread.new do
@@ -160,7 +160,7 @@ class Test < DBus::Object
       if interface == INTERFACE
         [{
           "ReadMe" => @read_me,
-          "ReadOrWriteMe" => @read_or_write_me,
+          "ReadOrWriteMe" => @read_or_write_me
         }]
       else
         raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"), "Interface '#{interface}' not found on object '#{@path}'"
@@ -214,4 +214,3 @@ begin
 rescue SystemCallError
   # the test driver will kill the bus, that's OK
 end
-
