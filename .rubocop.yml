@@ -21,3 +21,39 @@ Style/IndentationConsistency:
   Exclude:
     # a conflict between markdown and ruby indentation
     - examples/doc/variants.rb
+
+# I am not ready to fix these
+Style/IfUnlessModifier:
+  Enabled: false
+
+# I am not ready to fix these
+Style/WhileUntilModifier:
+  Enabled: false
+
+# I am not ready to fix these
+Style/NegatedIf:
+  Enabled: false
+
+Style/EmptyElse:
+  EnforcedStyle: "nil"
+
+# Prefer readability over performance
+Performance/RedundantBlockCall:
+  Enabled: false
+
+# Need to check whether API stays OK
+Lint/InheritException:
+  Exclude:
+    - 'lib/dbus.rb'
+    - 'lib/dbus/auth.rb'
+    - 'lib/dbus/bus.rb'
+    - 'lib/dbus/introspect.rb'
+    - 'lib/dbus/marshall.rb'
+    - 'lib/dbus/matchrule.rb'
+    - 'lib/dbus/message.rb'
+    - 'lib/dbus/type.rb'
+
+# disable foo, _ = -> foo, = b/
+# WTF: spec/introspect_xml_parser_spec.rb
+#-    interfaces, _ = DBus::IntrospectXMLParser.new(xml).parse
+#+    interfaces, = DBus::IntrospectXMLParser.new(xml).parse
