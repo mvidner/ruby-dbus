@@ -1,9 +1,10 @@
-if ENV["COVERAGE"]
-  coverage = ENV["COVERAGE"] == "true"
-else
-  # heuristics: enable for interactive builds (but not in OBS) or in Travis
-  coverage = !!ENV["DISPLAY"] || ENV["TRAVIS"]
-end
+coverage = if ENV["COVERAGE"]
+             ENV["COVERAGE"] == "true"
+           else
+             # heuristics: enable for interactive builds (but not in OBS)
+             # or in Travis
+             !!ENV["DISPLAY"] || ENV["TRAVIS"]
+           end
 
 if coverage
   require "simplecov"

@@ -157,10 +157,13 @@ Style/GlobalVars:
 # Configuration parameters: MinBodyLength.
 Style/GuardClause:
   Exclude:
+    - 'examples/gdbus/gdbus'
     - 'lib/dbus/bus.rb'
+    - 'lib/dbus/introspect.rb'
     - 'lib/dbus/matchrule.rb'
     - 'lib/dbus/message.rb'
     - 'lib/dbus/proxy_object.rb'
+    - 'spec/service_newapi.rb'
 
 # Offense count: 1
 Style/MultilineBlockChain:
