@@ -3,7 +3,7 @@ coverage = if ENV["COVERAGE"]
            else
              # heuristics: enable for interactive builds (but not in OBS)
              # or in Travis
-             !!ENV["DISPLAY"] || ENV["TRAVIS"]
+             ENV["DISPLAY"] || ENV["TRAVIS"]
            end
 
 if coverage

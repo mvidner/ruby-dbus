@@ -123,11 +123,6 @@ Style/Documentation:
     - 'lib/dbus/xml.rb'
 
 # Offense count: 1
-Style/DoubleNegation:
-  Exclude:
-    - 'spec/spec_helper.rb'
-
-# Offense count: 1
 Style/EachWithObject:
   Exclude:
     - 'lib/dbus/marshall.rb'
