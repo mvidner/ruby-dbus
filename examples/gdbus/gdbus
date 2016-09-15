@@ -118,7 +118,7 @@ class DBusUI
                                DBus::ProxyObjectInterface)
     @methsigtreeview.model = model
     if selected
-      if intf = selected[1]
+      if (intf = selected[1])
         intf.methods.keys.sort.each do |mi|
           m = intf.methods[mi]
           subiter = model.append

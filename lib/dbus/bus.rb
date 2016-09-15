@@ -728,7 +728,7 @@ module DBus
       # before blocking, empty the buffers
       # https://bugzilla.novell.com/show_bug.cgi?id=537401
       @buses.each_value do |b|
-        while m = b.message_queue.message_from_buffer_nonblock
+        while (m = b.message_queue.message_from_buffer_nonblock)
           b.process(m)
         end
       end
@@ -743,7 +743,7 @@ module DBus
             @buses.delete socket # this bus died
             next
           end
-          while m = b.message_queue.message_from_buffer_nonblock
+          while (m = b.message_queue.message_from_buffer_nonblock)
             b.process(m)
           end
         end

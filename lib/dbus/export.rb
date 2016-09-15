@@ -21,6 +21,8 @@ module DBus
     attr_reader :path
     # The interfaces that the object supports. Hash: String => Interface
     class_attribute :intfs
+    self.intfs = {}
+
     # The service that the object is exported by.
     attr_writer :service
 
@@ -75,9 +77,15 @@ module DBus
     # belong to.
     def self.dbus_interface(s)
       @@intfs_mutex.synchronize do
-        unless @@cur_intf = (intfs && intfs[s])
+        @@cur_intf = intfs[s]
+        if !@@cur_intf
           @@cur_intf = Interface.new(s)
-          self.intfs = (intfs || {}).merge(s => @@cur_intf)
+          # As this is a mutable class_attr, we cannot use
+          #   self.intfs[s] = @@cur_intf                      # Hash#[]=
+          # as that would modify parent class attr in place.
+          # Using the setter lets a subclass have the new value
+          # while the superclass keeps the old one.
+          self.intfs = intfs.merge(s => @@cur_intf)
         end
         yield
         @@cur_intf = nil
