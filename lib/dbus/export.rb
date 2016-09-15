@@ -119,10 +119,10 @@ module DBus
     end
 
     ####################################################################
-    private
 
     # Helper method that returns a method name generated from the interface
     # name _intfname_ and method name _methname_.
+    # @api private
     def self.make_method_name(intfname, methname)
       "#{intfname}%%#{methname}"
     end

@@ -21,11 +21,6 @@ Lint/HandleExceptions:
     - 'spec/service_newapi.rb'
 
 # Offense count: 1
-Lint/IneffectiveAccessModifier:
-  Exclude:
-    - 'lib/dbus/export.rb'
-
-# Offense count: 1
 Lint/NestedMethodDefinition:
   Exclude:
     - 'spec/main_loop_spec.rb'
@@ -37,11 +32,6 @@ Lint/RescueException:
     - 'examples/no-introspect/nm-test.rb'
     - 'lib/dbus/bus.rb'
     - 'lib/dbus/message_queue.rb'
-
-# Offense count: 1
-Lint/UselessAccessModifier:
-  Exclude:
-    - 'lib/dbus/export.rb'
 
 # Offense count: 7
 Lint/UselessAssignment:
