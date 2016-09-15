@@ -192,10 +192,7 @@ module DBus
         end
 
         if signature.child.sigtype == Type::DICT_ENTRY
-          packet = packet.inject({}) do |hash, pair|
-            hash[pair[0]] = pair[1]
-            hash
-          end
+          packet = Hash[packet]
         end
       when Type::STRUCT
         align(8)

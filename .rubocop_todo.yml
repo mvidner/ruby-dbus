@@ -91,17 +91,6 @@ Style/Documentation:
     - 'lib/dbus/type.rb'
     - 'lib/dbus/xml.rb'
 
-# Offense count: 1
-Style/EachWithObject:
-  Exclude:
-    - 'lib/dbus/marshall.rb'
-
-# Offense count: 1
-# Configuration parameters: ExpectMatchingDefinition, Regex, IgnoreExecutableScripts.
-Style/FileName:
-  Exclude:
-    - 'ex-upower.rb'
-
 # Offense count: 2
 # Configuration parameters: EnforcedStyle, SupportedStyles.
 # SupportedStyles: format, sprintf, percent
