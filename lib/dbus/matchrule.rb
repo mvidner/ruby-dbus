@@ -47,11 +47,9 @@ module DBus
     # Returns a match rule string version of the object.
     # E.g.:  "type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='Foo',path='/bar/foo',destination=':452345.34',arg2='bar'"
     def to_s
-      FILTERS.select do |sym|
-        !method(sym).call.nil?
-      end.collect do |sym|
-        "#{sym}='#{method(sym).call}'"
-      end.join(",")
+      present_rules = FILTERS.select { |sym| method(sym).call }
+      present_rules.map! { |sym| "#{sym}='#{method(sym).call}'" }
+      present_rules.join(",")
     end
 
     # Parses a match rule string _s_ and sets the filters on the object.
