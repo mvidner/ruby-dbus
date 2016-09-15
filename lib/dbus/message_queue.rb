@@ -32,7 +32,7 @@ module DBus
       unless non_block
         # we can block
         while message.nil?
-          r, d, d = IO.select([@socket])
+          r, _d, _d = IO.select([@socket])
           if r && r[0] == @socket
             buffer_from_socket_nonblock
             message = message_from_buffer_nonblock

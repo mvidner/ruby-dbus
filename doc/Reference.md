@@ -150,7 +150,7 @@ To receive signals for a specific object and interface, use
       session_o = login_s.object(opath)
       session_o.introspect
       session_i = session_o["org.freedesktop.login1.Session"]
-      uid, user_opath = session_i["User"]
+      uid, _user_opath = session_i["User"]
       puts "Its UID: #{uid}"
       main.quit
     end

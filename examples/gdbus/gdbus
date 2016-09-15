@@ -143,7 +143,6 @@ class DBusUI
     name = view.model.get_iter(path)[0]
     puts "Clicked on: #{name.inspect}"
     type = view.model.get_iter(path)[1]
-    intf = view.model.get_iter(path)[2]
     if type == "M"
       method = view.model.get_iter(path)[2]
       intf = view.model.get_iter(path)[3]
@@ -162,7 +161,6 @@ class DBusUI
   def on_sessiontreeview_row_activated(view, path, _column)
     name = view.model.get_iter(path)[0]
     puts "Clicked on: #{name.inspect}"
-    intf = view.model.get_iter(path)[1]
   end
 
   def on_window_delete_event(_window, _event)
@@ -171,7 +169,7 @@ class DBusUI
 
   def setup_methodview_renderer(treeview)
     renderer = Gtk::CellRendererText.new
-    col_offset = treeview.insert_column(-1, "T", renderer, "text" => 1)
+    _col_offset = treeview.insert_column(-1, "T", renderer, "text" => 1)
     col_offset = treeview.insert_column(-1, "Name", renderer, "text" => 0)
     column = treeview.get_column(col_offset - 1)
     column.clickable = true

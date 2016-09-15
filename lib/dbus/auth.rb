@@ -68,7 +68,7 @@ module DBus
       # name of cookie file, id of cookie in file, servers random challenge
       context, id, s_challenge = data.split(" ")
       # Random client challenge
-      c_challenge = Array.new(s_challenge.bytesize / 2).map { |_obj| obj = rand(255).to_s }.join
+      c_challenge = 1.upto(s_challenge.bytesize / 2).map { rand(255).to_s }.join
       # Search cookie file for id
       path = File.join(ENV["HOME"], ".dbus-keyrings", context)
       DBus.logger.debug "path: #{path.inspect}"

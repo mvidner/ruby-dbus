@@ -33,14 +33,6 @@ Lint/RescueException:
     - 'lib/dbus/bus.rb'
     - 'lib/dbus/message_queue.rb'
 
-# Offense count: 7
-Lint/UselessAssignment:
-  Exclude:
-    - 'examples/doc/receiving_signals.rb'
-    - 'examples/gdbus/gdbus'
-    - 'lib/dbus/auth.rb'
-    - 'lib/dbus/message_queue.rb'
-
 # Offense count: 34
 Metrics/AbcSize:
   Max: 126
