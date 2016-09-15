@@ -147,13 +147,13 @@ module DBus
           res << child
         when "("
           res = Type.new(STRUCT)
-          while (c = nextchar) != nil && c != ")"
+          while (c = nextchar) && c != ")"
             res << parse_one(c)
           end
           raise SignatureException, "Parse error in #{@signature}" if c.nil?
         when "{"
           res = Type.new(DICT_ENTRY)
-          while (c = nextchar) != nil && c != "}"
+          while (c = nextchar) && c != "}"
             res << parse_one(c)
           end
           raise SignatureException, "Parse error in #{@signature}" if c.nil?

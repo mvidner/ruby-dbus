@@ -165,13 +165,6 @@ Style/MultilineBlockChain:
   Exclude:
     - 'lib/dbus/matchrule.rb'
 
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: IncludeSemanticChanges.
-Style/NonNilCheck:
-  Exclude:
-    - 'lib/dbus/type.rb'
-
 # Offense count: 1
 Style/OptionalArguments:
   Exclude:
