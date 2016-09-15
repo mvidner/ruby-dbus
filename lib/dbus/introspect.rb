@@ -106,9 +106,8 @@ module DBus
 
     # Validates element _name_.
     def validate_name(name)
-      if !(name =~ METHOD_SIGNAL_RE) || (name.bytesize > 255)
-        raise InvalidMethodName, name
-      end
+      return if (name =~ METHOD_SIGNAL_RE) && (name.bytesize <= 255)
+      raise InvalidMethodName, name
     end
 
     # Creates a new element with the given _name_.

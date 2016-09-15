@@ -200,10 +200,10 @@ class DBusUI
     DBus::SessionBus.instance.proxy.ListNames do |_msg, names|
       fill_treeview(DBus::SessionBus.instance, @sessiontreeview, names)
     end
-    if $enable_system
-      DBus::SystemBus.instance.proxy.ListNames do |_msg, names|
-        fill_treeview(DBus::SystemBus.instance, @systemtreeview, names)
-      end
+
+    return unless $enable_system
+    DBus::SystemBus.instance.proxy.ListNames do |_msg, names|
+      fill_treeview(DBus::SystemBus.instance, @systemtreeview, names)
     end
   end
 
@@ -213,12 +213,12 @@ class DBusUI
       subiter[0] = key
       walk_node(model, subiter, val)
     end
-    unless node.object.nil?
-      node.object.interfaces.sort.each do |ifname|
-        subiter = model.append(iter)
-        subiter[0] = ifname
-        subiter[1] = node.object[ifname]
-      end
+
+    return if node.object.nil?
+    node.object.interfaces.sort.each do |ifname|
+      subiter = model.append(iter)
+      subiter[0] = ifname
+      subiter[1] = node.object[ifname]
     end
   end
 

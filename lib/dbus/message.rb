@@ -95,10 +95,7 @@ module DBus
       @member = nil
       @path = nil
       @reply_serial = nil
-
-      if mtype == METHOD_RETURN
-        @flags = NO_REPLY_EXPECTED
-      end
+      @flags = NO_REPLY_EXPECTED if mtype == METHOD_RETURN
     end
 
     def to_s
@@ -255,9 +252,7 @@ module DBus
     def initialize(error_name, description = nil)
       super(ERROR)
       @error_name = error_name
-      unless description.nil?
-        add_param(Type::STRING, description)
-      end
+      add_param(Type::STRING, description) unless description.nil?
     end
 
     def self.from_exception(ex)

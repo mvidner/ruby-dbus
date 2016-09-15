@@ -84,9 +84,9 @@ module DBus
         intf.methods.each_value do |meth|
           name = meth.name.to_sym
           # don't overwrite instance methods!
-          if dup_meths.include?(name) || self.class.instance_methods.include?(name)
-            next
-          elsif univocal_meths.include? name
+          next if dup_meths.include?(name)
+          next if self.class.instance_methods.include?(name)
+          if univocal_meths.include? name
             univocal_meths.delete name
             dup_meths << name
           else
@@ -115,12 +115,9 @@ module DBus
     # It uses _default_iface_ which must have been set.
     # @return [void]
     def on_signal(name, &block)
-      if @default_iface && has_iface?(@default_iface)
-        @interfaces[@default_iface].on_signal(name, &block)
-      else
-        # TODO: improve
-        raise NoMethodError
-      end
+      # TODO: improve
+      raise NoMethodError unless @default_iface && has_iface?(@default_iface)
+      @interfaces[@default_iface].on_signal(name, &block)
     end
 
     ####################################################
@@ -129,21 +126,21 @@ module DBus
     # Handles all unkown methods, mostly to route method calls to the
     # default interface.
     def method_missing(name, *args, &reply_handler)
-      if @default_iface && has_iface?(@default_iface)
-        begin
-          @interfaces[@default_iface].method(name).call(*args, &reply_handler)
-        rescue NameError => e
-          # interesting, foo.method("unknown")
-          # raises NameError, not NoMethodError
-          raise unless e.to_s =~ /undefined method `#{name}'/
-          # BTW e.exception("...") would preserve the class.
-          raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
-        end
-      else
+      unless @default_iface && has_iface?(@default_iface)
         # TODO: distinguish:
         # - di not specified
         # TODO
         # - di is specified but not found in introspection data
+        raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
+      end
+
+      begin
+        @interfaces[@default_iface].method(name).call(*args, &reply_handler)
+      rescue NameError => e
+        # interesting, foo.method("unknown")
+        # raises NameError, not NoMethodError
+        raise unless e.to_s =~ /undefined method `#{name}'/
+        # BTW e.exception("...") would preserve the class.
         raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
       end
     end

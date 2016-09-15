@@ -61,11 +61,8 @@ module DBus
         # "
         name = Regexp.last_match(1)
         val = Regexp.last_match(2)
-        if FILTERS.member?(name.to_sym)
-          method(name + "=").call(val)
-        else
-          raise MatchRuleException, name
-        end
+        raise MatchRuleException, name unless FILTERS.member?(name.to_sym)
+        method(name + "=").call(val)
       end
       self
     end

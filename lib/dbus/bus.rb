@@ -41,11 +41,9 @@ module DBus
     # Perform an introspection on all the objects on the service
     # (starting recursively from the root).
     def introspect
-      if block_given?
-        raise NotImplementedError
-      else
-        rec_introspect(@root, "/")
-      end
+      raise NotImplementedError if block_given?
+
+      rec_introspect(@root, "/")
       self
     end
 
@@ -97,11 +95,8 @@ module DBus
       n = @root
       path.sub(%r{^/}, "").split("/").each do |elem|
         if !(n[elem])
-          if !create
-            return nil
-          else
-            n[elem] = Node.new(elem)
-          end
+          return nil if !create
+          n[elem] = Node.new(elem)
         end
         n = n[elem]
       end
@@ -131,9 +126,8 @@ module DBus
                   end
         rec_introspect(subnode, subpath)
       end
-      if !intfs.empty?
-        node.object = ProxyObjectFactory.new(xml, @bus, @name, path).build
-      end
+      return if intfs.empty?
+      node.object = ProxyObjectFactory.new(xml, @bus, @name, path).build
     end
   end
 
@@ -343,11 +337,8 @@ module DBus
       ret = nil
       if reply_handler.nil?
         send_sync(message) do |rmsg|
-          if rmsg.is_a?(Error)
-            raise rmsg
-          else
-            ret = rmsg.params
-          end
+          raise rmsg if rmsg.is_a?(Error)
+          ret = rmsg.params
         end
       else
         on_return(message) do |rmsg|
@@ -419,11 +410,9 @@ module DBus
       # method calls to be serviced arrive before the reply for RequestName
       # (Ticket#29).
       proxy.RequestName(name, NAME_FLAG_REPLACE_EXISTING) do |rmsg, r|
-        if rmsg.is_a?(Error) # check and report errors first
-          raise rmsg
-        elsif r != REQUEST_NAME_REPLY_PRIMARY_OWNER
-          raise NameRequestError
-        end
+        # check and report errors first
+        raise rmsg if rmsg.is_a?(Error)
+        raise NameRequestError unless r == REQUEST_NAME_REPLY_PRIMARY_OWNER
       end
       @service = Service.new(name, self)
       @service
@@ -499,12 +488,12 @@ module DBus
 
     def remove_match(mr)
       mrs = mr.to_s
-      unless @signal_matchrules.delete(mrs).nil?
-        # don't remove nonexisting matches.
-        # FIXME if we do try, the Error.MatchRuleNotFound is *not* raised
-        # and instead is reported as "no return code for nil"
-        proxy.RemoveMatch(mrs)
-      end
+      rule_existed = @signal_matchrules.delete(mrs).nil?
+      # don't remove nonexisting matches.
+      return if rule_existed
+      # FIXME: if we do try, the Error.MatchRuleNotFound is *not* raised
+      # and instead is reported as "no return code for nil"
+      proxy.RemoveMatch(mrs)
     end
 
     # @api private
