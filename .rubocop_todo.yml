@@ -193,16 +193,6 @@ Style/PredicateName:
     - 'lib/dbus/proxy_object.rb'
     - 'lib/dbus/xml.rb'
 
-# Offense count: 5
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles, AllowInnerSlashes.
-# SupportedStyles: slashes, percent_r, mixed
-Style/RegexpLiteral:
-  Exclude:
-    - 'Rakefile'
-    - 'lib/dbus/bus.rb'
-    - 'spec/session_bus_spec.rb'
-
 # Offense count: 1
 # Configuration parameters: EnforcedStyle, SupportedStyles.
 # SupportedStyles: snake_case, camelCase

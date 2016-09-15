@@ -95,7 +95,7 @@ module DBus
     # true, the the nodes in the path are created if they do not already exist.
     def get_node(path, create = false)
       n = @root
-      path.sub(/^\//, "").split("/").each do |elem|
+      path.sub(%r{^/}, "").split("/").each do |elem|
         if !(n[elem])
           if !create
             return nil

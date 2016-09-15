@@ -19,7 +19,7 @@ describe DBus::ASessionBus do
   end
 
   describe "#address_from_file" do
-    let(:session_bus_file_path) { /\.dbus\/session-bus\/baz-\d/ }
+    let(:session_bus_file_path) { %r{\.dbus/session-bus/baz-\d} }
 
     before do
       # mocks of files for address_from_file method

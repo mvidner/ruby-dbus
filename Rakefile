@@ -12,11 +12,11 @@ Packaging.configuration do |conf|
   conf.obs_target = "openSUSE_Tumbleweed"
   conf.package_name = "rubygem-ruby-dbus"
   conf.obs_sr_project = "openSUSE:Factory"
-  conf.skip_license_check << /^[^\/]*$/
-  conf.skip_license_check << /^(doc|examples|spec)\/.*/
+  conf.skip_license_check << %r{^[^/]*$}
+  conf.skip_license_check << %r{^(doc|examples|spec)/.*}
   # "Ruby on Rails is released under the MIT License."
   # but the files are missing copyright headers
-  conf.skip_license_check << /^lib\/dbus\/core_ext\//
+  conf.skip_license_check << %r{^lib/dbus/core_ext/}
 end
 
 desc "Default: run specs in the proper environment"
