@@ -36,12 +36,6 @@ module DBus
       @service = nil
     end
 
-    # State that the object implements the given _intf_.
-    def implements(intf)
-      # use a setter
-      self.intfs = (intfs || {}).merge(intf.name => intf)
-    end
-
     # Dispatch a message _msg_ to call exported methods
     def dispatch(msg)
       case msg.message_type
