@@ -10,9 +10,9 @@
 
 module DBus
   # Regular expressions that should match all method names.
-  MethodSignalRE = /^[A-Za-z][A-Za-z0-9_]*$/
+  METHOD_SIGNAL_RE = /^[A-Za-z][A-Za-z0-9_]*$/
   # Regular expressions that should match all interface names.
-  InterfaceElementRE = /^[A-Za-z][A-Za-z0-9_]*$/
+  INTERFACE_ELEMENT_RE = /^[A-Za-z][A-Za-z0-9_]*$/
 
   # Exception raised when an unknown signal is used.
   class UnknownSignal < Exception
@@ -52,7 +52,7 @@ module DBus
       raise InvalidIntrospectionData if name =~ /\.\./
       raise InvalidIntrospectionData if !(name =~ /\./)
       name.split(".").each do |element|
-        raise InvalidIntrospectionData if !(element =~ InterfaceElementRE)
+        raise InvalidIntrospectionData if !(element =~ INTERFACE_ELEMENT_RE)
       end
     end
 
@@ -106,7 +106,7 @@ module DBus
 
     # Validates element _name_.
     def validate_name(name)
-      if !(name =~ MethodSignalRE) || (name.bytesize > 255)
+      if !(name =~ METHOD_SIGNAL_RE) || (name.bytesize > 255)
         raise InvalidMethodName, name
       end
     end

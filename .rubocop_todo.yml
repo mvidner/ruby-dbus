@@ -76,11 +76,6 @@ Style/ClassVars:
     - 'lib/dbus/export.rb'
     - 'lib/dbus/message.rb'
 
-# Offense count: 2
-Style/ConstantName:
-  Exclude:
-    - 'lib/dbus/introspect.rb'
-
 # Offense count: 16
 Style/Documentation:
   Exclude:
