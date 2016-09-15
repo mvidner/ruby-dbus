@@ -81,9 +81,9 @@ module DBus
     def unexport(obj)
       raise ArgumentError, "DBus::Service#unexport() expects a DBus::Object argument" unless obj.is_a?(DBus::Object)
       return false unless obj.path
-      pathSep = obj.path.rindex("/") # last path seperator
-      parent_path = obj.path[1..pathSep - 1]
-      node_name = obj.path[pathSep + 1..-1]
+      last_path_separator_idx = obj.path.rindex("/")
+      parent_path = obj.path[1..last_path_separator_idx - 1]
+      node_name = obj.path[last_path_separator_idx + 1..-1]
 
       parent_node = get_node(parent_path, false)
       return false unless parent_node
