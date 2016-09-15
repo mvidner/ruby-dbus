@@ -91,14 +91,6 @@ Style/Documentation:
     - 'lib/dbus/type.rb'
     - 'lib/dbus/xml.rb'
 
-# Offense count: 2
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-# SupportedStyles: format, sprintf, percent
-Style/FormatString:
-  Exclude:
-    - 'lib/dbus/auth.rb'
-    - 'lib/dbus/bus.rb'
-
 # Offense count: 7
 # Configuration parameters: AllowedVariables.
 Style/GlobalVars:

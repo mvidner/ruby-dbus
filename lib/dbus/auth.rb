@@ -39,7 +39,7 @@ module DBus
       # obtain for "1000" => 31303030 This is what the server is expecting.
       # Why? I dunno. How did I come to that conclusion? by looking at rbus
       # code. I have no idea how he found that out.
-      Process.uid.to_s.split(//).collect { |a| "%x" % a[0].ord }.join
+      Process.uid.to_s.split(//).map { |d| d.ord.to_s(16) }.join
     end
   end
 

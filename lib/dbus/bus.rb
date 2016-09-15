@@ -184,7 +184,7 @@ module DBus
     def sub_inspect
       s = ""
       if !@object.nil?
-        s += "%x " % @object.object_id
+        s += format("%x ", @object.object_id)
       end
       s + "{" + keys.collect { |k| "#{k} => #{self[k].sub_inspect}" }.join(",") + "}"
     end
