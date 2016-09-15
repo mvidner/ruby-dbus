@@ -84,18 +84,18 @@ module DBus
     private
 
     # Retrieve the next _nbytes_ number of bytes from the buffer.
-    def get(nbytes)
+    def read(nbytes)
       raise IncompleteBufferException if @idx + nbytes > @buffy.bytesize
       ret = @buffy.slice(@idx, nbytes)
       @idx += nbytes
       ret
     end
 
-    # Get the string length and string itself from the buffer.
+    # Read the string length and string itself from the buffer.
     # Return the string.
-    def get_string
+    def read_string
       align(4)
-      str_sz = get(4).unpack(@uint32)[0]
+      str_sz = read(4).unpack(@uint32)[0]
       ret = @buffy.slice(@idx, str_sz)
       raise IncompleteBufferException if @idx + str_sz + 1 > @buffy.bytesize
       @idx += str_sz
@@ -107,10 +107,10 @@ module DBus
       ret
     end
 
-    # Get the signature length and signature itself from the buffer.
+    # Read the signature length and signature itself from the buffer.
     # Return the signature.
-    def get_signature
-      str_sz = get(1).unpack("C")[0]
+    def read_signature
+      str_sz = read(1).unpack("C")[0]
       ret = @buffy.slice(@idx, str_sz)
       raise IncompleteBufferException if @idx + str_sz + 1 >= @buffy.bytesize
       @idx += str_sz
@@ -128,29 +128,29 @@ module DBus
       packet = nil
       case signature.sigtype
       when Type::BYTE
-        packet = get(1).unpack("C")[0]
+        packet = read(1).unpack("C")[0]
       when Type::UINT16
         align(2)
-        packet = get(2).unpack(@uint16)[0]
+        packet = read(2).unpack(@uint16)[0]
       when Type::INT16
         align(4)
-        packet = get(4).unpack(@uint16)[0]
+        packet = read(4).unpack(@uint16)[0]
         if (packet & 0x8000) != 0
           packet -= 0x10000
         end
       when Type::UINT32, Type::UNIX_FD
         align(4)
-        packet = get(4).unpack(@uint32)[0]
+        packet = read(4).unpack(@uint32)[0]
       when Type::INT32
         align(4)
-        packet = get(4).unpack(@uint32)[0]
+        packet = read(4).unpack(@uint32)[0]
         if (packet & 0x80000000) != 0
           packet -= 0x100000000
         end
       when Type::UINT64
         align(8)
-        packet_l = get(4).unpack(@uint32)[0]
-        packet_h = get(4).unpack(@uint32)[0]
+        packet_l = read(4).unpack(@uint32)[0]
+        packet_h = read(4).unpack(@uint32)[0]
         packet = if @endianness == LIL_END
                    packet_l + packet_h * 2**32
                  else
@@ -158,8 +158,8 @@ module DBus
                  end
       when Type::INT64
         align(8)
-        packet_l = get(4).unpack(@uint32)[0]
-        packet_h = get(4).unpack(@uint32)[0]
+        packet_l = read(4).unpack(@uint32)[0]
+        packet_h = read(4).unpack(@uint32)[0]
         packet = if @endianness == LIL_END
                    packet_l + packet_h * 2**32
                  else
@@ -170,16 +170,16 @@ module DBus
         end
       when Type::DOUBLE
         align(8)
-        packet = get(8).unpack(@double)[0]
+        packet = read(8).unpack(@double)[0]
       when Type::BOOLEAN
         align(4)
-        v = get(4).unpack(@uint32)[0]
+        v = read(4).unpack(@uint32)[0]
         raise InvalidPacketException if ![0, 1].member?(v)
         packet = (v == 1)
       when Type::ARRAY
         align(4)
         # checks please
-        array_sz = get(4).unpack(@uint32)[0]
+        array_sz = read(4).unpack(@uint32)[0]
         raise InvalidPacketException if array_sz > 67_108_864
 
         align(signature.child.alignment)
@@ -201,18 +201,18 @@ module DBus
           packet << do_parse(elem)
         end
       when Type::VARIANT
-        string = get_signature
+        string = read_signature
         # error checking please
         sig = Type::Parser.new(string).parse[0]
         align(sig.alignment)
         packet = do_parse(sig)
       when Type::OBJECT_PATH
-        packet = get_string
+        packet = read_string
       when Type::STRING
-        packet = get_string
+        packet = read_string
         packet.force_encoding("UTF-8")
       when Type::SIGNATURE
-        packet = get_signature
+        packet = read_signature
       when Type::DICT_ENTRY
         align(8)
         key = do_parse(signature.members[0])
