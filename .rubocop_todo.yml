@@ -37,7 +37,7 @@ Metrics/CyclomaticComplexity:
 # Configuration parameters: AllowHeredoc, AllowURI, URISchemes.
 # URISchemes: http, https
 Metrics/LineLength:
-  Max: 189
+  Max: 120
 
 # Offense count: 50
 # Configuration parameters: CountComments.
@@ -73,14 +73,3 @@ Style/Documentation:
 Style/OptionalArguments:
   Exclude:
     - 'lib/dbus/proxy_object_interface.rb'
-
-# Offense count: 2
-# Configuration parameters: NamePrefix, NamePrefixBlacklist, NameWhitelist.
-# NamePrefix: is_, has_, have_
-# NamePrefixBlacklist: is_, has_, have_
-# NameWhitelist: is_a?
-Style/PredicateName:
-  Exclude:
-    - 'spec/**/*'
-    - 'lib/dbus/proxy_object.rb'
-    - 'lib/dbus/xml.rb'

@@ -59,7 +59,10 @@ def with_private_bus(&block)
 
   temp_dir = Dir.mktmpdir
   with_env("XDG_DATA_DIRS", temp_dir) do
-    cmd = "dbus-daemon --nofork --config-file=#{config_file_path} --print-address=3 3>#{address_file.path} --print-pid=4 4>#{pid_file.path} >#{output_file.path} 2>&1 &"
+    cmd = "dbus-daemon --nofork --config-file=#{config_file_path} " \
+          "--print-address=3 3>#{address_file.path} " \
+          "--print-pid=4 4>#{pid_file.path} " \
+          ">#{output_file.path} 2>&1 &"
     system cmd
 
     # wait until dbus-daemon writes the info

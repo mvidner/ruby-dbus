@@ -122,7 +122,8 @@ class Test < DBus::Object
   dbus_interface PROPERTY_INTERFACE do
     dbus_method :Get, "in interface:s, in propname:s, out value:v" do |interface, propname|
       unless interface == INTERFACE
-        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"), "Interface '#{interface}' not found on object '#{@path}'"
+        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
+              "Interface '#{interface}' not found on object '#{@path}'"
       end
 
       case propname
@@ -131,22 +132,26 @@ class Test < DBus::Object
       when "ReadOrWriteMe"
         [@read_or_write_me]
       when "WriteMe"
-        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"), "Property '#{interface}.#{propname}' (on object '#{@path}') is not readable"
+        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
+              "Property '#{interface}.#{propname}' (on object '#{@path}') is not readable"
       else
         # what should happen for unknown properties
         # plasma: InvalidArgs (propname), UnknownInterface (interface)
-        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"), "Property '#{interface}.#{propname}' not found on object '#{@path}'"
+        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
+              "Property '#{interface}.#{propname}' not found on object '#{@path}'"
       end
     end
 
     dbus_method :Set, "in interface:s, in propname:s, in  value:v" do |interface, propname, value|
       unless interface == INTERFACE
-        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"), "Interface '#{interface}' not found on object '#{@path}'"
+        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
+              "Interface '#{interface}' not found on object '#{@path}'"
       end
 
       case propname
       when "ReadMe"
-        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"), "Property '#{interface}.#{propname}' (on object '#{@path}') is not writable"
+        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
+              "Property '#{interface}.#{propname}' (on object '#{@path}') is not writable"
       when "ReadOrWriteMe"
         @read_or_write_me = value
         self.PropertiesChanged(interface, { propname => value }, [])
@@ -154,13 +159,15 @@ class Test < DBus::Object
         @read_me = value
         self.PropertiesChanged(interface, { "ReadMe" => value }, [])
       else
-        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"), "Property '#{interface}.#{propname}' not found on object '#{@path}'"
+        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
+              "Property '#{interface}.#{propname}' not found on object '#{@path}'"
       end
     end
 
     dbus_method :GetAll, "in interface:s, out value:a{sv}" do |interface|
       unless interface == INTERFACE
-        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"), "Interface '#{interface}' not found on object '#{@path}'"
+        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
+              "Interface '#{interface}' not found on object '#{@path}'"
       end
 
       [

@@ -70,6 +70,10 @@ Lint/RescueException:
     - 'lib/dbus/bus.rb'
     - 'lib/dbus/message_queue.rb'
 
+Style/PredicateName:
+  NamePrefix:
+    # has_ and have_ are allowed
+    - is_
 
 # disable foo, _ = -> foo, = b/
 # WTF: spec/introspect_xml_parser_spec.rb

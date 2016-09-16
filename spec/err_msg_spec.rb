@@ -16,15 +16,18 @@ describe "ErrMsgTest" do
   it "tests report dbus interface" do
     # a specific exception...
     # mentioning DBus and the interface
-    expect { @obj.NoSuchMethod }.to raise_error(NameError, /DBus interface.*#{@obj.default_iface}/)
+    expect { @obj.NoSuchMethod }
+      .to raise_error(NameError, /DBus interface.*#{@obj.default_iface}/)
   end
 
   it "tests report short struct" do
-    expect { @obj.test_variant ["(ss)", ["too few"]] }.to raise_error(DBus::TypeException, /1 elements but type info for 2/)
+    expect { @obj.test_variant ["(ss)", ["too few"]] }
+      .to raise_error(DBus::TypeException, /1 elements but type info for 2/)
   end
 
   it "tests report long struct" do
-    expect { @obj.test_variant ["(ss)", ["a", "b", "too many"]] }.to raise_error(DBus::TypeException, /3 elements but type info for 2/)
+    expect { @obj.test_variant ["(ss)", ["a", "b", "too many"]] }
+      .to raise_error(DBus::TypeException, /3 elements but type info for 2/)
   end
 
   it "tests report nil" do
@@ -36,7 +39,8 @@ describe "ErrMsgTest" do
     nils.each do |has_nil|
       # TODO: want backtrace from the perspective of the caller:
       # rescue/reraise in send_sync?
-      expect { @obj.test_variant has_nil }.to raise_error(DBus::TypeException, /Cannot send nil/)
+      expect { @obj.test_variant has_nil }
+        .to raise_error(DBus::TypeException, /Cannot send nil/)
     end
   end
 end
