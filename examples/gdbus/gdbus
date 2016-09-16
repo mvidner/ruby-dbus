@@ -8,7 +8,7 @@
 require "dbus"
 require "gtk2"
 
-$enable_system = false
+ENABLE_SYSTEM = false
 
 class MethodCallWindow
   def initialize(pwindow, intf, meth)
@@ -195,13 +195,13 @@ class DBusUI
   def start_buses
     # call glibize to get dbus messages from the glib mainloop
     DBus::SessionBus.instance.glibize
-    DBus::SystemBus.instance.glibize if $enable_system
+    DBus::SystemBus.instance.glibize if ENABLE_SYSTEM
 
     DBus::SessionBus.instance.proxy.ListNames do |_msg, names|
       fill_treeview(DBus::SessionBus.instance, @sessiontreeview, names)
     end
 
-    return unless $enable_system
+    return unless ENABLE_SYSTEM
     DBus::SystemBus.instance.proxy.ListNames do |_msg, names|
       fill_treeview(DBus::SystemBus.instance, @systemtreeview, names)
     end

@@ -69,13 +69,6 @@ Style/Documentation:
     - 'lib/dbus/type.rb'
     - 'lib/dbus/xml.rb'
 
-# Offense count: 7
-# Configuration parameters: AllowedVariables.
-Style/GlobalVars:
-  Exclude:
-    - 'examples/gdbus/gdbus'
-    - 'spec/spec_helper.rb'
-
 # Offense count: 1
 Style/OptionalArguments:
   Exclude:
