@@ -11,27 +11,10 @@ Lint/Eval:
   Exclude:
     - 'examples/gdbus/gdbus'
 
-# Offense count: 7
-Lint/HandleExceptions:
-  Exclude:
-    - 'lib/dbus/marshall.rb'
-    - 'lib/dbus/message_queue.rb'
-    - 'lib/dbus/xml.rb'
-    - 'spec/server_spec.rb'
-    - 'spec/service_newapi.rb'
-
 # Offense count: 1
 Lint/NestedMethodDefinition:
   Exclude:
     - 'spec/main_loop_spec.rb'
-
-# Offense count: 5
-Lint/RescueException:
-  Exclude:
-    - 'examples/gdbus/gdbus'
-    - 'examples/no-introspect/nm-test.rb'
-    - 'lib/dbus/bus.rb'
-    - 'lib/dbus/message_queue.rb'
 
 # Offense count: 34
 Metrics/AbcSize:

@@ -50,10 +50,6 @@ module DBus
 
   # General exceptions.
 
-  # Exception raised when an invalid packet is encountered.
-  class InvalidPacketException < Exception
-  end
-
   # Exception raised when there is a problem with a type (may be unknown or
   # mismatch).
   class TypeException < Exception
@@ -64,16 +60,8 @@ module DBus
   class IncompleteBufferException < Exception
   end
 
-  # Exception raised when a method has not been implemented (yet).
-  class MethodNotImplemented < Exception
-  end
-
-  # Exception raised when a method is invoked with invalid
-  # parameters (wrong number or type).
-  class InvalidParameters < Exception
-  end
-
   # Exception raised when an invalid method name is used.
+  # FIXME: use NameError
   class InvalidMethodName < Exception
   end
 
