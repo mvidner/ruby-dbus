@@ -187,8 +187,9 @@ module DBus
     # Unmarshall a packet contained in the buffer _buf_ and set the
     # parameters of the message object according the data found in the
     # buffer.
-    # Return the detected message and the index pointer of the buffer where
-    # the message data ended.
+    # @return [Array(Message,Integer)]
+    #   the detected message (self) and
+    #   the index pointer of the buffer where the message data ended.
     def unmarshall_buffer(buf)
       buf = buf.dup
       endianness = if buf[0] == "l"
@@ -226,14 +227,6 @@ module DBus
         @params = pu.unmarshall(@signature, @body_length)
       end
       [self, pu.idx]
-    end # def unmarshall_buf
-
-    # Unmarshall the data of a message found in the buffer _buf_ using
-    # Message#unmarshall_buf.
-    # Return the message.
-    def unmarshall(buf)
-      ret, = unmarshall_buffer(buf)
-      ret
     end
 
     # Make a new exception from ex, mark it as being caused by this message

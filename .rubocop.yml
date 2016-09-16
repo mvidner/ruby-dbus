@@ -139,8 +139,3 @@ Style/Documentation:
 Style/OptionalArguments:
   Exclude:
     - 'lib/dbus/proxy_object_interface.rb'
-
-# disable foo, _ = -> foo, = b/
-# WTF: spec/introspect_xml_parser_spec.rb
-#-    interfaces, _ = DBus::IntrospectXMLParser.new(xml).parse
-#+    interfaces, = DBus::IntrospectXMLParser.new(xml).parse

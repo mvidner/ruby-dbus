@@ -102,7 +102,8 @@ module DBus
                  REXMLParser
                end
 
-    # return a pair: [list of Interfaces, list of direct subnode names]
+    # @return [Array(Array<Interface>,Array<String>)]
+    #   a pair: [list of Interfaces, list of direct subnode names]
     def parse
       # Using a Hash instead of a list helps merge split-up interfaces,
       # a quirk observed in ModemManager (I#41).

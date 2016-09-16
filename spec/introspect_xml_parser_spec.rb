@@ -18,7 +18,7 @@ describe "IntrospectXMLParserTest" do
 </node>
 EOS
 
-    interfaces, = DBus::IntrospectXMLParser.new(xml).parse
+    interfaces, _subnodes = DBus::IntrospectXMLParser.new(xml).parse
 
     foo = interfaces.find { |i| i.name == "org.example.Foo" }
     expect(foo.methods.keys.size).to eq(2)
