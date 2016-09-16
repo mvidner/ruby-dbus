@@ -1,6 +1,3 @@
-# Offenses still to be fixed:
-inherit_from: .rubocop_todo.yml
-
 # Do not check code borrowed from ActiveSupport
 AllCops:
   Exclude:
@@ -74,6 +71,74 @@ Style/PredicateName:
   NamePrefix:
     # has_ and have_ are allowed
     - is_
+
+# Offense count: 1
+Lint/Eval:
+  Exclude:
+    - 'examples/gdbus/gdbus'
+
+# Offense count: 1
+Lint/NestedMethodDefinition:
+  Exclude:
+    - 'spec/main_loop_spec.rb'
+
+# Offense count: 34
+Metrics/AbcSize:
+  Max: 123
+
+# Offense count: 2
+Metrics/BlockNesting:
+  Max: 4
+
+# Offense count: 8
+# Configuration parameters: CountComments.
+Metrics/ClassLength:
+  Max: 297
+
+# Offense count: 12
+Metrics/CyclomaticComplexity:
+  Max: 36
+
+# Offense count: 62
+# Configuration parameters: AllowHeredoc, AllowURI, URISchemes.
+# URISchemes: http, https
+Metrics/LineLength:
+  Max: 118
+
+# Offense count: 49
+# Configuration parameters: CountComments.
+Metrics/MethodLength:
+  Max: 96
+
+# Offense count: 9
+Metrics/PerceivedComplexity:
+  Max: 27
+
+# Offense count: 8
+Style/ClassVars:
+  Exclude:
+    - 'lib/dbus/export.rb'
+    - 'lib/dbus/message.rb'
+
+# Offense count: 16
+Style/Documentation:
+  Exclude:
+    - 'spec/**/*'
+    - 'test/**/*'
+    - 'examples/gdbus/gdbus'
+    - 'examples/service/service_newapi.rb'
+    - 'lib/dbus/api_options.rb'
+    - 'lib/dbus/error.rb'
+    - 'lib/dbus/logger.rb'
+    - 'lib/dbus/message.rb'
+    - 'lib/dbus/message_queue.rb'
+    - 'lib/dbus/type.rb'
+    - 'lib/dbus/xml.rb'
+
+# Offense count: 1
+Style/OptionalArguments:
+  Exclude:
+    - 'lib/dbus/proxy_object_interface.rb'
 
 # disable foo, _ = -> foo, = b/
 # WTF: spec/introspect_xml_parser_spec.rb
