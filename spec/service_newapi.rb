@@ -4,14 +4,14 @@
 require_relative "spec_helper"
 SimpleCov.command_name "Service Tests" if Object.const_defined? "SimpleCov"
 # find the library without external help
-$:.unshift File.expand_path("../../lib", __FILE__)
+$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
-require 'dbus'
+require "dbus"
 
-PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
+PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties".freeze
 
 class Test < DBus::Object
-  INTERFACE = "org.ruby.SampleInterface"
+  INTERFACE = "org.ruby.SampleInterface".freeze
   def initialize(path)
     super path
     @read_me = "READ ME"
@@ -81,7 +81,7 @@ class Test < DBus::Object
   end
 
   dbus_interface "org.ruby.Ticket30" do
-    dbus_method :Sybilla, 'in choices:av, out advice:s' do |choices|
+    dbus_method :Sybilla, "in choices:av, out advice:s" do |choices|
       ["Do #{choices[0]}"]
     end
   end
@@ -98,8 +98,8 @@ class Test < DBus::Object
   dbus_interface "org.ruby.Loop" do
     # starts doing something long, but returns immediately
     # and sends a signal when done
-    dbus_method :LongTaskBegin, 'in delay:i' do |delay|
-# FIXME did not complain about mismatch between signature and block args
+    dbus_method :LongTaskBegin, "in delay:i" do |delay|
+      # FIXME: did not complain about mismatch between signature and block args
       self.LongTaskStart
       DBus.logger.debug "Long task began"
       task = Thread.new do
@@ -121,50 +121,61 @@ class Test < DBus::Object
   # ReadOrWriteMe:string, returns "READ OR WRITE ME" at first
   dbus_interface PROPERTY_INTERFACE do
     dbus_method :Get, "in interface:s, in propname:s, out value:v" do |interface, propname|
-      if interface == INTERFACE
-        if propname == "ReadMe"
-          [@read_me]
-        elsif propname == "ReadOrWriteMe"
-          [@read_or_write_me]
-        elsif propname == "WriteMe"
-          raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"), "Property '#{interface}.#{propname}' (on object '#{@path}') is not readable"
-        else
-          raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"), "Property '#{interface}.#{propname}' not found on object '#{@path}'"
-        end
-      else
-        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"), "Interface '#{interface}' not found on object '#{@path}'"
+      unless interface == INTERFACE
+        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
+              "Interface '#{interface}' not found on object '#{@path}'"
       end
-# what should happen for unknown properties
-# plasma: InvalidArgs (propname), UnknownInterface (interface)
+
+      case propname
+      when "ReadMe"
+        [@read_me]
+      when "ReadOrWriteMe"
+        [@read_or_write_me]
+      when "WriteMe"
+        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
+              "Property '#{interface}.#{propname}' (on object '#{@path}') is not readable"
+      else
+        # what should happen for unknown properties
+        # plasma: InvalidArgs (propname), UnknownInterface (interface)
+        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
+              "Property '#{interface}.#{propname}' not found on object '#{@path}'"
+      end
     end
 
     dbus_method :Set, "in interface:s, in propname:s, in  value:v" do |interface, propname, value|
-      if interface == INTERFACE
-        if propname == "ReadMe"
-          raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"), "Property '#{interface}.#{propname}' (on object '#{@path}') is not writable"
-        elsif propname == "ReadOrWriteMe"
-          @read_or_write_me = value
-          self.PropertiesChanged(interface, {propname => value}, [])
-        elsif propname == "WriteMe"
-          @read_me = value
-          self.PropertiesChanged(interface, {"ReadMe" => value}, [])
-        else
-          raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"), "Property '#{interface}.#{propname}' not found on object '#{@path}'"
-        end
+      unless interface == INTERFACE
+        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
+              "Interface '#{interface}' not found on object '#{@path}'"
+      end
+
+      case propname
+      when "ReadMe"
+        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
+              "Property '#{interface}.#{propname}' (on object '#{@path}') is not writable"
+      when "ReadOrWriteMe"
+        @read_or_write_me = value
+        self.PropertiesChanged(interface, { propname => value }, [])
+      when "WriteMe"
+        @read_me = value
+        self.PropertiesChanged(interface, { "ReadMe" => value }, [])
       else
-        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"), "Interface '#{interface}' not found on object '#{@path}'"
+        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
+              "Property '#{interface}.#{propname}' not found on object '#{@path}'"
       end
     end
 
     dbus_method :GetAll, "in interface:s, out value:a{sv}" do |interface|
-      if interface == INTERFACE
-        [ {
-            "ReadMe" => @read_me,
-            "ReadOrWriteMe" =>@read_or_write_me,
-          } ]
-      else
-        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"), "Interface '#{interface}' not found on object '#{@path}'"
+      unless interface == INTERFACE
+        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
+              "Interface '#{interface}' not found on object '#{@path}'"
       end
+
+      [
+        {
+          "ReadMe" => @read_me,
+          "ReadOrWriteMe" => @read_or_write_me
+        }
+      ]
     end
 
     dbus_signal :PropertiesChanged, "interface:s, changed_properties:a{sv}, invalidated_properties:as"
@@ -214,4 +225,3 @@ begin
 rescue SystemCallError
   # the test driver will kill the bus, that's OK
 end
-

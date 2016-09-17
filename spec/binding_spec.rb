@@ -57,7 +57,7 @@ describe "BindingTest" do
     # interfaces can be defined dynamicaly
     derived = DBus::Object.new "/org/ruby/MyDerivedInstance"
 
-    #define a new interface
+    # define a new interface
     derived.singleton_class.instance_eval do
       dbus_interface "org.ruby.DynamicInterface" do
         dbus_method :hello2, "in name:s, in name2:s" do |name, name2|
@@ -70,5 +70,4 @@ describe "BindingTest" do
     ifaces = derived.intfs
     expect(ifaces).to include "org.ruby.DynamicInterface"
   end
-
 end

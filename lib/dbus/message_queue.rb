@@ -22,7 +22,7 @@ module DBus
       connect
     end
 
-    # TODO failure modes
+    # TODO: failure modes
     #
     # If _non_block_ is true, return nil instead of waiting
     # EOFError may be raised
@@ -32,8 +32,8 @@ module DBus
       unless non_block
         # we can block
         while message.nil?
-          r, d, d = IO.select([@socket])
-          if r and r[0] == @socket
+          r, _d, _d = IO.select([@socket])
+          if r && r[0] == @socket
             buffer_from_socket_nonblock
             message = message_from_buffer_nonblock
           end
@@ -45,7 +45,7 @@ module DBus
     def push(message)
       @socket.write(message.marshall)
     end
-    alias :<< :push
+    alias << push
 
     private
 
@@ -56,20 +56,20 @@ module DBus
       worked = addresses.find do |a|
         transport, keyvaluestring = a.split ":"
         kv_list = keyvaluestring.split ","
-        kv_hash = Hash.new
+        kv_hash = {}
         kv_list.each do |kv|
           key, escaped_value = kv.split "="
-          value = escaped_value.gsub(/%(..)/) {|m| [$1].pack "H2" }
+          value = escaped_value.gsub(/%(..)/) { |_m| [Regexp.last_match(1)].pack "H2" }
           kv_hash[key] = value
         end
         case transport
-          when "unix"
+        when "unix"
           connect_to_unix kv_hash
-          when "tcp"
+        when "tcp"
           connect_to_tcp kv_hash
-          when "launchd"
+        when "launchd"
           connect_to_launchd kv_hash
-          else
+        else
           # ignore, report?
         end
       end
@@ -80,46 +80,46 @@ module DBus
 
     # Connect to a bus over tcp and initialize the connection.
     def connect_to_tcp(params)
-      #check if the path is sufficient
-      if params.key?("host") and params.key?("port")
+      # check if the path is sufficient
+      if params.key?("host") && params.key?("port")
         begin
-          #initialize the tcp socket
-          @socket = TCPSocket.new(params["host"],params["port"].to_i)
+          # initialize the tcp socket
+          @socket = TCPSocket.new(params["host"], params["port"].to_i)
           @socket.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
           init_connection
           @is_tcp = true
         rescue Exception => e
           puts "Oops:", e
           puts "Error: Could not establish connection to: #{@path}, will now exit."
-          exit(1) #a little harsh
+          exit(1) # a little harsh
         end
       else
-        #Danger, Will Robinson: the specified "path" is not usable
+        # Danger, Will Robinson: the specified "path" is not usable
         puts "Error: supplied path: #{@path}, unusable! sorry."
       end
     end
 
     # Connect to an abstract unix bus and initialize the connection.
     def connect_to_unix(params)
-      @socket = Socket.new(Socket::Constants::PF_UNIX,Socket::Constants::SOCK_STREAM, 0)
+      @socket = Socket.new(Socket::Constants::PF_UNIX, Socket::Constants::SOCK_STREAM, 0)
       @socket.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
-      if ! params['abstract'].nil?
-        if HOST_END == LIL_END
-          sockaddr = "\1\0\0#{params['abstract']}"
-        else
-          sockaddr = "\0\1\0#{params['abstract']}"
-        end
-      elsif ! params['path'].nil?
-        sockaddr = Socket.pack_sockaddr_un(params['path'])
+      if !params["abstract"].nil?
+        sockaddr = if HOST_END == LIL_END
+                     "\1\0\0#{params["abstract"]}"
+                   else
+                     "\0\1\0#{params["abstract"]}"
+                   end
+      elsif !params["path"].nil?
+        sockaddr = Socket.pack_sockaddr_un(params["path"])
       end
       @socket.connect(sockaddr)
       init_connection
     end
 
     def connect_to_launchd(params)
-      socket_var = params['env']
+      socket_var = params["env"]
       socket = `launchctl getenv #{socket_var}`.chomp
-      connect_to_unix 'path' => socket
+      connect_to_unix "path" => socket
     end
 
     # Initialize the connection to the bus.
@@ -128,7 +128,7 @@ module DBus
       @client.authenticate
     end
 
-    public                      # FIXME: fix Main loop instead
+    public # FIXME: fix Main loop instead
 
     # Get and remove one message from the buffer.
     # Return the message or nil.
@@ -153,12 +153,12 @@ module DBus
     def buffer_from_socket_nonblock
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)
     rescue EOFError
-      raise                     # the caller expects it
+      raise # the caller expects it
     rescue Errno::EAGAIN
       # fine, would block
     rescue Exception => e
       puts "Oops:", e
-      raise if @is_tcp          # why?
+      raise if @is_tcp # why?
       puts "WARNING: read_nonblock failed, falling back to .recv"
       @buffer += @socket.recv(MSG_BUF_SIZE)
     end

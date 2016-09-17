@@ -8,7 +8,7 @@ describe "SignalHandlerTest" do
     @session_bus = DBus::ASessionBus.new
     svc = @session_bus.service("org.ruby.service")
     @obj = svc.object("/org/ruby/MyInstance")
-    @obj.introspect                  # necessary
+    @obj.introspect # necessary
     @obj.default_iface = "org.ruby.Loop"
     @intf = @obj["org.ruby.Loop"]
 
@@ -35,7 +35,7 @@ describe "SignalHandlerTest" do
 
     quitter = Thread.new do
       DBus.logger.debug "sleep before quit"
-      # FIXME if we sleep for too long
+      # FIXME: if we sleep for too long
       # the socket will be drained and we deadlock in a select.
       # It could be worked around by sending ourselves a Unix signal
       # (with a dummy handler) to interrupt the select
@@ -73,7 +73,7 @@ describe "SignalHandlerTest" do
     expect(started).to eq(true)
     expect(counter).to eq(1)
     expect { @intf.on_signal }.to raise_error(ArgumentError) # not enough
-    expect { @intf.on_signal 'to', 'many', 'yarrrrr!' }.to raise_error(ArgumentError)
+    expect { @intf.on_signal "to", "many", "yarrrrr!" }.to raise_error(ArgumentError)
   end
 
   it "tests too many rules" do

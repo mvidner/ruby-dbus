@@ -1,12 +1,19 @@
+/.bundle/
+/.vendor/
+/Gemfile.lock
+
 /doc/tutorial/index.html
 /doc/DBus
 /doc/*.html
 /doc/css
 /doc/js
 .yardoc/
+
 # Rubinius
 .rbx/
+
 # SimpleCov
 coverage/
+
 # packaging
 ruby-dbus-*.gem

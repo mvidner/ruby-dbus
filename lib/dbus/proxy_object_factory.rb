@@ -15,13 +15,16 @@ module DBus
     # Creates a new proxy object factory for the given introspection XML _xml_,
     # _bus_, destination _dest_, and _path_.
     def initialize(xml, bus, dest, path, api: ApiOptions::CURRENT)
-      @xml, @bus, @path, @dest = xml, bus, path, dest
+      @xml = xml
+      @bus = bus
+      @path = path
+      @dest = dest
       @api = api
     end
 
     # Investigates the sub-nodes of the proxy object _po_ based on the
     # introspection XML data _xml_ and sets them up recursively.
-    def ProxyObjectFactory.introspect_into(po, xml)
+    def self.introspect_into(po, xml)
       intfs, po.subnodes = IntrospectXMLParser.new(xml).parse
       intfs.each do |i|
         poi = ProxyObjectInterface.new(po, i.name)

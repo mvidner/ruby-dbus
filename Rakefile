@@ -1,10 +1,10 @@
 #! /usr/bin/env ruby
-require 'rake'
-require 'fileutils'
+require "rake"
+require "fileutils"
 include FileUtils
-require 'tmpdir'
-require 'rspec/core/rake_task'
-
+require "tmpdir"
+require "rspec/core/rake_task"
+require "rubocop/rake_task"
 require "packaging"
 
 Packaging.configuration do |conf|
@@ -12,22 +12,22 @@ Packaging.configuration do |conf|
   conf.obs_target = "openSUSE_Tumbleweed"
   conf.package_name = "rubygem-ruby-dbus"
   conf.obs_sr_project = "openSUSE:Factory"
-  conf.skip_license_check << /^[^\/]*$/
-  conf.skip_license_check << /^(doc|examples|spec)\/.*/
+  conf.skip_license_check << %r{^[^/]*$}
+  conf.skip_license_check << %r{^(doc|examples|spec)/.*}
   # "Ruby on Rails is released under the MIT License."
   # but the files are missing copyright headers
-  conf.skip_license_check << /^lib\/dbus\/core_ext\//
+  conf.skip_license_check << %r{^lib/dbus/core_ext/}
 end
 
-desc 'Default: run specs in the proper environment'
-task :default => :spec
-task :test => :spec
+desc "Default: run specs in the proper environment"
+task default: [:spec, :rubocop]
+task test: :spec
 
 RSpec::Core::RakeTask.new("bare:spec")
 
 %w(spec).each do |tname|
   desc "Run bare:#{tname} in the proper environment"
-  task tname do |t|
+  task tname do |_t|
     cd "spec/tools" do
       sh "./test_env rake bare:#{tname}"
     end
@@ -37,14 +37,14 @@ end
 if ENV["TRAVIS"]
   require "coveralls/rake/task"
   Coveralls::RakeTask.new
-  task :default => "coveralls:push"
+  task default: "coveralls:push"
 end
 
-#remove tarball implementation and create gem for this gemfile
+# remove tarball implementation and create gem for this gemfile
 Rake::Task[:tarball].clear
 
 desc "Build a package from a clone of the local Git repo"
-task :tarball do |t|
+task :tarball do |_t|
   Dir.mktmpdir do |temp|
     sh "git clone . #{temp}"
     cd temp do
@@ -63,3 +63,5 @@ namespace :doc do
     end
   end
 end
+
+RuboCop::RakeTask.new

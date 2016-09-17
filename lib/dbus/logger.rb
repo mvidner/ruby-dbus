@@ -8,7 +8,7 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
-require 'logger'
+require "logger"
 
 module DBus
   # Get the logger for the DBus module.

@@ -31,4 +31,3 @@ end
 main = DBus::Main.new
 main << session_bus
 main.run
-

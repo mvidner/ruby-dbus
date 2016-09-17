@@ -34,25 +34,21 @@ require "thread"
 # Module containing all the D-Bus modules and classes.
 module DBus
   # Default socket name for the system bus.
-  SystemSocketName = "unix:path=/var/run/dbus/system_bus_socket"
+  SystemSocketName = "unix:path=/var/run/dbus/system_bus_socket".freeze
 
   # Byte signifying big endianness.
-  BIG_END = ?B
+  BIG_END = "B".freeze
   # Byte signifying little endianness.
-  LIL_END = ?l
+  LIL_END = "l".freeze
 
   # Byte signifying the host's endianness.
   HOST_END = if [0x01020304].pack("L").unpack("V")[0] == 0x01020304
-    LIL_END
-  else
-    BIG_END
-  end
+               LIL_END
+             else
+               BIG_END
+             end
 
   # General exceptions.
-
-  # Exception raised when an invalid packet is encountered.
-  class InvalidPacketException < Exception
-  end
 
   # Exception raised when there is a problem with a type (may be unknown or
   # mismatch).
@@ -64,16 +60,8 @@ module DBus
   class IncompleteBufferException < Exception
   end
 
-  # Exception raised when a method has not been implemented (yet).
-  class MethodNotImplemented < Exception
-  end
-
-  # Exception raised when a method is invoked with invalid
-  # parameters (wrong number or type).
-  class InvalidParameters < Exception
-  end
-
   # Exception raised when an invalid method name is used.
+  # FIXME: use NameError
   class InvalidMethodName < Exception
   end
 

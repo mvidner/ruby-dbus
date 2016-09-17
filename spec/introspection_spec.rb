@@ -12,7 +12,7 @@ describe "IntrospectionTest" do
   end
 
   it "tests wrong number of arguments" do
-    expect { @obj.test_variant "too","many","args" }.to raise_error(ArgumentError)
+    expect { @obj.test_variant "too", "many", "args" }.to raise_error(ArgumentError)
     # not enough
     expect { @obj.test_variant }.to raise_error(ArgumentError)
   end

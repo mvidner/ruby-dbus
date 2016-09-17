@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'dbus'
+require "dbus"
 bus = DBus::SessionBus.instance
 # get a rb object
 proxy = bus.introspect("org.gnome.Rhythmbox", "/org/gnome/Rhythmbox/Player")
@@ -22,4 +22,3 @@ proxyi.playPause(true)
 main = DBus::Main.new
 main << bus
 main.run
-

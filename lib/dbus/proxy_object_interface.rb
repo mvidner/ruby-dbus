@@ -25,8 +25,10 @@ module DBus
     # Creates a new proxy interface for the given proxy _object_
     # and the given _name_.
     def initialize(object, name)
-      @object, @name = object, name
-      @methods, @signals = Hash.new, Hash.new
+      @object = object
+      @name = name
+      @methods = {}
+      @signals = {}
     end
 
     # Returns the string representation of the interface (the name).
@@ -77,9 +79,9 @@ module DBus
 
     # Defines a signal or method based on the descriptor _m_.
     def define(m)
-      if m.kind_of?(Method)
+      if m.is_a?(Method)
         define_method_from_descriptor(m)
-      elsif m.kind_of?(Signal)
+      elsif m.is_a?(Signal)
         define_signal_from_descriptor(m)
       end
     end
@@ -107,12 +109,12 @@ module DBus
       end
     end
 
-    PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
+    PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties".freeze
 
     # Read a property.
     # @param propname [String]
     def [](propname)
-      ret = self.object[PROPERTY_INTERFACE].Get(self.name, propname)
+      ret = object[PROPERTY_INTERFACE].Get(name, propname)
       # this method always returns the single property
       if @object.api.proxy_method_returns_array
         ret[0]
@@ -125,13 +127,13 @@ module DBus
     # @param propname [String]
     # @param value [Object]
     def []=(propname, value)
-      self.object[PROPERTY_INTERFACE].Set(self.name, propname, value)
+      object[PROPERTY_INTERFACE].Set(name, propname, value)
     end
 
     # Read all properties at once, as a hash.
     # @return [Hash{String}]
     def all_properties
-      ret = self.object[PROPERTY_INTERFACE].GetAll(self.name)
+      ret = object[PROPERTY_INTERFACE].GetAll(name)
       # this method always returns the single property
       if @object.api.proxy_method_returns_array
         ret[0]

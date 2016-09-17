@@ -1,5 +1,5 @@
 #! /usr/bin/env ruby
-require 'dbus'
+require "dbus"
 
 bus = DBus::SystemBus.instance
 nm_service = bus["org.freedesktop.NetworkManager"]
@@ -16,4 +16,4 @@ else
 end
 puts "Toggling wireless"
 # write a property
-nm_iface["WirelessEnabled"] = ! enabled
+nm_iface["WirelessEnabled"] = !enabled

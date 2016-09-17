@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
-require 'dbus'
-require 'thread'
+require "dbus"
+require "thread"
 Thread.abort_on_exception = true
 
 class Test < DBus::Object
@@ -37,7 +37,7 @@ service.export(myobj)
 
 Thread.new do
   i = 0
-  loop do 
+  loop do
     # Signal emission
     myobj.SomethingJustHappened("hey", i += 1)
     sleep(0.5)
@@ -48,4 +48,3 @@ puts "listening"
 main = DBus::Main.new
 main << bus
 main.run
-

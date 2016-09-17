@@ -22,4 +22,3 @@ p player["org.ruby.AnotherInterface"].Reverse("Hello world!")
 main = DBus::Main.new
 main << session_bus
 main.run
-

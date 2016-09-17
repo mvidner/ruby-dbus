@@ -19,14 +19,14 @@ describe DBus::ASessionBus do
   end
 
   describe "#address_from_file" do
-    let(:session_bus_file_path) { /\.dbus\/session-bus\/baz-\d/ }
+    let(:session_bus_file_path) { %r{\.dbus/session-bus/baz-\d} }
 
     before do
       # mocks of files for address_from_file method
       machine_id_path = File.expand_path("/etc/machine-id", __FILE__)
-      expect(Dir).to receive(:[]).with(any_args) {[machine_id_path] }
+      expect(Dir).to receive(:[]).with(any_args) { [machine_id_path] }
       expect(File).to receive(:read).with(machine_id_path) { "baz" }
-      expect(File).to receive(:exists?).with(session_bus_file_path) { true }
+      expect(File).to receive(:exist?).with(session_bus_file_path) { true }
     end
 
     around(:each) do |example|
@@ -36,9 +36,8 @@ describe DBus::ASessionBus do
     end
 
     context "when DBUS_SESSION_BUS_ADDRESS from file is surrounded by quotation marks" do
-
       it "returns session bus address without single quotation marks" do
-        expect(File).to receive(:open).with(session_bus_file_path) { <<-EOS.gsub(/^\s*/, '') }
+        expect(File).to receive(:open).with(session_bus_file_path) { <<-EOS.gsub(/^\s*/, "") }
           DBUS_SESSION_BUS_ADDRESS='#{dbus_session_bus_address}'
           DBUS_SESSION_BUS_PID=12345
           DBUS_SESSION_BUS_WINDOWID=12345678
@@ -47,7 +46,7 @@ describe DBus::ASessionBus do
       end
 
       it "returns session bus address without double quotation marks" do
-        expect(File).to receive(:open).with(session_bus_file_path) { <<-EOS.gsub(/^\s*/, '') }
+        expect(File).to receive(:open).with(session_bus_file_path) { <<-EOS.gsub(/^\s*/, "") }
           DBUS_SESSION_BUS_ADDRESS="#{dbus_session_bus_address}"
           DBUS_SESSION_BUS_PID=12345
           DBUS_SESSION_BUS_WINDOWID=12345678
@@ -58,7 +57,7 @@ describe DBus::ASessionBus do
 
     context "when DBUS_SESSION_BUS_ADDRESS from file is not surrounded by any quotation marks" do
       it "returns session bus address as it is" do
-        expect(File).to receive(:open).with(session_bus_file_path) { <<-EOS.gsub(/^\s*/, '') }
+        expect(File).to receive(:open).with(session_bus_file_path) { <<-EOS.gsub(/^\s*/, "") }
           DBUS_SESSION_BUS_ADDRESS=#{dbus_session_bus_address}
           DBUS_SESSION_BUS_PID=12345
           DBUS_SESSION_BUS_WINDOWID=12345678

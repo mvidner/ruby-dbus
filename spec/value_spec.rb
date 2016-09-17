@@ -8,14 +8,14 @@ describe "ValueTest" do
     session_bus = DBus::ASessionBus.new
     @svc = session_bus.service("org.ruby.service")
     @obj = @svc.object("/org/ruby/MyInstance")
-    @obj.introspect                  # necessary
+    @obj.introspect # necessary
     @obj.default_iface = "org.ruby.SampleInterface"
   end
 
   it "tests passing an array of structs through a variant" do
-    triple = ['a(uuu)', []]
+    triple = ["a(uuu)", []]
     @obj.test_variant(triple)
-    quadruple = ['a(uuuu)', []]     # a(uuu) works fine
+    quadruple = ["a(uuuu)", []] # a(uuu) works fine
     # The bus disconnects us because of malformed message,
     # code 12: DBUS_INVALID_TOO_MUCH_DATA
     @obj.test_variant(quadruple)
@@ -51,16 +51,15 @@ describe "ValueTest" do
 
   # these are ambiguous
   it "tests pairs with a string" do
-    
     # deprecated
     expect(@obj.bounce_variant(["s", "foo"])[0]).to eq("foo")
-    
+
     expect(@obj.bounce_variant(DBus.variant("s", "foo"))[0]).to eq("foo")
     expect(@obj.bounce_variant([DBus.type("s"), "foo"])[0]).to eq("foo")
 
     # does not work, because the server side forgets the explicit typing
-#    assert_equal ["s", "foo"], @obj.bounce_variant(["av", ["s", "foo"]])[0]
-#    assert_equal ["s", "foo"], @obj.bounce_variant(["as", ["s", "foo"]])[0]
+    #    assert_equal ["s", "foo"], @obj.bounce_variant(["av", ["s", "foo"]])[0]
+    #    assert_equal ["s", "foo"], @obj.bounce_variant(["as", ["s", "foo"]])[0]
 
     # instead, use this to demonstrate that the variant is passed as expected
     expect(@obj.variant_size(["s", "four"])[0]).to eq(4)
@@ -73,8 +72,8 @@ describe "ValueTest" do
     # https://trac.luon.net/ruby-dbus/ticket/30
     @obj.default_iface = "org.ruby.Ticket30"
     choices = []
-    choices << ['s', 'Plan A']
-    choices << ['s', 'Plan B']
+    choices << ["s", "Plan A"]
+    choices << ["s", "Plan B"]
     # old explicit typing
     expect(@obj.Sybilla(choices)[0]).to eq("Do Plan A")
     # automatic typing

@@ -1,9 +1,10 @@
-if ENV["COVERAGE"]
-  coverage = ENV["COVERAGE"] == "true"
-else
-  # heuristics: enable for interactive builds (but not in OBS) or in Travis
-  coverage = !!ENV["DISPLAY"] || ENV["TRAVIS"]
-end
+coverage = if ENV["COVERAGE"]
+             ENV["COVERAGE"] == "true"
+           else
+             # heuristics: enable for interactive builds (but not in OBS)
+             # or in Travis
+             ENV["DISPLAY"] || ENV["TRAVIS"]
+           end
 
 if coverage
   require "simplecov"
@@ -21,7 +22,7 @@ if coverage
   SimpleCov.start
 end
 
-$:.unshift File.expand_path("../../lib", __FILE__)
+$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
 if Object.const_defined? "RSpec"
   # http://betterspecs.org/#expect
@@ -56,35 +57,38 @@ def with_private_bus(&block)
   pid_file     = Tempfile.new("dbus-pid")
   output_file  = Tempfile.new("dbus-output") # just in case
 
-  $temp_dir = Dir.mktmpdir
-  with_env("XDG_DATA_DIRS", $temp_dir) do
-    cmd = "dbus-daemon --nofork --config-file=#{config_file_path} --print-address=3 3>#{address_file.path} --print-pid=4 4>#{pid_file.path} >#{output_file.path} 2>&1 &"
+  temp_dir = Dir.mktmpdir
+  with_env("XDG_DATA_DIRS", temp_dir) do
+    cmd = "dbus-daemon --nofork --config-file=#{config_file_path} " \
+          "--print-address=3 3>#{address_file.path} " \
+          "--print-pid=4 4>#{pid_file.path} " \
+          ">#{output_file.path} 2>&1 &"
     system cmd
-  end
 
-  # wait until dbus-daemon writes the info
-  Timeout.timeout(10) do
-    until File.size?(address_file) and File.size?(pid_file) do
-      sleep 0.1
+    # wait until dbus-daemon writes the info
+    Timeout.timeout(10) do
+      until File.size?(address_file) && File.size?(pid_file)
+        sleep 0.1
+      end
     end
+
+    address = address_file.read.chomp
+    pid = pid_file.read.chomp.to_i
+
+    with_env("DBUS_SESSION_BUS_ADDRESS", address) do
+      block.call
+    end
+
+    Process.kill("TERM", pid)
   end
-
-  address = address_file.read.chomp
-  pid = pid_file.read.chomp.to_i
-
-  with_env("DBUS_SESSION_BUS_ADDRESS", address) do
-    block.call
-  end
-
-  Process.kill("TERM", pid)
-  FileUtils.rm_rf $temp_dir
+  FileUtils.rm_rf temp_dir
 end
 
 def with_service_by_activation(&block)
   name = "org.ruby.service"
   exec = "#{TOPDIR}/spec/service_newapi.rb"
 
-  service_dir = "#{$temp_dir}/dbus-1/services"
+  service_dir = "#{ENV["XDG_DATA_DIRS"]}/dbus-1/services"
   FileUtils.mkdir_p service_dir
   # file name actually does not need to match the service name
   File.open("#{service_dir}/#{name}.service", "w") do |f|

@@ -17,7 +17,7 @@ describe "AsyncTest" do
     loop = DBus::Main.new
     loop << @bus
 
-    immediate_answer = @obj.the_answer do |msg, retval|
+    immediate_answer = @obj.the_answer do |_msg, retval|
       expect(retval).to eq(42)
       loop.quit
     end
@@ -33,7 +33,7 @@ describe "AsyncTest" do
     loop << @bus
 
     ifc = @obj["org.ruby.AnotherInterface"]
-    immediate_answer = ifc.Reverse("abcd") do |msg, retval|
+    immediate_answer = ifc.Reverse("abcd") do |_msg, retval|
       expect(retval).to eq("dcba")
       loop.quit
     end
@@ -43,5 +43,4 @@ describe "AsyncTest" do
     # wait for the async reply
     loop.run
   end
-
 end

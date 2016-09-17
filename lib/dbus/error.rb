@@ -30,7 +30,7 @@ module DBus
         @name = name
         super(msg)
       end
-      # TODO validate error name
+      # TODO: validate error name
     end
   end # class Error
 

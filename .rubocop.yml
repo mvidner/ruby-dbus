@@ -1,0 +1,141 @@
+# Do not check code borrowed from ActiveSupport
+AllCops:
+  Exclude:
+    - 'lib/dbus/core_ext/**/*.rb'
+
+# https://github.com/SUSE/style-guides/blob/master/Ruby.md#strings
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+# https://github.com/SUSE/style-guides/blob/master/Ruby.md#arrays
+Style/WordArray:
+  Enabled: false
+
+Style/IndentationConsistency:
+  Exclude:
+    # a conflict between markdown and ruby indentation
+    - examples/doc/variants.rb
+
+# I am not ready to fix these
+Style/IfUnlessModifier:
+  Enabled: false
+
+# I am not ready to fix these
+Style/WhileUntilModifier:
+  Enabled: false
+
+# I am not ready to fix these
+Style/NegatedIf:
+  Enabled: false
+
+Style/EmptyElse:
+  EnforcedStyle: "nil"
+
+# Prefer readability over performance
+Performance/RedundantBlockCall:
+  Enabled: false
+
+# Need to check whether API stays OK
+Lint/InheritException:
+  Exclude:
+    - 'lib/dbus.rb'
+    - 'lib/dbus/auth.rb'
+    - 'lib/dbus/bus.rb'
+    - 'lib/dbus/introspect.rb'
+    - 'lib/dbus/marshall.rb'
+    - 'lib/dbus/matchrule.rb'
+    - 'lib/dbus/message.rb'
+    - 'lib/dbus/type.rb'
+
+# Offense count: 7
+Lint/HandleExceptions:
+  Exclude:
+    - 'lib/dbus/marshall.rb'
+    - 'lib/dbus/message_queue.rb'
+    - 'lib/dbus/xml.rb'
+    - 'spec/server_spec.rb'
+    - 'spec/service_newapi.rb'
+
+# Offense count: 5
+Lint/RescueException:
+  Exclude:
+    - 'examples/gdbus/gdbus'
+    - 'examples/no-introspect/nm-test.rb'
+    - 'lib/dbus/bus.rb'
+    - 'lib/dbus/message_queue.rb'
+
+Style/PredicateName:
+  NamePrefix:
+    # has_ and have_ are allowed
+    - is_
+
+# Offense count: 1
+Lint/Eval:
+  Exclude:
+    - 'examples/gdbus/gdbus'
+
+# Offense count: 1
+Lint/NestedMethodDefinition:
+  Exclude:
+    - 'spec/main_loop_spec.rb'
+
+# Offense count: 34
+Metrics/AbcSize:
+  Max: 123
+
+# Offense count: 2
+Metrics/BlockNesting:
+  Max: 4
+
+# Offense count: 8
+# Configuration parameters: CountComments.
+Metrics/ClassLength:
+  Max: 297
+
+# Offense count: 12
+Metrics/CyclomaticComplexity:
+  Max: 36
+
+# Offense count: 62
+# Configuration parameters: AllowHeredoc, AllowURI, URISchemes.
+# URISchemes: http, https
+Metrics/LineLength:
+  Max: 118
+
+# Offense count: 49
+# Configuration parameters: CountComments.
+Metrics/MethodLength:
+  Max: 96
+
+# Offense count: 9
+Metrics/PerceivedComplexity:
+  Max: 27
+
+# Offense count: 8
+Style/ClassVars:
+  Exclude:
+    - 'lib/dbus/export.rb'
+    - 'lib/dbus/message.rb'
+
+# Offense count: 16
+Style/Documentation:
+  Exclude:
+    - 'spec/**/*'
+    - 'test/**/*'
+    - 'examples/gdbus/gdbus'
+    - 'examples/service/service_newapi.rb'
+    - 'lib/dbus/api_options.rb'
+    - 'lib/dbus/error.rb'
+    - 'lib/dbus/logger.rb'
+    - 'lib/dbus/message.rb'
+    - 'lib/dbus/message_queue.rb'
+    - 'lib/dbus/type.rb'
+    - 'lib/dbus/xml.rb'
+
+# Offense count: 1
+Style/OptionalArguments:
+  Exclude:
+    - 'lib/dbus/proxy_object_interface.rb'

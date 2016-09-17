@@ -27,7 +27,7 @@ module DBus
     # Mutex that protects updates on the serial number.
     @@serial_mutex = Mutex.new
     # Type of a message (by specification).
-    MESSAGE_SIGNATURE = "yyyyuua(yv)"
+    MESSAGE_SIGNATURE = "yyyyuua(yv)".freeze
 
     # FIXME: following message type constants should be under Message::Type IMO
     # well, yeah sure
@@ -45,7 +45,7 @@ module DBus
 
     # Message flag signyfing that no reply is expected.
     NO_REPLY_EXPECTED = 0x1
-    # Message flag signifying that no automatic start is required/must be 
+    # Message flag signifying that no automatic start is required/must be
     # performed.
     NO_AUTO_START = 0x2
 
@@ -83,26 +83,26 @@ module DBus
       @flags = 0
       @protocol = 1
       @body_length = 0
-      @signature = String.new
+      @signature = ""
       @@serial_mutex.synchronize do
         @serial = @@serial
         @@serial += 1
       end
-      @params = Array.new
+      @params = []
       @destination = nil
       @interface = nil
       @error_name = nil
       @member = nil
       @path = nil
       @reply_serial = nil
-
-      if mtype == METHOD_RETURN
-        @flags = NO_REPLY_EXPECTED
-      end
+      @flags = NO_REPLY_EXPECTED if mtype == METHOD_RETURN
     end
 
     def to_s
-      "#{message_type} sender=#{sender} -> dest=#{destination} serial=#{serial} reply_serial=#{reply_serial} path=#{path}; interface=#{interface}; member=#{member} error_name=#{error_name}"
+      "#{message_type} sender=#{sender} -> dest=#{destination} " \
+      "serial=#{serial} reply_serial=#{reply_serial} " \
+      "path=#{path}; interface=#{interface}; member=#{member} " \
+      "error_name=#{error_name}"
     end
 
     # Create a regular reply to a message _m_.
@@ -111,7 +111,7 @@ module DBus
     end
 
     # Create an error reply to a message _m_.
-    def self.error(m, error_name, description=nil)
+    def self.error(m, error_name, description = nil)
       ErrorMessage.new(error_name, description).reply_to(m)
     end
 
@@ -126,7 +126,7 @@ module DBus
 
     # Add a parameter _val_ of type _type_ to the message.
     def add_param(type, val)
-      type = type.chr if type.kind_of?(Fixnum)
+      type = type.chr if type.is_a?(Fixnum)
       @signature += type.to_s
       @params << [type, val]
     end
@@ -187,18 +187,19 @@ module DBus
     # Unmarshall a packet contained in the buffer _buf_ and set the
     # parameters of the message object according the data found in the
     # buffer.
-    # Return the detected message and the index pointer of the buffer where
-    # the message data ended.
+    # @return [Array(Message,Integer)]
+    #   the detected message (self) and
+    #   the index pointer of the buffer where the message data ended.
     def unmarshall_buffer(buf)
       buf = buf.dup
-      if buf[0] == ?l
-        endianness = LIL_END
-      else
-        endianness = BIG_END
-      end
+      endianness = if buf[0] == "l"
+                     LIL_END
+                   else
+                     BIG_END
+                   end
       pu = PacketUnmarshaller.new(buf, endianness)
       mdata = pu.unmarshall(MESSAGE_SIGNATURE)
-      _, @message_type, @flags, @protocol, @body_length, @serial, 
+      _, @message_type, @flags, @protocol, @body_length, @serial,
         headers = mdata
 
       headers.each do |struct|
@@ -222,18 +223,10 @@ module DBus
         end
       end
       pu.align(8)
-      if @body_length > 0 and @signature
+      if @body_length > 0 && @signature
         @params = pu.unmarshall(@signature, @body_length)
       end
       [self, pu.idx]
-    end # def unmarshall_buf
-
-    # Unmarshall the data of a message found in the buffer _buf_ using
-    # Message#unmarshall_buf.
-    # Return the message.
-    def unmarshall(buf)
-      ret, _ = unmarshall_buffer(buf)
-      ret
     end
 
     # Make a new exception from ex, mark it as being caused by this message
@@ -252,12 +245,10 @@ module DBus
   end
 
   class ErrorMessage < Message
-    def initialize(error_name, description=nil)
+    def initialize(error_name, description = nil)
       super(ERROR)
       @error_name = error_name
-      unless description.nil?
-        add_param(Type::STRING, description)
-      end
+      add_param(Type::STRING, description) unless description.nil?
     end
 
     def self.from_exception(ex)
@@ -268,7 +259,7 @@ module DBus
                # ex.class.to_s # RuntimeError is not a valid name, has no dot
              end
       description = ex.message
-      msg = self.new(name, description)
+      msg = new(name, description)
       msg.add_param(DBus.type("as"), ex.backtrace)
       msg
     end

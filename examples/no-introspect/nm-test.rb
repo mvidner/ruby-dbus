@@ -3,7 +3,7 @@
 # Trivial network interface lister using NetworkManager.
 # NetworkManager does not support introspection, so the api is not that sexy.
 
-require 'dbus'
+require "dbus"
 
 bus = DBus::SystemBus.instance
 
@@ -17,5 +17,3 @@ rescue Exception
   poi.define_method("GetDevices", "") # NM 0.7
   p poi.GetDevices
 end
-
-
