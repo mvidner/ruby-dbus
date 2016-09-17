@@ -14,7 +14,7 @@ GEMSPEC = Gem::Specification.new do |s|
   s.homepage = "https://trac.luon.net/ruby-dbus"
   s.files = FileList[
     "{doc,examples,lib,spec}/**/*",
-    "COPYING", "NEWS", "Rakefile", "README.md",
+    "COPYING", "NEWS.md", "Rakefile", "README.md",
     "ruby-dbus.gemspec", "VERSION", ".rspec"].to_a.sort
   s.require_path = "lib"
 
