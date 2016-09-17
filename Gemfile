@@ -3,8 +3,7 @@ source "https://rubygems.org"
 gemspec
 
 group :test do
-  gem "simplecov"
-  gem "coveralls"
+  # Optional dependency, we do want to test with it
   gem "nokogiri"
 end
 
