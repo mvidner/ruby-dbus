@@ -23,20 +23,15 @@ is simply "dbus"
 #### Calling Methods
 
 1. {DBus.session_bus Connect to the session bus};
-   {DBus::Connection#[] get the screensaver service}
-   {DBus::Service#[] and its screensaver object}.
-2. Perform {DBus::ProxyObject#introspect explicit introspection}
-   to define the interfaces and methods
-   on the {DBus::ProxyObject object proxy}
-([I#28](https://github.com/mvidner/ruby-dbus/issues/28)).
-3. Call one of its methods in a loop, solving [xkcd#196](http://xkcd.com/196).
+2. {DBus::Connection#[] get the screensaver service}
+3. {DBus::Service#[] and its screensaver object}.
+4. Call one of its methods in a loop, solving [xkcd#196](http://xkcd.com/196).
 
 &nbsp;
 
     mybus = DBus.session_bus
     service = mybus["org.freedesktop.ScreenSaver"]
     object = service["/ScreenSaver"]
-    object.introspect
     loop do
       object.SimulateUserActivity
       sleep 5 * 60
@@ -50,7 +45,6 @@ In this example SuspendAllowed returns a boolean:
     mybus = DBus.session_bus
     pm_s = mybus["org.freedesktop.PowerManagement"]
     pm_o = pm_s["/org/freedesktop/PowerManagement"]
-    pm_o.introspect
     pm_i = pm_o["org.freedesktop.PowerManagement"]
 
     if pm_i.CanSuspend
@@ -74,7 +68,6 @@ For nearly all methods you used `Method[0]` or
     pm_s = mybus["org.freedesktop.PowerManagement"]
     # use legacy compatibility API
     pm_o = pm_s.object["/org/freedesktop/PowerManagement"]
-    pm_o.introspect
     pm_i = pm_o["org.freedesktop.PowerManagement"]
 
     # wrong
@@ -97,7 +90,6 @@ an actual Hash of them.
     sysbus = DBus.system_bus
     upower_s = sysbus["org.freedesktop.UPower"]
     upower_o = upower_s["/org/freedesktop/UPower"]
-    upower_o.introspect
     upower_i = upower_o["org.freedesktop.UPower"]
 
     on_battery = upower_i["OnBattery"]
@@ -137,7 +129,6 @@ To receive signals for a specific object and interface, use
     sysbus = DBus.system_bus
     login_s = sysbus["org.freedesktop.login1"] # part of systemd
     login_o = login_s.object "/org/freedesktop/login1"
-    login_o.introspect
     login_o.default_iface = "org.freedesktop.login1.Manager"
 
     main = DBus::Main.new
@@ -148,7 +139,6 @@ To receive signals for a specific object and interface, use
       puts "New session: #{name}"
 
       session_o = login_s.object(opath)
-      session_o.introspect
       session_i = session_o["org.freedesktop.login1.Session"]
       uid, _user_opath = session_i["User"]
       puts "Its UID: #{uid}"
@@ -218,7 +208,6 @@ D-Bus calls can reply with an error instead of a return value. An error is
 translated to a Ruby exception, an instance of {DBus::Error}.
 
     nm_o = DBus.system_bus["org.freedesktop.NetworkManager"]["/org/freedesktop/NetworkManager"]
-    nm_o.introspect
     nm = nm_o["org.freedesktop.NetworkManager"]
     begin
       nm.Sleep(false)

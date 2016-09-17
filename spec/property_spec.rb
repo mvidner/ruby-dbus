@@ -7,7 +7,6 @@ describe "PropertyTest" do
     session_bus = DBus::ASessionBus.new
     @svc = session_bus.service("org.ruby.service")
     @obj = @svc.object("/org/ruby/MyInstance")
-    @obj.introspect
     @iface = @obj["org.ruby.SampleInterface"]
   end
 
@@ -17,7 +16,6 @@ describe "PropertyTest" do
 
   it "tests property reading on a V1 object" do
     obj = @svc["/org/ruby/MyInstance"]
-    obj.introspect
     iface = obj["org.ruby.SampleInterface"]
 
     expect(iface["ReadMe"]).to eq("READ ME")
@@ -53,7 +51,6 @@ describe "PropertyTest" do
 
   it "tests get all on a V1 object" do
     obj = @svc["/org/ruby/MyInstance"]
-    obj.introspect
     iface = obj["org.ruby.SampleInterface"]
 
     all = iface.all_properties

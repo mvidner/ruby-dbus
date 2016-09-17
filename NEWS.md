@@ -2,9 +2,15 @@
 
 ## Unreleased
 
+Bug fixes:
+ * It is no longer required to explicitly call ProxyObject#introspect,
+   it will be done automatically once ([#28][]).
+
 Requirements:
  * Introduced RuboCop to keep a consistent coding style.
  * Replaced Gemfile.ci with a regular Gemfile.
+
+[#28]: http://github.com/mvidner/ruby-dbus/issue/28
 
 ## Ruby D-Bus 0.12.0 - 2016-09-12
 

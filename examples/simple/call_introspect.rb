@@ -10,8 +10,6 @@ rhythmbox = session_bus.service("org.gnome.Rhythmbox")
 # Get the object from this service
 player = rhythmbox.object("/org/gnome/Rhythmbox/Player")
 
-# Introspect it
-player.introspect
 if player.has_iface? "org.gnome.Rhythmbox.Player"
   puts "We have Rhythmbox Player interface"
 end

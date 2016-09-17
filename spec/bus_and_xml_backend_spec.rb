@@ -16,7 +16,6 @@ describe "BusAndXmlBackendTest" do
     @svc = @bus.service("org.ruby.service")
     obj = @svc.object("/org/ruby/MyInstance")
     obj.default_iface = "org.ruby.SampleInterface"
-    obj.introspect
     # "should respond to :the_answer"
     expect(obj.the_answer[0]).to eq(42)
     # "should work with multiple interfaces"
@@ -29,7 +28,6 @@ describe "BusAndXmlBackendTest" do
     @svc = @bus.service("org.ruby.service")
     obj = @svc.object("/org/ruby/MyInstance")
     obj.default_iface = "org.ruby.SampleInterface"
-    obj.introspect
     # "should respond to :the_answer"
     expect(obj.the_answer[0]).to eq(42)
     # "should work with multiple interfaces"

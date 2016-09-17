@@ -9,8 +9,7 @@ if ARGV.size < 2
 end
 
 d = DBus::SessionBus.instance
-o = d.service("org.freedesktop.Notifications").object("/org/freedesktop/Notifications")
-o.introspect
+o = d["org.freedesktop.Notifications"]["/org/freedesktop/Notifications"]
 
 i = o["org.freedesktop.Notifications"]
 
