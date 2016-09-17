@@ -7,6 +7,10 @@ Note about bug numbers:
 
 == Unreleased
 
+Requirements:
+ * Introduced RuboCop to keep a consistent coding style.
+ * Replaced Gemfile.ci with a regular Gemfile.
+
 == Ruby D-Bus 0.12.0 - 2016-09-12
 
 API:
