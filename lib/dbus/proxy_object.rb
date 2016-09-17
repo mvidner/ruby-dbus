@@ -37,6 +37,7 @@ module DBus
       @bus = bus
       @destination = dest
       @path = path
+      @introspected = false
       @interfaces = {}
       @subnodes = []
       @api = api
@@ -44,6 +45,7 @@ module DBus
 
     # Returns the interfaces of the object.
     def interfaces
+      introspect unless introspected
       @interfaces.keys
     end
 
@@ -51,6 +53,7 @@ module DBus
     # @param [String] intfname
     # @return [ProxyObjectInterface]
     def [](intfname)
+      introspect unless introspected
       @interfaces[intfname]
     end
 
@@ -58,6 +61,7 @@ module DBus
     # @param [String] intfname
     # @param [ProxyObjectInterface] intf
     # @return [ProxyObjectInterface]
+    # @api private
     def []=(intfname, intf)
       @interfaces[intfname] = intf
     end
@@ -107,8 +111,8 @@ module DBus
 
     # Returns whether the object has an interface with the given _name_.
     def has_iface?(name)
-      raise "Cannot call has_iface? if not introspected" if !@introspected
-      @interfaces.member?(name)
+      introspect unless introspected
+      @interfaces.key?(name)
     end
 
     # Registers a handler, the code block, for a signal with the given _name_.
