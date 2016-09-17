@@ -61,14 +61,13 @@ class MethodCallWindow
       end
       m.add_param(param[1], data)
     end
-    bus.on_return(m) do |retm|
+    bus.send_sync_or_async(m) do |retm|
       if retm.is_a?(DBus::Error)
         puts "Error: #{retm.inspect}"
       else
         puts "Method #{m.member} returns: #{retm.params.inspect}"
       end
     end
-    bus.send(m.marshall)
   end
 end
 
@@ -92,6 +91,9 @@ class DBusUI
     @methsigtreeview = @glade.get_object("methsigtreeview")
     # ierk
     setup_methodview_renderer(@methsigtreeview)
+    @methsigtreeview.signal_connect("row-activated") do |view, path, column|
+      on_method_activated(view, path, column)
+    end
 
     @window = @glade.get_object("window1")
     @window.show_all
