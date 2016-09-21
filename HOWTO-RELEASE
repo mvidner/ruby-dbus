@@ -11,6 +11,8 @@ Push, and check the Travis CI results.
 Edit VERSION NEWS package/rubygem-ruby-dbus.spec
 
     osc vc package
+    gem2rpm --config package/gem2rpm.yml \
+      package/ruby-dbus-$(cat VERSION).gem > package/rubygem-ruby-dbus.spec
     git commit -m "Releasing version $(cat VERSION)."
 
 Build, and submit + SR to OBS
@@ -19,13 +21,13 @@ Build, and submit + SR to OBS
 
 Push the versioned commit; tag
 
-    cat VERSION && git tag v`cat VERSION`
+    cat VERSION && git tag v$(cat VERSION)
     git push
     git push --tags
 
 Push gem
 
-    gem push package/ruby-dbus-`cat VERSION`.gem
+    gem push package/ruby-dbus-$(cat VERSION).gem
 
 Publicize
 

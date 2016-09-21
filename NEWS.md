@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.13.0 - 2016-09-21
+
 Bug fixes:
  * It is no longer required to explicitly call ProxyObject#introspect,
    it will be done automatically once ([#28][]).

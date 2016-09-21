@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Sep 21 20:18:19 UTC 2016 - mvidner@suse.com
+
+- 0.13.0
+ Bug fixes:
+ * It is no longer required to explicitly call ProxyObject#introspect,
+   it will be done automatically once (gh#mvidner/ruby-dbus#28).
+
+-------------------------------------------------------------------
 Mon Sep 12 19:51:17 UTC 2016 - mvidner@suse.com
 
 - 0.12.0
