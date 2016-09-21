@@ -4,7 +4,11 @@ require "fileutils"
 include FileUtils
 require "tmpdir"
 require "rspec/core/rake_task"
-require "rubocop/rake_task"
+begin
+  require "rubocop/rake_task"
+rescue LoadError
+  nil
+end
 require "packaging"
 
 Packaging.configuration do |conf|
@@ -64,4 +68,4 @@ namespace :doc do
   end
 end
 
-RuboCop::RakeTask.new
+RuboCop::RakeTask.new if Object.const_defined? :RuboCop

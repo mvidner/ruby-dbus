@@ -56,7 +56,7 @@ Pure Ruby module for interaction with D-Bus IPC system.
 
 %install
 %gem_install \
-  --doc-files="COPYING NEWS README.md" \
+  --doc-files="COPYING NEWS.md README.md" \
   -f
 
 # MANUAL
