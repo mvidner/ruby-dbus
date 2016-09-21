@@ -8,7 +8,6 @@ describe "AsyncTest" do
     @bus = DBus::ASessionBus.new
     @svc = @bus.service("org.ruby.service")
     @obj = @svc.object "/org/ruby/MyInstance"
-    @obj.introspect
     @obj.default_iface = "org.ruby.SampleInterface"
   end
 

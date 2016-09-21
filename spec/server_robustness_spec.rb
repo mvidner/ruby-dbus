@@ -29,7 +29,6 @@ describe "ServerRobustnessTest" do
 
   it "tests a method that raises" do
     obj = @svc.object "/org/ruby/MyInstance"
-    obj.introspect
     obj.default_iface = "org.ruby.SampleInterface"
     expect { obj.will_raise }.to raise_error(DBus::Error) do |e|
       expect(e).to_not match(/timeout/)
@@ -38,7 +37,6 @@ describe "ServerRobustnessTest" do
 
   it "tests a method that raises name error" do
     obj = @svc.object "/org/ruby/MyInstance"
-    obj.introspect
     obj.default_iface = "org.ruby.SampleInterface"
     expect { obj.will_raise_name_error }.to raise_error(DBus::Error) do |e|
       expect(e).to_not match(/timeout/)

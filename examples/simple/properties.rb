@@ -3,8 +3,7 @@ require "dbus"
 
 bus = DBus::SystemBus.instance
 nm_service = bus["org.freedesktop.NetworkManager"]
-network_manager_object = nm_service.object("/org/freedesktop/NetworkManager")
-network_manager_object.introspect
+network_manager_object = nm_service["/org/freedesktop/NetworkManager"]
 nm_iface = network_manager_object["org.freedesktop.NetworkManager"]
 
 # read a property

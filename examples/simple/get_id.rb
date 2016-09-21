@@ -10,8 +10,6 @@ driver_svc = bus["org.freedesktop.DBus"]
 # p driver_svc
 driver_obj = driver_svc["/"]
 # p driver_obj
-driver_obj.introspect
-
 driver_ifc = driver_obj["org.freedesktop.DBus"]
 # p driver_ifc
 

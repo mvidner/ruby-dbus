@@ -9,14 +9,12 @@ describe "BindingTest" do
     @bus = DBus::ASessionBus.new
     @svc = @bus.service("org.ruby.service")
     @base = @svc.object "/org/ruby/MyInstance"
-    @base.introspect
     @base.default_iface = "org.ruby.SampleInterface"
   end
 
   # https://trac.luon.net/ruby-dbus/ticket/36#comment:3
   it "tests class inheritance" do
     derived = @svc.object "/org/ruby/MyDerivedInstance"
-    derived.introspect
 
     # it should inherit from the parent
     expect(derived["org.ruby.SampleInterface"]).not_to be_nil
@@ -26,7 +24,6 @@ describe "BindingTest" do
   # Interfaces and methods/signals appeared on all classes
   it "tests separation of classes" do
     test2 = @svc.object "/org/ruby/MyInstance2"
-    test2.introspect
 
     # it should have its own interface
     expect(test2["org.ruby.Test2"]).not_to be_nil

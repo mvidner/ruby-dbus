@@ -8,7 +8,6 @@ describe "ValueTest" do
     session_bus = DBus::ASessionBus.new
     @svc = session_bus.service("org.ruby.service")
     @obj = @svc.object("/org/ruby/MyInstance")
-    @obj.introspect # necessary
     @obj.default_iface = "org.ruby.SampleInterface"
   end
 
@@ -39,7 +38,6 @@ describe "ValueTest" do
 
   it "retrieves a single return value with API V1" do
     obj = @svc["/org/ruby/MyInstance"]
-    obj.introspect
     obj.default_iface = "org.ruby.SampleInterface"
 
     expect(obj.bounce_variant("cuckoo")).to eq("cuckoo")

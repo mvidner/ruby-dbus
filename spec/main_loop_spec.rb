@@ -8,7 +8,6 @@ describe "MainLoopTest" do
     @session_bus = DBus::ASessionBus.new
     svc = @session_bus.service("org.ruby.service")
     @obj = svc.object("/org/ruby/MyInstance")
-    @obj.introspect # necessary
     @obj.default_iface = "org.ruby.Loop"
 
     @loop = DBus::Main.new
