@@ -296,7 +296,7 @@ module DBus
     def append(type, val)
       raise TypeException, "Cannot send nil" if val.nil?
 
-      type = type.chr if type.is_a?(Fixnum)
+      type = type.chr if type.is_a?(Integer)
       type = Type::Parser.new(type).parse[0] if type.is_a?(String)
       case type.sigtype
       when Type::BYTE

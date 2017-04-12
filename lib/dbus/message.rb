@@ -126,7 +126,7 @@ module DBus
 
     # Add a parameter _val_ of type _type_ to the message.
     def add_param(type, val)
-      type = type.chr if type.is_a?(Fixnum)
+      type = type.chr if type.is_a?(Integer)
       @signature += type.to_s
       @params << [type, val]
     end
