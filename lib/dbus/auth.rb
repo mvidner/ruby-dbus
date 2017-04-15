@@ -228,8 +228,8 @@ module DBus
           send("CANCEL")
           @state = :WaitingForReject
         when "OK"
-          send("BEGIN")
-          @state = :Authenticated
+          send("NEGOTIATE_UNIX_FD")
+          @state = :WaitingForUnixFd
         else
           send("ERROR")
           @state = :WaitingForData
@@ -238,8 +238,8 @@ module DBus
         DBus.logger.debug ":WaitingForOk msg: #{msg[0].inspect}"
         case msg[0]
         when "OK"
-          send("BEGIN")
-          @state = :Authenticated
+          send("NEGOTIATE_UNIX_FD")
+          @state = :WaitingForUnixFd
         when "REJECT"
           next_authenticator
           @state = :WaitingForData
@@ -259,6 +259,19 @@ module DBus
         else
           @socket.close
           return false
+        end
+      when :WaitingForUnixFd
+        DBus.logger.debug ":WaitingForUnixFd msg: #{msg[0].inspect}"
+        case msg[0]
+        when "AGREE_UNIX_FD"
+          send("BEGIN")
+          @state = :Authenticated
+        when "ERROR"
+          send("BEGIN")
+          @state = :Authenticated
+        else
+          send("BEGIN")
+          @state = :Authenticated
         end
       end
       true
