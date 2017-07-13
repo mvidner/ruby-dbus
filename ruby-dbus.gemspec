@@ -1,6 +1,5 @@
 # -*- ruby -*-
 require "rubygems"
-require "rake"
 
 GEMSPEC = Gem::Specification.new do |s|
   s.name = "ruby-dbus"
@@ -12,10 +11,11 @@ GEMSPEC = Gem::Specification.new do |s|
   s.author = "Ruby DBus Team"
   s.email = "ruby-dbus-devel@lists.luon.net"
   s.homepage = "https://trac.luon.net/ruby-dbus"
-  s.files = FileList[
+  s.files = Dir[
     "{doc,examples,lib,spec}/**/*",
     "COPYING", "NEWS.md", "Rakefile", "README.md",
-    "ruby-dbus.gemspec", "VERSION", ".rspec"].to_a.sort
+    "ruby-dbus.gemspec", "VERSION", ".rspec"
+  ]
   s.require_path = "lib"
 
   s.required_ruby_version = ">= 2.0.0"
