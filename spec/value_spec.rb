@@ -87,4 +87,8 @@ describe "ValueTest" do
     str = @obj.multibyte_string[0]
     expect(str).to eq("あいうえお")
   end
+
+  it "aligns short integers correctly" do
+    expect(@obj.i16_plus(10, -30)[0]).to eq(-20)
+  end
 end

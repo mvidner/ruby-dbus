@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+Bug fixes:
+ * Sending 16-bit signed integers ("n") did not work at all ([#68][]).
+
+Requirements:
+ * Stopped supporting ruby 2.0.0, because of Nokogiri.
+
+[#68]: https://github.com/mvidner/ruby-dbus/issues/68
+
 ## Ruby D-Bus 0.13.0 - 2016-09-21
 
 Bug fixes:

@@ -67,6 +67,10 @@ class Test < DBus::Object
       "あいうえお"
     end
 
+    dbus_method :i16_plus, "in a:n, in b:n, out result:n" do |a, b|
+      a + b
+    end
+
     dbus_signal :SomethingJustHappened, "toto:s, tutu:u"
   end
 

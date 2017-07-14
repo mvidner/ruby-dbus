@@ -133,8 +133,8 @@ module DBus
         align(2)
         packet = read(2).unpack(@uint16)[0]
       when Type::INT16
-        align(4)
-        packet = read(4).unpack(@uint16)[0]
+        align(2)
+        packet = read(2).unpack(@uint16)[0]
         if (packet & 0x8000) != 0
           packet -= 0x10000
         end
