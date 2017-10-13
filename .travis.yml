@@ -1,5 +1,10 @@
 sudo: false
 language: ruby
+addons:
+  apt:
+    packages:
+      - dbus
+
 rvm:
   - "2.4.1"
   - "2.3.4"
