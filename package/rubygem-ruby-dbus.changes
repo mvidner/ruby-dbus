@@ -1,4 +1,15 @@
 -------------------------------------------------------------------
+Fri Oct 13 12:38:54 UTC 2017 - mvidner@suse.com
+
+- 0.14.0
+ Bug fixes:
+ * Sending 16-bit signed integers ("n") did not work at all
+   (gh#mvidner/ruby-dbus#68).
+
+ Requirements:
+ * Stopped supporting ruby 2.0.0, because of Nokogiri.
+
+-------------------------------------------------------------------
 Wed Sep 21 20:18:19 UTC 2016 - mvidner@suse.com
 
 - 0.13.0

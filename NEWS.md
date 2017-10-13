@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.14.0 - 2017-10-13
+
 Bug fixes:
  * Sending 16-bit signed integers ("n") did not work at all ([#68][]).
 

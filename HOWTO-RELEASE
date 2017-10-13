@@ -8,7 +8,7 @@ Push, and check the Travis CI results.
 
     git push
 
-Edit VERSION NEWS package/rubygem-ruby-dbus.spec
+Edit VERSION NEWS.md package/rubygem-ruby-dbus.spec
 
     osc vc package
     gem2rpm --config package/gem2rpm.yml \
