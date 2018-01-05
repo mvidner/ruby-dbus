@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Jan  5 14:37:21 UTC 2018 - mvidner@suse.com
+
+- 0.14.1
+ Bug fixes:
+ * Allow registering signal handlers while a signal is being handled
+   (gh#mvidner/ruby-dbus#70, Jan Biniok).
+
+-------------------------------------------------------------------
 Fri Oct 13 12:38:54 UTC 2017 - mvidner@suse.com
 
 - 0.14.0

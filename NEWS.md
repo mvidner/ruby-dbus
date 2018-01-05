@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.14.1 - 2018-01-05
+
+Bug fixes:
+ * Allow registering signal handlers while a signal is being handled
+   ([#70][], Jan Biniok).
+
+[#70]: https://github.com/mvidner/ruby-dbus/pull/70
+
 ## Ruby D-Bus 0.14.0 - 2017-10-13
 
 Bug fixes:

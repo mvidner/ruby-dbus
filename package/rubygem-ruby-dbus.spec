@@ -1,7 +1,7 @@
 #
 # spec file for package rubygem-ruby-dbus
 #
-# Copyright (c) 2017 SUSE LINUX GmbH, Nuernberg, Germany.
+# Copyright (c) 2018 SUSE LINUX GmbH, Nuernberg, Germany.
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -24,7 +24,7 @@
 #
 
 Name:           rubygem-ruby-dbus
-Version:        0.14.0
+Version:        0.14.1
 Release:        0
 %define mod_name ruby-dbus
 %define mod_full_name %{mod_name}-%{version}
