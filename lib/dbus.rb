@@ -8,10 +8,11 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
+require "active_support/core_ext/class/attribute"
+
 require_relative "dbus/api_options"
 require_relative "dbus/auth"
 require_relative "dbus/bus"
-require_relative "dbus/core_ext/class/attribute"
 require_relative "dbus/error"
 require_relative "dbus/export"
 require_relative "dbus/introspect"
