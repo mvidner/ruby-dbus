@@ -9,6 +9,7 @@
 # See the file "COPYING" for the exact licensing terms.
 
 require "thread"
+require "dbus/core_ext/class/attribute"
 
 module DBus
   # Exported object type
@@ -20,7 +21,7 @@ module DBus
     # The path of the object.
     attr_reader :path
     # The interfaces that the object supports. Hash: String => Interface
-    class_attribute :intfs
+    my_class_attribute :intfs
     self.intfs = {}
 
     # The service that the object is exported by.

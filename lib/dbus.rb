@@ -11,7 +11,6 @@
 require_relative "dbus/api_options"
 require_relative "dbus/auth"
 require_relative "dbus/bus"
-require_relative "dbus/core_ext/class/attribute"
 require_relative "dbus/error"
 require_relative "dbus/export"
 require_relative "dbus/introspect"
