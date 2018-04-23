@@ -18,7 +18,7 @@ Ruby D-Bus is a pure Ruby library for writing clients and services for D-Bus.
 [Coverage Status]: https://coveralls.io/r/mvidner/ruby-dbus
 
 [GV img]: https://badge.fury.io/rb/ruby-dbus.png
-[BS img]: https://travis-ci.org/mvidner/ruby-dbus.png
+[BS img]: https://travis-ci.org/mvidner/ruby-dbus.png?branch=master
 [DS img]: https://gemnasium.com/mvidner/ruby-dbus.png
 [CC img]: https://codeclimate.com/github/mvidner/ruby-dbus.png
 [CS img]: https://coveralls.io/repos/mvidner/ruby-dbus/badge.png?branch=master
