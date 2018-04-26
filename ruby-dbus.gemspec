@@ -23,6 +23,8 @@ GEMSPEC = Gem::Specification.new do |s|
   # This is optional
   # s.add_runtime_dependency "nokogiri"
 
+  s.add_dependency "activesupport", ">= 4.1.0"
+
   s.add_development_dependency "coveralls"
   s.add_development_dependency "packaging_rake_tasks"
   s.add_development_dependency "rake"
