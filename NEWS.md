@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.15.0 - 2018-04-30
+
 API:
  * Accessing an unknown interface will raise instead of returning nil ([#74]).
 

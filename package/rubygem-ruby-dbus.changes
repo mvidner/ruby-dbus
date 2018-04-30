@@ -1,4 +1,15 @@
 -------------------------------------------------------------------
+Mon Apr 30 14:58:32 UTC 2018 - mvidner@suse.com
+
+- 0.15.0
+ API:
+ * Accessing an unknown interface will raise instead of
+   returning nil (gh#mvidner/ruby-dbus#74).
+ Bug fixes:
+ * Fixed a conflict with activesupport 5.2 (gh#mvidner/ruby-dbus#71)
+
+
+-------------------------------------------------------------------
 Fri Jan  5 14:37:21 UTC 2018 - mvidner@suse.com
 
 - 0.14.1
