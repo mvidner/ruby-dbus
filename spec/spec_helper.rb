@@ -92,11 +92,11 @@ def with_service_by_activation(&block)
   FileUtils.mkdir_p service_dir
   # file name actually does not need to match the service name
   File.open("#{service_dir}/#{name}.service", "w") do |f|
-    s = <<EOS
-[D-BUS Service]
-Name=#{name}
-Exec=#{exec}
-EOS
+    s = <<-TEXT.gsub(/^\s*/, "")
+      [D-BUS Service]
+      Name=#{name}
+      Exec=#{exec}
+    TEXT
     f.write(s)
   end
 

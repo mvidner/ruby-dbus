@@ -37,31 +37,31 @@ describe DBus::ASessionBus do
 
     context "when DBUS_SESSION_BUS_ADDRESS from file is surrounded by quotation marks" do
       it "returns session bus address without single quotation marks" do
-        expect(File).to receive(:open).with(session_bus_file_path) { <<-EOS.gsub(/^\s*/, "") }
+        expect(File).to receive(:open).with(session_bus_file_path) { <<-TEXT.gsub(/^\s*/, "") }
           DBUS_SESSION_BUS_ADDRESS='#{dbus_session_bus_address}'
           DBUS_SESSION_BUS_PID=12345
           DBUS_SESSION_BUS_WINDOWID=12345678
-        EOS
+        TEXT
         expect(DBus::ASessionBus.address_from_file).to eq(dbus_session_bus_address)
       end
 
       it "returns session bus address without double quotation marks" do
-        expect(File).to receive(:open).with(session_bus_file_path) { <<-EOS.gsub(/^\s*/, "") }
+        expect(File).to receive(:open).with(session_bus_file_path) { <<-TEXT.gsub(/^\s*/, "") }
           DBUS_SESSION_BUS_ADDRESS="#{dbus_session_bus_address}"
           DBUS_SESSION_BUS_PID=12345
           DBUS_SESSION_BUS_WINDOWID=12345678
-        EOS
+        TEXT
         expect(DBus::ASessionBus.address_from_file).to eq(dbus_session_bus_address)
       end
     end
 
     context "when DBUS_SESSION_BUS_ADDRESS from file is not surrounded by any quotation marks" do
       it "returns session bus address as it is" do
-        expect(File).to receive(:open).with(session_bus_file_path) { <<-EOS.gsub(/^\s*/, "") }
+        expect(File).to receive(:open).with(session_bus_file_path) { <<-TEXT.gsub(/^\s*/, "") }
           DBUS_SESSION_BUS_ADDRESS=#{dbus_session_bus_address}
           DBUS_SESSION_BUS_PID=12345
           DBUS_SESSION_BUS_WINDOWID=12345678
-        EOS
+        TEXT
         expect(DBus::ASessionBus.address_from_file).to eq(dbus_session_bus_address)
       end
     end

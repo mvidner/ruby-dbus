@@ -387,7 +387,7 @@ module DBus
         # introspect in synchronous !
         data = introspect_data(dest, path)
         pof = DBus::ProxyObjectFactory.new(data, self, dest, path)
-        return pof.build
+        pof.build
       else
         introspect_data(dest, path) do |async_data|
           yield(DBus::ProxyObjectFactory.new(async_data, self, dest, path).build)

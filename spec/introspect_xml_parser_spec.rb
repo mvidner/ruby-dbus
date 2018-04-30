@@ -4,19 +4,19 @@ require "dbus"
 
 describe "IntrospectXMLParserTest" do
   it "tests split interfaces" do
-    xml = <<EOS
-<node>
-   <interface name="org.example.Foo">
-     <method name="Dwim"/>
-   </interface>
-   <interface name="org.example.Bar">
-     <method name="Drink"/>
-   </interface>
-   <interface name="org.example.Foo">
-     <method name="Smurf"/>
-   </interface>
-</node>
-EOS
+    xml = <<-XML
+      <node>
+        <interface name="org.example.Foo">
+          <method name="Dwim"/>
+        </interface>
+        <interface name="org.example.Bar">
+          <method name="Drink"/>
+        </interface>
+        <interface name="org.example.Foo">
+          <method name="Smurf"/>
+        </interface>
+      </node>
+    XML
 
     interfaces, _subnodes = DBus::IntrospectXMLParser.new(xml).parse
 

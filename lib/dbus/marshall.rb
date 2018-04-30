@@ -69,6 +69,7 @@ module DBus
     def align(a)
       case a
       when 1
+        nil
       when 2, 4, 8
         bits = a - 1
         @idx = @idx + bits & ~bits

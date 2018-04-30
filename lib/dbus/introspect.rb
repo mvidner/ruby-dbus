@@ -50,9 +50,9 @@ module DBus
       raise InvalidIntrospectionData if name.bytesize > 255
       raise InvalidIntrospectionData if name =~ /^\./ || name =~ /\.$/
       raise InvalidIntrospectionData if name =~ /\.\./
-      raise InvalidIntrospectionData if !(name =~ /\./)
+      raise InvalidIntrospectionData if name !~ /\./
       name.split(".").each do |element|
-        raise InvalidIntrospectionData if !(element =~ INTERFACE_ELEMENT_RE)
+        raise InvalidIntrospectionData if element !~ INTERFACE_ELEMENT_RE
       end
     end
 

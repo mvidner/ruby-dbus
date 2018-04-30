@@ -226,7 +226,7 @@ class DBusUI
 
   def introspect_services(model, bus)
     el = @introspect_array.shift
-    if !(el =~ /^:/)
+    if el !~ /^:/
       iter = model.append(nil)
       iter[0] = el
       puts "introspecting: #{el}"

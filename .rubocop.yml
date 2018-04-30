@@ -1,7 +1,9 @@
-# Do not check code borrowed from ActiveSupport
 AllCops:
   Exclude:
+    # Do not check code borrowed from ActiveSupport
     - 'lib/dbus/core_ext/**/*.rb'
+    # RPM spec is not RSpec
+    - package/rubygem-ruby-dbus.spec
 
 # https://github.com/SUSE/style-guides/blob/master/Ruby.md#strings
 Style/StringLiterals:
@@ -12,6 +14,9 @@ Style/StringLiteralsInInterpolation:
 
 # https://github.com/SUSE/style-guides/blob/master/Ruby.md#arrays
 Style/WordArray:
+  Enabled: false
+
+Style/SymbolArray:
   Enabled: false
 
 Style/IndentationConsistency:
@@ -89,6 +94,9 @@ Metrics/AbcSize:
 # Offense count: 2
 Metrics/BlockNesting:
   Max: 4
+
+Metrics/BlockLength:
+  Max: 70
 
 # Offense count: 8
 # Configuration parameters: CountComments.

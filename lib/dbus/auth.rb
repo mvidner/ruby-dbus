@@ -73,7 +73,7 @@ module DBus
       path = File.join(ENV["HOME"], ".dbus-keyrings", context)
       DBus.logger.debug "path: #{path.inspect}"
       File.foreach(path) do |line|
-        if line.index(id) == 0
+        if line.index(id).zero?
           # Right line of file, read cookie
           cookie = line.split(" ")[2].chomp
           DBus.logger.debug "cookie: #{cookie.inspect}"

@@ -29,7 +29,7 @@ task test: :spec
 
 RSpec::Core::RakeTask.new("bare:spec")
 
-%w(spec).each do |tname|
+["spec"].each do |tname|
   desc "Run bare:#{tname} in the proper environment"
   task tname do |_t|
     cd "spec/tools" do

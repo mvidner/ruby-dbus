@@ -41,21 +41,17 @@ module DBus
 
         # required methods
         # returns node attribute value
-        def [](key)
-        end
+        def [](key); end
 
         # yields child nodes which match xpath of type AbstractXML::Node
-        def each(xpath)
-        end
+        def each(xpath); end
       end
       # required methods
       # initialize parser with xml string
-      def initialize(xml)
-      end
+      def initialize(xml); end
 
       # yields nodes which match xpath of type AbstractXML::Node
-      def each(xpath)
-      end
+      def each(xpath); end
     end
 
     class NokogiriParser < AbstractXML
