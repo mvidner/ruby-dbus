@@ -38,5 +38,14 @@ describe DBus::ProxyObject do
         end
       end
     end
+
+    describe "#[]" do
+      it "raises when the interface is not found" do
+        obj = svc["/org/ruby/MyInstance"]
+        expect { obj["org.ruby.NoSuchInterface"] }.to raise_error(DBus::Error) do |e|
+          expect(e.message).to match(/no such interface/)
+        end
+      end
+    end
   end
 end

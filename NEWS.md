@@ -2,10 +2,14 @@
 
 ## Unreleased
 
+API:
+ * Accessing an unknown interface will raise instead of returning nil ([#74]).
+
 Bug fixes:
  * Fixed a conflict with activesupport 5.2 ([#71])
 
 [#71]: https://github.com/mvidner/ruby-dbus/issues/71
+[#74]: https://github.com/mvidner/ruby-dbus/pull/74
 
 ## Ruby D-Bus 0.14.1 - 2018-01-05
 
