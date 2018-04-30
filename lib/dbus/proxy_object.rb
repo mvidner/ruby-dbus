@@ -54,7 +54,9 @@ module DBus
     # @return [ProxyObjectInterface]
     def [](intfname)
       introspect unless introspected
-      @interfaces[intfname]
+      ifc = @interfaces[intfname]
+      raise DBus::Error, "no such interface `#{intfname}' on object `#{@path}'" unless ifc
+      ifc
     end
 
     # Maps the given interface name _intfname_ to the given interface _intf.
