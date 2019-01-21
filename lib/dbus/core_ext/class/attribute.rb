@@ -108,4 +108,12 @@ class Class
       end
     end
   end
+
+  private
+
+  unless respond_to?(:singleton_class?)
+    def singleton_class?
+      ancestors.first != self
+    end
+  end
 end
