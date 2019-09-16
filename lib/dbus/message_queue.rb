@@ -11,6 +11,7 @@ require "fcntl"
 require "socket"
 
 module DBus
+  # Encapsulates a socket so that we can {#push} and {#pop} {Message}s.
   class MessageQueue
     # The socket that is used to connect with the bus.
     attr_reader :socket
@@ -22,10 +23,10 @@ module DBus
       connect
     end
 
-    # TODO: failure modes
-    #
-    # If _non_block_ is true, return nil instead of waiting
-    # EOFError may be raised
+    # @param non_block [Boolean] if true, return nil instead of waiting
+    # @return [Message,nil] one message or nil if unavailable
+    # @raise EOFError
+    # @todo failure modes
     def pop(non_block = false)
       buffer_from_socket_nonblock
       message = message_from_buffer_nonblock
@@ -131,7 +132,7 @@ module DBus
     public # FIXME: fix Main loop instead
 
     # Get and remove one message from the buffer.
-    # Return the message or nil.
+    # @return [Message,nil] the message or nil if unavailable
     def message_from_buffer_nonblock
       return nil if @buffer.empty?
       ret = nil
@@ -139,7 +140,7 @@ module DBus
         ret, size = Message.new.unmarshall_buffer(@buffer)
         @buffer.slice!(0, size)
       rescue IncompleteBufferException
-        # fall through, let ret be null
+        # fall through, let ret remain nil
       end
       ret
     end
@@ -149,7 +150,8 @@ module DBus
 
     # Fill (append) the buffer from data that might be available on the
     # socket.
-    # EOFError may be raised
+    # @return [void]
+    # @raise EOFError
     def buffer_from_socket_nonblock
       @buffer += @socket.read_nonblock(MSG_BUF_SIZE)
     rescue EOFError
