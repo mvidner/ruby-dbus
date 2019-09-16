@@ -125,8 +125,8 @@ module DBus
 
     # Initialize the connection to the bus.
     def init_connection
-      @client = Client.new(@socket)
-      @client.authenticate
+      client = Client.new(@socket)
+      client.authenticate
     end
 
     public # FIXME: fix Main loop instead
