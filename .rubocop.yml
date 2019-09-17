@@ -125,7 +125,7 @@ Metrics/PerceivedComplexity:
 # Offense count: 8
 Style/ClassVars:
   Exclude:
-    - 'lib/dbus/export.rb'
+    - 'lib/dbus/object.rb'
     - 'lib/dbus/message.rb'
 
 # Offense count: 16

@@ -1,5 +1,3 @@
-# dbus/introspection.rb - module containing a low-level D-Bus introspection implementation
-#
 # This file is part of the ruby-dbus project
 # Copyright (C) 2007 Arnaud Cornet and Paul van Tilburg
 #
@@ -16,7 +14,7 @@ module DBus
   # = Exportable D-Bus object class
   #
   # Objects that are going to be exported by a D-Bus service
-  # should inherit from this class. At the client side, use ProxyObject.
+  # should inherit from this class. At the client side, use {ProxyObject}.
   class Object
     # The path of the object.
     attr_reader :path
@@ -127,5 +125,5 @@ module DBus
     def self.make_method_name(intfname, methname)
       "#{intfname}%%#{methname}"
     end
-  end # class Object
-end # module DBus
+  end
+end
