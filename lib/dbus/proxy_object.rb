@@ -36,7 +36,7 @@ module DBus
     def initialize(bus, dest, path, api: ApiOptions::CURRENT)
       @bus = bus
       @destination = dest
-      @path = path
+      @path = ObjectPath.new(path)
       @introspected = false
       @interfaces = {}
       @subnodes = []
