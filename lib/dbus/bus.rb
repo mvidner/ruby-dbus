@@ -458,6 +458,9 @@ module DBus
         retm = wait_for_message
         process(retm)
       end
+    rescue EOFError
+      new_err = DBus::Error.new("Connection dropped after we sent #{m.inspect}")
+      raise new_err
     end
 
     # @api private
