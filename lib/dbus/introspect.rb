@@ -14,10 +14,6 @@ module DBus
   # Regular expressions that should match all interface names.
   INTERFACE_ELEMENT_RE = /^[A-Za-z][A-Za-z0-9_]*$/
 
-  # Exception raised when an unknown signal is used.
-  class UnknownSignal < Exception
-  end
-
   # Exception raised when an invalid class definition is encountered.
   class InvalidClassDefinition < Exception
   end
