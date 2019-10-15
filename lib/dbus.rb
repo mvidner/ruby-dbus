@@ -11,6 +11,7 @@
 require_relative "dbus/api_options"
 require_relative "dbus/auth"
 require_relative "dbus/bus"
+require_relative "dbus/bus_name"
 require_relative "dbus/error"
 require_relative "dbus/introspect"
 require_relative "dbus/logger"

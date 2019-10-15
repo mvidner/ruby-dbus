@@ -17,7 +17,7 @@ require "singleton"
 # Module containing all the D-Bus modules and classes.
 module DBus
   # This represents a remote service. It should not be instantiated directly
-  # Use Bus::service()
+  # Use {Bus#service}
   class Service
     # The service name.
     attr_reader :name
@@ -28,7 +28,7 @@ module DBus
 
     # Create a new service with a given _name_ on a given _bus_.
     def initialize(name, bus)
-      @name = name
+      @name = BusName.new(name)
       @bus = bus
       @root = Node.new("/")
     end
