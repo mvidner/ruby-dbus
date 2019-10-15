@@ -29,7 +29,7 @@ Release:        0
 %define mod_name ruby-dbus
 %define mod_full_name %{mod_name}-%{version}
 # MANUAL
-BuildRequires:  %{rubygem nokogiri > 1.6}
+BuildRequires:  %{rubygem nokogiri >= 1.10.4}
 BuildRequires:  %{rubygem packaging_rake_tasks}
 BuildRequires:  %{rubygem rake}
 BuildRequires:  %{rubygem rspec}
