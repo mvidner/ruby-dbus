@@ -2,10 +2,19 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.16.0 - 2019-10-15
+
+API:
+ * An invalid service name or an invalid object path will raise
+   instead of being sent to the bus. The bus would then drop the connection,
+   producing EOFError here ([#80][]).
+
+[#80]: https://github.com/mvidner/ruby-dbus/issues/80
+
 ## Ruby D-Bus 0.15.0 - 2018-04-30
 
 API:
- * Accessing an unknown interface will raise instead of returning nil ([#74]).
+ * Accessing an unknown interface will raise instead of returning nil ([#74][]).
 
 Bug fixes:
  * Fixed a conflict with activesupport 5.2 ([#71])
