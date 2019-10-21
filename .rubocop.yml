@@ -19,7 +19,7 @@ Style/WordArray:
 Style/SymbolArray:
   Enabled: false
 
-Style/IndentationConsistency:
+Layout/IndentationConsistency:
   Exclude:
     # a conflict between markdown and ruby indentation
     - examples/doc/variants.rb
@@ -72,13 +72,17 @@ Lint/RescueException:
     - 'lib/dbus/bus.rb'
     - 'lib/dbus/message_queue.rb'
 
-Style/PredicateName:
+Naming/PredicateName:
   NamePrefix:
     # has_ and have_ are allowed
     - is_
 
 # Offense count: 1
-Lint/Eval:
+Security/Eval:
+  Exclude:
+    - 'examples/gdbus/gdbus'
+
+Lint/RescueWithoutErrorClass:
   Exclude:
     - 'examples/gdbus/gdbus'
 

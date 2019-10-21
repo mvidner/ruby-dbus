@@ -58,7 +58,7 @@ module DBus
           meth.rets.zip(retdata).each do |rsig, rdata|
             reply.add_param(rsig.type, rdata)
           end
-        rescue => ex
+        rescue StandardError => ex
           dbus_msg_exc = msg.annotate_exception(ex)
           reply = ErrorMessage.from_exception(dbus_msg_exc).reply_to(msg)
         end
@@ -86,7 +86,7 @@ module DBus
     end
 
     # Dummy undefined interface class.
-    class UndefinedInterface < ScriptError
+    class UndefinedInterface < ScriptError # rubocop:disable Lint/InheritException
       def initialize(sym)
         super "No interface specified for #{sym}"
       end

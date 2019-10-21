@@ -422,7 +422,7 @@ module DBus
         ["s", value.to_str]
       elsif value.respond_to? :to_int
         i = value.to_int
-        if -2_147_483_648 <= i && i < 2_147_483_648
+        if (-2_147_483_648...2_147_483_648).cover?(i)
           ["i", i]
         else
           ["x", i]

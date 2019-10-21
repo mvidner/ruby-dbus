@@ -87,14 +87,14 @@ module DBus
           return response
         end
       end
+      return if @retries <= 0
+
       # a little rescue magic
-      unless @retries <= 0
-        puts "ERROR: Could not auth, will now exit."
-        puts "ERROR: Unable to locate cookie, retry in 1 second."
-        @retries -= 1
-        sleep 1
-        data(hexdata)
-      end
+      puts "ERROR: Could not auth, will now exit."
+      puts "ERROR: Unable to locate cookie, retry in 1 second."
+      @retries -= 1
+      sleep 1
+      data(hexdata)
     end
 
     # encode plain to hex

@@ -129,6 +129,11 @@ module DBus
     ####################################################
     private
 
+    # rubocop:disable Style/MethodMissing
+    # but https://github.com/rubocop-hq/ruby-style-guide#no-method-missing
+    # and http://blog.marc-andre.ca/2010/11/15/methodmissing-politely/
+    # have a point to be investigated
+
     # Handles all unkown methods, mostly to route method calls to the
     # default interface.
     def method_missing(name, *args, &reply_handler)
@@ -150,5 +155,6 @@ module DBus
         raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
       end
     end
+    # rubocop:enable Style/MethodMissing
   end # class ProxyObject
 end

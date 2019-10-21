@@ -27,6 +27,6 @@ GEMSPEC = Gem::Specification.new do |s|
   s.add_development_dependency "packaging_rake_tasks"
   s.add_development_dependency "rake"
   s.add_development_dependency "rspec", "~> 3"
-  s.add_development_dependency "rubocop", "= 0.41.2"
+  s.add_development_dependency "rubocop", "= 0.50.0"
   s.add_development_dependency "simplecov"
 end
