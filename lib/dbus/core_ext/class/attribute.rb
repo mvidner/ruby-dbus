@@ -2,7 +2,7 @@
 # copied from activesupport/core_ext from Rails, MIT license
 # https://github.com/rails/rails/tree/9794e85351243cac6d4e78adaba634b8e4ecad0a/activesupport/lib/active_support/core_ext
 
-require "dbus/core_ext/module/redefine_method"
+require_relative "../module/redefine_method"
 
 class Class
   # Declare a class-level attribute whose value is inheritable by subclasses.
