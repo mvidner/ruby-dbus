@@ -119,15 +119,9 @@ class Test < DBus::Object
     dbus_signal :LongTaskEnd
   end
 
-=begin
+  # ==================================================
+  # INTERNAL NOTES
   # TODO: again ensure that we are inside a dbus_interface block
-
-  # @example
-  #     class Note < DBus::Object
-  #       dbus_interface "org.example.Note" do
-  #         dbus_attr_accessor :text, Type::STRING
-  #       end
-  #     end
 
   # low level for doing weird things? probably unnecessary
   # Declaring a property that is neiter readable nor writable
@@ -141,9 +135,14 @@ class Test < DBus::Object
   #   to convert the Ruby convention to the DBus convention
   # @param emits_changed_signal [true,false,:invalidates,:const]
   #   FIXME: ignored for now, true assumed. (also applies to interface)
-  dbus_property(ruby_name, type, read:, write:, dbus_name:)
+  # dbus_property(ruby_name, type, read:, write:, dbus_name:)
 
   # MAKE INTROSPECTION WORK!
+
+  # =========================================
+  # DOC
+
+  # @example
 
   # dbus_reader/writer/accessor does notimply
   # attr_reader/attr_writer/attr_accessor
@@ -154,63 +153,25 @@ class Test < DBus::Object
   # It always uses the methods #foo or #foo=.
   # dbus_writer :foo actually wraps #foo= so that it can send
   # a PropertiesChanged signal. The original version is #_original_foo=.
-  # Therefore the correct order is
+  # Therefore the correct declaration order is
   #
   # def foo=(val); ...; end
   # dbus_writer :foo, Type::STRING
 
-  # A read-only property accessing a reader method (which must already exist).
-  # (To directly access an instance variable, use {#dbus_attr_reader} instead)
-  def self.dbus_reader(ruby_name, type, dbus_name: nil)
-  end
-
-  # A write-only property accessing a writer method (which must already exist).
-  # (To directly access an instance variable, use {#dbus_attr_writer} instead)
-  def self.dbus_writer(ruby_name, type, dbus_name: nil)
-  end
-
-  # A read-write property using a pair of reader/writer methods
-  # (which must already exist).
-  # (To directly access an instance variable, use {#dbus_attr_accessor} instead)
-  def self.dbus_accessor(ruby_name, type, dbus_name: nil)
-  end
-
-  # A read-only property accessing an instance variable.
-  # A combination of attr_reader and {#dbus_reader}.
-  # @param ruby_name [Symbol] :foo_bar is exposed as FooBar;
-  #   use dbus_name to override
-  # @param dbus_name [String]
-  def self.dbus_attr_reader(ruby_name, type, dbus_name: nil)
-    attr_reader(ruby_name, dbus_name)
-    dbus_reader(ruby_name, type, dbus_name)
-  end
-
-  # A write-only property accessing an instance variable.
-  # A combination of attr_writer and {#dbus_writer}.
-  #
-  # @param ruby_name [Symbol] :foo_bar is exposed as FooBar;
-  #   use dbus_name to override
-
-  def self.dbus_attr_writer(ruby_name, type, dbus_name: nil)
-    attr_writer(ruby_name, dbus_name)
-    dbus_writer(ruby_name, type, dbus_name)
-  end
-
-  # A read-write property accessing an instance variable.
-  # A combination of attr_accessor and {#dbus_accessor}.
-  def self.dbus_attr_accessor(ruby_name, type, dbus_name: nil)
-    attr_accessor(ruby_name, dbus_name)
-    dbus_accessor(ruby_name, type, dbus_name)
-  end
+  # https://ruby-doc.org/stdlib-2.5.0/libdoc/observer/rdoc/Observable.html
+  # does not seem useful
 
   # ruby @foo_bar, dbus FooBar
   # type: eg Type::STRING (looks up DBus::Type::STRING)
   # next: make aliases directly in DBus (maybe DBus::Object)
-  dbus_reader :read_it, Type::STRING
+  dbus_reader :read_it, DBus::Type::STRING
 
-  dbus_writer :write_it
+  # omit type to mean variant?
+  dbus_writer :write_it, DBus::Type::VARIANT
+
   # ARRAY does not work this way. DBus.type("av")
-  dbus_accessor :baz, Type::ARRAY(Type::VARIANT)
+  # dbus_accessor :baz, DBus::Type::ARRAY(DBus::Type::VARIANT)
+  dbus_accessor :baz, DBus::Type::ARRAY
 
   # what about multiple interfaces?
   # spec says that empty interface is ok as long as name unique
@@ -247,11 +208,12 @@ class Test < DBus::Object
     # call old method
     @a_prop = value
     #
-    # PropertiesChanged(STRING interface_name, DICT<STRING,VARIANT> changed_properties, ARRAY<STRING> invalidated_properties)
+    # PropertiesChanged(STRING interface_name,
+    #                   DICT<STRING,VARIANT> changed_properties,
+    #                   ARRAY<STRING> invalidated_properties)
     helper.properties_changed(name, value)
     #
   end
-=end
 
   # Properties:
   # ReadMe:string, returns "READ ME" at first, then what WriteMe received
