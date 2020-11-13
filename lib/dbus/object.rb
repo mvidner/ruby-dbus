@@ -92,6 +92,93 @@ module DBus
       end
     end
 
+
+    # A read-write property accessing an instance variable.
+    # A combination of attr_accessor and {.dbus_accessor}.
+    #
+    # PropertiesChanged signal will be emitted whenever `foo_bar=` is used
+    # but not when @foo_bar is written directly.
+    #
+    # @param ruby_name [Symbol] :foo_bar is exposed as FooBar;
+    #   use dbus_name to override
+    # @param type a signature like "s" or "a(uus)" or Type::STRING
+    # @param dbus_name [String] if not given it is made
+    #   by CamelCasing the ruby_name. foo_bar becomes FooBar
+    #   to convert the Ruby convention to the DBus convention.
+    # @return [void]
+    def self.dbus_attr_accessor(ruby_name, type, dbus_name: nil)
+      attr_accessor(ruby_name, dbus_name)
+      dbus_accessor(ruby_name, type, dbus_name)
+    end
+
+    # A read-only property accessing an instance variable.
+    # A combination of attr_reader and {.dbus_reader}.
+    #
+    # PropertiesChanged: You should also call FIXME Class#method(args) whenever
+    # the underlying value changes to emit PropertiesChanged.
+    #
+    # @param  (see .dbus_attr_accessor)
+    # @return (see .dbus_attr_accessor)
+    def self.dbus_attr_reader(ruby_name, type, dbus_name: nil)
+      attr_reader(ruby_name, dbus_name)
+      dbus_reader(ruby_name, type, dbus_name)
+    end
+
+    # A write-only property accessing an instance variable.
+    # A combination of attr_writer and {.dbus_writer}.
+    #
+    # @param  (see .dbus_attr_accessor)
+    # @return (see .dbus_attr_accessor)
+    def self.dbus_attr_writer(ruby_name, type, dbus_name: nil)
+      attr_writer(ruby_name, dbus_name)
+      dbus_writer(ruby_name, type, dbus_name)
+    end
+
+    # A read-write property using a pair of reader/writer methods
+    # (which must already exist).
+    # (To directly access an instance variable, use {.dbus_attr_accessor} instead)
+    #
+    # Uses {.dbus_watcher} to set up the PropertiesChanged signal.
+    #
+    # @param  (see .dbus_attr_accessor)
+    # @return (see .dbus_attr_accessor)
+    def self.dbus_accessor(ruby_name, type, dbus_name: nil)
+    end
+
+    # A read-only property accessing a reader method (which must already exist).
+    # (To directly access an instance variable, use {.dbus_attr_reader} instead)
+    #
+    # PropertiesChanged: You should also call FIXME Class#method(args) whenever
+    # the underlying value changes to emit PropertiesChanged.
+    #
+    # @param  (see .dbus_attr_accessor)
+    # @return (see .dbus_attr_accessor)
+    def self.dbus_reader(ruby_name, type, dbus_name: nil)
+    end
+
+    # A write-only property accessing a writer method (which must already exist).
+    # (To directly access an instance variable, use {.dbus_attr_writer} instead)
+    #
+    # Uses {.dbus_watcher} to set up the PropertiesChanged signal.
+    #
+    # @param  (see .dbus_attr_accessor)
+    # @return (see .dbus_attr_accessor)
+    def self.dbus_writer(ruby_name, type, dbus_name: nil)
+    end
+
+    # Enables automatic sending of the PropertiesChanged signal.
+    # For *ruby_name* `foo_bar`, wrap `foo_bar=` so that it sends
+    # the signal for FooBar.
+    # The original version remains as #_original_foo.
+    #
+    # @param ruby_name [Symbol] :foo_bar and :foo_bar= both mean the same thing
+    # @param dbus_name [String] if not given it is made
+    #   by CamelCasing the ruby_name. foo_bar becomes FooBar
+    #   to convert the Ruby convention to the DBus convention.
+    # @return [void]
+    def self.dbus_watcher(ruby_name, dbus_name: nil)
+    end
+
     # Defines an exportable method on the object with the given name _sym_,
     # _prototype_ and the code in a block.
     def self.dbus_method(sym, protoype = "", &block)
