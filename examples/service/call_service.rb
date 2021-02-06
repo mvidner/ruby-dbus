@@ -14,7 +14,7 @@ player.test_variant(["s", "coucou"])
 player.on_signal("SomethingJustHappened") do |u, v|
   puts "SomethingJustHappened: #{u} #{v}"
 end
-player.hello("8=======D", "(_._)")
+player.hello("Hey", "there!")
 p player["org.ruby.AnotherInterface"].Reverse("Hello world!")
 
 main = DBus::Main.new
