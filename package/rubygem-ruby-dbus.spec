@@ -38,7 +38,7 @@ BuildRequires:  netcfg
 # /MANUAL
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  ruby-macros >= 5
-BuildRequires:  %{ruby >= 2.0.0}
+BuildRequires:  %{ruby >= 2.1.0}
 BuildRequires:  %{rubygem gem2rpm}
 Url:            https://github.com/mvidner/ruby-dbus
 Source:         https://rubygems.org/gems/%{mod_full_name}.gem

@@ -18,7 +18,7 @@ GEMSPEC = Gem::Specification.new do |s|
   ]
   s.require_path = "lib"
 
-  s.required_ruby_version = ">= 2.0.0"
+  s.required_ruby_version = ">= 2.1.0"
 
   # This is optional
   # s.add_runtime_dependency "nokogiri"
