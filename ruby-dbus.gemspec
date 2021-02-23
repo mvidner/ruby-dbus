@@ -20,6 +20,8 @@ GEMSPEC = Gem::Specification.new do |s|
 
   s.required_ruby_version = ">= 2.0.0"
 
+  s.add_dependency "rexml"
+
   # This is optional
   # s.add_runtime_dependency "nokogiri"
 
