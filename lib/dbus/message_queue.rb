@@ -81,22 +81,23 @@ module DBus
 
     # Connect to a bus over tcp and initialize the connection.
     def connect_to_tcp(params)
-      # check if the path is sufficient
-      if params.key?("host") && params.key?("port")
+      host = params["host"]
+      port = params["port"]
+      if host && port
         begin
           # initialize the tcp socket
-          @socket = TCPSocket.new(params["host"], params["port"].to_i)
+          @socket = TCPSocket.new(host, port.to_i)
           @socket.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
           init_connection
           @is_tcp = true
         rescue Exception => e
           puts "Oops:", e
-          puts "Error: Could not establish connection to: #{@path}, will now exit."
+          puts "Error: Could not establish connection to: #{host}:#{port}, will now exit."
           exit(1) # a little harsh
         end
       else
         # Danger, Will Robinson: the specified "path" is not usable
-        puts "Error: supplied path: #{@path}, unusable! sorry."
+        puts "Error: supplied params: #{@params}, unusable! sorry."
       end
     end
 
