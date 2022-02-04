@@ -210,4 +210,24 @@ module DBus
       xml
     end
   end # class Signal
+
+  # An (exported) property
+  # https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-properties
+  class Property
+    # @return [String] The name of the property, for example FooBar.
+    attr_reader :name
+    attr_reader :type
+    attr_reader :access
+
+    def initialize(name, type, access)
+      @name = name
+      @type = type
+      @access = access
+    end
+
+    # Return introspection XML string representation of the property.
+    def to_xml
+      "    <property type=\"#{@type}\" name=\"#{@name}\" access=\"#{@access}\"/>\n"
+    end
+  end
 end # module DBus

@@ -169,17 +169,19 @@ class Test < DBus::Object
   # https://ruby-doc.org/stdlib-2.5.0/libdoc/observer/rdoc/Observable.html
   # does not seem useful
 
-  # ruby @foo_bar, dbus FooBar
-  # type: eg Type::STRING (looks up DBus::Type::STRING)
-  # next: make aliases directly in DBus (maybe DBus::Object)
-  dbus_reader :read_it, DBus::Type::STRING
+  dbus_interface "org.ruby.SomeProperties" do
+    # ruby @foo_bar, dbus FooBar
+    # type: eg Type::STRING (looks up DBus::Type::STRING)
+    # next: make aliases directly in DBus (maybe DBus::Object)
+    dbus_reader :read_it, DBus::Type::STRING
 
-  # omit type to mean variant?
-  dbus_writer :write_it, DBus::Type::VARIANT
+    # omit type to mean variant?
+    dbus_writer :write_it, DBus::Type::VARIANT
 
-  # ARRAY does not work this way. DBus.type("av")
-  # dbus_accessor :baz, DBus::Type::ARRAY(DBus::Type::VARIANT)
-  dbus_accessor :baz, DBus::Type::ARRAY
+    # ARRAY does not work this way. DBus.type("av")
+    # dbus_accessor :baz, DBus::Type::ARRAY(DBus::Type::VARIANT)
+    dbus_accessor :baz, DBus::Type::ARRAY
+  end
 
   # what about multiple interfaces?
   # spec says that empty interface is ok as long as name unique
@@ -235,8 +237,6 @@ class Test < DBus::Object
       end
 
       case propname
-      when "ReadMe"
-        [@read_me]
       when "ReadOrWriteMe"
         [@read_or_write_me]
       when "WriteMe"

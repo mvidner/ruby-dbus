@@ -162,6 +162,7 @@ module DBus
           xml += "  <interface name=\"#{v.name}\">\n"
           v.methods.each_value { |m| xml += m.to_xml }
           v.signals.each_value { |m| xml += m.to_xml }
+          v.properties.each_value { |m| xml += m.to_xml }
           xml += "  </interface>\n"
         end
       end

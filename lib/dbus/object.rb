@@ -10,6 +10,8 @@ require "thread"
 require_relative "core_ext/class/attribute"
 
 module DBus
+  PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties".freeze
+
   # Exported object type
   # = Exportable D-Bus object class
   #
@@ -143,6 +145,7 @@ module DBus
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
     def self.dbus_accessor(ruby_name, type, dbus_name: nil)
+      raise UndefinedInterface, ruby_name if @@cur_intf.nil?
     end
 
     # A read-only property accessing a reader method (which must already exist).
@@ -154,6 +157,7 @@ module DBus
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
     def self.dbus_reader(ruby_name, type, dbus_name: nil)
+      raise UndefinedInterface, ruby_name if @@cur_intf.nil?
     end
 
     # A write-only property accessing a writer method (which must already exist).
@@ -164,6 +168,7 @@ module DBus
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
     def self.dbus_writer(ruby_name, type, dbus_name: nil)
+      raise UndefinedInterface, ruby_name if @@cur_intf.nil?
     end
 
     # Enables automatic sending of the PropertiesChanged signal.
@@ -181,10 +186,14 @@ module DBus
 
     # Defines an exportable method on the object with the given name _sym_,
     # _prototype_ and the code in a block.
+    # @param prototype
     def self.dbus_method(sym, protoype = "", &block)
       raise UndefinedInterface, sym if @@cur_intf.nil?
       @@cur_intf.define(Method.new(sym.to_s).from_prototype(protoype))
-      define_method(Object.make_method_name(@@cur_intf.name, sym.to_s), &block)
+
+      ruby_name = Object.make_method_name(@@cur_intf.name, sym.to_s)
+      # ::Module#define_method(name) { body }
+      define_method(ruby_name, &block)
     end
 
     # Emits a signal from the object with the given _interface_, signal
@@ -204,13 +213,77 @@ module DBus
       end
     end
 
-    ####################################################################
-
     # Helper method that returns a method name generated from the interface
     # name _intfname_ and method name _methname_.
     # @api private
     def self.make_method_name(intfname, methname)
       "#{intfname}%%#{methname}"
+    end
+
+
+    ####################################################################
+
+    # use the above defined methods to declare the property-handling
+    # interfaces and methods
+    # FIXME make it correctly generic, not hardcoded to the example properties
+    dbus_interface PROPERTY_INTERFACE do
+      dbus_method :Get, "in interface:s, in propname:s, out value:v" do |interface, propname|
+        unless interface == INTERFACE
+          raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
+                "Interface '#{interface}' not found on object '#{@path}'"
+        end
+
+        case propname
+        when "ReadOrWriteMe"
+          [@read_or_write_me]
+        when "WriteMe"
+          raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
+                "Property '#{interface}.#{propname}' (on object '#{@path}') is not readable"
+        else
+          # what should happen for unknown properties
+          # plasma: InvalidArgs (propname), UnknownInterface (interface)
+          raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
+                "Property '#{interface}.#{propname}' not found on object '#{@path}'"
+        end
+      end
+
+      dbus_method :Set, "in interface:s, in propname:s, in  value:v" do |interface, propname, value|
+        unless interface == INTERFACE
+          raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
+                "Interface '#{interface}' not found on object '#{@path}'"
+        end
+
+        case propname
+        when "ReadMe"
+          raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
+                "Property '#{interface}.#{propname}' (on object '#{@path}') is not writable"
+        when "ReadOrWriteMe"
+          @read_or_write_me = value
+          self.PropertiesChanged(interface, { propname => value }, [])
+        when "WriteMe"
+          @read_me = value
+          self.PropertiesChanged(interface, { "ReadMe" => value }, [])
+        else
+          raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
+                "Property '#{interface}.#{propname}' not found on object '#{@path}'"
+        end
+      end
+
+      dbus_method :GetAll, "in interface:s, out value:a{sv}" do |interface|
+        unless interface == INTERFACE
+          raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
+                "Interface '#{interface}' not found on object '#{@path}'"
+        end
+
+        [
+          {
+            "ReadMe" => @read_me,
+            "ReadOrWriteMe" => @read_or_write_me
+          }
+        ]
+      end
+
+      dbus_signal :PropertiesChanged, "interface:s, changed_properties:a{sv}, invalidated_properties:as"
     end
   end
 end
