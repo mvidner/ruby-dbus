@@ -85,13 +85,13 @@ module DBus
       end
     end
 
-    # Dummy undefined interface class.
+    # Forgetting to declare the interface for a method/signal/property
+    # is a ScriptError.
     class UndefinedInterface < ScriptError # rubocop:disable Lint/InheritException
       def initialize(sym)
-        super "No interface specified for #{sym}"
+        super "No interface specified for #{sym}. Enclose it in dbus_interface."
       end
     end
-
 
     # A read-write property accessing an instance variable.
     # A combination of attr_accessor and {.dbus_accessor}.

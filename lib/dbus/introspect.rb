@@ -26,11 +26,11 @@ module DBus
   # It also is the local definition of interface exported by the program.
   # At the client side, see ProxyObjectInterface
   class Interface
-    # The name of the interface. String
+    # @return [String] The name of the interface.
     attr_reader :name
-    # The methods that are part of the interface. Hash: Symbol => DBus::Method
+    # @return [Hash{Symbol => DBus::Method}] The methods that are part of the interface.
     attr_reader :methods
-    # The signals that are part of the interface. Hash: Symbol => Signal
+    # @return [Hash{Symbol => Signal}] The signals that are part of the interface.
     attr_reader :signals
 
     # Creates a new interface with a given _name_.
