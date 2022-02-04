@@ -107,8 +107,8 @@ module DBus
     #   to convert the Ruby convention to the DBus convention.
     # @return [void]
     def self.dbus_attr_accessor(ruby_name, type, dbus_name: nil)
-      attr_accessor(ruby_name, dbus_name)
-      dbus_accessor(ruby_name, type, dbus_name)
+      attr_accessor(ruby_name)
+      dbus_accessor(ruby_name, type, dbus_name: dbus_name)
     end
 
     # A read-only property accessing an instance variable.
@@ -120,8 +120,8 @@ module DBus
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
     def self.dbus_attr_reader(ruby_name, type, dbus_name: nil)
-      attr_reader(ruby_name, dbus_name)
-      dbus_reader(ruby_name, type, dbus_name)
+      attr_reader(ruby_name)
+      dbus_reader(ruby_name, type, dbus_name: dbus_name)
     end
 
     # A write-only property accessing an instance variable.
@@ -130,8 +130,8 @@ module DBus
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
     def self.dbus_attr_writer(ruby_name, type, dbus_name: nil)
-      attr_writer(ruby_name, dbus_name)
-      dbus_writer(ruby_name, type, dbus_name)
+      attr_writer(ruby_name)
+      dbus_writer(ruby_name, type, dbus_name: dbus_name)
     end
 
     # A read-write property using a pair of reader/writer methods

@@ -59,6 +59,14 @@ class Test < DBus::Object
     dbus_method :mirror_byte_array, "in bytes:ay, out mirrored:ay" do |bytes|
       [bytes]
     end
+
+    dbus_attr_accessor :read_or_write_me, "s"
+    dbus_attr_reader :read_me, "s"
+
+    def write_me=(value)
+      @read_me = value
+    end
+    dbus_writer :write_me, "s"
   end
 
   # closing and reopening the same interface
