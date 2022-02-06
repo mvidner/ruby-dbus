@@ -154,14 +154,14 @@ module DBus
 <node>
 '
       each_pair do |k, _v|
-        xml += "<node name=\"#{k}\" />"
+        xml += "  <node name=\"#{k}\" />\n"
       end
       if @object
         @object.intfs.each_pair do |_k, v|
-          xml += %(<interface name="#{v.name}">\n)
+          xml += "  <interface name=\"#{v.name}\">\n"
           v.methods.each_value { |m| xml += m.to_xml }
           v.signals.each_value { |m| xml += m.to_xml }
-          xml += "</interface>\n"
+          xml += "  </interface>\n"
         end
       end
       xml += "</node>"

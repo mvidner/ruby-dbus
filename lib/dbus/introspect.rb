@@ -167,16 +167,16 @@ module DBus
 
     # Return an XML string representation of the method interface elment.
     def to_xml
-      xml = %(<method name="#{@name}">\n)
+      xml = "    <method name=\"#{@name}\">\n"
       @params.each do |param|
-        name = param.name ? %(name="#{param.name}" ) : ""
-        xml += %(<arg #{name}direction="in" type="#{param.type}"/>\n)
+        name = param.name ? "name=\"#{param.name}\" " : ""
+        xml += "      <arg #{name}direction=\"in\" type=\"#{param.type}\"/>\n"
       end
       @rets.each do |param|
-        name = param.name ? %(name="#{param.name}" ) : ""
-        xml += %(<arg #{name}direction="out" type="#{param.type}"/>\n)
+        name = param.name ? "name=\"#{param.name}\" " : ""
+        xml += "      <arg #{name}direction=\"out\" type=\"#{param.type}\"/>\n"
       end
-      xml += %(</method>\n)
+      xml += "    </method>\n"
       xml
     end
   end # class Method
@@ -201,12 +201,12 @@ module DBus
 
     # Return an XML string representation of the signal interface elment.
     def to_xml
-      xml = %(<signal name="#{@name}">\n)
+      xml = "    <signal name=\"#{@name}\">\n"
       @params.each do |param|
-        name = param.name ? %(name="#{param.name}" ) : ""
-        xml += %(<arg #{name}type="#{param.type}"/>\n)
+        name = param.name ? "name=\"#{param.name}\" " : ""
+        xml += "      <arg #{name}type=\"#{param.type}\"/>\n"
       end
-      xml += %(</signal>\n)
+      xml += "    </signal>\n"
       xml
     end
   end # class Signal
