@@ -31,7 +31,7 @@ describe "PropertyTest" do
   end
 
   # https://github.com/mvidner/ruby-dbus/pull/19
-  it "tests service select timeout" do
+  it "tests service select timeout", slow: true do
     @iface["ReadOrWriteMe"] = "VALUE"
     expect(@iface["ReadOrWriteMe"]).to eq("VALUE")
     # wait for the service to become idle

@@ -70,7 +70,7 @@ describe "MainLoopTest" do
     @obj.on_signal "LongTaskEnd"
   end
 
-  it "tests loop quit" do
+  it "tests loop quit", slow: true do
     test_loop_quit 1
   end
 
