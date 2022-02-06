@@ -96,7 +96,7 @@ module DBus
     end
 
     # A read-write property accessing an instance variable.
-    # A combination of attr_accessor and {.dbus_accessor}.
+    # A combination of `attr_accessor` and {.dbus_accessor}.
     #
     # PropertiesChanged signal will be emitted whenever `foo_bar=` is used
     # but not when @foo_bar is written directly.
@@ -114,10 +114,16 @@ module DBus
     end
 
     # A read-only property accessing an instance variable.
-    # A combination of attr_reader and {.dbus_reader}.
+    # A combination of `attr_reader` and {.dbus_reader}.
     #
-    # PropertiesChanged: You should also call FIXME Class#method(args) whenever
-    # the underlying value changes to emit PropertiesChanged.
+    # Whenever the property value gets changed from "inside" the object,
+    # you should emit the `PropertiesChanged` signal by calling
+    #
+    #   object[DBus::PROPERTY_INTERFACE].PropertiesChanged(interface_name, {dbus_name.to_s => value}, [])
+    #
+    # or, omitting the value in the signal,
+    #
+    #   object[DBus::PROPERTY_INTERFACE].PropertiesChanged(interface_name, {}, [dbus_name.to_s])
     #
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
@@ -127,7 +133,7 @@ module DBus
     end
 
     # A write-only property accessing an instance variable.
-    # A combination of attr_writer and {.dbus_writer}.
+    # A combination of `attr_writer` and {.dbus_writer}.
     #
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
@@ -157,8 +163,14 @@ module DBus
     # A read-only property accessing a reader method (which must already exist).
     # (To directly access an instance variable, use {.dbus_attr_reader} instead)
     #
-    # PropertiesChanged: You should also call FIXME Class#method(args) whenever
-    # the underlying value changes to emit PropertiesChanged.
+    # Whenever the property value gets changed from "inside" the object,
+    # you should emit the `PropertiesChanged` signal by calling
+    #
+    #   object[DBus::PROPERTY_INTERFACE].PropertiesChanged(interface_name, {dbus_name.to_s => value}, [])
+    #
+    # or, omitting the value in the signal,
+    #
+    #   object[DBus::PROPERTY_INTERFACE].PropertiesChanged(interface_name, {}, [dbus_name.to_s])
     #
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
@@ -190,7 +202,7 @@ module DBus
     # Enables automatic sending of the PropertiesChanged signal.
     # For *ruby_name* `foo_bar`, wrap `foo_bar=` so that it sends
     # the signal for FooBar.
-    # The original version remains as #_original_foo.
+    # The original version remains as `_original_foo_bar=`.
     #
     # @param ruby_name [Symbol] :foo_bar and :foo_bar= both mean the same thing
     # @param dbus_name [String] if not given it is made
@@ -198,7 +210,24 @@ module DBus
     #   to convert the Ruby convention to the DBus convention.
     # @return [void]
     def self.dbus_watcher(ruby_name, dbus_name: nil)
-      # TODO: test and implement this
+      raise UndefinedInterface, ruby_name if @@cur_intf.nil?
+      cur_intf = @@cur_intf
+
+      ruby_name = ruby_name.to_s.sub(/=$/, "").to_sym
+      ruby_name_eq = "#{ruby_name}=".to_sym
+      original_ruby_name_eq = "_original_#{ruby_name_eq}"
+
+      dbus_name = make_dbus_name(ruby_name, dbus_name: dbus_name)
+
+      # the argument order is alias_method(new_name, existing_name)
+      alias_method original_ruby_name_eq, ruby_name_eq
+      define_method ruby_name_eq do |value|
+        public_send(original_ruby_name_eq, value)
+
+        # TODO: respect EmitsChangedSignal to use invalidated_properties instead
+        # PropertiesChanged, "interface:s, changed_properties:a{sv}, invalidated_properties:as"
+        PropertiesChanged(cur_intf.name, { dbus_name.to_s => value }, [])
+      end
     end
 
     # Defines an exportable method on the object with the given name _sym_,
@@ -242,7 +271,7 @@ module DBus
       "#{intfname}%%#{methname}"
     end
 
-    # TODO borrow a proven implementation
+    # TODO: borrow a proven implementation
     # @param str [String]
     # @return [String]
     # @api private
@@ -259,27 +288,38 @@ module DBus
       dbus_name.to_sym
     end
 
+    # @param interface_name [String]
+    # @param property_name [String]
+    # @return [Property]
+    # @raise [DBus::Error]
+    # @api private
+    def dbus_lookup_property(interface_name, property_name)
+      # what should happen for unknown properties
+      # plasma: InvalidArgs (propname), UnknownInterface (interface)
+      # systemd: UnknownProperty
+      interface = intfs[interface_name]
+      if !interface
+        raise DBus.error("org.freedesktop.DBus.Error.UnknownProperty"),
+              "Property '#{interface_name}.#{property_name}' (on object '#{@path}') not found: no such interface"
+      end
+
+      property = interface.properties[property_name.to_sym]
+      if !property
+        raise DBus.error("org.freedesktop.DBus.Error.UnknownProperty"),
+              "Property '#{interface_name}.#{property_name}' (on object '#{@path}') not found"
+      end
+
+      property
+    end
+
     ####################################################################
 
     # use the above defined methods to declare the property-handling
     # interfaces and methods
-    # FIXME make it correctly generic, not hardcoded to the example properties
-    dbus_interface PROPERTY_INTERFACE do
-      dbus_method :Get, "in i_name:s, in p_name:s, out value:v" do |i_name, p_name|
-        # what should happen for unknown properties
-        # plasma: InvalidArgs (propname), UnknownInterface (interface)
-        # systemd: UnknownProperty
-        interface = intfs[i_name]
-        if !interface
-          raise DBus.error("org.freedesktop.DBus.Error.UnknownProperty"),
-                "Property '#{i_name}.#{p_name}' (on object '#{@path}') not found: no such interface"
-        end
 
-        property = interface.properties[p_name.to_sym]
-        if !property
-          raise DBus.error("org.freedesktop.DBus.Error.UnknownProperty"),
-                "Property '#{i_name}.#{p_name}' (on object '#{@path}') not found"
-        end
+    dbus_interface PROPERTY_INTERFACE do
+      dbus_method :Get, "in interface_name:s, in property_name:s, out value:v" do |interface_name, property_name|
+        property = dbus_lookup_property(interface_name, property_name)
 
         if property.readable?
           ruby_name = property.ruby_name
@@ -287,44 +327,51 @@ module DBus
           [value]
         else
           raise DBus.error("org.freedesktop.DBus.Error.PropertyWriteOnly"),
-                "Property '#{i_name}.#{p_name}' (on object '#{@path}') is not readable"
+                "Property '#{interface_name}.#{property_name}' (on object '#{@path}') is not readable"
         end
       end
 
-      dbus_method :Set, "in interface:s, in propname:s, in  value:v" do |interface, propname, value|
-        unless interface == INTERFACE
-          raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
-                "Interface '#{interface}' not found on object '#{@path}'"
-        end
+      dbus_method :Set, "in interface_name:s, in property_name:s, in val:v" do |interface_name, property_name, value|
+        property = dbus_lookup_property(interface_name, property_name)
 
-        case propname
-        when "ReadMe"
-          raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
-                "Property '#{i_name}.#{p_name}' (on object '#{@path}') is not writable"
-        when "ReadOrWriteMe"
-          @read_or_write_me = value
-          self.PropertiesChanged(interface, { propname => value }, [])
-        when "WriteMe"
-          @read_me = value
-          self.PropertiesChanged(interface, { "ReadMe" => value }, [])
+        if property.writable?
+          ruby_name_eq = "#{property.ruby_name}="
+          public_send(ruby_name_eq, value)
         else
-          raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
-                "Property '#{i_name}.#{p_name}' not found on object '#{@path}'"
+          raise DBus.error("org.freedesktop.DBus.Error.PropertyReadOnly"),
+                "Property '#{interface_name}.#{property_name}' (on object '#{@path}') is not writable"
         end
       end
 
-      dbus_method :GetAll, "in interface:s, out value:a{sv}" do |interface|
-        unless interface == INTERFACE
-          raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
-                "Interface '#{interface}' not found on object '#{@path}'"
+      dbus_method :GetAll, "in interface_name:s, out value:a{sv}" do |interface_name|
+        interface = intfs[interface_name]
+        if !interface
+          raise DBus.error("org.freedesktop.DBus.Error.UnknownProperty"),
+                "Properties '#{interface_name}.*' (on object '#{@path}') not found: no such interface"
         end
 
-        [
-          {
-            "ReadMe" => @read_me,
-            "ReadOrWriteMe" => @read_or_write_me
-          }
-        ]
+        p_hash = {}
+        interface.properties.each do |p_name, property|
+          next unless property.readable?
+
+          ruby_name = property.ruby_name
+          begin
+            # D-Bus spec says:
+            # > If GetAll is called with a valid interface name for which some
+            # > properties are not accessible to the caller (for example, due
+            # > to per-property access control implemented in the service),
+            # > those properties should be silently omitted from the result
+            # > array.
+            # so we will silently omit properties that fail to read.
+            # Get'ting them individually will send DBus.Error
+            p_hash[p_name.to_s] = public_send(ruby_name)
+          rescue StandardError
+            DBus.logger.debug "Property '#{interface_name}.#{p_name}' (on object '#{@path}')" \
+                              " has raised during GetAll, omitting it"
+          end
+        end
+
+        [p_hash]
       end
 
       dbus_signal :PropertiesChanged, "interface:s, changed_properties:a{sv}, invalidated_properties:as"

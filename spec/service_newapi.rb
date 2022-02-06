@@ -60,6 +60,10 @@ class Test < DBus::Object
       [bytes]
     end
 
+    # Properties:
+    # ReadMe:string, returns "READ ME" at first, then what WriteMe received
+    # WriteMe:string
+    # ReadOrWriteMe:string, returns "READ OR WRITE ME" at first
     dbus_attr_accessor :read_or_write_me, "s"
     dbus_attr_reader :read_me, "s"
 
@@ -67,6 +71,14 @@ class Test < DBus::Object
       @read_me = value
     end
     dbus_writer :write_me, "s"
+
+    dbus_attr_writer :password, "s"
+
+    # a property that raises when client tries to read it
+    def explosive
+      raise "Something failed"
+    end
+    dbus_reader :explosive, "s"
   end
 
   # closing and reopening the same interface
@@ -129,7 +141,6 @@ class Test < DBus::Object
 
   # ==================================================
   # INTERNAL NOTES
-  # TODO: again ensure that we are inside a dbus_interface block
 
   # low level for doing weird things? probably unnecessary
   # Declaring a property that is neiter readable nor writable
@@ -173,11 +184,14 @@ class Test < DBus::Object
     # ruby @foo_bar, dbus FooBar
     # type: eg Type::STRING (looks up DBus::Type::STRING)
     # next: make aliases directly in DBus (maybe DBus::Object)
+    # FIXME: the symbolic type works only for one-character signatures
     dbus_reader :read_it, DBus::Type::STRING
 
+    def write_it=(_value); end
     # omit type to mean variant?
     dbus_writer :write_it, DBus::Type::VARIANT
 
+    def baz=(_value); end
     # ARRAY does not work this way. DBus.type("av")
     # dbus_accessor :baz, DBus::Type::ARRAY(DBus::Type::VARIANT)
     dbus_accessor :baz, DBus::Type::ARRAY
@@ -223,50 +237,6 @@ class Test < DBus::Object
     #                   ARRAY<STRING> invalidated_properties)
     helper.properties_changed(name, value)
     #
-  end
-
-  # Properties:
-  # ReadMe:string, returns "READ ME" at first, then what WriteMe received
-  # WriteMe:string
-  # ReadOrWriteMe:string, returns "READ OR WRITE ME" at first
-  dbus_interface PROPERTY_INTERFACE do
-    dbus_method :Set, "in interface:s, in propname:s, in  value:v" do |interface, propname, value|
-      unless interface == INTERFACE
-        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
-              "Interface '#{interface}' not found on object '#{@path}'"
-      end
-
-      case propname
-      when "ReadMe"
-        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
-              "Property '#{interface}.#{propname}' (on object '#{@path}') is not writable"
-      when "ReadOrWriteMe"
-        @read_or_write_me = value
-        self.PropertiesChanged(interface, { propname => value }, [])
-      when "WriteMe"
-        @read_me = value
-        self.PropertiesChanged(interface, { "ReadMe" => value }, [])
-      else
-        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
-              "Property '#{interface}.#{propname}' not found on object '#{@path}'"
-      end
-    end
-
-    dbus_method :GetAll, "in interface:s, out value:a{sv}" do |interface|
-      unless interface == INTERFACE
-        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
-              "Interface '#{interface}' not found on object '#{@path}'"
-      end
-
-      [
-        {
-          "ReadMe" => @read_me,
-          "ReadOrWriteMe" => @read_or_write_me
-        }
-      ]
-    end
-
-    dbus_signal :PropertiesChanged, "interface:s, changed_properties:a{sv}, invalidated_properties:as"
   end
 end
 
