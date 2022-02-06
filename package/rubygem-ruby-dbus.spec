@@ -1,7 +1,7 @@
 #
 # spec file for package rubygem-ruby-dbus
 #
-# Copyright (c) 2019 SUSE LINUX GmbH, Nuernberg, Germany.
+# Copyright (c) 2022 SUSE LINUX GmbH, Nuernberg, Germany.
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -29,10 +29,10 @@ Release:        0
 %define mod_name ruby-dbus
 %define mod_full_name %{mod_name}-%{version}
 # MANUAL
-BuildRequires:  %{rubygem nokogiri >= 1.10.4}
+BuildRequires:  %{rubygem nokogiri >= 1.12}
 BuildRequires:  %{rubygem packaging_rake_tasks}
 BuildRequires:  %{rubygem rake}
-BuildRequires:  %{rubygem rspec}
+BuildRequires:  %{rubygem rspec >= 3.9}
 BuildRequires:  dbus-1
 BuildRequires:  netcfg
 # /MANUAL

@@ -73,10 +73,10 @@
     Provides:       ruby-dbus = %{version}
     Obsoletes:      ruby-dbus < %{version}
 :preamble: |-
-  BuildRequires:  %{rubygem nokogiri >= 1.10.4}
+  BuildRequires:  %{rubygem nokogiri >= 1.12}
   BuildRequires:  %{rubygem packaging_rake_tasks}
   BuildRequires:  %{rubygem rake}
-  BuildRequires:  %{rubygem rspec}
+  BuildRequires:  %{rubygem rspec >= 3.9}
   BuildRequires:  dbus-1
   BuildRequires:  netcfg
 
