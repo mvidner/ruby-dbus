@@ -148,11 +148,12 @@ module DBus
 
     # Return an XML string representation of the node.
     # It is shallow, not recursing into subnodes
-    def to_xml
+    # @param node_opath [String]
+    def to_xml(node_opath)
       xml = '<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
-<node>
 '
+      xml += "<node name=\"#{node_opath}\">\n"
       each_pair do |k, _v|
         xml += "  <node name=\"#{k}\" />\n"
       end
@@ -532,7 +533,8 @@ module DBus
               m.member == "Introspect"
           reply = Message.new(Message::METHOD_RETURN).reply_to(m)
           reply.sender = @unique_name
-          reply.add_param(Type::STRING, node.to_xml)
+          xml = node.to_xml(m.path)
+          reply.add_param(Type::STRING, xml)
           @message_queue.push(reply)
         else
           obj = node.object
