@@ -204,9 +204,9 @@ module DBus
     # Defines an exportable method on the object with the given name _sym_,
     # _prototype_ and the code in a block.
     # @param prototype [Prototype]
-    def self.dbus_method(sym, protoype = "", &block)
+    def self.dbus_method(sym, prototype = "", &block)
       raise UndefinedInterface, sym if @@cur_intf.nil?
-      @@cur_intf.define(Method.new(sym.to_s).from_prototype(protoype))
+      @@cur_intf.define(Method.new(sym.to_s).from_prototype(prototype))
 
       ruby_name = Object.make_method_name(@@cur_intf.name, sym.to_s)
       # ::Module#define_method(name) { body }
@@ -215,16 +215,19 @@ module DBus
 
     # Emits a signal from the object with the given _interface_, signal
     # _sig_ and arguments _args_.
+    # @param intf [Interface]
+    # @param sig [Signal]
+    # @param args arguments for the signal
     def emit(intf, sig, *args)
       @service.bus.emit(@service, self, intf, sig, *args)
     end
 
     # Defines a signal for the object with a given name _sym_ and _prototype_.
-    def self.dbus_signal(sym, protoype = "")
+    def self.dbus_signal(sym, prototype = "")
       raise UndefinedInterface, sym if @@cur_intf.nil?
       cur_intf = @@cur_intf
-      signal = Signal.new(sym.to_s).from_prototype(protoype)
-      cur_intf.define(Signal.new(sym.to_s).from_prototype(protoype))
+      signal = Signal.new(sym.to_s).from_prototype(prototype)
+      cur_intf.define(Signal.new(sym.to_s).from_prototype(prototype))
 
       # ::Module#define_method(name) { body }
       define_method(sym.to_s) do |*args|

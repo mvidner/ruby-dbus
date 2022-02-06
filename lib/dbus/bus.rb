@@ -17,7 +17,7 @@ require "singleton"
 # Module containing all the D-Bus modules and classes.
 module DBus
   # This represents a remote service. It should not be instantiated directly
-  # Use {Bus#service}
+  # Use {Connection#service}
   class Service
     # The service name.
     attr_reader :name
@@ -569,6 +569,11 @@ module DBus
     # @api private
     # Emit a signal event for the given _service_, object _obj_, interface
     # _intf_ and signal _sig_ with arguments _args_.
+    # @param service [Service]
+    # @param obj [DBus::Object]
+    # @param intf [Interface]
+    # @param sig [Signal]
+    # @param args arguments for the signal
     def emit(service, obj, intf, sig, *args)
       m = Message.new(DBus::Message::SIGNAL)
       m.path = obj.path

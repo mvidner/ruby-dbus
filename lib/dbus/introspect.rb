@@ -69,6 +69,7 @@ module DBus
                  end
       category[name] = ie
     end
+    alias declare define
     alias << define
 
     # Defines a method with name _id_ and a given _prototype_ in the
@@ -79,6 +80,7 @@ module DBus
       m.from_prototype(prototype)
       define(m)
     end
+    alias declare_method define_method
   end # class Interface
 
   # = A formal parameter has a name and a type
