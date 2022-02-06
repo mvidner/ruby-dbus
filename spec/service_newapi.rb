@@ -230,26 +230,6 @@ class Test < DBus::Object
   # WriteMe:string
   # ReadOrWriteMe:string, returns "READ OR WRITE ME" at first
   dbus_interface PROPERTY_INTERFACE do
-    dbus_method :Get, "in interface:s, in propname:s, out value:v" do |interface, propname|
-      unless interface == INTERFACE
-        raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
-              "Interface '#{interface}' not found on object '#{@path}'"
-      end
-
-      case propname
-      when "ReadOrWriteMe"
-        [@read_or_write_me]
-      when "WriteMe"
-        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
-              "Property '#{interface}.#{propname}' (on object '#{@path}') is not readable"
-      else
-        # what should happen for unknown properties
-        # plasma: InvalidArgs (propname), UnknownInterface (interface)
-        raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
-              "Property '#{interface}.#{propname}' not found on object '#{@path}'"
-      end
-    end
-
     dbus_method :Set, "in interface:s, in propname:s, in  value:v" do |interface, propname, value|
       unless interface == INTERFACE
         raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),

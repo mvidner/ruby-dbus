@@ -146,6 +146,12 @@ module DBus
     # @return (see .dbus_attr_accessor)
     def self.dbus_accessor(ruby_name, type, dbus_name: nil)
       raise UndefinedInterface, ruby_name if @@cur_intf.nil?
+
+      dbus_name = make_dbus_name(ruby_name, dbus_name: dbus_name)
+      property = Property.new(dbus_name, type, :readwrite, ruby_name: ruby_name)
+      @@cur_intf.define(property)
+
+      dbus_watcher(ruby_name, dbus_name: dbus_name)
     end
 
     # A read-only property accessing a reader method (which must already exist).
@@ -158,6 +164,10 @@ module DBus
     # @return (see .dbus_attr_accessor)
     def self.dbus_reader(ruby_name, type, dbus_name: nil)
       raise UndefinedInterface, ruby_name if @@cur_intf.nil?
+
+      dbus_name = make_dbus_name(ruby_name, dbus_name: dbus_name)
+      property = Property.new(dbus_name, type, :read, ruby_name: ruby_name)
+      @@cur_intf.define(property)
     end
 
     # A write-only property accessing a writer method (which must already exist).
@@ -169,6 +179,12 @@ module DBus
     # @return (see .dbus_attr_accessor)
     def self.dbus_writer(ruby_name, type, dbus_name: nil)
       raise UndefinedInterface, ruby_name if @@cur_intf.nil?
+
+      dbus_name = make_dbus_name(ruby_name, dbus_name: dbus_name)
+      property = Property.new(dbus_name, type, :write, ruby_name: ruby_name)
+      @@cur_intf.define(property)
+
+      dbus_watcher(ruby_name, dbus_name: dbus_name)
     end
 
     # Enables automatic sending of the PropertiesChanged signal.
@@ -182,11 +198,12 @@ module DBus
     #   to convert the Ruby convention to the DBus convention.
     # @return [void]
     def self.dbus_watcher(ruby_name, dbus_name: nil)
+      # TODO: test and implement this
     end
 
     # Defines an exportable method on the object with the given name _sym_,
     # _prototype_ and the code in a block.
-    # @param prototype
+    # @param prototype [Prototype]
     def self.dbus_method(sym, protoype = "", &block)
       raise UndefinedInterface, sym if @@cur_intf.nil?
       @@cur_intf.define(Method.new(sym.to_s).from_prototype(protoype))
@@ -208,6 +225,8 @@ module DBus
       cur_intf = @@cur_intf
       signal = Signal.new(sym.to_s).from_prototype(protoype)
       cur_intf.define(Signal.new(sym.to_s).from_prototype(protoype))
+
+      # ::Module#define_method(name) { body }
       define_method(sym.to_s) do |*args|
         emit(cur_intf, signal, *args)
       end
@@ -220,6 +239,22 @@ module DBus
       "#{intfname}%%#{methname}"
     end
 
+    # TODO borrow a proven implementation
+    # @param str [String]
+    # @return [String]
+    # @api private
+    def self.camelize(str)
+      str.split(/_/).map(&:capitalize).join("")
+    end
+
+    # Make a D-Bus conventional name, CamelCased.
+    # @param ruby_name [String,Symbol] eg :do_something
+    # @param dbus_name [String,Symbol,nil] use this if given
+    # @return [Symbol] eg DoSomething
+    def self.make_dbus_name(ruby_name, dbus_name: nil)
+      dbus_name ||= camelize(ruby_name.to_s)
+      dbus_name.to_sym
+    end
 
     ####################################################################
 
@@ -227,23 +262,29 @@ module DBus
     # interfaces and methods
     # FIXME make it correctly generic, not hardcoded to the example properties
     dbus_interface PROPERTY_INTERFACE do
-      dbus_method :Get, "in interface:s, in propname:s, out value:v" do |interface, propname|
-        unless interface == INTERFACE
-          raise DBus.error("org.freedesktop.DBus.Error.UnknownInterface"),
-                "Interface '#{interface}' not found on object '#{@path}'"
+      dbus_method :Get, "in i_name:s, in p_name:s, out value:v" do |i_name, p_name|
+        # what should happen for unknown properties
+        # plasma: InvalidArgs (propname), UnknownInterface (interface)
+        # systemd: UnknownProperty
+        interface = intfs[i_name]
+        if !interface
+          raise DBus.error("org.freedesktop.DBus.Error.UnknownProperty"),
+                "Property '#{i_name}.#{p_name}' (on object '#{@path}') not found: no such interface"
         end
 
-        case propname
-        when "ReadOrWriteMe"
-          [@read_or_write_me]
-        when "WriteMe"
-          raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
-                "Property '#{interface}.#{propname}' (on object '#{@path}') is not readable"
+        property = interface.properties[p_name.to_sym]
+        if !property
+          raise DBus.error("org.freedesktop.DBus.Error.UnknownProperty"),
+                "Property '#{i_name}.#{p_name}' (on object '#{@path}') not found"
+        end
+
+        if property.readable?
+          ruby_name = property.ruby_name
+          value = public_send(ruby_name)
+          [value]
         else
-          # what should happen for unknown properties
-          # plasma: InvalidArgs (propname), UnknownInterface (interface)
-          raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
-                "Property '#{interface}.#{propname}' not found on object '#{@path}'"
+          raise DBus.error("org.freedesktop.DBus.Error.PropertyWriteOnly"),
+                "Property '#{i_name}.#{p_name}' (on object '#{@path}') is not readable"
         end
       end
 
@@ -256,7 +297,7 @@ module DBus
         case propname
         when "ReadMe"
           raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
-                "Property '#{interface}.#{propname}' (on object '#{@path}') is not writable"
+                "Property '#{i_name}.#{p_name}' (on object '#{@path}') is not writable"
         when "ReadOrWriteMe"
           @read_or_write_me = value
           self.PropertiesChanged(interface, { propname => value }, [])
@@ -265,7 +306,7 @@ module DBus
           self.PropertiesChanged(interface, { "ReadMe" => value }, [])
         else
           raise DBus.error("org.freedesktop.DBus.Error.InvalidArgs"),
-                "Property '#{interface}.#{propname}' not found on object '#{@path}'"
+                "Property '#{i_name}.#{p_name}' not found on object '#{@path}'"
         end
       end
 
