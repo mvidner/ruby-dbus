@@ -2,6 +2,8 @@ AllCops:
   Exclude:
     # Do not check code borrowed from ActiveSupport
     - 'lib/dbus/core_ext/**/*.rb'
+    # Bundled dependencies
+    - 'vendor/**/*'
     # RPM spec is not RSpec
     - package/rubygem-ruby-dbus.spec
 
