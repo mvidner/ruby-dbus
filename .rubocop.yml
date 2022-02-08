@@ -41,10 +41,6 @@ Style/NegatedIf:
 Style/EmptyElse:
   EnforcedStyle: "nil"
 
-# Prefer readability over performance
-Performance/RedundantBlockCall:
-  Enabled: false
-
 # Need to check whether API stays OK
 Lint/InheritException:
   Exclude:
@@ -58,7 +54,7 @@ Lint/InheritException:
     - 'lib/dbus/type.rb'
 
 # Offense count: 7
-Lint/HandleExceptions:
+Lint/SuppressedException:
   Exclude:
     - 'lib/dbus/marshall.rb'
     - 'lib/dbus/message_queue.rb'
@@ -84,7 +80,7 @@ Security/Eval:
   Exclude:
     - 'examples/gdbus/gdbus'
 
-Lint/RescueWithoutErrorClass:
+Style/RescueStandardError:
   Exclude:
     - 'examples/gdbus/gdbus'
 
@@ -118,7 +114,7 @@ Metrics/CyclomaticComplexity:
 # Offense count: 62
 # Configuration parameters: AllowHeredoc, AllowURI, URISchemes.
 # URISchemes: http, https
-Metrics/LineLength:
+Layout/LineLength:
   Max: 118
 
 # Offense count: 49
