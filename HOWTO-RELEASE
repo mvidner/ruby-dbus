@@ -4,7 +4,7 @@ the current packages
 
     rake osc:build
 
-Push, and check the Travis CI results.
+Push, and check the CI results.
 
     git push
 

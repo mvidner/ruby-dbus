@@ -2,8 +2,8 @@ coverage = if ENV["COVERAGE"]
              ENV["COVERAGE"] == "true"
            else
              # heuristics: enable for interactive builds (but not in OBS)
-             # or in Travis
-             ENV["DISPLAY"] || ENV["TRAVIS"]
+             # or in Continuous Integration (GitHub Actions)
+             ENV["DISPLAY"] || ENV["CI"]
            end
 
 if coverage
@@ -15,8 +15,8 @@ if coverage
   # do not cover the activesupport helpers
   SimpleCov.add_filter "/core_ext/"
 
-  # use coveralls for on-line code coverage reporting at Travis CI
-  if ENV["TRAVIS"]
+  # use coveralls for on-line code coverage reporting during CI
+  if ENV["CI"]
     require "coveralls"
   end
   SimpleCov.start

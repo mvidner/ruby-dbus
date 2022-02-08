@@ -38,7 +38,7 @@ RSpec::Core::RakeTask.new("bare:spec")
   end
 end
 
-if ENV["TRAVIS"]
+if ENV["CI"]
   require "coveralls/rake/task"
   Coveralls::RakeTask.new
   task default: "coveralls:push"
