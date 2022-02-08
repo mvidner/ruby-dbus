@@ -44,6 +44,7 @@ module DBus
     end
 
     # Returns the interfaces of the object.
+    # @return [Array<String>] names of the interfaces
     def interfaces
       introspect unless introspected
       @interfaces.keys
