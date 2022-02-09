@@ -2,8 +2,7 @@ coverage = if ENV["COVERAGE"]
              ENV["COVERAGE"] == "true"
            else
              # heuristics: enable for interactive builds (but not in OBS)
-             # or in Continuous Integration (GitHub Actions)
-             ENV["DISPLAY"] || ENV["CI"]
+             ENV["DISPLAY"]
            end
 
 if coverage
@@ -15,11 +14,24 @@ if coverage
   # do not cover the activesupport helpers
   SimpleCov.add_filter "/core_ext/"
 
-  # use coveralls for on-line code coverage reporting during CI
-  if ENV["CI"]
-    require "coveralls"
-  end
   SimpleCov.start
+
+  # additionally use the LCOV format for on-line code coverage reporting at CI
+  if ENV["COVERAGE_LCOV"] == "true"
+    require "simplecov-lcov"
+
+    SimpleCov::Formatter::LcovFormatter.config do |c|
+      c.report_with_single_file = true
+      # this is the default Coveralls GitHub Action location
+      # https://github.com/marketplace/actions/coveralls-github-action
+      c.single_report_path = "coverage/lcov.info"
+    end
+
+    SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+      SimpleCov::Formatter::HTMLFormatter,
+      SimpleCov::Formatter::LcovFormatter
+    ]
+  end
 end
 
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)

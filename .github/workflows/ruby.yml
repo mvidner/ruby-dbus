@@ -30,5 +30,17 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby-version }}
         bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+
     - name: Run tests
       run: bundle exec rake
+      # enable code coverage reporting
+      env:
+        COVERAGE: 'true'
+        COVERAGE_LCOV: 'true'
+
+    - name: Coveralls Report
+      # send it only for the latest version to avoid duplicate submits
+      if: ${{ matrix.ruby-version == '3.1' }}
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}

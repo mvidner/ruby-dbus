@@ -38,12 +38,6 @@ RSpec::Core::RakeTask.new("bare:spec")
   end
 end
 
-if ENV["CI"]
-  require "coveralls/rake/task"
-  Coveralls::RakeTask.new
-  task default: "coveralls:push"
-end
-
 # remove tarball implementation and create gem for this gemfile
 Rake::Task[:tarball].clear
 
