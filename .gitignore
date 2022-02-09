@@ -4,6 +4,7 @@
 /.bundle/
 /.vendor/
 /Gemfile.lock
+.ruby-version
 
 /doc/tutorial/index.html
 /doc/DBus
