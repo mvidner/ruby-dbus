@@ -13,15 +13,11 @@ jobs:
   test:
 
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
+    continue-on-error: ${{ matrix.ruby-version == 'head' }}
     strategy:
       fail-fast: false
       matrix:
-        ruby-version: ['2.5', '2.6', '2.7', '3.0', '3.1']
-        experimental: [false]
-        include:
-          - ruby-version: head
-            experimental: true
+        ruby-version: ['2.5', '2.6', '2.7', '3.0', '3.1', 'head']
 
     steps:
     - uses: actions/checkout@v2
