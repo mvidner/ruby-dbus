@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+API:
+ * Export properties with `dbus_attr_accessor`, `dbus_reader` etc. ([#86][]).
+
 Bug fixes:
  * Depend on rexml which is separate since Ruby 3.0 ([#87][],
    by Toshiaki Asai).
@@ -10,6 +13,7 @@ Bug fixes:
    as "Oops: undefined method `zero?' for nil:NilClass".
  * Add the missing name to the root introspection node.
 
+[#86]: https://github.com/mvidner/ruby-dbus/pull/86
 [#87]: https://github.com/mvidner/ruby-dbus/pull/87
 
 ## Ruby D-Bus 0.16.0 - 2019-10-15
