@@ -233,7 +233,8 @@ module DBus
     # @return [Symbol] :read :write or :readwrite
     attr_reader :access
 
-    # @return [Symbol] What to call at Ruby side. (TODO clarify :foo vs :foo=)
+    # @return [Symbol] What to call at Ruby side.
+    #   (Always without the trailing `=`)
     attr_reader :ruby_name
 
     def initialize(name, type, access, ruby_name:)
