@@ -244,14 +244,97 @@ When you want to provide a DBus API.
 (check that client and service side have their counterparts)
 
 ### Basic
+
 #### Exporting a Method
+
 ##### Interfaces
+
 ##### Methods
+
 ##### Bus Names
+
 ##### Errors
+
 #### Exporting Properties
+
+Similar to plain Ruby attributes, declared with
+
+- {https://docs.ruby-lang.org/en/3.1/Module.html#method-i-attr_accessor attr_accessor}
+- {https://docs.ruby-lang.org/en/3.1/Module.html#method-i-attr_reader attr_reader}
+- {https://docs.ruby-lang.org/en/3.1/Module.html#method-i-attr_writer attr_writer}
+
+These methods declare the attributes and export them as properties:
+
+- {DBus::Object.dbus_attr_accessor}
+- {DBus::Object.dbus_attr_reader}
+- {DBus::Object.dbus_attr_writer}
+
+For making properties out of Ruby methods (which are not attributes), use:
+
+- {DBus::Object.dbus_accessor}
+- {DBus::Object.dbus_reader}
+- {DBus::Object.dbus_writer}
+
+Note that the properties are declared in the Ruby naming convention with
+`snake_case` and D-Bus sees them `CamelCased`. Use the `dbus_name` argument
+for overriding this.
+
+&nbsp;
+
+    class Note < DBus::Object
+      dbus_interface "net.vidner.Example.Properties" do
+        # A read-write property "Title",
+        # with `title` and `title=` accessing @title.
+        dbus_attr_accessor :title, DBus::Type::STRING
+
+        # A read-only property "Author"
+        # (type specified via DBus signature)
+        # with `author` reading `@author`
+        dbus_attr_reader :author, "s"
+
+        # A read-only property `Clock`
+        def clock
+          Time.now.to_s
+        end
+        dbus_reader :clock, "s"
+
+        # Name mapping: `CreationTime`
+        def creation_time
+          "1993-01-01 00:00:00 +0100"
+        end
+        dbus_reader :creation_time, "s"
+
+        dbus_attr_accessor :book_volume, DBus::Type::VARIANT, dbus_name: "Volume"
+      end
+
+      dbus_interface "net.vidner.Example.Audio" do
+        dbus_attr_accessor :speaker_volume, DBus::Type::BYTE, dbus_name: "Volume"
+      end
+
+      # Must assign values because `nil` would crash our connection
+      def initialize(opath)
+        super
+        @title = "Ahem"
+        @author = "Martin"
+        @book_volume = 1
+        @speaker_volume = 11
+      end
+    end
+
+    obj = Note.new("/net/vidner/Example/Properties")
+
+    bus = DBus::SessionBus.instance
+    service = bus.request_service("net.vidner.Example")
+    service.export(obj)
+
+    main = DBus::Main.new
+    main << bus
+    main.run
+
 ### Advanced
+
 #### Inheritance
+
 #### Names
 
 Specification Conformance
