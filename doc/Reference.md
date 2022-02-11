@@ -179,7 +179,7 @@ If the signature expects a Variant
    ISSUE: using something else than cryptic signatures is even more painful
    than remembering the signatures!
 
-        foo_i["Bar"] = DBus.variant("au", [0, 1, 1, 2, 3, 5, 8])
+   `foo_i["Bar"] = DBus.variant("au", [0, 1, 1, 2, 3, 5, 8])`
 
 2. Other values are tried to fit one of these:
    Boolean, Double, Array of Variants, Hash of String keyed Variants,
