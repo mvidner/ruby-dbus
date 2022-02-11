@@ -57,6 +57,7 @@ module DBus
       introspect unless introspected
       ifc = @interfaces[intfname]
       raise DBus::Error, "no such interface `#{intfname}' on object `#{@path}'" unless ifc
+
       ifc
     end
 
@@ -93,6 +94,7 @@ module DBus
           # don't overwrite instance methods!
           next if dup_meths.include?(name)
           next if self.class.instance_methods.include?(name)
+
           if univocal_meths.include? name
             univocal_meths.delete name
             dup_meths << name
@@ -124,6 +126,7 @@ module DBus
     def on_signal(name, &block)
       # TODO: improve
       raise NoMethodError unless @default_iface && has_iface?(@default_iface)
+
       @interfaces[@default_iface].on_signal(name, &block)
     end
 
@@ -152,6 +155,7 @@ module DBus
         # interesting, foo.method("unknown")
         # raises NameError, not NoMethodError
         raise unless e.to_s =~ /undefined method `#{name}'/
+
         # BTW e.exception("...") would preserve the class.
         raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
       end

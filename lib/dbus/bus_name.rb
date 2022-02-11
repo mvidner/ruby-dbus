@@ -15,6 +15,7 @@ module DBus
       unless self.class.valid?(s)
         raise DBus::Error, "Invalid bus name #{s.inspect}"
       end
+
       super
     end
 

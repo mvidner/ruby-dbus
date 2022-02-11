@@ -79,12 +79,14 @@ module DBus
     def unexport(obj)
       raise ArgumentError, "DBus::Service#unexport() expects a DBus::Object argument" unless obj.is_a?(DBus::Object)
       return false unless obj.path
+
       last_path_separator_idx = obj.path.rindex("/")
       parent_path = obj.path[1..last_path_separator_idx - 1]
       node_name = obj.path[last_path_separator_idx + 1..-1]
 
       parent_node = get_node(parent_path, false)
       return false unless parent_node
+
       obj.service = nil
       parent_node.delete(node_name).object
     end
@@ -96,6 +98,7 @@ module DBus
       path.sub(%r{^/}, "").split("/").each do |elem|
         if !(n[elem])
           return nil if !create
+
           n[elem] = Node.new(elem)
         end
         n = n[elem]
@@ -127,6 +130,7 @@ module DBus
         rec_introspect(subnode, subpath)
       end
       return if intfs.empty?
+
       node.object = ProxyObjectFactory.new(xml, @bus, @name, path).build
     end
   end
@@ -340,6 +344,7 @@ module DBus
       if reply_handler.nil?
         send_sync(message) do |rmsg|
           raise rmsg if rmsg.is_a?(Error)
+
           ret = rmsg.params
         end
       else
@@ -448,6 +453,7 @@ module DBus
     # the call will block until a reply message arrives.
     def send_sync(m, &retc) # :yields: reply/return message
       return if m.nil? # check if somethings wrong
+
       @message_queue.push(m)
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
@@ -473,6 +479,7 @@ module DBus
       if m.message_type != Message::METHOD_CALL
         raise "on_return should only get method_calls"
       end
+
       @method_call_msgs[m.serial] = m
       @method_call_replies[m.serial] = retc
     end
@@ -496,6 +503,7 @@ module DBus
       rule_existed = @signal_matchrules.delete(mrs).nil?
       # don't remove nonexisting matches.
       return if rule_existed
+
       # FIXME: if we do try, the Error.MatchRuleNotFound is *not* raised
       # and instead is reported as "no return code for nil"
       proxy.RemoveMatch(mrs)
@@ -505,9 +513,11 @@ module DBus
     # Process a message _m_ based on its type.
     def process(m)
       return if m.nil? # check if somethings wrong
+
       case m.message_type
       when Message::ERROR, Message::METHOD_RETURN
         raise InvalidPacketException if m.reply_serial.nil?
+
         mcs = @method_call_replies[m.reply_serial]
         if !mcs
           DBus.logger.debug "no return code for mcs: #{mcs.inspect} m: #{m.inspect}"
@@ -540,6 +550,7 @@ module DBus
         else
           obj = node.object
           return if obj.nil? # FIXME, pushes no reply
+
           obj.dispatch(m) if obj
         end
       when DBus::Message::SIGNAL
@@ -630,6 +641,7 @@ module DBus
       # traditional dbus uses /var/lib/dbus/machine-id
       machine_id_path = Dir["{/etc,/var/lib/dbus,/var/db/dbus}/machine-id"].first
       return nil unless machine_id_path
+
       machine_id = File.read(machine_id_path).chomp
 
       display = ENV["DISPLAY"][/:(\d+)\.?/, 1]
@@ -736,6 +748,7 @@ module DBus
       while !@quitting && !@buses.empty?
         ready = IO.select(@buses.keys, [], [], 5) # timeout 5 seconds
         next unless ready # timeout exceeds so continue unless quitting
+
         ready.first.each do |socket|
           b = @buses[socket]
           begin

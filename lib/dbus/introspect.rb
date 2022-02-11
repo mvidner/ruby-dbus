@@ -51,6 +51,7 @@ module DBus
       raise InvalidIntrospectionData if name =~ /^\./ || name =~ /\.$/
       raise InvalidIntrospectionData if name =~ /\.\./
       raise InvalidIntrospectionData if name !~ /\./
+
       name.split(".").each do |element|
         raise InvalidIntrospectionData if element !~ INTERFACE_ELEMENT_RE
       end
@@ -115,6 +116,7 @@ module DBus
     # Validates element _name_.
     def validate_name(name)
       return if (name =~ METHOD_SIGNAL_RE) && (name.bytesize <= 255)
+
       raise InvalidMethodName, name
     end
 
@@ -161,6 +163,7 @@ module DBus
       prototype.split(/, */).each do |arg|
         arg = arg.split(" ")
         raise InvalidClassDefinition if arg.size != 2
+
         dir, arg = arg
         if arg =~ /:/
           arg = arg.split(":")

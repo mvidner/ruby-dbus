@@ -87,6 +87,7 @@ module DBus
     # Retrieve the next _nbytes_ number of bytes from the buffer.
     def read(nbytes)
       raise IncompleteBufferException if @idx + nbytes > @buffy.bytesize
+
       ret = @buffy.slice(@idx, nbytes)
       @idx += nbytes
       ret
@@ -99,10 +100,12 @@ module DBus
       str_sz = read(4).unpack(@uint32)[0]
       ret = @buffy.slice(@idx, str_sz)
       raise IncompleteBufferException if @idx + str_sz + 1 > @buffy.bytesize
+
       @idx += str_sz
       if @buffy[@idx].ord != 0
         raise InvalidPacketException, "String is not nul-terminated"
       end
+
       @idx += 1
       # no exception, see check above
       ret
@@ -114,10 +117,12 @@ module DBus
       str_sz = read(1).unpack("C")[0]
       ret = @buffy.slice(@idx, str_sz)
       raise IncompleteBufferException if @idx + str_sz + 1 >= @buffy.bytesize
+
       @idx += str_sz
       if @buffy[@idx].ord != 0
         raise InvalidPacketException, "Type is not nul-terminated"
       end
+
       @idx += 1
       # no exception, see check above
       ret
@@ -176,6 +181,7 @@ module DBus
         align(4)
         v = read(4).unpack(@uint32)[0]
         raise InvalidPacketException if ![0, 1].member?(v)
+
         packet = (v == 1)
       when Type::ARRAY
         align(4)
@@ -282,6 +288,7 @@ module DBus
       yield
       sz = @packet.bytesize - contentidx
       raise InvalidPacketException if sz > 67_108_864
+
       @packet[sizeidx...sizeidx + 4] = [sz].pack("L")
     end
 
@@ -364,6 +371,7 @@ module DBus
       when Type::ARRAY
         if val.is_a?(Hash)
           raise TypeException, "Expected an Array but got a Hash" if type.child.sigtype != Type::DICT_ENTRY
+
           # Damn ruby rocks here
           val = val.to_a
         end
@@ -374,6 +382,7 @@ module DBus
         if !val.is_a?(Enumerable)
           raise TypeException, "Expected an Enumerable of #{type.child.inspect} but got a #{val.class}"
         end
+
         array(type.child) do
           val.each do |elem|
             append(type.child, elem)
@@ -388,6 +397,7 @@ module DBus
         if type.members.size != val.size
           raise TypeException, "Struct/DE has #{val.size} elements but type info for #{type.members.size}"
         end
+
         struct do
           type.members.zip(val).each do |t, v|
             append(t, v)

@@ -14,6 +14,7 @@ module DBus
       unless self.class.valid?(s)
         raise DBus::Error, "Invalid object path #{s.inspect}"
       end
+
       super
     end
 

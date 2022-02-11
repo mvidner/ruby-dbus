@@ -100,6 +100,7 @@ module DBus
     # encode plain to hex
     def hex_encode(plain)
       return nil if plain.nil?
+
       plain.to_s.unpack("H*")[0]
     end
 
@@ -154,6 +155,7 @@ module DBus
     # Try authentication using the next authenticator.
     def next_authenticator
       raise AuthenticationFailed if @auth_list.empty?
+
       @authenticator = @auth_list.shift.new
       auth_msg = ["AUTH", @authenticator.name, @authenticator.authenticate]
       DBus.logger.debug "auth_msg: #{auth_msg.inspect}"
@@ -172,6 +174,7 @@ module DBus
       while left > 0
         buf = @socket.read(left > 1 ? 1 : left)
         break if buf.nil?
+
         left -= buf.bytesize
         data += buf
         break if data.include? crlf # crlf means line finished, the TCP socket keeps on listening, so we break

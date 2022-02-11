@@ -205,6 +205,7 @@ class DBusUI
     end
 
     return unless ENABLE_SYSTEM
+
     DBus::SystemBus.instance.proxy.ListNames do |_msg, names|
       fill_treeview(DBus::SystemBus.instance, @systemtreeview, names)
     end
@@ -218,6 +219,7 @@ class DBusUI
     end
 
     return if node.object.nil?
+
     node.object.interfaces.sort.each do |ifname|
       subiter = model.append(iter)
       subiter[0] = ifname

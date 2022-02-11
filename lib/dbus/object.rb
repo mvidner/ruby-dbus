@@ -20,6 +20,7 @@ module DBus
   class Object
     # The path of the object.
     attr_reader :path
+
     # The interfaces that the object supports. Hash: String => Interface
     my_class_attribute :intfs
     self.intfs = {}
@@ -110,6 +111,7 @@ module DBus
     # @return [void]
     def self.dbus_attr_accessor(ruby_name, type, dbus_name: nil)
       attr_accessor(ruby_name)
+
       dbus_accessor(ruby_name, type, dbus_name: dbus_name)
     end
 
@@ -129,6 +131,7 @@ module DBus
     # @return (see .dbus_attr_accessor)
     def self.dbus_attr_reader(ruby_name, type, dbus_name: nil)
       attr_reader(ruby_name)
+
       dbus_reader(ruby_name, type, dbus_name: dbus_name)
     end
 
@@ -139,6 +142,7 @@ module DBus
     # @return (see .dbus_attr_accessor)
     def self.dbus_attr_writer(ruby_name, type, dbus_name: nil)
       attr_writer(ruby_name)
+
       dbus_writer(ruby_name, type, dbus_name: dbus_name)
     end
 
@@ -211,6 +215,7 @@ module DBus
     # @return [void]
     def self.dbus_watcher(ruby_name, dbus_name: nil)
       raise UndefinedInterface, ruby_name if @@cur_intf.nil?
+
       cur_intf = @@cur_intf
 
       ruby_name = ruby_name.to_s.sub(/=$/, "").to_sym
@@ -235,6 +240,7 @@ module DBus
     # @param prototype [Prototype]
     def self.dbus_method(sym, prototype = "", &block)
       raise UndefinedInterface, sym if @@cur_intf.nil?
+
       @@cur_intf.define(Method.new(sym.to_s).from_prototype(prototype))
 
       ruby_name = Object.make_method_name(@@cur_intf.name, sym.to_s)
@@ -254,6 +260,7 @@ module DBus
     # Defines a signal for the object with a given name _sym_ and _prototype_.
     def self.dbus_signal(sym, prototype = "")
       raise UndefinedInterface, sym if @@cur_intf.nil?
+
       cur_intf = @@cur_intf
       signal = Signal.new(sym.to_s).from_prototype(prototype)
       cur_intf.define(Signal.new(sym.to_s).from_prototype(prototype))

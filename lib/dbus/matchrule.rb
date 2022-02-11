@@ -41,6 +41,7 @@ module DBus
       if !["signal", "method_call", "method_return", "error"].member?(t)
         raise MatchRuleException, t
       end
+
       @type = t
     end
 
@@ -58,10 +59,12 @@ module DBus
     def from_s(str)
       str.split(",").each do |eq|
         next unless eq =~ /^(.*)='([^']*)'$/
+
         # "
         name = Regexp.last_match(1)
         val = Regexp.last_match(2)
         raise MatchRuleException, name unless FILTERS.member?(name.to_sym)
+
         method(name + "=").call(val)
       end
       self
@@ -90,6 +93,7 @@ module DBus
       return false if @interface && @interface != msg.interface
       return false if @member && @member != msg.member
       return false if @path && @path != msg.path
+
       # FIXME: sender and destination are ignored
       true
     end

@@ -76,6 +76,7 @@ module DBus
         if !TypeMapping.keys.member?(sigtype)
           raise SignatureException, "Unknown key in signature: #{sigtype.chr}"
         end
+
         @sigtype = sigtype
         @members = []
       end
@@ -99,6 +100,7 @@ module DBus
           if !TypeMapping.keys.member?(@sigtype)
             raise NotImplementedError
           end
+
           @sigtype.chr
         end
       end
@@ -109,10 +111,12 @@ module DBus
           raise SignatureException
         end
         raise SignatureException if @sigtype == ARRAY && !@members.empty?
+
         if @sigtype == DICT_ENTRY
           if @members.size == 2
             raise SignatureException, "Dict entries have exactly two members"
           end
+
           if @members.empty?
             if [STRUCT, ARRAY, DICT_ENTRY].member?(a.sigtype)
               raise SignatureException, "Dict entry keys must be basic types"
@@ -161,6 +165,7 @@ module DBus
           res = Type.new(ARRAY)
           c = nextchar
           raise SignatureException, "Parse error in #{@signature}" if c.nil?
+
           child = parse_one(c)
           res << child
         when "("

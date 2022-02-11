@@ -136,6 +136,7 @@ module DBus
     # @return [Message,nil] the message or nil if unavailable
     def message_from_buffer_nonblock
       return nil if @buffer.empty?
+
       ret = nil
       begin
         ret, size = Message.new.unmarshall_buffer(@buffer)
@@ -162,6 +163,7 @@ module DBus
     rescue Exception => e
       puts "Oops:", e
       raise if @is_tcp # why?
+
       puts "WARNING: read_nonblock failed, falling back to .recv"
       @buffer += @socket.recv(MSG_BUF_SIZE)
     end
