@@ -87,6 +87,7 @@ module DBus
     end
 
     # Defines a proxied method on the interface.
+    # Better name: declare_method
     def define_method(methodname, prototype)
       m = Method.new(methodname)
       m.from_prototype(prototype)

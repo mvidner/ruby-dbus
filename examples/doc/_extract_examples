@@ -4,6 +4,9 @@ if ARGV[0].nil?
   exit
 end
 
+base_url = "https://github.com/mvidner/ruby-dbus/blob/master/"
+base_url += ARGV[0].gsub("../", "")
+
 File.open(ARGV[0]) do |f|
   title = nil
   setup = ""
@@ -20,7 +23,9 @@ File.open(ARGV[0]) do |f|
           setup = example
         else
           File.open("#{basename}.rb", "w") do |e|
+            anchor = title.downcase.gsub(/ +/, "-")
             e.write setup
+            e.write "# #{base_url}##{anchor}\n"
             e.write example
             e.chmod(0o755)
           end

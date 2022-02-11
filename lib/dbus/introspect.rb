@@ -26,12 +26,15 @@ module DBus
   # It also is the local definition of interface exported by the program.
   # At the client side, see ProxyObjectInterface
   class Interface
-    # The name of the interface. String
+    # @return [String] The name of the interface.
     attr_reader :name
-    # The methods that are part of the interface. Hash: Symbol => DBus::Method
+    # @return [Hash{Symbol => DBus::Method}] The methods that are part of the interface.
     attr_reader :methods
-    # The signals that are part of the interface. Hash: Symbol => Signal
+    # @return [Hash{Symbol => Signal}] The signals that are part of the interface.
     attr_reader :signals
+
+    # @return [Hash{Symbol => Property}]
+    attr_reader :properties
 
     # Creates a new interface with a given _name_.
     def initialize(name)
@@ -39,6 +42,7 @@ module DBus
       @name = name
       @methods = {}
       @signals = {}
+      @properties = {}
     end
 
     # Validates a service _name_.
@@ -52,23 +56,31 @@ module DBus
       end
     end
 
-    # Helper method for defining a method _m_.
-    def define(m)
-      if m.is_a?(Method)
-        @methods[m.name.to_sym] = m
-      elsif m.is_a?(Signal)
-        @signals[m.name.to_sym] = m
-      end
+    # Add _ie_ as a known {Method}, {Signal} or {Property}
+    # @param ie [InterfaceElement]
+    def define(ie)
+      name = ie.name.to_sym
+      category = if ie.is_a?(Method)
+                   @methods
+                 elsif ie.is_a?(Signal)
+                   @signals
+                 elsif ie.is_a?(Property)
+                   @properties
+                 end
+      category[name] = ie
     end
+    alias declare define
     alias << define
 
     # Defines a method with name _id_ and a given _prototype_ in the
     # interface.
+    # Better name: declare_method
     def define_method(id, prototype)
       m = Method.new(id)
       m.from_prototype(prototype)
       define(m)
     end
+    alias declare_method define_method
   end # class Interface
 
   # = A formal parameter has a name and a type
@@ -144,6 +156,7 @@ module DBus
     end
 
     # Add parameter types by parsing the given _prototype_.
+    # @param prototype [Prototype]
     def from_prototype(prototype)
       prototype.split(/, */).each do |arg|
         arg = arg.split(" ")
@@ -210,4 +223,40 @@ module DBus
       xml
     end
   end # class Signal
+
+  # An (exported) property
+  # https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-properties
+  class Property
+    # @return [String] The name of the property, for example FooBar.
+    attr_reader :name
+    attr_reader :type
+    # @return [Symbol] :read :write or :readwrite
+    attr_reader :access
+
+    # @return [Symbol] What to call at Ruby side.
+    #   (Always without the trailing `=`)
+    attr_reader :ruby_name
+
+    def initialize(name, type, access, ruby_name:)
+      @name = name
+      @type = type
+      @access = access
+      @ruby_name = ruby_name
+    end
+
+    # @return [Boolean]
+    def readable?
+      access == :read || access == :readwrite
+    end
+
+    # @return [Boolean]
+    def writable?
+      access == :write || access == :readwrite
+    end
+
+    # Return introspection XML string representation of the property.
+    def to_xml
+      "    <property type=\"#{@type}\" name=\"#{@name}\" access=\"#{@access}\"/>\n"
+    end
+  end
 end # module DBus

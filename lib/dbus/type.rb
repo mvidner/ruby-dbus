@@ -9,6 +9,24 @@
 # See the file "COPYING" for the exact licensing terms.
 
 module DBus
+  # Like a {Signature} but containing only a single complete type.
+  #
+  # For documentation purposes only.
+  class SingleCompleteType < String; end
+
+  # Zero or more {SingleCompleteType}s; its own type code is "g".
+  # For example "ssv" for a method taking two Strings and a Variant/
+  #
+  # For documentation purposes only.
+  class Signature < String; end
+
+  # Similar to {Signature} but for {DBus::Object.define_method},
+  # contains names and direction of the parameters.
+  # For example "in query:s, in case_sensitive:b, out results:ao".
+  #
+  # For documentation purposes only.
+  class Prototype < String; end
+
   # = D-Bus type module
   #
   # This module containts the constants of the types specified in the D-Bus

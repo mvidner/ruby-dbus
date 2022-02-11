@@ -9,6 +9,12 @@ begin
 rescue LoadError
   nil
 end
+begin
+  require "yard"
+rescue LoadError
+  nil
+end
+
 require "packaging"
 
 Packaging.configuration do |conf|
@@ -79,3 +85,5 @@ else
     warn "RuboCop not installed"
   end
 end
+
+YARD::Rake::YardocTask.new if Object.const_defined? :YARD

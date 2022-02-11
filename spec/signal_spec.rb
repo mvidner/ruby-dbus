@@ -29,7 +29,7 @@ describe "SignalHandlerTest" do
   end
 
   # testing for commit 017c83 (kkaempf)
-  it "tests overriding a handler" do
+  it "tests overriding a handler", slow: true do
     DBus.logger.debug "Inside test_overriding_a_handler"
     counter = 0
 
@@ -52,7 +52,7 @@ describe "SignalHandlerTest" do
     expect(counter).to eq(1)
   end
 
-  it "tests on signal overload" do
+  it "tests on signal overload", slow: true do
     DBus.logger.debug "Inside test_on_signal_overload"
     counter = 0
     started = false
@@ -74,7 +74,7 @@ describe "SignalHandlerTest" do
     expect { @intf.on_signal "to", "many", "yarrrrr!" }.to raise_error(ArgumentError)
   end
 
-  it "is possible to add signal handlers from within handlers" do
+  it "is possible to add signal handlers from within handlers", slow: true do
     ended = false
     @intf.on_signal "LongTaskStart" do
       @intf.on_signal "LongTaskEnd" do

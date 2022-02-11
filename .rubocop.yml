@@ -103,6 +103,8 @@ Metrics/BlockNesting:
 
 Metrics/BlockLength:
   Max: 70
+  Exclude:
+    - 'spec/*_spec.rb'
 
 # Offense count: 8
 # Configuration parameters: CountComments.
