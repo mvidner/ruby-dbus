@@ -31,7 +31,6 @@ via [UPower](http://upower.freedesktop.org/docs/UPower.html#UPower:OnBattery)
     sysbus = DBus.system_bus
     upower_service   = sysbus["org.freedesktop.UPower"]
     upower_object    = upower_service["/org/freedesktop/UPower"]
-    upower_object.introspect
     upower_interface = upower_object["org.freedesktop.UPower"]
     on_battery       = upower_interface["OnBattery"]
     if on_battery

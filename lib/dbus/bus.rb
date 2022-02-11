@@ -676,7 +676,7 @@ module DBus
   # (for Unix-socket) unix:path=/tmp/my_funky_bus_socket
   #
   # you'll need to take care about authentification then, more info here:
-  # http://github.com/pangdudu/ruby-dbus/blob/master/README.rdoc
+  # https://gitlab.com/pangdudu/ruby-dbus/-/blob/master/README.rdoc
   class RemoteBus < Connection
     # Get the remote bus.
     def initialize(socket_name)

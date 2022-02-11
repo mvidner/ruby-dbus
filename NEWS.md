@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+Bug fixes:
+ * Depend on rexml which is separate since Ruby 3.0 ([#87][],
+   by Toshiaki Asai).
+   Nokogiri is faster but bigger so it remains optional.
+ * Fix connection in case ~/.dbus-keyrings has multiple cookies, showing
+   as "Oops: undefined method `zero?' for nil:NilClass".
+ * Add the missing name to the root introspection node.
+
+[#87]: https://github.com/mvidner/ruby-dbus/pull/87
+
 ## Ruby D-Bus 0.16.0 - 2019-10-15
 
 API:
