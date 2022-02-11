@@ -112,7 +112,7 @@ module DBus
       end
     end
 
-    PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties".freeze
+    PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
 
     # Read a property.
     # @param propname [String]

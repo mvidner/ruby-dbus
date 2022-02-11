@@ -29,7 +29,7 @@ module DBus
     # Mutex that protects updates on the serial number.
     @@serial_mutex = Mutex.new
     # Type of a message (by specification).
-    MESSAGE_SIGNATURE = "yyyyuua(yv)".freeze
+    MESSAGE_SIGNATURE = "yyyyuua(yv)"
 
     # FIXME: following message type constants should be under Message::Type IMO
     # well, yeah sure

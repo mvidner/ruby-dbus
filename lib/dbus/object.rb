@@ -12,7 +12,7 @@ require "thread"
 require_relative "core_ext/class/attribute"
 
 module DBus
-  PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties".freeze
+  PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
 
   # Exported object type
   # = Exportable D-Bus object class

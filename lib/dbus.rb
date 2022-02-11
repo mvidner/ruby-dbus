@@ -37,12 +37,12 @@ require "thread"
 # Module containing all the D-Bus modules and classes.
 module DBus
   # Default socket name for the system bus.
-  SystemSocketName = "unix:path=/var/run/dbus/system_bus_socket".freeze
+  SystemSocketName = "unix:path=/var/run/dbus/system_bus_socket"
 
   # Byte signifying big endianness.
-  BIG_END = "B".freeze
+  BIG_END = "B"
   # Byte signifying little endianness.
-  LIL_END = "l".freeze
+  LIL_END = "l"
 
   # Byte signifying the host's endianness.
   HOST_END = if [0x01020304].pack("L").unpack1("V") == 0x01020304

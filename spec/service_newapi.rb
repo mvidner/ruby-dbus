@@ -9,10 +9,10 @@ $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
 require "dbus"
 
-PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties".freeze
+PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
 
 class Test < DBus::Object
-  INTERFACE = "org.ruby.SampleInterface".freeze
+  INTERFACE = "org.ruby.SampleInterface"
   def initialize(path)
     super path
     @read_me = "READ ME"

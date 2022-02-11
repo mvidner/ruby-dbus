@@ -331,7 +331,7 @@ module DBus
     </signal>
   </interface>
 </node>
-'.freeze
+'
     # This apostroph is for syntax highlighting editors confused by above xml: "
 
     # @api private
