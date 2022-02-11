@@ -11,13 +11,12 @@ Push, and check the CI results.
 Edit VERSION NEWS.md package/rubygem-ruby-dbus.spec
 
     osc vc package
-    gem2rpm --config package/gem2rpm.yml \
-      package/ruby-dbus-$(cat VERSION).gem > package/rubygem-ruby-dbus.spec
     git commit -m "Releasing version $(cat VERSION)."
-
-Build, and submit + SR to OBS
-
-    rake osc:sr
+    rake package
+    gem2rpm --template opensuse --config package/gem2rpm.yml \
+      package/ruby-dbus-$(cat VERSION).gem > package/rubygem-ruby-dbus.spec
+    git commit -a --amend
+    rake osc:build
 
 Push the versioned commit; tag
 
@@ -28,6 +27,10 @@ Push the versioned commit; tag
 Push gem
 
     gem push package/ruby-dbus-$(cat VERSION).gem
+
+Build, and submit + SR to OBS
+
+    rake osc:sr
 
 Publicize
 

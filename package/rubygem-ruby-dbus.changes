@@ -1,4 +1,19 @@
 -------------------------------------------------------------------
+Fri Feb 11 18:56:31 UTC 2022 - Martin Vidner <mvidner@suse.com>
+
+- 0.17.0
+ API:
+ * Export properties with `dbus_attr_accessor`, `dbus_reader` etc.
+   (gh#mvidner/ruby-dbus#86).
+ Bug fixes:
+ * Depend on rexml which is separate since Ruby 3.0
+   (gh#mvidner/ruby-dbus#87, by Toshiaki Asai).
+   Nokogiri is faster but bigger so it remains optional.
+ * Fix connection in case ~/.dbus-keyrings has multiple cookies, showing
+   as "Oops: undefined method `zero?' for nil:NilClass".
+ * Add the missing name to the root introspection node.
+
+-------------------------------------------------------------------
 Tue Oct 15 19:08:27 UTC 2019 - Martin Vidner <mvidner@suse.com>
 
 - 0.16.0

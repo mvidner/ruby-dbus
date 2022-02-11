@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.17.0 - 2022-02-11
+
 API:
  * Export properties with `dbus_attr_accessor`, `dbus_reader` etc. ([#86][]).
 
