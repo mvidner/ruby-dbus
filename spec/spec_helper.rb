@@ -9,7 +9,7 @@ coverage = if ENV["COVERAGE"]
 
 if coverage
   require "simplecov"
-  SimpleCov.root File.expand_path("../..", __FILE__)
+  SimpleCov.root File.expand_path("..", __dir__)
 
   # do not cover specs
   SimpleCov.add_filter "_spec.rb"
@@ -36,7 +36,7 @@ if coverage
   end
 end
 
-$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 if Object.const_defined? "RSpec"
   # http://betterspecs.org/#expect
@@ -50,7 +50,7 @@ end
 require "tempfile"
 require "timeout"
 
-TOPDIR = File.expand_path("../..", __FILE__)
+TOPDIR = File.expand_path("..", __dir__)
 
 # path of config file for a private bus
 def config_file_path

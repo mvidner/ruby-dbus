@@ -5,7 +5,7 @@
 require_relative "spec_helper"
 SimpleCov.command_name "Service Tests" if Object.const_defined? "SimpleCov"
 # find the library without external help
-$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require "dbus"
 
