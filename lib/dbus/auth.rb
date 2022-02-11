@@ -101,7 +101,7 @@ module DBus
     def hex_encode(plain)
       return nil if plain.nil?
 
-      plain.to_s.unpack("H*")[0]
+      plain.to_s.unpack1("H*")
     end
 
     # decode hex to plain

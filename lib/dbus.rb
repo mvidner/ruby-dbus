@@ -43,7 +43,7 @@ module DBus
   LIL_END = "l".freeze
 
   # Byte signifying the host's endianness.
-  HOST_END = if [0x01020304].pack("L").unpack("V")[0] == 0x01020304
+  HOST_END = if [0x01020304].pack("L").unpack1("V") == 0x01020304
                LIL_END
              else
                BIG_END

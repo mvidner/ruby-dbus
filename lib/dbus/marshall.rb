@@ -97,7 +97,7 @@ module DBus
     # Return the string.
     def read_string
       align(4)
-      str_sz = read(4).unpack(@uint32)[0]
+      str_sz = read(4).unpack1(@uint32)
       ret = @buffy.slice(@idx, str_sz)
       raise IncompleteBufferException if @idx + str_sz + 1 > @buffy.bytesize
 
@@ -114,7 +114,7 @@ module DBus
     # Read the signature length and signature itself from the buffer.
     # Return the signature.
     def read_signature
-      str_sz = read(1).unpack("C")[0]
+      str_sz = read(1).unpack1("C")
       ret = @buffy.slice(@idx, str_sz)
       raise IncompleteBufferException if @idx + str_sz + 1 >= @buffy.bytesize
 
@@ -134,29 +134,29 @@ module DBus
       packet = nil
       case signature.sigtype
       when Type::BYTE
-        packet = read(1).unpack("C")[0]
+        packet = read(1).unpack1("C")
       when Type::UINT16
         align(2)
-        packet = read(2).unpack(@uint16)[0]
+        packet = read(2).unpack1(@uint16)
       when Type::INT16
         align(2)
-        packet = read(2).unpack(@uint16)[0]
+        packet = read(2).unpack1(@uint16)
         if (packet & 0x8000) != 0
           packet -= 0x10000
         end
       when Type::UINT32, Type::UNIX_FD
         align(4)
-        packet = read(4).unpack(@uint32)[0]
+        packet = read(4).unpack1(@uint32)
       when Type::INT32
         align(4)
-        packet = read(4).unpack(@uint32)[0]
+        packet = read(4).unpack1(@uint32)
         if (packet & 0x80000000) != 0
           packet -= 0x100000000
         end
       when Type::UINT64
         align(8)
-        packet_l = read(4).unpack(@uint32)[0]
-        packet_h = read(4).unpack(@uint32)[0]
+        packet_l = read(4).unpack1(@uint32)
+        packet_h = read(4).unpack1(@uint32)
         packet = if @endianness == LIL_END
                    packet_l + packet_h * 2**32
                  else
@@ -164,8 +164,8 @@ module DBus
                  end
       when Type::INT64
         align(8)
-        packet_l = read(4).unpack(@uint32)[0]
-        packet_h = read(4).unpack(@uint32)[0]
+        packet_l = read(4).unpack1(@uint32)
+        packet_h = read(4).unpack1(@uint32)
         packet = if @endianness == LIL_END
                    packet_l + packet_h * 2**32
                  else
@@ -176,17 +176,17 @@ module DBus
         end
       when Type::DOUBLE
         align(8)
-        packet = read(8).unpack(@double)[0]
+        packet = read(8).unpack1(@double)
       when Type::BOOLEAN
         align(4)
-        v = read(4).unpack(@uint32)[0]
+        v = read(4).unpack1(@uint32)
         raise InvalidPacketException if ![0, 1].member?(v)
 
         packet = (v == 1)
       when Type::ARRAY
         align(4)
         # checks please
-        array_sz = read(4).unpack(@uint32)[0]
+        array_sz = read(4).unpack1(@uint32)
         raise InvalidPacketException if array_sz > 67_108_864
 
         align(signature.child.alignment)
