@@ -142,5 +142,5 @@ module DBus
         ret
       end
     end
-  end # class ProxyObjectInterface
+  end
 end

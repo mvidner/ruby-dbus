@@ -138,7 +138,7 @@ module DBus
         end
         s
       end
-    end # class Type
+    end
 
     # = D-Bus type parser class
     #
@@ -195,8 +195,8 @@ module DBus
         end
         ret
       end
-    end # class Parser
-  end # module Type
+    end
+  end
 
   # shortcuts
 
@@ -211,4 +211,4 @@ module DBus
     [type(string_type), value]
   end
   module_function :variant
-end # module DBus
+end

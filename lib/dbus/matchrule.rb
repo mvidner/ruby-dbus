@@ -97,5 +97,5 @@ module DBus
       # FIXME: sender and destination are ignored
       true
     end
-  end # class MatchRule
-end # module D-Bus
+  end
+end

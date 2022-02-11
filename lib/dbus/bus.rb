@@ -188,7 +188,7 @@ module DBus
       end
       s + "{" + keys.collect { |k| "#{k} => #{self[k].sub_inspect}" }.join(",") + "}"
     end
-  end # class Inspect
+  end
 
   # FIXME: rename Connection to Bus?
 
@@ -615,7 +615,7 @@ module DBus
       end
       @service = Service.new(@unique_name, self)
     end
-  end # class Connection
+  end
 
   # = D-Bus session bus class
   #
@@ -763,5 +763,5 @@ module DBus
         end
       end
     end
-  end # class Main
-end # module DBus
+  end
+end

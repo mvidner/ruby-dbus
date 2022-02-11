@@ -41,5 +41,5 @@ module DBus
       ProxyObjectFactory.introspect_into(po, @xml)
       po
     end
-  end # class ProxyObjectFactory
+  end
 end

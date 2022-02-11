@@ -161,5 +161,5 @@ module DBus
       end
     end
     # rubocop:enable Style/MethodMissing
-  end # class ProxyObject
+  end
 end

@@ -82,7 +82,7 @@ module DBus
       define(m)
     end
     alias declare_method define_method
-  end # class Interface
+  end
 
   # = A formal parameter has a name and a type
   class FormalParameter
@@ -137,7 +137,7 @@ module DBus
     def add_param(name_signature_pair)
       add_fparam(*name_signature_pair)
     end
-  end # class InterfaceElement
+  end
 
   # = D-Bus interface method class
   #
@@ -195,7 +195,7 @@ module DBus
       xml += "    </method>\n"
       xml
     end
-  end # class Method
+  end
 
   # = D-Bus interface signal class
   #
@@ -225,7 +225,7 @@ module DBus
       xml += "    </signal>\n"
       xml
     end
-  end # class Signal
+  end
 
   # An (exported) property
   # https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-properties
@@ -262,4 +262,4 @@ module DBus
       "    <property type=\"#{@type}\" name=\"#{@name}\" access=\"#{@access}\"/>\n"
     end
   end
-end # module DBus
+end

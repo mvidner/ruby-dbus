@@ -69,4 +69,4 @@ module DBus
   # Exception raised when invalid introspection data is parsed/used.
   class InvalidIntrospectionData < Exception
   end
-end # module DBus
+end

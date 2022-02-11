@@ -236,7 +236,7 @@ module DBus
       new_ex.set_backtrace(ex.backtrace)
       new_ex
     end
-  end # class Message
+  end
 
   class MethodReturnMessage < Message
     def initialize
@@ -264,4 +264,4 @@ module DBus
       msg
     end
   end
-end # module DBus
+end

@@ -108,7 +108,7 @@ module DBus
     def hex_decode(encoded)
       encoded.scan(/[[:xdigit:]]{2}/).map { |h| h.hex.chr }.join
     end
-  end # DBusCookieSHA1 class ends here
+  end
 
   # Note: this following stuff is tested with External authenticator only!
 
@@ -265,6 +265,6 @@ module DBus
         end
       end
       true
-    end # def next_state
-  end # class Client
-end # module D-Bus
+    end
+  end
+end

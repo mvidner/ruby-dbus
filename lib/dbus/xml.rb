@@ -159,5 +159,5 @@ module DBus
         end
       end
     end
-  end # class IntrospectXMLParser
-end # module DBus
+  end
+end

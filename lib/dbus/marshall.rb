@@ -230,8 +230,8 @@ module DBus
               "sigtype: #{signature.sigtype} (#{signature.sigtype.chr})"
       end
       packet
-    end # def do_parse
-  end # class PacketUnmarshaller
+    end
+  end
 
   # D-Bus packet marshaller class
   #
@@ -407,7 +407,7 @@ module DBus
         raise NotImplementedError,
               "sigtype: #{type.sigtype} (#{type.sigtype.chr})"
       end
-    end # def append
+    end
 
     # Make a [signature, value] pair for a variant
     def self.make_variant(value)
@@ -439,5 +439,5 @@ module DBus
         end
       end
     end
-  end # class PacketMarshaller
-end # module DBus
+  end
+end
