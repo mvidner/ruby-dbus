@@ -1,4 +1,6 @@
 #!/usr/bin/env rspec
+# frozen_string_literal: true
+
 # Test marshalling variants according to ruby types
 require_relative "spec_helper"
 require "dbus"

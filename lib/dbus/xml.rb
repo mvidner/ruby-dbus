@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # dbus/xml.rb - introspection parser, rexml/nokogiri abstraction
 #
 # This file is part of the ruby-dbus project

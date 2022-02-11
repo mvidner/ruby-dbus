@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # dbus/introspection.rb - module containing a low-level D-Bus introspection implementation
 #
 # This file is part of the ruby-dbus project

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # dbus/logger.rb - debug logging
 #
 # This file is part of the ruby-dbus project

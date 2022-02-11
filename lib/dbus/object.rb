@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is part of the ruby-dbus project
 # Copyright (C) 2007 Arnaud Cornet and Paul van Tilburg
 #

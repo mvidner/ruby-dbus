@@ -1,4 +1,6 @@
 #!/usr/bin/env rspec
+# frozen_string_literal: true
+
 # Test the signal handlers
 require_relative "spec_helper"
 require "dbus"

@@ -1,4 +1,6 @@
 #!/usr/bin/env rspec
+# frozen_string_literal: true
+
 # Test the binding of dbus concepts to ruby concepts
 require_relative "spec_helper"
 require "dbus"

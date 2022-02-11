@@ -1,4 +1,6 @@
 #!/usr/bin/env rspec
+# frozen_string_literal: true
+
 # should report it missing on org.ruby.SampleInterface
 # (on object...) instead of on DBus::Proxy::ObjectInterface
 require_relative "spec_helper"

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # dbus.rb - Module containing the low-level D-Bus implementation
 #
 # This file is part of the ruby-dbus project

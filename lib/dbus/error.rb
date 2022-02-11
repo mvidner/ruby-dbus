@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # error.rb
 #
 # This file is part of the ruby-dbus project

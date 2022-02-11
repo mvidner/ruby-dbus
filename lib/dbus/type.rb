@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # dbus/type.rb - module containing low-level D-Bus data type information
 #
 # This file is part of the ruby-dbus project

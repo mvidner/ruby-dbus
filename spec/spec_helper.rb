@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 coverage = if ENV["COVERAGE"]
              ENV["COVERAGE"] == "true"
            else

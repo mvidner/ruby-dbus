@@ -1,4 +1,6 @@
 #!/usr/bin/env rspec
+# frozen_string_literal: true
+
 # Test the bus class
 require_relative "spec_helper"
 
