@@ -89,7 +89,9 @@ module DBus
 
   # = A formal parameter has a name and a type
   class FormalParameter
+    # @return [#to_s]
     attr_reader :name
+    # @return [SingleCompleteType]
     attr_reader :type
 
     def initialize(name, type)
@@ -111,9 +113,10 @@ module DBus
   # This is a generic class for entities that are part of the interface
   # such as methods and signals.
   class InterfaceElement
-    # The name of the interface element. Symbol
+    # @return [Symbol] The name of the interface element
     attr_reader :name
-    # The parameters of the interface element. Array: FormalParameter
+
+    # @return [Array<FormalParameter>] The parameters of the interface element
     attr_reader :params
 
     # Validates element _name_.
@@ -146,7 +149,7 @@ module DBus
   #
   # This is a class representing methods that are part of an interface.
   class Method < InterfaceElement
-    # The list of return values for the method. Array: FormalParameter
+    # @return [Array<FormalParameter>] The list of return values for the method
     attr_reader :rets
 
     # Creates a new method interface element with the given _name_.
@@ -156,6 +159,8 @@ module DBus
     end
 
     # Add a return value _name_ and _signature_.
+    # @param name [#to_s]
+    # @param signature [SingleCompleteType]
     def add_return(name, signature)
       @rets << FormalParameter.new(name, signature)
     end
