@@ -35,7 +35,7 @@ module DBus
   # protocol.
   module Type
     # Mapping from type number to name and alignment.
-    TypeMapping = {
+    TYPE_MAPPING = {
       0 => ["INVALID", nil],
       "y" => ["BYTE", 1],
       "b" => ["BOOLEAN", 4],
@@ -56,7 +56,7 @@ module DBus
       "h" => ["UNIX_FD", 4]
     }.freeze
     # Defines the set of constants
-    TypeMapping.each_pair do |key, value|
+    TYPE_MAPPING.each_pair do |key, value|
       Type.const_set(value.first, key)
     end
 
@@ -75,7 +75,7 @@ module DBus
 
       # Create a new type instance for type number _sigtype_.
       def initialize(sigtype)
-        if !TypeMapping.keys.member?(sigtype)
+        if !TYPE_MAPPING.keys.member?(sigtype)
           raise SignatureException, "Unknown key in signature: #{sigtype.chr}"
         end
 
@@ -85,7 +85,7 @@ module DBus
 
       # Return the required alignment for the type.
       def alignment
-        TypeMapping[@sigtype].last
+        TYPE_MAPPING[@sigtype].last
       end
 
       # Return a string representation of the type according to the
@@ -99,7 +99,7 @@ module DBus
         when DICT_ENTRY
           "{#{@members.collect(&:to_s).join}}"
         else
-          if !TypeMapping.keys.member?(@sigtype)
+          if !TYPE_MAPPING.keys.member?(@sigtype)
             raise NotImplementedError
           end
 
@@ -134,7 +134,7 @@ module DBus
       end
 
       def inspect
-        s = TypeMapping[@sigtype].first
+        s = TYPE_MAPPING[@sigtype].first
         if [STRUCT, ARRAY].member?(@sigtype)
           s += ": #{@members.inspect}"
         end

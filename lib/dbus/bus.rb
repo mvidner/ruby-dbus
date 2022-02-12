@@ -684,7 +684,7 @@ module DBus
   class ASystemBus < Connection
     # Get the default system bus.
     def initialize
-      super(SystemSocketName)
+      super(SYSTEM_BUS_ADDRESS)
       send_hello
     end
   end

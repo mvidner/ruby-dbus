@@ -9,7 +9,8 @@
 # See the file "COPYING" for the exact licensing terms.
 
 module DBus
-  # A {::String} that validates at initialization time
+  # D-Bus: a name for a connection, like ":1.3" or "org.example.ManagerManager".
+  # Implemented as a {::String} that validates at initialization time.
   # @see https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names-bus
   class BusName < String
     # @raise Error if not a valid bus name
