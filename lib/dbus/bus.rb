@@ -11,7 +11,6 @@
 # See the file "COPYING" for the exact licensing terms.
 
 require "socket"
-require "thread"
 require "singleton"
 
 # = D-Bus main module

@@ -30,8 +30,6 @@ require_relative "dbus/type"
 require_relative "dbus/xml"
 
 require "socket"
-require "thread"
-
 # = D-Bus main module
 #
 # Module containing all the D-Bus modules and classes.

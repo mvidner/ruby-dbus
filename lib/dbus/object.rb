@@ -8,7 +8,6 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
-require "thread"
 require_relative "core_ext/class/attribute"
 
 module DBus
