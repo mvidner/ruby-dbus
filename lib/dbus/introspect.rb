@@ -63,11 +63,12 @@ module DBus
     # @param ie [InterfaceElement]
     def define(ie)
       name = ie.name.to_sym
-      category = if ie.is_a?(Method)
+      category = case ie
+                 when Method
                    @methods
-                 elsif ie.is_a?(Signal)
+                 when Signal
                    @signals
-                 elsif ie.is_a?(Property)
+                 when Property
                    @properties
                  end
       category[name] = ie

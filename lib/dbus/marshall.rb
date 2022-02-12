@@ -36,11 +36,12 @@ module DBus
     def initialize(buffer, endianness)
       @buffy = buffer.dup
       @endianness = endianness
-      if @endianness == BIG_END
+      case @endianness
+      when BIG_END
         @uint32 = "N"
         @uint16 = "n"
         @double = "G"
-      elsif @endianness == LIL_END
+      when LIL_END
         @uint32 = "V"
         @uint16 = "v"
         @double = "E"
@@ -348,9 +349,10 @@ module DBus
       when Type::VARIANT
         vartype = nil
         if val.is_a?(Array) && val.size == 2
-          if val[0].is_a?(DBus::Type::Type)
+          case val[0]
+          when DBus::Type::Type
             vartype, vardata = val
-          elsif val[0].is_a?(String)
+          when String
             begin
               parsed = Type::Parser.new(val[0]).parse
               vartype = parsed[0] if parsed.size == 1

@@ -145,10 +145,11 @@ module DBus
         name = ae["name"]
         dir = ae["direction"]
         sig = ae["type"]
-        if m.is_a?(DBus::Signal)
+        case m
+        when DBus::Signal
           # Direction can only be "out", ignore it
           m.add_fparam(name, sig)
-        elsif m.is_a?(DBus::Method)
+        when DBus::Method
           case dir
           # This is a method, so dir defaults to "in"
           when "in", nil

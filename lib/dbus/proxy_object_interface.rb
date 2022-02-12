@@ -81,9 +81,10 @@ module DBus
 
     # Defines a signal or method based on the descriptor _m_.
     def define(m)
-      if m.is_a?(Method)
+      case m
+      when Method
         define_method_from_descriptor(m)
-      elsif m.is_a?(Signal)
+      when Signal
         define_signal_from_descriptor(m)
       end
     end

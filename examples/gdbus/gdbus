@@ -106,10 +106,11 @@ class DBusUI
   def beautify_method(meth)
     # Damn, this need to be rewritten :p
     s = "#{meth.name}("
-    if meth.is_a?(DBus::Method)
+    case meth
+    when DBus::Method
       s += (meth.params.collect { |a| "in #{a[0]}:#{a[1]}" } +
             meth.rets.collect { |a| "out #{a[0]}:#{a[1]}" }).join(", ")
-    elsif meth.is_a?(DBus::Signal)
+    when DBus::Signal
       s += (meth.params.collect { |a| "in #{a[0]}:#{a[1]}" }).join(", ")
     end
     s += ")"
@@ -148,11 +149,12 @@ class DBusUI
     name = view.model.get_iter(path)[0]
     puts "Clicked on: #{name.inspect}"
     type = view.model.get_iter(path)[1]
-    if type == "M"
+    case type
+    when "M"
       method = view.model.get_iter(path)[2]
       intf = view.model.get_iter(path)[3]
       MethodCallWindow.new(@window, intf, method).run
-    elsif type == "S"
+    when "S"
       signal = view.model.get_iter(path)[2]
       intf = view.model.get_iter(path)[3]
       mr = DBus::MatchRule.new.from_signal(intf, signal)
