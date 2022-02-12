@@ -147,6 +147,11 @@ Style/Documentation:
     - 'lib/dbus/type.rb'
     - 'lib/dbus/xml.rb'
 
+# Buggy in 1.0, fixed in 1.12
+# https://github.com/rubocop/rubocop/issues/5953
+Style/AccessModifierDeclarations:
+  Enabled: false
+
 # Offense count: 1
 Style/OptionalArguments:
   Exclude:
