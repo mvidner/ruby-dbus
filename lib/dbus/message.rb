@@ -225,7 +225,7 @@ module DBus
         end
       end
       pu.align(8)
-      if @body_length > 0 && @signature
+      if @body_length.positive? && @signature
         @params = pu.unmarshall(@signature, @body_length)
       end
       [self, pu.idx]

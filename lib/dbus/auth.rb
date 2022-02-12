@@ -173,7 +173,7 @@ module DBus
       data = ""
       crlf = "\r\n"
       left = 1024 # 1024 byte, no idea if it's ever getting bigger
-      while left > 0
+      while left.positive?
         buf = @socket.read(left > 1 ? 1 : left)
         break if buf.nil?
 
