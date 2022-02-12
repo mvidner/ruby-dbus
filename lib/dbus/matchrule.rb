@@ -29,7 +29,7 @@ module DBus
     attr_accessor :path
     # The destination filter.
     attr_accessor :destination
-    # The type type that is matched.
+    # @return [String] The type type that is matched.
     attr_reader :type
 
     # Create a new match rule
@@ -37,14 +37,14 @@ module DBus
       @sender = @interface = @member = @path = @destination = @type = nil
     end
 
-    # Set the message types to filter to type _t_.
+    # Set the message types to filter to type _typ_.
     # Possible message types are: signal, method_call, method_return, and error.
-    def type=(t)
-      if !["signal", "method_call", "method_return", "error"].member?(t)
-        raise MatchRuleException, t
+    def type=(typ)
+      if !["signal", "method_call", "method_return", "error"].member?(typ)
+        raise MatchRuleException, typ
       end
 
-      @type = t
+      @type = typ
     end
 
     # Returns a match rule string version of the object. E.g.:

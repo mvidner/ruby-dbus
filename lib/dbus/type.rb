@@ -107,8 +107,8 @@ module DBus
         end
       end
 
-      # Add a new member type _a_.
-      def <<(a)
+      # Add a new member type _item_.
+      def <<(item)
         if ![STRUCT, ARRAY, DICT_ENTRY].member?(@sigtype)
           raise SignatureException
         end
@@ -119,12 +119,12 @@ module DBus
           when 2
             raise SignatureException, "Dict entries have exactly two members"
           when 0
-            if [STRUCT, ARRAY, DICT_ENTRY].member?(a.sigtype)
+            if [STRUCT, ARRAY, DICT_ENTRY].member?(item.sigtype)
               raise SignatureException, "Dict entry keys must be basic types"
             end
           end
         end
-        @members << a
+        @members << item
       end
 
       # Return the first contained member type.
@@ -159,31 +159,31 @@ module DBus
         c
       end
 
-      # Parse one character _c_ of the signature.
-      def parse_one(c)
+      # Parse one character _char_ of the signature.
+      def parse_one(char)
         res = nil
-        case c
+        case char
         when "a"
           res = Type.new(ARRAY)
-          c = nextchar
-          raise SignatureException, "Parse error in #{@signature}" if c.nil?
+          char = nextchar
+          raise SignatureException, "Parse error in #{@signature}" if char.nil?
 
-          child = parse_one(c)
+          child = parse_one(char)
           res << child
         when "("
           res = Type.new(STRUCT)
-          while (c = nextchar) && c != ")"
-            res << parse_one(c)
+          while (char = nextchar) && char != ")"
+            res << parse_one(char)
           end
-          raise SignatureException, "Parse error in #{@signature}" if c.nil?
+          raise SignatureException, "Parse error in #{@signature}" if char.nil?
         when "{"
           res = Type.new(DICT_ENTRY)
-          while (c = nextchar) && c != "}"
-            res << parse_one(c)
+          while (char = nextchar) && char != "}"
+            res << parse_one(char)
           end
-          raise SignatureException, "Parse error in #{@signature}" if c.nil?
+          raise SignatureException, "Parse error in #{@signature}" if char.nil?
         else
-          res = Type.new(c)
+          res = Type.new(char)
         end
         res
       end

@@ -69,18 +69,18 @@ module DBus
       ret
     end
 
-    # Align the pointer index on a byte index of _a_, where a
+    # Align the pointer index on a byte index of _alignment_, which
     # must be 1, 2, 4 or 8.
-    def align(a)
-      case a
+    def align(alignment)
+      case alignment
       when 1
         nil
       when 2, 4, 8
-        bits = a - 1
+        bits = alignment - 1
         @idx = @idx + bits & ~bits
         raise IncompleteBufferException if @idx > @buffy.bytesize
       else
-        raise "Unsupported alignment #{a}"
+        raise ArgumentError, "Unsupported alignment #{alignment}"
       end
     end
 
@@ -254,20 +254,21 @@ module DBus
       @offset = offset # for correct alignment of nested marshallers
     end
 
-    # Round _n_ up to the specified power of two, _a_
-    def num_align(n, a)
-      case a
+    # Round _num_ up to the specified power of two, _alignment_
+    def num_align(num, alignment)
+      case alignment
       when 1, 2, 4, 8
-        bits = a - 1
-        n + bits & ~bits
+        bits = alignment - 1
+        num + bits & ~bits
       else
-        raise "Unsupported alignment"
+        raise ArgumentError, "Unsupported alignment #{alignment}"
       end
     end
 
-    # Align the buffer with NULL (\0) bytes on a byte length of _a_.
-    def align(a)
-      @packet = @packet.ljust(num_align(@offset + @packet.bytesize, a) - @offset, 0.chr)
+    # Align the buffer with NULL (\0) bytes on a byte length of _alignment_.
+    def align(alignment)
+      pad_count = num_align(@offset + @packet.bytesize, alignment) - @offset
+      @packet = @packet.ljust(pad_count, 0.chr)
     end
 
     # Append the the string _str_ itself to the packet.

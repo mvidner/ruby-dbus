@@ -14,18 +14,18 @@ module DBus
   # @see https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names-bus
   class BusName < String
     # @raise Error if not a valid bus name
-    def initialize(s)
-      unless self.class.valid?(s)
-        raise DBus::Error, "Invalid bus name #{s.inspect}"
+    def initialize(name)
+      unless self.class.valid?(name)
+        raise DBus::Error, "Invalid bus name #{name.inspect}"
       end
 
       super
     end
 
-    def self.valid?(s)
-      s.size <= 255 &&
-        (s =~ /\A:[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)+\z/ ||
-         s =~ /\A[A-Za-z_-][A-Za-z0-9_-]*(\.[A-Za-z_-][A-Za-z0-9_-]*)+\z/)
+    def self.valid?(name)
+      name.size <= 255 &&
+        (name =~ /\A:[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)+\z/ ||
+         name =~ /\A[A-Za-z_-][A-Za-z0-9_-]*(\.[A-Za-z_-][A-Za-z0-9_-]*)+\z/)
     end
   end
 end

@@ -11,8 +11,8 @@ describe "VariantTest" do
     @svc = @bus.service("org.ruby.service")
   end
 
-  def make_variant(a)
-    DBus::PacketMarshaller.make_variant(a)
+  def make_variant(val)
+    DBus::PacketMarshaller.make_variant(val)
   end
 
   it "tests make variant scalar" do

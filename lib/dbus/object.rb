@@ -72,17 +72,19 @@ module DBus
 
     # Select (and create) the interface that the following defined methods
     # belong to.
-    def self.dbus_interface(s)
+    # @param name [String] interface name like "org.example.ManagerManager"
+    # @see https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names-interface
+    def self.dbus_interface(name)
       @@intfs_mutex.synchronize do
-        @@cur_intf = intfs[s]
+        @@cur_intf = intfs[name]
         if !@@cur_intf
-          @@cur_intf = Interface.new(s)
+          @@cur_intf = Interface.new(name) # validates the name
           # As this is a mutable class_attr, we cannot use
-          #   self.intfs[s] = @@cur_intf                      # Hash#[]=
+          #   self.intfs[name] = @@cur_intf                      # Hash#[]=
           # as that would modify parent class attr in place.
           # Using the setter lets a subclass have the new value
           # while the superclass keeps the old one.
-          self.intfs = intfs.merge(s => @@cur_intf)
+          self.intfs = intfs.merge(name => @@cur_intf)
         end
         yield
         @@cur_intf = nil

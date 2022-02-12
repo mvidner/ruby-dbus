@@ -460,46 +460,49 @@ module DBus
     end
 
     # @api private
-    # Send a message _m_ on to the bus. This is done synchronously, thus
+    # Send a message _msg_ on to the bus. This is done synchronously, thus
     # the call will block until a reply message arrives.
-    def send_sync(m, &retc) # :yields: reply/return message
-      return if m.nil? # check if somethings wrong
+    # @param msg [Message]
+    def send_sync(msg, &retc) # :yields: reply/return message
+      return if msg.nil? # check if somethings wrong
 
-      @message_queue.push(m)
-      @method_call_msgs[m.serial] = m
-      @method_call_replies[m.serial] = retc
+      @message_queue.push(msg)
+      @method_call_msgs[msg.serial] = msg
+      @method_call_replies[msg.serial] = retc
 
       retm = wait_for_message
       return if retm.nil? # check if somethings wrong
 
       process(retm)
-      while @method_call_replies.key? m.serial
+      while @method_call_replies.key? msg.serial
         retm = wait_for_message
         process(retm)
       end
     rescue EOFError
-      new_err = DBus::Error.new("Connection dropped after we sent #{m.inspect}")
+      new_err = DBus::Error.new("Connection dropped after we sent #{msg.inspect}")
       raise new_err
     end
 
     # @api private
     # Specify a code block that has to be executed when a reply for
-    # message _m_ is received.
-    def on_return(m, &retc)
+    # message _msg_ is received.
+    # @param msg [Message]
+    def on_return(msg, &retc)
       # Have a better exception here
-      if m.message_type != Message::METHOD_CALL
+      if msg.message_type != Message::METHOD_CALL
         raise "on_return should only get method_calls"
       end
 
-      @method_call_msgs[m.serial] = m
-      @method_call_replies[m.serial] = retc
+      @method_call_msgs[msg.serial] = msg
+      @method_call_replies[msg.serial] = retc
     end
 
     # Asks bus to send us messages matching mr, and execute slot when
     # received
-    def add_match(mr, &slot)
+    # @param match_rule [MatchRule,#to_s]
+    def add_match(match_rule, &slot)
       # check this is a signal.
-      mrs = mr.to_s
+      mrs = match_rule.to_s
       DBus.logger.debug "#{@signal_matchrules.size} rules, adding #{mrs.inspect}"
       # don't ask for the same match if we override it
       unless @signal_matchrules.key?(mrs)
@@ -509,8 +512,9 @@ module DBus
       @signal_matchrules[mrs] = slot
     end
 
-    def remove_match(mr)
-      mrs = mr.to_s
+    # @param match_rule [MatchRule,#to_s]
+    def remove_match(match_rule)
+      mrs = match_rule.to_s
       rule_existed = @signal_matchrules.delete(mrs).nil?
       # don't remove nonexisting matches.
       return if rule_existed
@@ -521,63 +525,64 @@ module DBus
     end
 
     # @api private
-    # Process a message _m_ based on its type.
-    def process(m)
-      return if m.nil? # check if somethings wrong
+    # Process a message _msg_ based on its type.
+    # @param msg [Message]
+    def process(msg)
+      return if msg.nil? # check if somethings wrong
 
-      case m.message_type
+      case msg.message_type
       when Message::ERROR, Message::METHOD_RETURN
-        raise InvalidPacketException if m.reply_serial.nil?
+        raise InvalidPacketException if msg.reply_serial.nil?
 
-        mcs = @method_call_replies[m.reply_serial]
+        mcs = @method_call_replies[msg.reply_serial]
         if !mcs
-          DBus.logger.debug "no return code for mcs: #{mcs.inspect} m: #{m.inspect}"
+          DBus.logger.debug "no return code for mcs: #{mcs.inspect} msg: #{msg.inspect}"
         else
-          if m.message_type == Message::ERROR
-            mcs.call(Error.new(m))
+          if msg.message_type == Message::ERROR
+            mcs.call(Error.new(msg))
           else
-            mcs.call(m)
+            mcs.call(msg)
           end
-          @method_call_replies.delete(m.reply_serial)
-          @method_call_msgs.delete(m.reply_serial)
+          @method_call_replies.delete(msg.reply_serial)
+          @method_call_msgs.delete(msg.reply_serial)
         end
       when DBus::Message::METHOD_CALL
-        if m.path == "/org/freedesktop/DBus"
+        if msg.path == "/org/freedesktop/DBus"
           DBus.logger.debug "Got method call on /org/freedesktop/DBus"
         end
-        node = @service.get_node(m.path, create: false)
+        node = @service.get_node(msg.path, create: false)
         if !node
-          reply = Message.error(m, "org.freedesktop.DBus.Error.UnknownObject",
-                                "Object #{m.path} doesn't exist")
+          reply = Message.error(msg, "org.freedesktop.DBus.Error.UnknownObject",
+                                "Object #{msg.path} doesn't exist")
           @message_queue.push(reply)
         # handle introspectable as an exception:
-        elsif m.interface == "org.freedesktop.DBus.Introspectable" &&
-              m.member == "Introspect"
-          reply = Message.new(Message::METHOD_RETURN).reply_to(m)
+        elsif msg.interface == "org.freedesktop.DBus.Introspectable" &&
+              msg.member == "Introspect"
+          reply = Message.new(Message::METHOD_RETURN).reply_to(msg)
           reply.sender = @unique_name
-          xml = node.to_xml(m.path)
+          xml = node.to_xml(msg.path)
           reply.add_param(Type::STRING, xml)
           @message_queue.push(reply)
         else
           obj = node.object
           return if obj.nil? # FIXME, pushes no reply
 
-          obj&.dispatch(m)
+          obj&.dispatch(msg)
         end
       when DBus::Message::SIGNAL
         # the signal can match multiple different rules
         # clone to allow new signale handlers to be registered
         @signal_matchrules.dup.each do |mrs, slot|
-          if DBus::MatchRule.new.from_s(mrs).match(m)
-            slot.call(m)
+          if DBus::MatchRule.new.from_s(mrs).match(msg)
+            slot.call(msg)
           end
         end
       else
         # spec(Message Format): Unknown types must be ignored.
-        DBus.logger.debug "Unknown message type: #{m.message_type}"
+        DBus.logger.debug "Unknown message type: #{msg.message_type}"
       end
     rescue Exception => e
-      raise m.annotate_exception(e)
+      raise msg.annotate_exception(e)
     end
 
     # Retrieves the Service with the given _name_.

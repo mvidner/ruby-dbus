@@ -28,6 +28,7 @@ module DBus
       attr_accessor :backend
     end
     # Creates a new parser for XML data in string _xml_.
+    # @param xml [String]
     def initialize(xml)
       @xml = xml
     end
@@ -142,24 +143,25 @@ module DBus
     ######################################################################
     private
 
-    # Parses a method signature XML element _e_ and initialises
-    # method/signal _m_.
-    def parse_methsig(e, m)
-      e.each("arg") do |ae|
+    # Parses a method signature XML element *elem* and initialises
+    # method/signal *methsig*.
+    # @param elem [AbstractXML::Node]
+    def parse_methsig(elem, methsig)
+      elem.each("arg") do |ae|
         name = ae["name"]
         dir = ae["direction"]
         sig = ae["type"]
-        case m
+        case methsig
         when DBus::Signal
           # Direction can only be "out", ignore it
-          m.add_fparam(name, sig)
+          methsig.add_fparam(name, sig)
         when DBus::Method
           case dir
           # This is a method, so dir defaults to "in"
           when "in", nil
-            m.add_fparam(name, sig)
+            methsig.add_fparam(name, sig)
           when "out"
-            m.add_return(name, sig)
+            methsig.add_return(name, sig)
           end
         else
           raise NotImplementedError, dir

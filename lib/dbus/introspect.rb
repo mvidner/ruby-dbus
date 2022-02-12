@@ -59,11 +59,11 @@ module DBus
       end
     end
 
-    # Add _ie_ as a known {Method}, {Signal} or {Property}
-    # @param ie [InterfaceElement]
-    def define(ie)
-      name = ie.name.to_sym
-      category = case ie
+    # Add _ifc_el_ as a known {Method}, {Signal} or {Property}
+    # @param ifc_el [InterfaceElement]
+    def define(ifc_el)
+      name = ifc_el.name.to_sym
+      category = case ifc_el
                  when Method
                    @methods
                  when Signal
@@ -71,7 +71,7 @@ module DBus
                  when Property
                    @properties
                  end
-      category[name] = ie
+      category[name] = ifc_el
     end
     alias declare define
     alias << define

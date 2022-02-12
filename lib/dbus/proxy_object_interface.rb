@@ -38,27 +38,28 @@ module DBus
       @name
     end
 
-    # Defines a method on the interface from the Method descriptor _m_.
-    def define_method_from_descriptor(m)
-      m.params.each do |fpar|
+    # Defines a method on the interface from the Method descriptor _method_.
+    # @param method [Method]
+    def define_method_from_descriptor(method)
+      method.params.each do |fpar|
         par = fpar.type
         # This is the signature validity check
         Type::Parser.new(par).parse
       end
 
       singleton_class.class_eval do
-        define_method m.name do |*args, &reply_handler|
-          if m.params.size != args.size
-            raise ArgumentError, "wrong number of arguments (#{args.size} for #{m.params.size})"
+        define_method method.name do |*args, &reply_handler|
+          if method.params.size != args.size
+            raise ArgumentError, "wrong number of arguments (#{args.size} for #{method.params.size})"
           end
 
           msg = Message.new(Message::METHOD_CALL)
           msg.path = @object.path
           msg.interface = @name
           msg.destination = @object.destination
-          msg.member = m.name
+          msg.member = method.name
           msg.sender = @object.bus.unique_name
-          m.params.each do |fpar|
+          method.params.each do |fpar|
             par = fpar.type
             msg.add_param(par, args.shift)
           end
@@ -66,31 +67,31 @@ module DBus
           if ret.nil? || @object.api.proxy_method_returns_array
             ret
           else
-            m.rets.size == 1 ? ret.first : ret
+            method.rets.size == 1 ? ret.first : ret
           end
         end
       end
 
-      @methods[m.name] = m
+      @methods[method.name] = method
     end
 
-    # Defines a signal from the descriptor _s_.
-    def define_signal_from_descriptor(s)
-      @signals[s.name] = s
+    # Defines a signal from the descriptor _sig_.
+    # @param sig [Signal]
+    def define_signal_from_descriptor(sig)
+      @signals[sig.name] = sig
     end
 
-    # Defines a signal or method based on the descriptor _m_.
-    def define(m)
-      case m
+    # Defines a signal or method based on the descriptor _ifc_el_.
+    def define(ifc_el)
+      case ifc_el
       when Method
-        define_method_from_descriptor(m)
+        define_method_from_descriptor(ifc_el)
       when Signal
-        define_signal_from_descriptor(m)
+        define_signal_from_descriptor(ifc_el)
       end
     end
 
     # Defines a proxied method on the interface.
-    # Better name: declare_method
     def define_method(methodname, prototype)
       m = Method.new(methodname)
       m.from_prototype(prototype)
