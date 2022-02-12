@@ -349,51 +349,9 @@ module DBus
       when Type::SIGNATURE
         append_signature(val)
       when Type::VARIANT
-        vartype = nil
-        if val.is_a?(Array) && val.size == 2
-          case val[0]
-          when DBus::Type::Type
-            vartype, vardata = val
-          when String
-            begin
-              parsed = Type::Parser.new(val[0]).parse
-              vartype = parsed[0] if parsed.size == 1
-              vardata = val[1]
-            rescue Type::SignatureException
-              # no assignment
-            end
-          end
-        end
-        if vartype.nil?
-          vartype, vardata = PacketMarshaller.make_variant(val)
-          vartype = Type::Parser.new(vartype).parse[0]
-        end
-
-        append_signature(vartype.to_s)
-        align(vartype.alignment)
-        sub = PacketMarshaller.new(@offset + @packet.bytesize)
-        sub.append(vartype, vardata)
-        @packet += sub.packet
+        append_variant(val)
       when Type::ARRAY
-        if val.is_a?(Hash)
-          raise TypeException, "Expected an Array but got a Hash" if type.child.sigtype != Type::DICT_ENTRY
-
-          # Damn ruby rocks here
-          val = val.to_a
-        end
-        # If string is recieved and ay is expected, explode the string
-        if val.is_a?(String) && type.child.sigtype == Type::BYTE
-          val = val.bytes
-        end
-        if !val.is_a?(Enumerable)
-          raise TypeException, "Expected an Enumerable of #{type.child.inspect} but got a #{val.class}"
-        end
-
-        array(type.child) do
-          val.each do |elem|
-            append(type.child, elem)
-          end
-        end
+        append_array(type.child, val)
       when Type::STRUCT, Type::DICT_ENTRY
         # TODO: use duck typing, val.respond_to?
         raise TypeException, "Struct/DE expects an Array" if !val.is_a?(Array)
@@ -412,6 +370,57 @@ module DBus
       else
         raise NotImplementedError,
               "sigtype: #{type.sigtype} (#{type.sigtype.chr})"
+      end
+    end
+
+    def append_variant(val)
+      vartype = nil
+      if val.is_a?(Array) && val.size == 2
+        case val[0]
+        when DBus::Type::Type
+          vartype, vardata = val
+        when String
+          begin
+            parsed = Type::Parser.new(val[0]).parse
+            vartype = parsed[0] if parsed.size == 1
+            vardata = val[1]
+          rescue Type::SignatureException
+            # no assignment
+          end
+        end
+      end
+      if vartype.nil?
+        vartype, vardata = PacketMarshaller.make_variant(val)
+        vartype = Type::Parser.new(vartype).parse[0]
+      end
+
+      append_signature(vartype.to_s)
+      align(vartype.alignment)
+      sub = PacketMarshaller.new(@offset + @packet.bytesize)
+      sub.append(vartype, vardata)
+      @packet += sub.packet
+    end
+
+    # @param child_type [DBus::Type::Type]
+    def append_array(child_type, val)
+      if val.is_a?(Hash)
+        raise TypeException, "Expected an Array but got a Hash" if child_type.sigtype != Type::DICT_ENTRY
+
+        # Damn ruby rocks here
+        val = val.to_a
+      end
+      # If string is recieved and ay is expected, explode the string
+      if val.is_a?(String) && child_type.sigtype == Type::BYTE
+        val = val.bytes
+      end
+      if !val.is_a?(Enumerable)
+        raise TypeException, "Expected an Enumerable of #{child_type.inspect} but got a #{val.class}"
+      end
+
+      array(child_type) do
+        val.each do |elem|
+          append(child_type, elem)
+        end
       end
     end
 
