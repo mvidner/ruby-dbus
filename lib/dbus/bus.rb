@@ -573,6 +573,7 @@ module DBus
           end
         end
       else
+        # spec(Message Format): Unknown types must be ignored.
         DBus.logger.debug "Unknown message type: #{m.message_type}"
       end
     rescue Exception => e

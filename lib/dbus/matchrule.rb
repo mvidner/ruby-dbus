@@ -85,13 +85,7 @@ module DBus
 
     # Determines whether a message _msg_ matches the match rule.
     def match(msg)
-      if @type
-        if { Message::SIGNAL => "signal", Message::METHOD_CALL => "method_call",
-             Message::METHOD_RETURN => "method_return",
-             Message::ERROR => "error" }[msg.message_type] != @type
-          return false
-        end
-      end
+      return false if @type && @type != msg.message_type_s
       return false if @interface && @interface != msg.interface
       return false if @member && @member != msg.member
       return false if @path && @path != msg.path

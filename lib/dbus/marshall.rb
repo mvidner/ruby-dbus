@@ -53,12 +53,14 @@ module DBus
 
     # Unmarshall the buffer for a given _signature_ and length _len_.
     # Return an array of unmarshalled objects
+    # @param signature [Signature]
+    # @param len [Integer,nil] if given, and there is not enough data
+    #   in the buffer, raise {IncompleteBufferException}
+    # @return [Array<::Object>]
+    # @raise IncompleteBufferException
     def unmarshall(signature, len = nil)
-      if !len.nil?
-        if @buffy.bytesize < @idx + len
-          raise IncompleteBufferException
-        end
-      end
+      raise IncompleteBufferException if len && @buffy.bytesize < @idx + len
+
       sigtree = Type::Parser.new(signature).parse
       ret = []
       sigtree.each do |elem|

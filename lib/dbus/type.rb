@@ -115,11 +115,10 @@ module DBus
         raise SignatureException if @sigtype == ARRAY && !@members.empty?
 
         if @sigtype == DICT_ENTRY
-          if @members.size == 2
+          case @members.size
+          when 2
             raise SignatureException, "Dict entries have exactly two members"
-          end
-
-          if @members.empty?
+          when 0
             if [STRUCT, ARRAY, DICT_ENTRY].member?(a.sigtype)
               raise SignatureException, "Dict entry keys must be basic types"
             end
@@ -147,6 +146,7 @@ module DBus
     # Helper class to parse a type signature in the protocol.
     class Parser
       # Create a new parser for the given _signature_.
+      # @param signature [Signature]
       def initialize(signature)
         @signature = signature
         @idx = 0

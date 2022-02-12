@@ -45,6 +45,9 @@ module DBus
     # Signal message type.
     SIGNAL = 4
 
+    # Names used by signal match rules
+    TYPE_NAMES = ["invalid", "method_call", "method_return", "error", "signal"].freeze
+
     # Message flag signyfing that no reply is expected.
     NO_REPLY_EXPECTED = 0x1
     # Message flag signifying that no automatic start is required/must be
@@ -105,6 +108,12 @@ module DBus
       "serial=#{serial} reply_serial=#{reply_serial} " \
       "path=#{path}; interface=#{interface}; member=#{member} " \
       "error_name=#{error_name}"
+    end
+
+    # @return [String] name of message type, as used in match rules:
+    #    "method_call", "method_return", "signal", "error"
+    def message_type_s
+      TYPE_NAMES[message_type] || "unknown_type_#{message_type}"
     end
 
     # Create a regular reply to a message _m_.
