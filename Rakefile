@@ -3,7 +3,6 @@
 
 require "rake"
 require "fileutils"
-include FileUtils
 require "tmpdir"
 require "rspec/core/rake_task"
 begin
