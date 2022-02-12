@@ -33,9 +33,17 @@ module DBus
     end
 
     class AbstractXML
+      # @!method initialize(xml)
+      # @abstract
+
+      # @!method each(xpath)
+      # @abstract
+      # yields nodes which match xpath of type AbstractXML::Node
+
       def self.have_nokogiri?
         Object.const_defined?("Nokogiri")
       end
+
       class Node
         def initialize(node)
           @node = node
@@ -48,12 +56,6 @@ module DBus
         # yields child nodes which match xpath of type AbstractXML::Node
         def each(xpath); end
       end
-      # required methods
-      # initialize parser with xml string
-      def initialize(xml); end
-
-      # yields nodes which match xpath of type AbstractXML::Node
-      def each(xpath); end
     end
 
     class NokogiriParser < AbstractXML
@@ -67,6 +69,7 @@ module DBus
         end
       end
       def initialize(xml)
+        super()
         @doc = Nokogiri.XML(xml)
       end
 
@@ -86,6 +89,7 @@ module DBus
         end
       end
       def initialize(xml)
+        super()
         @doc = REXML::Document.new(xml)
       end
 

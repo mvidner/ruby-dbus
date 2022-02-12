@@ -145,13 +145,17 @@ module DBus
   #
   # Class representing a node on an object path.
   class Node < Hash
-    # The D-Bus object contained by the node.
+    # @return [DBus::Object,DBus::ProxyObject,nil]
+    #   The D-Bus object contained by the node.
     attr_accessor :object
+
     # The name of the node.
+    # @return [String] the last component of its object path
     attr_reader :name
 
     # Create a new node with a given _name_.
     def initialize(name)
+      super()
       @name = name
       @object = nil
     end
