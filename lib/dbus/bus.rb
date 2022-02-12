@@ -56,9 +56,10 @@ module DBus
 
     # Retrieves an object at the given _path_
     # whose methods always return an array.
+    # @param path [ObjectPath]
     # @return [ProxyObject]
     def object(path, api: ApiOptions::A0)
-      node = get_node(path, _create = true)
+      node = get_node(path, create: true)
       if node.object.nil? || node.object.api != api
         node.object = ProxyObject.new(
           @bus, @name, path,
@@ -68,15 +69,17 @@ module DBus
       node.object
     end
 
-    # Export an object _obj_ (an DBus::Object subclass instance).
+    # Export an object
+    # @param obj [DBus::Object]
     def export(obj)
       obj.service = self
-      get_node(obj.path, true).object = obj
+      get_node(obj.path, create: true).object = obj
     end
 
     # Undo exporting an object _obj_.
     # Raises ArgumentError if it is not a DBus::Object.
     # Returns the object, or false if _obj_ was not exported.
+    # @param obj [DBus::Object]
     def unexport(obj)
       raise ArgumentError, "DBus::Service#unexport() expects a DBus::Object argument" unless obj.is_a?(DBus::Object)
       return false unless obj.path
@@ -85,7 +88,7 @@ module DBus
       parent_path = obj.path[1..last_path_separator_idx - 1]
       node_name = obj.path[last_path_separator_idx + 1..-1]
 
-      parent_node = get_node(parent_path, false)
+      parent_node = get_node(parent_path, create: false)
       return false unless parent_node
 
       obj.service = nil
@@ -94,7 +97,9 @@ module DBus
 
     # Get the object node corresponding to the given _path_. if _create_ is
     # true, the the nodes in the path are created if they do not already exist.
-    def get_node(path, create = false)
+    # @param path [ObjectPath]
+    # @return [Node,nil]
+    def get_node(path, create: false)
       n = @root
       path.sub(%r{^/}, "").split("/").each do |elem|
         if !(n[elem])
@@ -221,7 +226,7 @@ module DBus
     # but do not block on the queue.
     # Called by a main loop when something is available in the queue
     def dispatch_message_queue
-      while (msg = @message_queue.pop(:non_block)) # FIXME: EOFError
+      while (msg = @message_queue.pop(blocking: false)) # FIXME: EOFError
         process(msg)
       end
     end
@@ -533,7 +538,7 @@ module DBus
         if m.path == "/org/freedesktop/DBus"
           DBus.logger.debug "Got method call on /org/freedesktop/DBus"
         end
-        node = @service.get_node(m.path)
+        node = @service.get_node(m.path, create: false)
         if !node
           reply = Message.error(m, "org.freedesktop.DBus.Error.UnknownObject",
                                 "Object #{m.path} doesn't exist")

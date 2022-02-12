@@ -25,14 +25,16 @@ module DBus
       connect
     end
 
-    # @param non_block [Boolean] if true, return nil instead of waiting
+    # @param blocking [Boolean]
+    #   true:  wait to return a {Message};
+    #   false: may return `nil`
     # @return [Message,nil] one message or nil if unavailable
     # @raise EOFError
     # @todo failure modes
-    def pop(non_block = false)
+    def pop(blocking: true)
       buffer_from_socket_nonblock
       message = message_from_buffer_nonblock
-      unless non_block
+      if blocking
         # we can block
         while message.nil?
           r, _d, _d = IO.select([@socket])
