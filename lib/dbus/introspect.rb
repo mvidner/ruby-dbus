@@ -12,9 +12,9 @@
 
 module DBus
   # Regular expressions that should match all method names.
-  METHOD_SIGNAL_RE = /^[A-Za-z][A-Za-z0-9_]*$/
+  METHOD_SIGNAL_RE = /^[A-Za-z][A-Za-z0-9_]*$/.freeze
   # Regular expressions that should match all interface names.
-  INTERFACE_ELEMENT_RE = /^[A-Za-z][A-Za-z0-9_]*$/
+  INTERFACE_ELEMENT_RE = /^[A-Za-z][A-Za-z0-9_]*$/.freeze
 
   # Exception raised when an invalid class definition is encountered.
   class InvalidClassDefinition < Exception
