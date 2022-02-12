@@ -105,7 +105,7 @@ class DBusUI
 
   def beautify_method(meth)
     # Damn, this need to be rewritten :p
-    s = meth.name + "("
+    s = "#{meth.name}("
     if meth.is_a?(DBus::Method)
       s += (meth.params.collect { |a| "in #{a[0]}:#{a[1]}" } +
             meth.rets.collect { |a| "out #{a[0]}:#{a[1]}" }).join(", ")

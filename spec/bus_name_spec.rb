@@ -19,7 +19,7 @@ describe DBus::BusName do
       expect(described_class.valid?("Empty.Last.Component.")).to be_falsey
       expect(described_class.valid?("Invalid.Ch@r@cter")).to be_falsey
       expect(described_class.valid?("/Invalid-Character")).to be_falsey
-      long_name = "a." + ("long." * 100) + "name"
+      long_name = "a.#{"long." * 100}name"
       expect(described_class.valid?(long_name)).to be_falsey
       expect(described_class.valid?("org.7_zip.Archiver")).to be_falsey
     end

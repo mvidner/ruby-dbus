@@ -125,9 +125,9 @@ module DBus
       subnodes.each do |nodename|
         subnode = node[nodename] = Node.new(nodename)
         subpath = if path == "/"
-                    "/" + nodename
+                    "/#{nodename}"
                   else
-                    path + "/" + nodename
+                    "#{path}/#{nodename}"
                   end
         rec_introspect(subnode, subpath)
       end

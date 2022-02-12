@@ -275,7 +275,7 @@ module DBus
 
     # Append the the signature _signature_ itself to the packet.
     def append_signature(str)
-      @packet += str.bytesize.chr + str + "\0"
+      @packet += "#{str.bytesize.chr}#{str}\u0000"
     end
 
     # Append the array type _type_ to the packet and allow for appending

@@ -151,7 +151,7 @@ module DBus
     # server.
     def send(meth, *args)
       o = ([meth] + args).join(" ")
-      @socket.write(o + "\r\n")
+      @socket.write("#{o}\r\n")
     end
 
     # Try authentication using the next authenticator.

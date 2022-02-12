@@ -93,11 +93,11 @@ module DBus
       def to_s
         case @sigtype
         when STRUCT
-          "(" + @members.collect(&:to_s).join + ")"
+          "(#{@members.collect(&:to_s).join})"
         when ARRAY
-          "a" + child.to_s
+          "a#{child}"
         when DICT_ENTRY
-          "{" + @members.collect(&:to_s).join + "}"
+          "{#{@members.collect(&:to_s).join}}"
         else
           if !TypeMapping.keys.member?(@sigtype)
             raise NotImplementedError
@@ -136,7 +136,7 @@ module DBus
       def inspect
         s = TypeMapping[@sigtype].first
         if [STRUCT, ARRAY].member?(@sigtype)
-          s += ": " + @members.inspect
+          s += ": #{@members.inspect}"
         end
         s
       end
