@@ -1,4 +1,5 @@
 AllCops:
+  TargetRubyVersion: 2.4
   Exclude:
     # Do not check code borrowed from ActiveSupport
     - 'lib/dbus/core_ext/**/*.rb'

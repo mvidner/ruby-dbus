@@ -70,16 +70,7 @@ namespace :doc do
 end
 
 if Object.const_defined? :RuboCop
-  if RUBY_VERSION.start_with?("2.")
-    RuboCop::RakeTask.new
-  else
-    desc "Run RuboCop (dummy)"
-    task :rubocop do
-      warn "The code is not adapted to recent RuboCop yet,\n" \
-           "and the old one no longer works with Ruby 3.x.\n" \
-           "Switch back to Ruby 2.x to run it."
-    end
-  end
+  RuboCop::RakeTask.new
 else
   desc "Run RuboCop (dummy)"
   task :rubocop do
