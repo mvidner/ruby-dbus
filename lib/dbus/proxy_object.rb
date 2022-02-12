@@ -135,8 +135,10 @@ module DBus
     ####################################################
     private
 
-    # rubocop:disable Style/MethodMissing
-    # but https://github.com/rubocop-hq/ruby-style-guide#no-method-missing
+    # rubocop:disable Lint/MissingSuper
+    # as this should forward everything
+    #
+    # https://github.com/rubocop-hq/ruby-style-guide#no-method-missing
     # and http://blog.marc-andre.ca/2010/11/15/methodmissing-politely/
     # have a point to be investigated
 
@@ -162,6 +164,12 @@ module DBus
         raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
       end
     end
-    # rubocop:enable Style/MethodMissing
+    # rubocop:enable Lint/MissingSuper
+
+    def respond_to_missing?(name, _include_private = false)
+      @default_iface &&
+        has_iface?(@default_iface) &&
+        @interfaces[@default_iface].methods.key?(name) or super
+    end
   end
 end
