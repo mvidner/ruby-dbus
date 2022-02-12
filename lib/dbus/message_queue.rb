@@ -56,7 +56,7 @@ module DBus
     def connect
       addresses = @address.split ";"
       # connect to first one that succeeds
-      worked = addresses.find do |a|
+      addresses.find do |a|
         transport, keyvaluestring = a.split ":"
         kv_list = keyvaluestring.split ","
         kv_hash = {}
@@ -76,7 +76,6 @@ module DBus
           # ignore, report?
         end
       end
-      worked
       # returns the address that worked or nil.
       # how to report failure?
     end
