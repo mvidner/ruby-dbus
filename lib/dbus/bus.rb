@@ -162,14 +162,12 @@ module DBus
       each_pair do |k, _v|
         xml += "  <node name=\"#{k}\" />\n"
       end
-      if @object
-        @object.intfs.each_pair do |_k, v|
-          xml += "  <interface name=\"#{v.name}\">\n"
-          v.methods.each_value { |m| xml += m.to_xml }
-          v.signals.each_value { |m| xml += m.to_xml }
-          v.properties.each_value { |m| xml += m.to_xml }
-          xml += "  </interface>\n"
-        end
+      @object&.intfs&.each_pair do |_k, v|
+        xml += "  <interface name=\"#{v.name}\">\n"
+        v.methods.each_value { |m| xml += m.to_xml }
+        v.signals.each_value { |m| xml += m.to_xml }
+        v.properties.each_value { |m| xml += m.to_xml }
+        xml += "  </interface>\n"
       end
       xml += "</node>"
       xml
@@ -552,7 +550,7 @@ module DBus
           obj = node.object
           return if obj.nil? # FIXME, pushes no reply
 
-          obj.dispatch(m) if obj
+          obj&.dispatch(m)
         end
       when DBus::Message::SIGNAL
         # the signal can match multiple different rules
