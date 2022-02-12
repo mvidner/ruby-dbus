@@ -150,7 +150,7 @@ module DBus
     attr_accessor :object
 
     # The name of the node.
-    # @return [String] the last component of its object path
+    # @return [String] the last component of its object path, or "/"
     attr_reader :name
 
     # Create a new node with a given _name_.
@@ -194,7 +194,10 @@ module DBus
       if !@object.nil?
         s += format("%x ", @object.object_id)
       end
-      s + "{" + keys.collect { |k| "#{k} => #{self[k].sub_inspect}" }.join(",") + "}"
+      contents_sub_inspect = keys
+                             .map { |k| "#{k} => #{self[k].sub_inspect}" }
+                             .join(",")
+      "#{s}{#{contents_sub_inspect}}"
     end
   end
 
