@@ -5,9 +5,12 @@
 Bug fixes:
  * dbus_attr_accessor and friends validate the signature ([#120][]).
  * Declare the Introspectable interface in exported objects([#99][]).
+ * Do reply with an error when calling a nonexisting object
+   with an existing path prefix([#121][]).
 
 [#120]: https://github.com/mvidner/ruby-dbus/issues/120
 [#99]: https://github.com/mvidner/ruby-dbus/issues/99
+[#121]: https://github.com/mvidner/ruby-dbus/issues/121
 
 ## Ruby D-Bus 0.18.1 - 2022-07-13
 

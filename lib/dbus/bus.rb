@@ -561,23 +561,22 @@ module DBus
           DBus.logger.debug "Got method call on /org/freedesktop/DBus"
         end
         node = @service.get_node(msg.path, create: false)
-        if !node
-          reply = Message.error(msg, "org.freedesktop.DBus.Error.UnknownObject",
-                                "Object #{msg.path} doesn't exist")
-          @message_queue.push(reply)
-        # handle introspectable as an exception:
-        elsif msg.interface == "org.freedesktop.DBus.Introspectable" &&
-              msg.member == "Introspect"
+        # introspect a known path even if there is no object on it
+        if node &&
+           msg.interface == "org.freedesktop.DBus.Introspectable" &&
+           msg.member == "Introspect"
           reply = Message.new(Message::METHOD_RETURN).reply_to(msg)
           reply.sender = @unique_name
           xml = node.to_xml(msg.path)
           reply.add_param(Type::STRING, xml)
           @message_queue.push(reply)
+        # dispatch for an object
+        elsif node&.object
+          node.object.dispatch(msg)
         else
-          obj = node.object
-          return if obj.nil? # FIXME, pushes no reply
-
-          obj&.dispatch(msg)
+          reply = Message.error(msg, "org.freedesktop.DBus.Error.UnknownObject",
+                                "Object #{msg.path} doesn't exist")
+          @message_queue.push(reply)
         end
       when DBus::Message::SIGNAL
         # the signal can match multiple different rules
