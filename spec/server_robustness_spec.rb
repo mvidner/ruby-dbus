@@ -29,6 +29,18 @@ describe "ServerRobustnessTest" do
     end
   end
 
+  context "an existing path without an object" do
+    let(:obj) { @svc.object "/org" }
+
+    it "errors without a timeout" do
+      ifc = DBus::ProxyObjectInterface.new(obj, "org.ruby.SampleInterface")
+      ifc.define_method("the_answer", "out n:i")
+      expect { ifc.the_answer }.to raise_error(DBus::Error) do |e|
+        expect(e).to_not match(/timeout/)
+      end
+    end
+  end
+
   it "tests a method that raises" do
     obj = @svc.object "/org/ruby/MyInstance"
     obj.default_iface = "org.ruby.SampleInterface"
