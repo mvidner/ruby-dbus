@@ -69,6 +69,7 @@ module DBus
           @node.search(path).each { |node| block.call NokogiriNode.new(node) }
         end
       end
+
       def initialize(xml)
         super()
         @doc = Nokogiri.XML(xml)
@@ -89,6 +90,7 @@ module DBus
           @node.elements.each(path) { |node| block.call REXMLNode.new(node) }
         end
       end
+
       def initialize(xml)
         super()
         @doc = REXML::Document.new(xml)

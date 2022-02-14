@@ -49,6 +49,7 @@ module DBus
     end
 
     # Retrieves an object at the given _path_.
+    # @param path [ObjectPath]
     # @return [ProxyObject]
     def [](path)
       object(path, api: ApiOptions::A1)
@@ -57,6 +58,7 @@ module DBus
     # Retrieves an object at the given _path_
     # whose methods always return an array.
     # @param path [ObjectPath]
+    # @param api [ApiOptions]
     # @return [ProxyObject]
     def object(path, api: ApiOptions::A0)
       node = get_node(path, create: true)
@@ -95,9 +97,10 @@ module DBus
       parent_node.delete(node_name).object
     end
 
-    # Get the object node corresponding to the given _path_. if _create_ is
-    # true, the the nodes in the path are created if they do not already exist.
+    # Get the object node corresponding to the given *path*.
     # @param path [ObjectPath]
+    # @param create [Boolean] if true, the the {Node}s in the path are created
+    #   if they do not already exist.
     # @return [Node,nil]
     def get_node(path, create: false)
       n = @root
@@ -222,7 +225,15 @@ module DBus
     def initialize(path)
       @message_queue = MessageQueue.new(path)
       @unique_name = nil
+
+      # @return [Hash{Integer => Proc}]
+      #   key: message serial
+      #   value: block to be run when the reply to that message is received
       @method_call_replies = {}
+
+      # @return [Hash{Integer => Message}]
+      #   for debugging only: messages for which a reply was not received yet;
+      #   key == value.serial
       @method_call_msgs = {}
       @signal_matchrules = {}
       @proxy = nil
@@ -463,6 +474,9 @@ module DBus
     # Send a message _msg_ on to the bus. This is done synchronously, thus
     # the call will block until a reply message arrives.
     # @param msg [Message]
+    # @param retc [Proc] the reply handler
+    # @yieldparam rmsg [MethodReturnMessage] the reply
+    # @yieldreturn [Array<Object>] the reply (out) parameters
     def send_sync(msg, &retc) # :yields: reply/return message
       return if msg.nil? # check if somethings wrong
 

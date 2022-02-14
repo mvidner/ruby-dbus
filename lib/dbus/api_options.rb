@@ -11,6 +11,13 @@
 module DBus
   class ApiOptions
     # https://github.com/mvidner/ruby-dbus/issues/30
+    # @return [Boolean]
+    #   - true: a proxy (client-side) method will return an array
+    #     even for the most common case where the method is declared
+    #     to have only one 'out parameter'
+    #   - false: a proxy (client-side) method will return
+    #     - one value for the only 'out parameter'
+    #     - an array with more 'out parameters'
     attr_accessor :proxy_method_returns_array
 
     A0 = ApiOptions.new

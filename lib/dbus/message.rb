@@ -71,11 +71,13 @@ module DBus
     attr_accessor :sender
     # The signature of the message contents.
     attr_accessor :signature
-    # The serial number of the message this message is a reply for.
+    # @return [Integer] (u32)
+    #   The serial number of the message this message is a reply for.
     attr_accessor :reply_serial
     # The protocol.
     attr_reader :protocol
-    # The serial of the message.
+    # @return [Integer] (u32)
+    #   The serial of the message.
     attr_reader :serial
     # The parameters of the message.
     attr_reader :params
