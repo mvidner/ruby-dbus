@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is part of the ruby-dbus project
 # Copyright (C) 2007 Arnaud Cornet and Paul van Tilburg
 #
@@ -100,14 +102,15 @@ module DBus
     # encode plain to hex
     def hex_encode(plain)
       return nil if plain.nil?
-      plain.to_s.unpack("H*")[0]
+
+      plain.to_s.unpack1("H*")
     end
 
     # decode hex to plain
     def hex_decode(encoded)
       encoded.scan(/[[:xdigit:]]{2}/).map { |h| h.hex.chr }.join
     end
-  end # DBusCookieSHA1 class ends here
+  end
 
   # Note: this following stuff is tested with External authenticator only!
 
@@ -148,12 +151,13 @@ module DBus
     # server.
     def send(meth, *args)
       o = ([meth] + args).join(" ")
-      @socket.write(o + "\r\n")
+      @socket.write("#{o}\r\n")
     end
 
     # Try authentication using the next authenticator.
     def next_authenticator
       raise AuthenticationFailed if @auth_list.empty?
+
       @authenticator = @auth_list.shift.new
       auth_msg = ["AUTH", @authenticator.name, @authenticator.authenticate]
       DBus.logger.debug "auth_msg: #{auth_msg.inspect}"
@@ -169,9 +173,10 @@ module DBus
       data = ""
       crlf = "\r\n"
       left = 1024 # 1024 byte, no idea if it's ever getting bigger
-      while left > 0
+      while left.positive?
         buf = @socket.read(left > 1 ? 1 : left)
         break if buf.nil?
+
         left -= buf.bytesize
         data += buf
         break if data.include? crlf # crlf means line finished, the TCP socket keeps on listening, so we break
@@ -262,6 +267,6 @@ module DBus
         end
       end
       true
-    end # def next_state
-  end # class Client
-end # module D-Bus
+    end
+  end
+end

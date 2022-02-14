@@ -1,4 +1,5 @@
 AllCops:
+  TargetRubyVersion: 2.4
   Exclude:
     # Do not check code borrowed from ActiveSupport
     - 'lib/dbus/core_ext/**/*.rb'
@@ -41,10 +42,6 @@ Style/NegatedIf:
 Style/EmptyElse:
   EnforcedStyle: "nil"
 
-# Prefer readability over performance
-Performance/RedundantBlockCall:
-  Enabled: false
-
 # Need to check whether API stays OK
 Lint/InheritException:
   Exclude:
@@ -58,7 +55,7 @@ Lint/InheritException:
     - 'lib/dbus/type.rb'
 
 # Offense count: 7
-Lint/HandleExceptions:
+Lint/SuppressedException:
   Exclude:
     - 'lib/dbus/marshall.rb'
     - 'lib/dbus/message_queue.rb'
@@ -84,7 +81,7 @@ Security/Eval:
   Exclude:
     - 'examples/gdbus/gdbus'
 
-Lint/RescueWithoutErrorClass:
+Style/RescueStandardError:
   Exclude:
     - 'examples/gdbus/gdbus'
 
@@ -113,12 +110,12 @@ Metrics/ClassLength:
 
 # Offense count: 12
 Metrics/CyclomaticComplexity:
-  Max: 36
+  Max: 28
 
 # Offense count: 62
 # Configuration parameters: AllowHeredoc, AllowURI, URISchemes.
 # URISchemes: http, https
-Metrics/LineLength:
+Layout/LineLength:
   Max: 118
 
 # Offense count: 49
@@ -150,6 +147,11 @@ Style/Documentation:
     - 'lib/dbus/message_queue.rb'
     - 'lib/dbus/type.rb'
     - 'lib/dbus/xml.rb'
+
+# Buggy in 1.0, fixed in 1.12
+# https://github.com/rubocop/rubocop/issues/5953
+Style/AccessModifierDeclarations:
+  Enabled: false
 
 # Offense count: 1
 Style/OptionalArguments:

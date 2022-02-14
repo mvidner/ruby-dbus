@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # -*- ruby -*-
 require "rubygems"
 
@@ -18,7 +20,7 @@ GEMSPEC = Gem::Specification.new do |s|
   ]
   s.require_path = "lib"
 
-  s.required_ruby_version = ">= 2.1.0"
+  s.required_ruby_version = ">= 2.4.0"
 
   s.add_dependency "rexml"
 
@@ -28,7 +30,7 @@ GEMSPEC = Gem::Specification.new do |s|
   s.add_development_dependency "packaging_rake_tasks"
   s.add_development_dependency "rake"
   s.add_development_dependency "rspec", "~> 3"
-  s.add_development_dependency "rubocop", "= 0.50.0"
+  s.add_development_dependency "rubocop", "= 1.0"
   s.add_development_dependency "simplecov"
   s.add_development_dependency "simplecov-lcov"
 end

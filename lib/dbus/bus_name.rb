@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is part of the ruby-dbus project
 # Copyright (C) 2019 Martin Vidner
 #
@@ -7,21 +9,23 @@
 # See the file "COPYING" for the exact licensing terms.
 
 module DBus
-  # A {::String} that validates at initialization time
+  # D-Bus: a name for a connection, like ":1.3" or "org.example.ManagerManager".
+  # Implemented as a {::String} that validates at initialization time.
   # @see https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names-bus
   class BusName < String
     # @raise Error if not a valid bus name
-    def initialize(s)
-      unless self.class.valid?(s)
-        raise DBus::Error, "Invalid bus name #{s.inspect}"
+    def initialize(name)
+      unless self.class.valid?(name)
+        raise DBus::Error, "Invalid bus name #{name.inspect}"
       end
+
       super
     end
 
-    def self.valid?(s)
-      s.size <= 255 &&
-        (s =~ /\A:[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)+\z/ ||
-         s =~ /\A[A-Za-z_-][A-Za-z0-9_-]*(\.[A-Za-z_-][A-Za-z0-9_-]*)+\z/)
+    def self.valid?(name)
+      name.size <= 255 &&
+        (name =~ /\A:[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)+\z/ ||
+         name =~ /\A[A-Za-z_-][A-Za-z0-9_-]*(\.[A-Za-z_-][A-Za-z0-9_-]*)+\z/)
     end
   end
 end

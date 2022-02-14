@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is part of the ruby-dbus project
 # Copyright (C) 2007 Arnaud Cornet and Paul van Tilburg
 #
@@ -27,7 +29,7 @@ module DBus
     attr_accessor :path
     # The destination filter.
     attr_accessor :destination
-    # The type type that is matched.
+    # @return [String] The type type that is matched.
     attr_reader :type
 
     # Create a new match rule
@@ -35,13 +37,14 @@ module DBus
       @sender = @interface = @member = @path = @destination = @type = nil
     end
 
-    # Set the message types to filter to type _t_.
+    # Set the message types to filter to type _typ_.
     # Possible message types are: signal, method_call, method_return, and error.
-    def type=(t)
-      if !["signal", "method_call", "method_return", "error"].member?(t)
-        raise MatchRuleException, t
+    def type=(typ)
+      if !["signal", "method_call", "method_return", "error"].member?(typ)
+        raise MatchRuleException, typ
       end
-      @type = t
+
+      @type = typ
     end
 
     # Returns a match rule string version of the object. E.g.:
@@ -58,11 +61,13 @@ module DBus
     def from_s(str)
       str.split(",").each do |eq|
         next unless eq =~ /^(.*)='([^']*)'$/
+
         # "
         name = Regexp.last_match(1)
         val = Regexp.last_match(2)
         raise MatchRuleException, name unless FILTERS.member?(name.to_sym)
-        method(name + "=").call(val)
+
+        method("#{name}=").call(val)
       end
       self
     end
@@ -80,18 +85,13 @@ module DBus
 
     # Determines whether a message _msg_ matches the match rule.
     def match(msg)
-      if @type
-        if { Message::SIGNAL => "signal", Message::METHOD_CALL => "method_call",
-             Message::METHOD_RETURN => "method_return",
-             Message::ERROR => "error" }[msg.message_type] != @type
-          return false
-        end
-      end
+      return false if @type && @type != msg.message_type_s
       return false if @interface && @interface != msg.interface
       return false if @member && @member != msg.member
       return false if @path && @path != msg.path
+
       # FIXME: sender and destination are ignored
       true
     end
-  end # class MatchRule
-end # module D-Bus
+  end
+end

@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
 #
 # This is a quite complex example using internal lower level API.
 # Not a good starting point, but might be usefull if you want to do tricky
@@ -103,11 +105,12 @@ class DBusUI
 
   def beautify_method(meth)
     # Damn, this need to be rewritten :p
-    s = meth.name + "("
-    if meth.is_a?(DBus::Method)
+    s = "#{meth.name}("
+    case meth
+    when DBus::Method
       s += (meth.params.collect { |a| "in #{a[0]}:#{a[1]}" } +
             meth.rets.collect { |a| "out #{a[0]}:#{a[1]}" }).join(", ")
-    elsif meth.is_a?(DBus::Signal)
+    when DBus::Signal
       s += (meth.params.collect { |a| "in #{a[0]}:#{a[1]}" }).join(", ")
     end
     s += ")"
@@ -146,11 +149,12 @@ class DBusUI
     name = view.model.get_iter(path)[0]
     puts "Clicked on: #{name.inspect}"
     type = view.model.get_iter(path)[1]
-    if type == "M"
+    case type
+    when "M"
       method = view.model.get_iter(path)[2]
       intf = view.model.get_iter(path)[3]
       MethodCallWindow.new(@window, intf, method).run
-    elsif type == "S"
+    when "S"
       signal = view.model.get_iter(path)[2]
       intf = view.model.get_iter(path)[3]
       mr = DBus::MatchRule.new.from_signal(intf, signal)
@@ -205,6 +209,7 @@ class DBusUI
     end
 
     return unless ENABLE_SYSTEM
+
     DBus::SystemBus.instance.proxy.ListNames do |_msg, names|
       fill_treeview(DBus::SystemBus.instance, @systemtreeview, names)
     end
@@ -218,6 +223,7 @@ class DBusUI
     end
 
     return if node.object.nil?
+
     node.object.interfaces.sort.each do |ifname|
       subiter = model.append(iter)
       subiter[0] = ifname

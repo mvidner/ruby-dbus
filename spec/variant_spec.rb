@@ -1,4 +1,6 @@
 #!/usr/bin/env rspec
+# frozen_string_literal: true
+
 # Test marshalling variants according to ruby types
 require_relative "spec_helper"
 require "dbus"
@@ -9,8 +11,8 @@ describe "VariantTest" do
     @svc = @bus.service("org.ruby.service")
   end
 
-  def make_variant(a)
-    DBus::PacketMarshaller.make_variant(a)
+  def make_variant(val)
+    DBus::PacketMarshaller.make_variant(val)
   end
 
   it "tests make variant scalar" do

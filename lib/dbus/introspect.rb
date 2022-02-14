@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # dbus/introspection.rb - module containing a low-level D-Bus introspection implementation
 #
 # This file is part of the ruby-dbus project
@@ -10,9 +12,9 @@
 
 module DBus
   # Regular expressions that should match all method names.
-  METHOD_SIGNAL_RE = /^[A-Za-z][A-Za-z0-9_]*$/
+  METHOD_SIGNAL_RE = /^[A-Za-z][A-Za-z0-9_]*$/.freeze
   # Regular expressions that should match all interface names.
-  INTERFACE_ELEMENT_RE = /^[A-Za-z][A-Za-z0-9_]*$/
+  INTERFACE_ELEMENT_RE = /^[A-Za-z][A-Za-z0-9_]*$/.freeze
 
   # Exception raised when an invalid class definition is encountered.
   class InvalidClassDefinition < Exception
@@ -51,23 +53,25 @@ module DBus
       raise InvalidIntrospectionData if name =~ /^\./ || name =~ /\.$/
       raise InvalidIntrospectionData if name =~ /\.\./
       raise InvalidIntrospectionData if name !~ /\./
+
       name.split(".").each do |element|
         raise InvalidIntrospectionData if element !~ INTERFACE_ELEMENT_RE
       end
     end
 
-    # Add _ie_ as a known {Method}, {Signal} or {Property}
-    # @param ie [InterfaceElement]
-    def define(ie)
-      name = ie.name.to_sym
-      category = if ie.is_a?(Method)
+    # Add _ifc_el_ as a known {Method}, {Signal} or {Property}
+    # @param ifc_el [InterfaceElement]
+    def define(ifc_el)
+      name = ifc_el.name.to_sym
+      category = case ifc_el
+                 when Method
                    @methods
-                 elsif ie.is_a?(Signal)
+                 when Signal
                    @signals
-                 elsif ie.is_a?(Property)
+                 when Property
                    @properties
                  end
-      category[name] = ie
+      category[name] = ifc_el
     end
     alias declare define
     alias << define
@@ -81,11 +85,13 @@ module DBus
       define(m)
     end
     alias declare_method define_method
-  end # class Interface
+  end
 
   # = A formal parameter has a name and a type
   class FormalParameter
+    # @return [#to_s]
     attr_reader :name
+    # @return [SingleCompleteType]
     attr_reader :type
 
     def initialize(name, type)
@@ -107,14 +113,16 @@ module DBus
   # This is a generic class for entities that are part of the interface
   # such as methods and signals.
   class InterfaceElement
-    # The name of the interface element. Symbol
+    # @return [Symbol] The name of the interface element
     attr_reader :name
-    # The parameters of the interface element. Array: FormalParameter
+
+    # @return [Array<FormalParameter>] The parameters of the interface element
     attr_reader :params
 
     # Validates element _name_.
     def validate_name(name)
       return if (name =~ METHOD_SIGNAL_RE) && (name.bytesize <= 255)
+
       raise InvalidMethodName, name
     end
 
@@ -135,13 +143,13 @@ module DBus
     def add_param(name_signature_pair)
       add_fparam(*name_signature_pair)
     end
-  end # class InterfaceElement
+  end
 
   # = D-Bus interface method class
   #
   # This is a class representing methods that are part of an interface.
   class Method < InterfaceElement
-    # The list of return values for the method. Array: FormalParameter
+    # @return [Array<FormalParameter>] The list of return values for the method
     attr_reader :rets
 
     # Creates a new method interface element with the given _name_.
@@ -151,6 +159,8 @@ module DBus
     end
 
     # Add a return value _name_ and _signature_.
+    # @param name [#to_s]
+    # @param signature [SingleCompleteType]
     def add_return(name, signature)
       @rets << FormalParameter.new(name, signature)
     end
@@ -161,6 +171,7 @@ module DBus
       prototype.split(/, */).each do |arg|
         arg = arg.split(" ")
         raise InvalidClassDefinition if arg.size != 2
+
         dir, arg = arg
         if arg =~ /:/
           arg = arg.split(":")
@@ -192,7 +203,7 @@ module DBus
       xml += "    </method>\n"
       xml
     end
-  end # class Method
+  end
 
   # = D-Bus interface signal class
   #
@@ -222,7 +233,7 @@ module DBus
       xml += "    </signal>\n"
       xml
     end
-  end # class Signal
+  end
 
   # An (exported) property
   # https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-properties
@@ -259,4 +270,4 @@ module DBus
       "    <property type=\"#{@type}\" name=\"#{@name}\" access=\"#{@access}\"/>\n"
     end
   end
-end # module DBus
+end

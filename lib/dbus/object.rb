@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is part of the ruby-dbus project
 # Copyright (C) 2007 Arnaud Cornet and Paul van Tilburg
 #
@@ -6,11 +8,10 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
-require "thread"
 require_relative "core_ext/class/attribute"
 
 module DBus
-  PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties".freeze
+  PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
 
   # Exported object type
   # = Exportable D-Bus object class
@@ -20,6 +21,7 @@ module DBus
   class Object
     # The path of the object.
     attr_reader :path
+
     # The interfaces that the object supports. Hash: String => Interface
     my_class_attribute :intfs
     self.intfs = {}
@@ -60,8 +62,8 @@ module DBus
           meth.rets.zip(retdata).each do |rsig, rdata|
             reply.add_param(rsig.type, rdata)
           end
-        rescue StandardError => ex
-          dbus_msg_exc = msg.annotate_exception(ex)
+        rescue StandardError => e
+          dbus_msg_exc = msg.annotate_exception(e)
           reply = ErrorMessage.from_exception(dbus_msg_exc).reply_to(msg)
         end
         @service.bus.message_queue.push(reply)
@@ -70,17 +72,19 @@ module DBus
 
     # Select (and create) the interface that the following defined methods
     # belong to.
-    def self.dbus_interface(s)
+    # @param name [String] interface name like "org.example.ManagerManager"
+    # @see https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names-interface
+    def self.dbus_interface(name)
       @@intfs_mutex.synchronize do
-        @@cur_intf = intfs[s]
+        @@cur_intf = intfs[name]
         if !@@cur_intf
-          @@cur_intf = Interface.new(s)
+          @@cur_intf = Interface.new(name) # validates the name
           # As this is a mutable class_attr, we cannot use
-          #   self.intfs[s] = @@cur_intf                      # Hash#[]=
+          #   self.intfs[name] = @@cur_intf                      # Hash#[]=
           # as that would modify parent class attr in place.
           # Using the setter lets a subclass have the new value
           # while the superclass keeps the old one.
-          self.intfs = intfs.merge(s => @@cur_intf)
+          self.intfs = intfs.merge(name => @@cur_intf)
         end
         yield
         @@cur_intf = nil
@@ -110,6 +114,7 @@ module DBus
     # @return [void]
     def self.dbus_attr_accessor(ruby_name, type, dbus_name: nil)
       attr_accessor(ruby_name)
+
       dbus_accessor(ruby_name, type, dbus_name: dbus_name)
     end
 
@@ -129,6 +134,7 @@ module DBus
     # @return (see .dbus_attr_accessor)
     def self.dbus_attr_reader(ruby_name, type, dbus_name: nil)
       attr_reader(ruby_name)
+
       dbus_reader(ruby_name, type, dbus_name: dbus_name)
     end
 
@@ -139,6 +145,7 @@ module DBus
     # @return (see .dbus_attr_accessor)
     def self.dbus_attr_writer(ruby_name, type, dbus_name: nil)
       attr_writer(ruby_name)
+
       dbus_writer(ruby_name, type, dbus_name: dbus_name)
     end
 
@@ -211,6 +218,7 @@ module DBus
     # @return [void]
     def self.dbus_watcher(ruby_name, dbus_name: nil)
       raise UndefinedInterface, ruby_name if @@cur_intf.nil?
+
       cur_intf = @@cur_intf
 
       ruby_name = ruby_name.to_s.sub(/=$/, "").to_sym
@@ -235,6 +243,7 @@ module DBus
     # @param prototype [Prototype]
     def self.dbus_method(sym, prototype = "", &block)
       raise UndefinedInterface, sym if @@cur_intf.nil?
+
       @@cur_intf.define(Method.new(sym.to_s).from_prototype(prototype))
 
       ruby_name = Object.make_method_name(@@cur_intf.name, sym.to_s)
@@ -254,6 +263,7 @@ module DBus
     # Defines a signal for the object with a given name _sym_ and _prototype_.
     def self.dbus_signal(sym, prototype = "")
       raise UndefinedInterface, sym if @@cur_intf.nil?
+
       cur_intf = @@cur_intf
       signal = Signal.new(sym.to_s).from_prototype(prototype)
       cur_intf.define(Signal.new(sym.to_s).from_prototype(prototype))

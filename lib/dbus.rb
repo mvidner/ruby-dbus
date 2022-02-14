@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # dbus.rb - Module containing the low-level D-Bus implementation
 #
 # This file is part of the ruby-dbus project
@@ -28,22 +30,20 @@ require_relative "dbus/type"
 require_relative "dbus/xml"
 
 require "socket"
-require "thread"
-
 # = D-Bus main module
 #
 # Module containing all the D-Bus modules and classes.
 module DBus
   # Default socket name for the system bus.
-  SystemSocketName = "unix:path=/var/run/dbus/system_bus_socket".freeze
+  SYSTEM_BUS_ADDRESS = "unix:path=/var/run/dbus/system_bus_socket"
 
   # Byte signifying big endianness.
-  BIG_END = "B".freeze
+  BIG_END = "B"
   # Byte signifying little endianness.
-  LIL_END = "l".freeze
+  LIL_END = "l"
 
   # Byte signifying the host's endianness.
-  HOST_END = if [0x01020304].pack("L").unpack("V")[0] == 0x01020304
+  HOST_END = if [0x01020304].pack("L").unpack1("V") == 0x01020304
                LIL_END
              else
                BIG_END
@@ -69,4 +69,4 @@ module DBus
   # Exception raised when invalid introspection data is parsed/used.
   class InvalidIntrospectionData < Exception
   end
-end # module DBus
+end

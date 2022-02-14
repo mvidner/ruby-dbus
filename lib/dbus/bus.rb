@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # dbus.rb - Module containing the low-level D-Bus implementation
 #
 # This file is part of the ruby-dbus project
@@ -9,7 +11,6 @@
 # See the file "COPYING" for the exact licensing terms.
 
 require "socket"
-require "thread"
 require "singleton"
 
 # = D-Bus main module
@@ -48,6 +49,7 @@ module DBus
     end
 
     # Retrieves an object at the given _path_.
+    # @param path [ObjectPath]
     # @return [ProxyObject]
     def [](path)
       object(path, api: ApiOptions::A1)
@@ -55,9 +57,11 @@ module DBus
 
     # Retrieves an object at the given _path_
     # whose methods always return an array.
+    # @param path [ObjectPath]
+    # @param api [ApiOptions]
     # @return [ProxyObject]
     def object(path, api: ApiOptions::A0)
-      node = get_node(path, _create = true)
+      node = get_node(path, create: true)
       if node.object.nil? || node.object.api != api
         node.object = ProxyObject.new(
           @bus, @name, path,
@@ -67,35 +71,43 @@ module DBus
       node.object
     end
 
-    # Export an object _obj_ (an DBus::Object subclass instance).
+    # Export an object
+    # @param obj [DBus::Object]
     def export(obj)
       obj.service = self
-      get_node(obj.path, true).object = obj
+      get_node(obj.path, create: true).object = obj
     end
 
     # Undo exporting an object _obj_.
     # Raises ArgumentError if it is not a DBus::Object.
     # Returns the object, or false if _obj_ was not exported.
+    # @param obj [DBus::Object]
     def unexport(obj)
       raise ArgumentError, "DBus::Service#unexport() expects a DBus::Object argument" unless obj.is_a?(DBus::Object)
       return false unless obj.path
+
       last_path_separator_idx = obj.path.rindex("/")
       parent_path = obj.path[1..last_path_separator_idx - 1]
       node_name = obj.path[last_path_separator_idx + 1..-1]
 
-      parent_node = get_node(parent_path, false)
+      parent_node = get_node(parent_path, create: false)
       return false unless parent_node
+
       obj.service = nil
       parent_node.delete(node_name).object
     end
 
-    # Get the object node corresponding to the given _path_. if _create_ is
-    # true, the the nodes in the path are created if they do not already exist.
-    def get_node(path, create = false)
+    # Get the object node corresponding to the given *path*.
+    # @param path [ObjectPath]
+    # @param create [Boolean] if true, the the {Node}s in the path are created
+    #   if they do not already exist.
+    # @return [Node,nil]
+    def get_node(path, create: false)
       n = @root
       path.sub(%r{^/}, "").split("/").each do |elem|
         if !(n[elem])
           return nil if !create
+
           n[elem] = Node.new(elem)
         end
         n = n[elem]
@@ -120,13 +132,14 @@ module DBus
       subnodes.each do |nodename|
         subnode = node[nodename] = Node.new(nodename)
         subpath = if path == "/"
-                    "/" + nodename
+                    "/#{nodename}"
                   else
-                    path + "/" + nodename
+                    "#{path}/#{nodename}"
                   end
         rec_introspect(subnode, subpath)
       end
       return if intfs.empty?
+
       node.object = ProxyObjectFactory.new(xml, @bus, @name, path).build
     end
   end
@@ -135,13 +148,17 @@ module DBus
   #
   # Class representing a node on an object path.
   class Node < Hash
-    # The D-Bus object contained by the node.
+    # @return [DBus::Object,DBus::ProxyObject,nil]
+    #   The D-Bus object contained by the node.
     attr_accessor :object
+
     # The name of the node.
+    # @return [String] the last component of its object path, or "/"
     attr_reader :name
 
     # Create a new node with a given _name_.
     def initialize(name)
+      super()
       @name = name
       @object = nil
     end
@@ -157,14 +174,12 @@ module DBus
       each_pair do |k, _v|
         xml += "  <node name=\"#{k}\" />\n"
       end
-      if @object
-        @object.intfs.each_pair do |_k, v|
-          xml += "  <interface name=\"#{v.name}\">\n"
-          v.methods.each_value { |m| xml += m.to_xml }
-          v.signals.each_value { |m| xml += m.to_xml }
-          v.properties.each_value { |m| xml += m.to_xml }
-          xml += "  </interface>\n"
-        end
+      @object&.intfs&.each_pair do |_k, v|
+        xml += "  <interface name=\"#{v.name}\">\n"
+        v.methods.each_value { |m| xml += m.to_xml }
+        v.signals.each_value { |m| xml += m.to_xml }
+        v.properties.each_value { |m| xml += m.to_xml }
+        xml += "  </interface>\n"
       end
       xml += "</node>"
       xml
@@ -182,9 +197,12 @@ module DBus
       if !@object.nil?
         s += format("%x ", @object.object_id)
       end
-      s + "{" + keys.collect { |k| "#{k} => #{self[k].sub_inspect}" }.join(",") + "}"
+      contents_sub_inspect = keys
+                             .map { |k| "#{k} => #{self[k].sub_inspect}" }
+                             .join(",")
+      "#{s}{#{contents_sub_inspect}}"
     end
-  end # class Inspect
+  end
 
   # FIXME: rename Connection to Bus?
 
@@ -207,7 +225,15 @@ module DBus
     def initialize(path)
       @message_queue = MessageQueue.new(path)
       @unique_name = nil
+
+      # @return [Hash{Integer => Proc}]
+      #   key: message serial
+      #   value: block to be run when the reply to that message is received
       @method_call_replies = {}
+
+      # @return [Hash{Integer => Message}]
+      #   for debugging only: messages for which a reply was not received yet;
+      #   key == value.serial
       @method_call_msgs = {}
       @signal_matchrules = {}
       @proxy = nil
@@ -218,7 +244,7 @@ module DBus
     # but do not block on the queue.
     # Called by a main loop when something is available in the queue
     def dispatch_message_queue
-      while (msg = @message_queue.pop(:non_block)) # FIXME: EOFError
+      while (msg = @message_queue.pop(blocking: false)) # FIXME: EOFError
         process(msg)
       end
     end
@@ -325,7 +351,7 @@ module DBus
     </signal>
   </interface>
 </node>
-'.freeze
+'
     # This apostroph is for syntax highlighting editors confused by above xml: "
 
     # @api private
@@ -340,6 +366,7 @@ module DBus
       if reply_handler.nil?
         send_sync(message) do |rmsg|
           raise rmsg if rmsg.is_a?(Error)
+
           ret = rmsg.params
         end
       else
@@ -444,44 +471,52 @@ module DBus
     end
 
     # @api private
-    # Send a message _m_ on to the bus. This is done synchronously, thus
+    # Send a message _msg_ on to the bus. This is done synchronously, thus
     # the call will block until a reply message arrives.
-    def send_sync(m, &retc) # :yields: reply/return message
-      return if m.nil? # check if somethings wrong
-      @message_queue.push(m)
-      @method_call_msgs[m.serial] = m
-      @method_call_replies[m.serial] = retc
+    # @param msg [Message]
+    # @param retc [Proc] the reply handler
+    # @yieldparam rmsg [MethodReturnMessage] the reply
+    # @yieldreturn [Array<Object>] the reply (out) parameters
+    def send_sync(msg, &retc) # :yields: reply/return message
+      return if msg.nil? # check if somethings wrong
+
+      @message_queue.push(msg)
+      @method_call_msgs[msg.serial] = msg
+      @method_call_replies[msg.serial] = retc
 
       retm = wait_for_message
       return if retm.nil? # check if somethings wrong
 
       process(retm)
-      while @method_call_replies.key? m.serial
+      while @method_call_replies.key? msg.serial
         retm = wait_for_message
         process(retm)
       end
     rescue EOFError
-      new_err = DBus::Error.new("Connection dropped after we sent #{m.inspect}")
+      new_err = DBus::Error.new("Connection dropped after we sent #{msg.inspect}")
       raise new_err
     end
 
     # @api private
     # Specify a code block that has to be executed when a reply for
-    # message _m_ is received.
-    def on_return(m, &retc)
+    # message _msg_ is received.
+    # @param msg [Message]
+    def on_return(msg, &retc)
       # Have a better exception here
-      if m.message_type != Message::METHOD_CALL
+      if msg.message_type != Message::METHOD_CALL
         raise "on_return should only get method_calls"
       end
-      @method_call_msgs[m.serial] = m
-      @method_call_replies[m.serial] = retc
+
+      @method_call_msgs[msg.serial] = msg
+      @method_call_replies[msg.serial] = retc
     end
 
     # Asks bus to send us messages matching mr, and execute slot when
     # received
-    def add_match(mr, &slot)
+    # @param match_rule [MatchRule,#to_s]
+    def add_match(match_rule, &slot)
       # check this is a signal.
-      mrs = mr.to_s
+      mrs = match_rule.to_s
       DBus.logger.debug "#{@signal_matchrules.size} rules, adding #{mrs.inspect}"
       # don't ask for the same match if we override it
       unless @signal_matchrules.key?(mrs)
@@ -491,70 +526,77 @@ module DBus
       @signal_matchrules[mrs] = slot
     end
 
-    def remove_match(mr)
-      mrs = mr.to_s
+    # @param match_rule [MatchRule,#to_s]
+    def remove_match(match_rule)
+      mrs = match_rule.to_s
       rule_existed = @signal_matchrules.delete(mrs).nil?
       # don't remove nonexisting matches.
       return if rule_existed
+
       # FIXME: if we do try, the Error.MatchRuleNotFound is *not* raised
       # and instead is reported as "no return code for nil"
       proxy.RemoveMatch(mrs)
     end
 
     # @api private
-    # Process a message _m_ based on its type.
-    def process(m)
-      return if m.nil? # check if somethings wrong
-      case m.message_type
+    # Process a message _msg_ based on its type.
+    # @param msg [Message]
+    def process(msg)
+      return if msg.nil? # check if somethings wrong
+
+      case msg.message_type
       when Message::ERROR, Message::METHOD_RETURN
-        raise InvalidPacketException if m.reply_serial.nil?
-        mcs = @method_call_replies[m.reply_serial]
+        raise InvalidPacketException if msg.reply_serial.nil?
+
+        mcs = @method_call_replies[msg.reply_serial]
         if !mcs
-          DBus.logger.debug "no return code for mcs: #{mcs.inspect} m: #{m.inspect}"
+          DBus.logger.debug "no return code for mcs: #{mcs.inspect} msg: #{msg.inspect}"
         else
-          if m.message_type == Message::ERROR
-            mcs.call(Error.new(m))
+          if msg.message_type == Message::ERROR
+            mcs.call(Error.new(msg))
           else
-            mcs.call(m)
+            mcs.call(msg)
           end
-          @method_call_replies.delete(m.reply_serial)
-          @method_call_msgs.delete(m.reply_serial)
+          @method_call_replies.delete(msg.reply_serial)
+          @method_call_msgs.delete(msg.reply_serial)
         end
       when DBus::Message::METHOD_CALL
-        if m.path == "/org/freedesktop/DBus"
+        if msg.path == "/org/freedesktop/DBus"
           DBus.logger.debug "Got method call on /org/freedesktop/DBus"
         end
-        node = @service.get_node(m.path)
+        node = @service.get_node(msg.path, create: false)
         if !node
-          reply = Message.error(m, "org.freedesktop.DBus.Error.UnknownObject",
-                                "Object #{m.path} doesn't exist")
+          reply = Message.error(msg, "org.freedesktop.DBus.Error.UnknownObject",
+                                "Object #{msg.path} doesn't exist")
           @message_queue.push(reply)
         # handle introspectable as an exception:
-        elsif m.interface == "org.freedesktop.DBus.Introspectable" &&
-              m.member == "Introspect"
-          reply = Message.new(Message::METHOD_RETURN).reply_to(m)
+        elsif msg.interface == "org.freedesktop.DBus.Introspectable" &&
+              msg.member == "Introspect"
+          reply = Message.new(Message::METHOD_RETURN).reply_to(msg)
           reply.sender = @unique_name
-          xml = node.to_xml(m.path)
+          xml = node.to_xml(msg.path)
           reply.add_param(Type::STRING, xml)
           @message_queue.push(reply)
         else
           obj = node.object
           return if obj.nil? # FIXME, pushes no reply
-          obj.dispatch(m) if obj
+
+          obj&.dispatch(msg)
         end
       when DBus::Message::SIGNAL
         # the signal can match multiple different rules
         # clone to allow new signale handlers to be registered
         @signal_matchrules.dup.each do |mrs, slot|
-          if DBus::MatchRule.new.from_s(mrs).match(m)
-            slot.call(m)
+          if DBus::MatchRule.new.from_s(mrs).match(msg)
+            slot.call(msg)
           end
         end
       else
-        DBus.logger.debug "Unknown message type: #{m.message_type}"
+        # spec(Message Format): Unknown types must be ignored.
+        DBus.logger.debug "Unknown message type: #{msg.message_type}"
       end
-    rescue Exception => ex
-      raise m.annotate_exception(ex)
+    rescue Exception => e
+      raise msg.annotate_exception(e)
     end
 
     # Retrieves the Service with the given _name_.
@@ -604,7 +646,7 @@ module DBus
       end
       @service = Service.new(@unique_name, self)
     end
-  end # class Connection
+  end
 
   # = D-Bus session bus class
   #
@@ -630,6 +672,7 @@ module DBus
       # traditional dbus uses /var/lib/dbus/machine-id
       machine_id_path = Dir["{/etc,/var/lib/dbus,/var/db/dbus}/machine-id"].first
       return nil unless machine_id_path
+
       machine_id = File.read(machine_id_path).chomp
 
       display = ENV["DISPLAY"][/:(\d+)\.?/, 1]
@@ -661,7 +704,7 @@ module DBus
   class ASystemBus < Connection
     # Get the default system bus.
     def initialize
-      super(SystemSocketName)
+      super(SYSTEM_BUS_ADDRESS)
       send_hello
     end
   end
@@ -736,6 +779,7 @@ module DBus
       while !@quitting && !@buses.empty?
         ready = IO.select(@buses.keys, [], [], 5) # timeout 5 seconds
         next unless ready # timeout exceeds so continue unless quitting
+
         ready.first.each do |socket|
           b = @buses[socket]
           begin
@@ -750,5 +794,5 @@ module DBus
         end
       end
     end
-  end # class Main
-end # module DBus
+  end
+end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # dbus.rb - Module containing the low-level D-Bus implementation
 #
 # This file is part of the ruby-dbus project
@@ -34,11 +36,12 @@ module DBus
     def initialize(buffer, endianness)
       @buffy = buffer.dup
       @endianness = endianness
-      if @endianness == BIG_END
+      case @endianness
+      when BIG_END
         @uint32 = "N"
         @uint16 = "n"
         @double = "G"
-      elsif @endianness == LIL_END
+      when LIL_END
         @uint32 = "V"
         @uint16 = "v"
         @double = "E"
@@ -50,12 +53,14 @@ module DBus
 
     # Unmarshall the buffer for a given _signature_ and length _len_.
     # Return an array of unmarshalled objects
+    # @param signature [Signature]
+    # @param len [Integer,nil] if given, and there is not enough data
+    #   in the buffer, raise {IncompleteBufferException}
+    # @return [Array<::Object>]
+    # @raise IncompleteBufferException
     def unmarshall(signature, len = nil)
-      if !len.nil?
-        if @buffy.bytesize < @idx + len
-          raise IncompleteBufferException
-        end
-      end
+      raise IncompleteBufferException if len && @buffy.bytesize < @idx + len
+
       sigtree = Type::Parser.new(signature).parse
       ret = []
       sigtree.each do |elem|
@@ -64,18 +69,18 @@ module DBus
       ret
     end
 
-    # Align the pointer index on a byte index of _a_, where a
+    # Align the pointer index on a byte index of _alignment_, which
     # must be 1, 2, 4 or 8.
-    def align(a)
-      case a
+    def align(alignment)
+      case alignment
       when 1
         nil
       when 2, 4, 8
-        bits = a - 1
+        bits = alignment - 1
         @idx = @idx + bits & ~bits
         raise IncompleteBufferException if @idx > @buffy.bytesize
       else
-        raise "Unsupported alignment #{a}"
+        raise ArgumentError, "Unsupported alignment #{alignment}"
       end
     end
 
@@ -87,6 +92,7 @@ module DBus
     # Retrieve the next _nbytes_ number of bytes from the buffer.
     def read(nbytes)
       raise IncompleteBufferException if @idx + nbytes > @buffy.bytesize
+
       ret = @buffy.slice(@idx, nbytes)
       @idx += nbytes
       ret
@@ -96,13 +102,15 @@ module DBus
     # Return the string.
     def read_string
       align(4)
-      str_sz = read(4).unpack(@uint32)[0]
+      str_sz = read(4).unpack1(@uint32)
       ret = @buffy.slice(@idx, str_sz)
       raise IncompleteBufferException if @idx + str_sz + 1 > @buffy.bytesize
+
       @idx += str_sz
       if @buffy[@idx].ord != 0
         raise InvalidPacketException, "String is not nul-terminated"
       end
+
       @idx += 1
       # no exception, see check above
       ret
@@ -111,13 +119,15 @@ module DBus
     # Read the signature length and signature itself from the buffer.
     # Return the signature.
     def read_signature
-      str_sz = read(1).unpack("C")[0]
+      str_sz = read(1).unpack1("C")
       ret = @buffy.slice(@idx, str_sz)
       raise IncompleteBufferException if @idx + str_sz + 1 >= @buffy.bytesize
+
       @idx += str_sz
       if @buffy[@idx].ord != 0
         raise InvalidPacketException, "Type is not nul-terminated"
       end
+
       @idx += 1
       # no exception, see check above
       ret
@@ -129,29 +139,29 @@ module DBus
       packet = nil
       case signature.sigtype
       when Type::BYTE
-        packet = read(1).unpack("C")[0]
+        packet = read(1).unpack1("C")
       when Type::UINT16
         align(2)
-        packet = read(2).unpack(@uint16)[0]
+        packet = read(2).unpack1(@uint16)
       when Type::INT16
         align(2)
-        packet = read(2).unpack(@uint16)[0]
+        packet = read(2).unpack1(@uint16)
         if (packet & 0x8000) != 0
           packet -= 0x10000
         end
       when Type::UINT32, Type::UNIX_FD
         align(4)
-        packet = read(4).unpack(@uint32)[0]
+        packet = read(4).unpack1(@uint32)
       when Type::INT32
         align(4)
-        packet = read(4).unpack(@uint32)[0]
+        packet = read(4).unpack1(@uint32)
         if (packet & 0x80000000) != 0
           packet -= 0x100000000
         end
       when Type::UINT64
         align(8)
-        packet_l = read(4).unpack(@uint32)[0]
-        packet_h = read(4).unpack(@uint32)[0]
+        packet_l = read(4).unpack1(@uint32)
+        packet_h = read(4).unpack1(@uint32)
         packet = if @endianness == LIL_END
                    packet_l + packet_h * 2**32
                  else
@@ -159,8 +169,8 @@ module DBus
                  end
       when Type::INT64
         align(8)
-        packet_l = read(4).unpack(@uint32)[0]
-        packet_h = read(4).unpack(@uint32)[0]
+        packet_l = read(4).unpack1(@uint32)
+        packet_h = read(4).unpack1(@uint32)
         packet = if @endianness == LIL_END
                    packet_l + packet_h * 2**32
                  else
@@ -171,16 +181,17 @@ module DBus
         end
       when Type::DOUBLE
         align(8)
-        packet = read(8).unpack(@double)[0]
+        packet = read(8).unpack1(@double)
       when Type::BOOLEAN
         align(4)
-        v = read(4).unpack(@uint32)[0]
+        v = read(4).unpack1(@uint32)
         raise InvalidPacketException if ![0, 1].member?(v)
+
         packet = (v == 1)
       when Type::ARRAY
         align(4)
         # checks please
-        array_sz = read(4).unpack(@uint32)[0]
+        array_sz = read(4).unpack1(@uint32)
         raise InvalidPacketException if array_sz > 67_108_864
 
         align(signature.child.alignment)
@@ -224,8 +235,8 @@ module DBus
               "sigtype: #{signature.sigtype} (#{signature.sigtype.chr})"
       end
       packet
-    end # def do_parse
-  end # class PacketUnmarshaller
+    end
+  end
 
   # D-Bus packet marshaller class
   #
@@ -243,20 +254,21 @@ module DBus
       @offset = offset # for correct alignment of nested marshallers
     end
 
-    # Round _n_ up to the specified power of two, _a_
-    def num_align(n, a)
-      case a
+    # Round _num_ up to the specified power of two, _alignment_
+    def num_align(num, alignment)
+      case alignment
       when 1, 2, 4, 8
-        bits = a - 1
-        n + bits & ~bits
+        bits = alignment - 1
+        num + bits & ~bits
       else
-        raise "Unsupported alignment"
+        raise ArgumentError, "Unsupported alignment #{alignment}"
       end
     end
 
-    # Align the buffer with NULL (\0) bytes on a byte length of _a_.
-    def align(a)
-      @packet = @packet.ljust(num_align(@offset + @packet.bytesize, a) - @offset, 0.chr)
+    # Align the buffer with NULL (\0) bytes on a byte length of _alignment_.
+    def align(alignment)
+      pad_count = num_align(@offset + @packet.bytesize, alignment) - @offset
+      @packet = @packet.ljust(pad_count, 0.chr)
     end
 
     # Append the the string _str_ itself to the packet.
@@ -267,7 +279,7 @@ module DBus
 
     # Append the the signature _signature_ itself to the packet.
     def append_signature(str)
-      @packet += str.bytesize.chr + str + "\0"
+      @packet += "#{str.bytesize.chr}#{str}\u0000"
     end
 
     # Append the array type _type_ to the packet and allow for appending
@@ -282,6 +294,7 @@ module DBus
       yield
       sz = @packet.bytesize - contentidx
       raise InvalidPacketException if sz > 67_108_864
+
       @packet[sizeidx...sizeidx + 4] = [sz].pack("L")
     end
 
@@ -337,48 +350,9 @@ module DBus
       when Type::SIGNATURE
         append_signature(val)
       when Type::VARIANT
-        vartype = nil
-        if val.is_a?(Array) && val.size == 2
-          if val[0].is_a?(DBus::Type::Type)
-            vartype, vardata = val
-          elsif val[0].is_a?(String)
-            begin
-              parsed = Type::Parser.new(val[0]).parse
-              vartype = parsed[0] if parsed.size == 1
-              vardata = val[1]
-            rescue Type::SignatureException
-              # no assignment
-            end
-          end
-        end
-        if vartype.nil?
-          vartype, vardata = PacketMarshaller.make_variant(val)
-          vartype = Type::Parser.new(vartype).parse[0]
-        end
-
-        append_signature(vartype.to_s)
-        align(vartype.alignment)
-        sub = PacketMarshaller.new(@offset + @packet.bytesize)
-        sub.append(vartype, vardata)
-        @packet += sub.packet
+        append_variant(val)
       when Type::ARRAY
-        if val.is_a?(Hash)
-          raise TypeException, "Expected an Array but got a Hash" if type.child.sigtype != Type::DICT_ENTRY
-          # Damn ruby rocks here
-          val = val.to_a
-        end
-        # If string is recieved and ay is expected, explode the string
-        if val.is_a?(String) && type.child.sigtype == Type::BYTE
-          val = val.bytes
-        end
-        if !val.is_a?(Enumerable)
-          raise TypeException, "Expected an Enumerable of #{type.child.inspect} but got a #{val.class}"
-        end
-        array(type.child) do
-          val.each do |elem|
-            append(type.child, elem)
-          end
-        end
+        append_array(type.child, val)
       when Type::STRUCT, Type::DICT_ENTRY
         # TODO: use duck typing, val.respond_to?
         raise TypeException, "Struct/DE expects an Array" if !val.is_a?(Array)
@@ -388,6 +362,7 @@ module DBus
         if type.members.size != val.size
           raise TypeException, "Struct/DE has #{val.size} elements but type info for #{type.members.size}"
         end
+
         struct do
           type.members.zip(val).each do |t, v|
             append(t, v)
@@ -397,7 +372,58 @@ module DBus
         raise NotImplementedError,
               "sigtype: #{type.sigtype} (#{type.sigtype.chr})"
       end
-    end # def append
+    end
+
+    def append_variant(val)
+      vartype = nil
+      if val.is_a?(Array) && val.size == 2
+        case val[0]
+        when DBus::Type::Type
+          vartype, vardata = val
+        when String
+          begin
+            parsed = Type::Parser.new(val[0]).parse
+            vartype = parsed[0] if parsed.size == 1
+            vardata = val[1]
+          rescue Type::SignatureException
+            # no assignment
+          end
+        end
+      end
+      if vartype.nil?
+        vartype, vardata = PacketMarshaller.make_variant(val)
+        vartype = Type::Parser.new(vartype).parse[0]
+      end
+
+      append_signature(vartype.to_s)
+      align(vartype.alignment)
+      sub = PacketMarshaller.new(@offset + @packet.bytesize)
+      sub.append(vartype, vardata)
+      @packet += sub.packet
+    end
+
+    # @param child_type [DBus::Type::Type]
+    def append_array(child_type, val)
+      if val.is_a?(Hash)
+        raise TypeException, "Expected an Array but got a Hash" if child_type.sigtype != Type::DICT_ENTRY
+
+        # Damn ruby rocks here
+        val = val.to_a
+      end
+      # If string is recieved and ay is expected, explode the string
+      if val.is_a?(String) && child_type.sigtype == Type::BYTE
+        val = val.bytes
+      end
+      if !val.is_a?(Enumerable)
+        raise TypeException, "Expected an Enumerable of #{child_type.inspect} but got a #{val.class}"
+      end
+
+      array(child_type) do
+        val.each do |elem|
+          append(child_type, elem)
+        end
+      end
+    end
 
     # Make a [signature, value] pair for a variant
     def self.make_variant(value)
@@ -429,5 +455,5 @@ module DBus
         end
       end
     end
-  end # class PacketMarshaller
-end # module DBus
+  end
+end

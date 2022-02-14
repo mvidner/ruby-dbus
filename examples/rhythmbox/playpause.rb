@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 require "dbus"
 bus = DBus::SessionBus.instance
@@ -13,7 +14,7 @@ mr.type = "signal"
 mr.interface = "org.gnome.Rhythmbox.Player"
 mr.path = "/org/gnome/Rhythmbox/Player"
 bus.add_match(mr) do |msg, first_param|
-  print msg.member + " "
+  print "#{msg.member} "
   puts first_param
 end
 

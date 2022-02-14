@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # dbus/xml.rb - introspection parser, rexml/nokogiri abstraction
 #
 # This file is part of the ruby-dbus project
@@ -26,14 +28,23 @@ module DBus
       attr_accessor :backend
     end
     # Creates a new parser for XML data in string _xml_.
+    # @param xml [String]
     def initialize(xml)
       @xml = xml
     end
 
     class AbstractXML
+      # @!method initialize(xml)
+      # @abstract
+
+      # @!method each(xpath)
+      # @abstract
+      # yields nodes which match xpath of type AbstractXML::Node
+
       def self.have_nokogiri?
         Object.const_defined?("Nokogiri")
       end
+
       class Node
         def initialize(node)
           @node = node
@@ -46,12 +57,6 @@ module DBus
         # yields child nodes which match xpath of type AbstractXML::Node
         def each(xpath); end
       end
-      # required methods
-      # initialize parser with xml string
-      def initialize(xml); end
-
-      # yields nodes which match xpath of type AbstractXML::Node
-      def each(xpath); end
     end
 
     class NokogiriParser < AbstractXML
@@ -64,7 +69,9 @@ module DBus
           @node.search(path).each { |node| block.call NokogiriNode.new(node) }
         end
       end
+
       def initialize(xml)
+        super()
         @doc = Nokogiri.XML(xml)
       end
 
@@ -83,7 +90,9 @@ module DBus
           @node.elements.each(path) { |node| block.call REXMLNode.new(node) }
         end
       end
+
       def initialize(xml)
+        super()
         @doc = REXML::Document.new(xml)
       end
 
@@ -136,28 +145,30 @@ module DBus
     ######################################################################
     private
 
-    # Parses a method signature XML element _e_ and initialises
-    # method/signal _m_.
-    def parse_methsig(e, m)
-      e.each("arg") do |ae|
+    # Parses a method signature XML element *elem* and initialises
+    # method/signal *methsig*.
+    # @param elem [AbstractXML::Node]
+    def parse_methsig(elem, methsig)
+      elem.each("arg") do |ae|
         name = ae["name"]
         dir = ae["direction"]
         sig = ae["type"]
-        if m.is_a?(DBus::Signal)
+        case methsig
+        when DBus::Signal
           # Direction can only be "out", ignore it
-          m.add_fparam(name, sig)
-        elsif m.is_a?(DBus::Method)
+          methsig.add_fparam(name, sig)
+        when DBus::Method
           case dir
           # This is a method, so dir defaults to "in"
           when "in", nil
-            m.add_fparam(name, sig)
+            methsig.add_fparam(name, sig)
           when "out"
-            m.add_return(name, sig)
+            methsig.add_return(name, sig)
           end
         else
           raise NotImplementedError, dir
         end
       end
     end
-  end # class IntrospectXMLParser
-end # module DBus
+  end
+end

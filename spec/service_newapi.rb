@@ -1,17 +1,17 @@
 #!/usr/bin/env ruby
-# -*- coding: utf-8 -*-
+# frozen_string_literal: true
 
 require_relative "spec_helper"
 SimpleCov.command_name "Service Tests" if Object.const_defined? "SimpleCov"
 # find the library without external help
-$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require "dbus"
 
-PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties".freeze
+PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
 
 class Test < DBus::Object
-  INTERFACE = "org.ruby.SampleInterface".freeze
+  INTERFACE = "org.ruby.SampleInterface"
   def initialize(path)
     super path
     @read_me = "READ ME"

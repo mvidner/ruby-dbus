@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is part of the ruby-dbus project
 # Copyright (C) 2007 Arnaud Cornet and Paul van Tilburg
 # Copyright (C) 2009-2014 Martin Vidner
@@ -22,17 +24,19 @@ module DBus
       @api = api
     end
 
-    # Investigates the sub-nodes of the proxy object _po_ based on the
+    # Investigates the sub-nodes of the proxy object _pobj_ based on the
     # introspection XML data _xml_ and sets them up recursively.
-    def self.introspect_into(po, xml)
-      intfs, po.subnodes = IntrospectXMLParser.new(xml).parse
+    # @param pobj [ProxyObject]
+    # @param xml [String]
+    def self.introspect_into(pobj, xml)
+      intfs, pobj.subnodes = IntrospectXMLParser.new(xml).parse
       intfs.each do |i|
-        poi = ProxyObjectInterface.new(po, i.name)
+        poi = ProxyObjectInterface.new(pobj, i.name)
         i.methods.each_value { |m| poi.define(m) }
         i.signals.each_value { |s| poi.define(s) }
-        po[i.name] = poi
+        pobj[i.name] = poi
       end
-      po.introspected = true
+      pobj.introspected = true
     end
 
     # Generates, sets up and returns the proxy object.
@@ -41,5 +45,5 @@ module DBus
       ProxyObjectFactory.introspect_into(po, @xml)
       po
     end
-  end # class ProxyObjectFactory
+  end
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is part of the ruby-dbus project
 # Copyright (C) 2007 Arnaud Cornet and Paul van Tilburg
 # Copyright (C) 2009-2014 Martin Vidner
@@ -23,14 +25,16 @@ module DBus
       connect
     end
 
-    # @param non_block [Boolean] if true, return nil instead of waiting
+    # @param blocking [Boolean]
+    #   true:  wait to return a {Message};
+    #   false: may return `nil`
     # @return [Message,nil] one message or nil if unavailable
     # @raise EOFError
     # @todo failure modes
-    def pop(non_block = false)
+    def pop(blocking: true)
       buffer_from_socket_nonblock
       message = message_from_buffer_nonblock
-      unless non_block
+      if blocking
         # we can block
         while message.nil?
           r, _d, _d = IO.select([@socket])
@@ -54,7 +58,7 @@ module DBus
     def connect
       addresses = @address.split ";"
       # connect to first one that succeeds
-      worked = addresses.find do |a|
+      addresses.find do |a|
         transport, keyvaluestring = a.split ":"
         kv_list = keyvaluestring.split ","
         kv_hash = {}
@@ -74,7 +78,6 @@ module DBus
           # ignore, report?
         end
       end
-      worked
       # returns the address that worked or nil.
       # how to report failure?
     end
@@ -136,6 +139,7 @@ module DBus
     # @return [Message,nil] the message or nil if unavailable
     def message_from_buffer_nonblock
       return nil if @buffer.empty?
+
       ret = nil
       begin
         ret, size = Message.new.unmarshall_buffer(@buffer)
@@ -162,6 +166,7 @@ module DBus
     rescue Exception => e
       puts "Oops:", e
       raise if @is_tcp # why?
+
       puts "WARNING: read_nonblock failed, falling back to .recv"
       @buffer += @socket.recv(MSG_BUF_SIZE)
     end

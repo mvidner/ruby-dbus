@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # dbus.rb - Module containing the low-level D-Bus implementation
 #
 # This file is part of the ruby-dbus project
@@ -27,7 +29,7 @@ module DBus
     # Mutex that protects updates on the serial number.
     @@serial_mutex = Mutex.new
     # Type of a message (by specification).
-    MESSAGE_SIGNATURE = "yyyyuua(yv)".freeze
+    MESSAGE_SIGNATURE = "yyyyuua(yv)"
 
     # FIXME: following message type constants should be under Message::Type IMO
     # well, yeah sure
@@ -42,6 +44,9 @@ module DBus
     ERROR = 3
     # Signal message type.
     SIGNAL = 4
+
+    # Names used by signal match rules
+    TYPE_NAMES = ["invalid", "method_call", "method_return", "error", "signal"].freeze
 
     # Message flag signyfing that no reply is expected.
     NO_REPLY_EXPECTED = 0x1
@@ -66,11 +71,13 @@ module DBus
     attr_accessor :sender
     # The signature of the message contents.
     attr_accessor :signature
-    # The serial number of the message this message is a reply for.
+    # @return [Integer] (u32)
+    #   The serial number of the message this message is a reply for.
     attr_accessor :reply_serial
     # The protocol.
     attr_reader :protocol
-    # The serial of the message.
+    # @return [Integer] (u32)
+    #   The serial of the message.
     attr_reader :serial
     # The parameters of the message.
     attr_reader :params
@@ -105,22 +112,28 @@ module DBus
       "error_name=#{error_name}"
     end
 
-    # Create a regular reply to a message _m_.
-    def self.method_return(m)
-      MethodReturnMessage.new.reply_to(m)
+    # @return [String] name of message type, as used in match rules:
+    #    "method_call", "method_return", "signal", "error"
+    def message_type_s
+      TYPE_NAMES[message_type] || "unknown_type_#{message_type}"
     end
 
-    # Create an error reply to a message _m_.
-    def self.error(m, error_name, description = nil)
-      ErrorMessage.new(error_name, description).reply_to(m)
+    # Create a regular reply to a message _msg_.
+    def self.method_return(msg)
+      MethodReturnMessage.new.reply_to(msg)
     end
 
-    # Mark this message as a reply to a another message _m_, taking
-    # the serial number of _m_ as reply serial and the sender of _m_ as
+    # Create an error reply to a message _msg_.
+    def self.error(msg, error_name, description = nil)
+      ErrorMessage.new(error_name, description).reply_to(msg)
+    end
+
+    # Mark this message as a reply to a another message _msg_, taking
+    # the serial number of _msg_ as reply serial and the sender of _msg_ as
     # destination.
-    def reply_to(m)
-      @reply_serial = m.serial
-      @destination = m.sender
+    def reply_to(msg)
+      @reply_serial = msg.serial
+      @destination = msg.sender
       self
     end
 
@@ -223,7 +236,7 @@ module DBus
         end
       end
       pu.align(8)
-      if @body_length > 0 && @signature
+      if @body_length.positive? && @signature
         @params = pu.unmarshall(@signature, @body_length)
       end
       [self, pu.idx]
@@ -231,12 +244,12 @@ module DBus
 
     # Make a new exception from ex, mark it as being caused by this message
     # @api private
-    def annotate_exception(ex)
-      new_ex = ex.exception("#{ex}; caused by #{self}")
-      new_ex.set_backtrace(ex.backtrace)
-      new_ex
+    def annotate_exception(exc)
+      new_exc = exc.exception("#{exc}; caused by #{self}")
+      new_exc.set_backtrace(exc.backtrace)
+      new_exc
     end
-  end # class Message
+  end
 
   class MethodReturnMessage < Message
     def initialize
@@ -251,17 +264,17 @@ module DBus
       add_param(Type::STRING, description) unless description.nil?
     end
 
-    def self.from_exception(ex)
-      name = if ex.is_a? DBus::Error
-               ex.name
+    def self.from_exception(exc)
+      name = if exc.is_a? DBus::Error
+               exc.name
              else
                "org.freedesktop.DBus.Error.Failed"
-               # ex.class.to_s # RuntimeError is not a valid name, has no dot
+               # exc.class.to_s # RuntimeError is not a valid name, has no dot
              end
-      description = ex.message
+      description = exc.message
       msg = new(name, description)
-      msg.add_param(DBus.type("as"), ex.backtrace)
+      msg.add_param(DBus.type("as"), exc.backtrace)
       msg
     end
   end
-end # module DBus
+end

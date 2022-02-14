@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is part of the ruby-dbus project
 # Copyright (C) 2019 Martin Vidner
 #
@@ -8,17 +10,19 @@
 
 module DBus
   # A {::String} that validates at initialization time
+  # @see https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-marshaling-object-path
   class ObjectPath < String
     # @raise Error if not a valid object path
-    def initialize(s)
-      unless self.class.valid?(s)
-        raise DBus::Error, "Invalid object path #{s.inspect}"
+    def initialize(str)
+      unless self.class.valid?(str)
+        raise DBus::Error, "Invalid object path #{str.inspect}"
       end
+
       super
     end
 
-    def self.valid?(s)
-      s == "/" || s =~ %r{\A(/[A-Za-z0-9_]+)+\z}
+    def self.valid?(str)
+      str == "/" || str =~ %r{\A(/[A-Za-z0-9_]+)+\z}
     end
   end
 end

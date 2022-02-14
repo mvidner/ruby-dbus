@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # error.rb
 #
 # This file is part of the ruby-dbus project
@@ -32,7 +34,7 @@ module DBus
       end
       # TODO: validate error name
     end
-  end # class Error
+  end
 
   # @example raise a generic error
   #   raise DBus.error, "message"
@@ -43,4 +45,4 @@ module DBus
     DBus::Error.new(nil, name)
   end
   module_function :error
-end # module DBus
+end

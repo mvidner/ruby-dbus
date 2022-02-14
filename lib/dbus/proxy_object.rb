@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is part of the ruby-dbus project
 # Copyright (C) 2007 Arnaud Cornet and Paul van Tilburg
 # Copyright (C) 2009-2014 Martin Vidner
@@ -57,6 +59,7 @@ module DBus
       introspect unless introspected
       ifc = @interfaces[intfname]
       raise DBus::Error, "no such interface `#{intfname}' on object `#{@path}'" unless ifc
+
       ifc
     end
 
@@ -93,6 +96,7 @@ module DBus
           # don't overwrite instance methods!
           next if dup_meths.include?(name)
           next if self.class.instance_methods.include?(name)
+
           if univocal_meths.include? name
             univocal_meths.delete name
             dup_meths << name
@@ -124,14 +128,17 @@ module DBus
     def on_signal(name, &block)
       # TODO: improve
       raise NoMethodError unless @default_iface && has_iface?(@default_iface)
+
       @interfaces[@default_iface].on_signal(name, &block)
     end
 
     ####################################################
     private
 
-    # rubocop:disable Style/MethodMissing
-    # but https://github.com/rubocop-hq/ruby-style-guide#no-method-missing
+    # rubocop:disable Lint/MissingSuper
+    # as this should forward everything
+    #
+    # https://github.com/rubocop-hq/ruby-style-guide#no-method-missing
     # and http://blog.marc-andre.ca/2010/11/15/methodmissing-politely/
     # have a point to be investigated
 
@@ -152,10 +159,17 @@ module DBus
         # interesting, foo.method("unknown")
         # raises NameError, not NoMethodError
         raise unless e.to_s =~ /undefined method `#{name}'/
+
         # BTW e.exception("...") would preserve the class.
         raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
       end
     end
-    # rubocop:enable Style/MethodMissing
-  end # class ProxyObject
+    # rubocop:enable Lint/MissingSuper
+
+    def respond_to_missing?(name, _include_private = false)
+      @default_iface &&
+        has_iface?(@default_iface) &&
+        @interfaces[@default_iface].methods.key?(name) or super
+    end
+  end
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # dbus/logger.rb - debug logging
 #
 # This file is part of the ruby-dbus project
@@ -16,7 +18,7 @@ module DBus
   # with DEBUG if $DEBUG is set, otherwise INFO.
   def logger
     unless defined? @logger
-      @logger = Logger.new(STDERR)
+      @logger = Logger.new($stderr)
       @logger.level = $DEBUG ? Logger::DEBUG : Logger::INFO
     end
     @logger
