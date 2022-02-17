@@ -45,11 +45,13 @@ module DBus
       when Message::METHOD_CALL
         reply = nil
         begin
-          if !intfs[msg.interface]
+          iface = intfs[msg.interface]
+          if !iface
             raise DBus.error("org.freedesktop.DBus.Error.UnknownMethod"),
                   "Interface \"#{msg.interface}\" of object \"#{msg.path}\" doesn't exist"
           end
-          meth = intfs[msg.interface].methods[msg.member.to_sym]
+          member_sym = msg.member.to_sym
+          meth = iface.methods[member_sym]
           if !meth
             raise DBus.error("org.freedesktop.DBus.Error.UnknownMethod"),
                   "Method \"#{msg.member}\" on interface \"#{msg.interface}\" of object \"#{msg.path}\" doesn't exist"
@@ -59,8 +61,17 @@ module DBus
           retdata = [*retdata]
 
           reply = Message.method_return(msg)
-          meth.rets.zip(retdata).each do |rsig, rdata|
-            reply.add_param(rsig.type, rdata)
+          if iface.name == PROPERTY_INTERFACE && member_sym == :Get
+            # Use the specific property type instead of the generic variant
+            # returned by Get.
+            # GetAll and Set still missing
+            property = dbus_lookup_property(msg.params[0], msg.params[1])
+            rsigs = [property.type]
+          else
+            rsigs = meth.rets.map(&:type)
+          end
+          rsigs.zip(retdata).each do |rsig, rdata|
+            reply.add_param(rsig, rdata)
           end
         rescue StandardError => e
           dbus_msg_exc = msg.annotate_exception(e)
