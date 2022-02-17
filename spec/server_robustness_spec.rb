@@ -16,7 +16,7 @@ describe "ServerRobustnessTest" do
   it "tests no such path with introspection" do
     obj = @svc.object "/org/ruby/NotMyInstance"
     expect { obj.introspect }.to raise_error(DBus::Error) do |e|
-      expect(e).to_not match(/timeout/)
+      expect(e.message).to_not match(/timeout/)
     end
   end
 
@@ -25,7 +25,7 @@ describe "ServerRobustnessTest" do
     ifc = DBus::ProxyObjectInterface.new(obj, "org.ruby.SampleInterface")
     ifc.define_method("the_answer", "out n:i")
     expect { ifc.the_answer }.to raise_error(DBus::Error) do |e|
-      expect(e).to_not match(/timeout/)
+      expect(e.message).to_not match(/timeout/)
     end
   end
 
@@ -36,7 +36,7 @@ describe "ServerRobustnessTest" do
       ifc = DBus::ProxyObjectInterface.new(obj, "org.ruby.SampleInterface")
       ifc.define_method("the_answer", "out n:i")
       expect { ifc.the_answer }.to raise_error(DBus::Error) do |e|
-        expect(e).to_not match(/timeout/)
+        expect(e.message).to_not match(/timeout/)
       end
     end
   end
@@ -45,7 +45,7 @@ describe "ServerRobustnessTest" do
     obj = @svc.object "/org/ruby/MyInstance"
     obj.default_iface = "org.ruby.SampleInterface"
     expect { obj.will_raise }.to raise_error(DBus::Error) do |e|
-      expect(e).to_not match(/timeout/)
+      expect(e.message).to_not match(/timeout/)
     end
   end
 
@@ -53,7 +53,7 @@ describe "ServerRobustnessTest" do
     obj = @svc.object "/org/ruby/MyInstance"
     obj.default_iface = "org.ruby.SampleInterface"
     expect { obj.will_raise_name_error }.to raise_error(DBus::Error) do |e|
-      expect(e).to_not match(/timeout/)
+      expect(e.message).to_not match(/timeout/)
     end
   end
 
@@ -63,7 +63,7 @@ describe "ServerRobustnessTest" do
     ifc = DBus::ProxyObjectInterface.new(obj, "org.ruby.SampleInterface")
     ifc.define_method("not_the_answer", "out n:i")
     expect { ifc.not_the_answer }.to raise_error(DBus::Error) do |e|
-      expect(e).to_not match(/timeout/)
+      expect(e.message).to_not match(/timeout/)
     end
   end
 
@@ -72,7 +72,7 @@ describe "ServerRobustnessTest" do
     ifc = DBus::ProxyObjectInterface.new(obj, "org.ruby.NoSuchInterface")
     ifc.define_method("the_answer", "out n:i")
     expect { ifc.the_answer }.to raise_error(DBus::Error) do |e|
-      expect(e).to_not match(/timeout/)
+      expect(e.message).to_not match(/timeout/)
     end
   end
 end
