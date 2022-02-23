@@ -92,4 +92,18 @@ describe "ValueTest" do
   it "aligns short integers correctly" do
     expect(@obj.i16_plus(10, -30)[0]).to eq(-20)
   end
+
+  context "structs" do
+    it "they are returned as FROZEN arrays" do
+      struct = @obj.Coordinates[0]
+      expect(struct).to be_an(Array)
+      expect(struct).to be_frozen
+    end
+
+    it "they are returned also from structs" do
+      struct = @obj.Coordinates2[0]
+      expect(struct).to be_an(Array)
+      expect(struct).to be_frozen
+    end
+  end
 end
