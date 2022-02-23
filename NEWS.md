@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+API:
+ * D-Bus structs have been passed as Ruby arrays. Now these arrays are frozen.
+ * Ruby structs can be used as D-Bus structs.
+
+Bug fixes:
+ * Returning the value for o.fd.DBus.Properties.Get, use the specific property
+   signature, not the generic Variant.
+
 ## Ruby D-Bus 0.17.0 - 2022-02-11
 
 API:
