@@ -190,11 +190,18 @@ If the signature expects a Variant
    type. This will hit you when you rely on method (2) but happen to have
    a particular string value in an array.
 
+##### Structs
+
+If a **STRUCT** `(...)` is expected you may pass
+
+- an [Array](https://ruby-doc.org/core/Array.html) (frozen is fine)
+- a [Struct](https://ruby-doc.org/core/Struct.html)
+
 ##### Byte Arrays
 
 If a byte array (`ay`) is expected you can pass a String too.
 The bytes sent are according to the string's
-[encoding](http://ruby-doc.org/core-2.0.0/Encoding.html).
+[encoding](http://ruby-doc.org/core/Encoding.html).
 
 ##### nil
 

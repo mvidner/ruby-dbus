@@ -11,6 +11,8 @@ require "dbus"
 PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
 
 class Test < DBus::Object
+  Point2D = Struct.new(:x, :y)
+
   INTERFACE = "org.ruby.SampleInterface"
   def initialize(path)
     super path
@@ -63,6 +65,11 @@ class Test < DBus::Object
 
     dbus_method :Coordinates, "out coords:(dd)" do
       coords = [3.0, 4.0].freeze
+      [coords]
+    end
+
+    dbus_method :Coordinates2, "out coords:(dd)" do
+      coords = Point2D.new(5.0, 12.0)
       [coords]
     end
 

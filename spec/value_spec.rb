@@ -99,5 +99,11 @@ describe "ValueTest" do
       expect(struct).to be_an(Array)
       expect(struct).to be_frozen
     end
+
+    it "they are returned also from structs" do
+      struct = @obj.Coordinates2[0]
+      expect(struct).to be_an(Array)
+      expect(struct).to be_frozen
+    end
   end
 end

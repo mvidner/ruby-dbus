@@ -355,13 +355,18 @@ module DBus
       when Type::ARRAY
         append_array(type.child, val)
       when Type::STRUCT, Type::DICT_ENTRY
-        # TODO: use duck typing, val.respond_to?
-        raise TypeException, "Struct/DE expects an Array" if !val.is_a?(Array)
-        if type.sigtype == Type::DICT_ENTRY && val.size != 2
-          raise TypeException, "Dict entry expects a pair"
+        unless val.is_a?(Array) || val.is_a?(Struct)
+          type_name = Type::TYPE_MAPPING[type.sigtype].first
+          raise TypeException, "#{type_name} expects an Array or Struct"
         end
+
+        if type.sigtype == Type::DICT_ENTRY && val.size != 2
+          raise TypeException, "DICT_ENTRY expects a pair"
+        end
+
         if type.members.size != val.size
-          raise TypeException, "Struct/DE has #{val.size} elements but type info for #{type.members.size}"
+          type_name = Type::TYPE_MAPPING[type.sigtype].first
+          raise TypeException, "#{type_name} has #{val.size} elements but type info for #{type.members.size}"
         end
 
         struct do
