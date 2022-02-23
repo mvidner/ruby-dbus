@@ -64,7 +64,7 @@ module DBus
           if iface.name == PROPERTY_INTERFACE && member_sym == :Get
             # Use the specific property type instead of the generic variant
             # returned by Get.
-            # GetAll and Set still missing
+            # TODO: GetAll and Set still missing
             property = dbus_lookup_property(msg.params[0], msg.params[1])
             rsigs = [property.type]
           else
