@@ -153,7 +153,7 @@ To receive signals for a specific object and interface, use
 
 D-Bus booleans, numbers, strings, arrays and dictionaries become their straightforward Ruby counterparts.
 
-Structs become arrays.
+Structs become frozen arrays.
 
 Object paths become strings.
 

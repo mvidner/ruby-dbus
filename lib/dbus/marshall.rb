@@ -212,6 +212,7 @@ module DBus
         signature.members.each do |elem|
           packet << do_parse(elem)
         end
+        packet.freeze
       when Type::VARIANT
         string = read_signature
         # error checking please
