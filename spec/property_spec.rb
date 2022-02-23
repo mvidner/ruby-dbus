@@ -52,7 +52,7 @@ describe "PropertyTest" do
 
   it "tests get all" do
     all = @iface.all_properties
-    expect(all.keys.sort).to eq(["ReadMe", "ReadOrWriteMe"])
+    expect(all.keys.sort).to eq(["MyStruct", "ReadMe", "ReadOrWriteMe"])
   end
 
   it "tests get all on a V1 object" do
@@ -60,7 +60,7 @@ describe "PropertyTest" do
     iface = obj["org.ruby.SampleInterface"]
 
     all = iface.all_properties
-    expect(all.keys.sort).to eq(["ReadMe", "ReadOrWriteMe"])
+    expect(all.keys.sort).to eq(["MyStruct", "ReadMe", "ReadOrWriteMe"])
   end
 
   it "tests unknown property reading" do
@@ -115,5 +115,12 @@ describe "PropertyTest" do
     quitter.join
 
     expect(received["ReadOrWriteMe"]).to eq("VALUE")
+  end
+
+  context "a struct-typed property" do
+    it "gets read as a struct, not an array (#97)" do
+      struct = @iface["MyStruct"]
+      expect(struct).to be_frozen
+    end
   end
 end

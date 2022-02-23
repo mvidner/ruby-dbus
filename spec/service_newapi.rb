@@ -16,6 +16,7 @@ class Test < DBus::Object
     super path
     @read_me = "READ ME"
     @read_or_write_me = "READ OR WRITE ME"
+    @my_struct = ["three", "strings", "in a struct"].freeze
   end
 
   # Create an interface aggregating all upcoming dbus_method defines.
@@ -60,6 +61,11 @@ class Test < DBus::Object
       [bytes]
     end
 
+    dbus_method :Coordinates, "out coords:(dd)" do
+      coords = [3.0, 4.0].freeze
+      [coords]
+    end
+
     # Properties:
     # ReadMe:string, returns "READ ME" at first, then what WriteMe received
     # WriteMe:string
@@ -79,6 +85,8 @@ class Test < DBus::Object
       raise "Something failed"
     end
     dbus_reader :explosive, "s"
+
+    dbus_attr_reader :my_struct, "(sss)"
   end
 
   # closing and reopening the same interface
