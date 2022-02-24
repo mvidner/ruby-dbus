@@ -24,7 +24,7 @@
 #
 
 Name:           rubygem-ruby-dbus
-Version:        0.17.0
+Version:        0.18.0.beta1
 Release:        0
 %define mod_name ruby-dbus
 %define mod_full_name %{mod_name}-%{version}
@@ -38,7 +38,7 @@ BuildRequires:  netcfg
 # /MANUAL
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  ruby-macros >= 5
-BuildRequires:  %{ruby >= 2.1.0}
+BuildRequires:  %{ruby >= 2.4.0}
 BuildRequires:  %{rubygem gem2rpm}
 Url:            https://github.com/mvidner/ruby-dbus
 Source:         https://rubygems.org/gems/%{mod_full_name}.gem

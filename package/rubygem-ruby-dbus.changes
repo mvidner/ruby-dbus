@@ -1,4 +1,17 @@
 -------------------------------------------------------------------
+Thu Feb 24 09:48:24 UTC 2022 - Martin Vidner <mvidner@suse.com>
+
+- 0.18.0.beta1
+ API:
+ * D-Bus structs have been passed as Ruby arrays. Now these arrays
+   are frozen.
+ * Ruby structs can be used as D-Bus structs.
+ Bug fixes:
+ * Returning the value for o.fd.DBus.Properties.Get, use the
+   specific property signature, not the generic Variant
+   (gh#mvidner/ruby-dbus#97).
+
+-------------------------------------------------------------------
 Fri Feb 11 18:56:31 UTC 2022 - Martin Vidner <mvidner@suse.com>
 
 - 0.17.0

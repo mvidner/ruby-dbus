@@ -2,13 +2,20 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.18.0.beta1 - 2022-02-24
+
 API:
  * D-Bus structs have been passed as Ruby arrays. Now these arrays are frozen.
  * Ruby structs can be used as D-Bus structs.
 
 Bug fixes:
  * Returning the value for o.fd.DBus.Properties.Get, use the specific property
-   signature, not the generic Variant.
+   signature, not the generic Variant ([#97][]).
+
+Requirements:
+ * Require Ruby 2.4, because of RuboCop 1.0.
+
+[#97]: https://github.com/mvidner/ruby-dbus/issues/97
 
 ## Ruby D-Bus 0.17.0 - 2022-02-11
 
