@@ -12,6 +12,8 @@
 
 require "socket"
 
+require_relative "../dbus/type"
+
 # = D-Bus main module
 #
 # Module containing all the D-Bus modules and classes.
@@ -35,27 +37,11 @@ module DBus
     # FIXME: Maybe should be accessed with a "consumed_size" method.
     attr_reader :idx
 
-    # Create a new unmarshaller for the given data _buffer_ and _endianness_.
+    # Create a new unmarshaller for the given data *buffer*.
+    # @param buffer [String]
+    # @param endianness [:little,:big]
     def initialize(buffer, endianness)
-      # forward compatibility with new tests
-      endianness = BIG_END if endianness == :big
-      endianness = LIL_END if endianness == :little
-
-      @buffy = buffer.dup
-      @endianness = endianness
-      case @endianness
-      when BIG_END
-        @uint32 = "N"
-        @uint16 = "n"
-        @double = "G"
-      when LIL_END
-        @uint32 = "V"
-        @uint16 = "v"
-        @double = "E"
-      else
-        raise InvalidPacketException, "Incorrect endianness #{@endianness}"
-      end
-      @idx = 0
+      @raw_msg = RawMessage.new(buffer)
     end
 
     # Unmarshall the buffer for a given _signature_ and length _len_.
@@ -76,183 +62,88 @@ module DBus
       ret
     end
 
-    # Align the pointer index on a byte index of _alignment_, which
-    # must be 1, 2, 4 or 8.
-    def align(alignment)
-      case alignment
-      when 1
-        nil
-      when 2, 4, 8
-        bits = alignment - 1
-        pad_size = ((@idx + bits) & ~bits) - @idx
-        pad = read(pad_size)
-        unless pad.bytes.all?(&:zero?)
-          raise InvalidPacketException, "Alignment bytes are not NUL"
-        end
-      else
-        raise ArgumentError, "Unsupported alignment #{alignment}"
-      end
+    # after the headers, the body starts 8-aligned
+    def align_body
+      @raw_msg.align(8)
     end
 
-    ###############################################################
-    # FIXME: does anyone except the object itself call the above methods?
-    # Yes : Message marshalling code needs to align "body" to 8 byte boundary
     private
 
-    # Retrieve the next _nbytes_ number of bytes from the buffer.
-    def read(nbytes)
-      raise IncompleteBufferException if @idx + nbytes > @buffy.bytesize
-
-      ret = @buffy.slice(@idx, nbytes)
-      @idx += nbytes
-      ret
+    # @param data_class [Class] a subclass of Data::Base (specific?)
+    # @return [::Integer,::Float]
+    def aligned_read_value(data_class)
+      @raw_msg.align(data_class.alignment)
+      bytes = @raw_msg.read(data_class.alignment)
+      bytes.unpack1(data_class.format[@raw_msg.endianness])
     end
 
-    # Read the string length and string itself from the buffer.
-    # Return the string.
-    def read_string
-      align(4)
-      str_sz = read(4).unpack1(@uint32)
-      ret = @buffy.slice(@idx, str_sz)
-      raise IncompleteBufferException if @idx + str_sz + 1 > @buffy.bytesize
-
-      @idx += str_sz
-      if @buffy[@idx].ord != 0
-        raise InvalidPacketException, "String is not NUL-terminated"
-      end
-
-      @idx += 1
-      # no exception, see check above
-      ret
-    end
-
-    # Read the signature length and signature itself from the buffer.
-    # Return the signature.
-    def read_signature
-      str_sz = read(1).unpack1("C")
-      ret = @buffy.slice(@idx, str_sz)
-      raise IncompleteBufferException if @idx + str_sz + 1 > @buffy.bytesize
-
-      @idx += str_sz
-      if @buffy[@idx].ord != 0
-        raise InvalidPacketException, "Type is not NUL-terminated"
-      end
-
-      @idx += 1
-      # no exception, see check above
-      ret
-    end
+    SIGNATURE_TYPE = Type::Type.new(Type::SIGNATURE).freeze
+    private_constant :SIGNATURE_TYPE
 
     # Based on the _signature_ type, retrieve a packet from the buffer
     # and return it.
+    # @param signature [Type::Type]
+    # @return [Data::Base]
     def do_parse(signature)
+      # FIXME: better naming for packet vs value
       packet = nil
-      case signature.sigtype
-      when Type::BYTE
-        packet = read(1).unpack1("C")
-      when Type::UINT16
-        align(2)
-        packet = read(2).unpack1(@uint16)
-      when Type::INT16
-        align(2)
-        packet = read(2).unpack1(@uint16)
-        if (packet & 0x8000) != 0
-          packet -= 0x10000
-        end
-      when Type::UINT32, Type::UNIX_FD
-        align(4)
-        packet = read(4).unpack1(@uint32)
-      when Type::INT32
-        align(4)
-        packet = read(4).unpack1(@uint32)
-        if (packet & 0x80000000) != 0
-          packet -= 0x100000000
-        end
-      when Type::UINT64
-        align(8)
-        packet_l = read(4).unpack1(@uint32)
-        packet_h = read(4).unpack1(@uint32)
-        packet = if @endianness == LIL_END
-                   packet_l + packet_h * 2**32
-                 else
-                   packet_l * 2**32 + packet_h
-                 end
-      when Type::INT64
-        align(8)
-        packet_l = read(4).unpack1(@uint32)
-        packet_h = read(4).unpack1(@uint32)
-        packet = if @endianness == LIL_END
-                   packet_l + packet_h * 2**32
-                 else
-                   packet_l * 2**32 + packet_h
-                 end
-        if (packet & 0x8000000000000000) != 0
-          packet -= 0x10000000000000000
-        end
-      when Type::DOUBLE
-        align(8)
-        packet = read(8).unpack1(@double)
-      when Type::BOOLEAN
-        align(4)
-        v = read(4).unpack1(@uint32)
-        unless [0, 1].member?(v)
-          raise InvalidPacketException, "BOOLEAN must be 0 or 1, found #{v}"
-        end
+      data_class = Data::BY_TYPE_CODE[signature.sigtype]
 
-        packet = (v == 1)
-      when Type::ARRAY
-        align(4)
-        # checks please
-        array_sz = read(4).unpack1(@uint32)
-        if array_sz > 67_108_864
-          raise InvalidPacketException, "ARRAY body longer than 64MiB"
-        end
-
-        align(signature.child.alignment)
-        raise IncompleteBufferException if @idx + array_sz > @buffy.bytesize
-
-        packet = []
-        start_idx = @idx
-        while @idx - start_idx < array_sz
-          packet << do_parse(signature.child)
-        end
-
-        if signature.child.sigtype == Type::DICT_ENTRY
-          packet = Hash[packet]
-        end
-      when Type::STRUCT
-        align(8)
-        packet = []
-        signature.members.each do |elem|
-          packet << do_parse(elem)
-        end
-        packet.freeze
-      when Type::VARIANT
-        string = read_signature
-        # error checking please
-        sigs = Type::Parser.new(string).parse
-        unless sigs.size == 1
-          raise InvalidPacketException, "VARIANT must contain 1 value, #{sigs.size} found"
-        end
-
-        sig = sigs.first
-        align(sig.alignment)
-        packet = do_parse(sig)
-      when Type::OBJECT_PATH
-        packet = read_string
-      when Type::STRING
-        packet = read_string
-        packet.force_encoding("UTF-8")
-      when Type::SIGNATURE
-        packet = read_signature
-      when Type::DICT_ENTRY
-        align(8)
-        key = do_parse(signature.members[0])
-        value = do_parse(signature.members[1])
-        packet = [key, value]
-      else
+      if data_class.nil?
         raise NotImplementedError,
               "sigtype: #{signature.sigtype} (#{signature.sigtype.chr})"
+      end      
+
+      if data_class.is_fixed?
+        value = aligned_read_value(data_class)
+        packet = data_class.from_raw(value)
+      elsif data_class.is_basic?
+        size = aligned_read_value(data_class.size_class)
+        value = @raw_msg.read(size)
+        nul = @raw_msg.read(1)
+        if nul != "\u0000"
+          raise InvalidPacketException, "#{data_class} is not NUL-terminated"
+        end
+
+        packet = data_class.from_raw(value)
+      else
+        @raw_msg.align(data_class.alignment)
+        case signature.sigtype
+        when Type::STRUCT, Type::DICT_ENTRY
+          values = signature.members.map do |child_sig|
+            do_parse(child_sig)
+          end
+          packet = data_class.from_child_bases(values)
+
+        when Type::VARIANT
+          data_sig = do_parse(SIGNATURE_TYPE) # -> Data::Signature
+          type = Type::Parser.new(data_sig.value).parse[0] # -> Type::Type
+
+          value = do_parse(type)
+          packet = data_class.from_child_base(value)
+
+        when Type::ARRAY
+          array_bytes = aligned_read_value(Data::UInt32)
+          raise InvalidPacketException if array_bytes > 67_108_864
+
+          ## not needed unless the IncompleteBE matters
+          # align(signature.child.alignment)
+          ## peeks inside
+          # raise IncompleteBufferException if @idx + array_bytes > @buffy.bytesize
+          # IncompleteBE - could prealloc?
+
+          items = []
+          start_pos = @raw_msg.pos
+          while @raw_msg.pos < start_pos + array_bytes
+            item = do_parse(signature.child)
+            items << item
+          end
+          packet = data_class.from_child_bases(items)
+
+          if signature.child.sigtype == Type::DICT_ENTRY
+            packet = Hash[packet]
+          end
+        end
       end
       packet
     end

@@ -204,13 +204,7 @@ module DBus
     #   the detected message (self) and
     #   the index pointer of the buffer where the message data ended.
     def unmarshall_buffer(buf)
-      buf = buf.dup
-      endianness = if buf[0] == "l"
-                     LIL_END
-                   else
-                     BIG_END
-                   end
-      pu = PacketUnmarshaller.new(buf, endianness)
+      pu = PacketUnmarshaller.new(buf, RawMessage.endianness(buf[0]))
       mdata = pu.unmarshall(MESSAGE_SIGNATURE)
       _, @message_type, @flags, @protocol, @body_length, @serial,
         headers = mdata

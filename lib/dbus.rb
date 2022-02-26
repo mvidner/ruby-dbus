@@ -27,6 +27,7 @@ require_relative "dbus/proxy_object"
 require_relative "dbus/proxy_object_factory"
 require_relative "dbus/proxy_object_interface"
 require_relative "dbus/type"
+require_relative "dbus/value"
 require_relative "dbus/xml"
 
 require "socket"
@@ -58,6 +59,7 @@ module DBus
 
   # Exception raised when an unmarshalled buffer is truncated and
   # incomplete.
+  # FIXME: it needs the buffer.dup because otherwise the buffer would be consumed? or not? via idx/pos?
   class IncompleteBufferException < Exception
   end
 
