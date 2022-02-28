@@ -24,6 +24,9 @@ module DBus
   #
   # Class that handles the conversion (unmarshalling) of payload data
   # to Array.
+  #
+  # Spelling note: this codebase always uses a double L
+  # in the "marshall" word and its inflections.
   class PacketUnmarshaller
     # Index pointer that points to the byte in the data that is
     # currently being processed.
@@ -34,6 +37,10 @@ module DBus
 
     # Create a new unmarshaller for the given data _buffer_ and _endianness_.
     def initialize(buffer, endianness)
+      # forward compatibility with new tests
+      endianness = BIG_END if endianness == :big
+      endianness = LIL_END if endianness == :little
+
       @buffy = buffer.dup
       @endianness = endianness
       case @endianness
@@ -185,7 +192,9 @@ module DBus
       when Type::BOOLEAN
         align(4)
         v = read(4).unpack1(@uint32)
-        raise InvalidPacketException if ![0, 1].member?(v)
+        unless [0, 1].member?(v)
+          raise InvalidPacketException, "BOOLEAN must be 0 or 1, found #{v}"
+        end
 
         packet = (v == 1)
       when Type::ARRAY
