@@ -20,6 +20,7 @@ describe DBus::ObjectPath do
       expect(described_class.valid?("/EmptyLastComponent/")).to be_falsey
       expect(described_class.valid?("/Invalid Character")).to be_falsey
       expect(described_class.valid?("/Invalid-Character")).to be_falsey
+      expect(described_class.valid?("/InválídCháráctér")).to be_falsey
     end
   end
 end

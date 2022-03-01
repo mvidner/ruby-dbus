@@ -8,6 +8,7 @@ RSpec.shared_examples "parses good data" do |cases|
   describe "parses all the instances of good test data" do
     cases.each_with_index do |(buffer, endianness, value), i|
       it "parses data ##{i}" do
+        buffer = String.new(buffer, encoding: Encoding::BINARY)
         subject = described_class.new(buffer, endianness)
         # note the singleton [value],
         # unmarshall works on multiple signatures but we use one
@@ -21,6 +22,7 @@ RSpec.shared_examples "reports bad data" do |cases|
   describe "reports all the instances of bad test data" do
     cases.each_with_index do |(buffer, endianness, exc_class, msg_re), i|
       it "reports data ##{i}" do
+        buffer = String.new(buffer, encoding: Encoding::BINARY)
         subject = described_class.new(buffer, endianness)
         expect { subject.unmarshall(signature) }.to raise_error(exc_class, msg_re)
       end
@@ -209,4 +211,108 @@ describe DBus::PacketUnmarshaller do
     include_examples "parses good data", good
     include_examples "reports empty data"
   end
+
+  context "STRINGs" do
+    let(:signature) { "s" }
+    good = [
+      ["\x00\x00\x00\x00\x00", :little, ""],
+      ["\x02\x00\x00\x00\xC5\x98\x00", :little, "Ř"],
+      ["\x03\x00\x00\x00\xEF\xBF\xBF\x00", :little, "\uffff"],
+      ["\x00\x00\x00\x00\x00", :big, ""],
+      ["\x00\x00\x00\x02\xC5\x98\x00", :big, "Ř"],
+      ["\x00\x00\x00\x03\xEF\xBF\xBF\x00", :big, "\uffff"],
+      # maximal UTF-8 codepoint U+10FFFF
+      ["\x00\x00\x00\x04\xF4\x8F\xBF\xBF\x00", :big, "\u{10ffff}"]
+    ]
+    _bad_but_valid = [
+      # NUL in the middle
+      ["\x03\x00\x00\x00a\x00b\x00", :little, DBus::InvalidPacketException, /Invalid string/],
+      # invalid UTF-8
+      ["\x04\x00\x00\x00\xFF\xFF\xFF\xFF\x00", :little, DBus::InvalidPacketException, /Invalid string/],
+      # overlong sequence encoding an "A"
+      ["\x02\x00\x00\x00\xC1\x81\x00", :little, DBus::InvalidPacketException, /Invalid string/],
+      # first codepoint outside UTF-8, U+110000
+      ["\x04\x00\x00\x00\xF4\x90\xC0\xC0\x00", :little, DBus::InvalidPacketException, /Invalid string/]
+
+    ]
+    bad = [
+      ["\x00\x00\x00\x00\x55", :little, DBus::InvalidPacketException, /not nul-terminated/],
+      ["\x01\x00\x00\x00@\x55", :little, DBus::InvalidPacketException, /not nul-terminated/],
+      ["\x00\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
+      ["\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
+      ["\x00\x00", :little, DBus::IncompleteBufferException, /./],
+      ["\x00", :little, DBus::IncompleteBufferException, /./]
+    ]
+    include_examples "parses good data", good
+    include_examples "reports bad data", bad
+    include_examples "reports empty data"
+  end
+
+  context "OBJECT_PATHs" do
+    let(:signature) { "o" }
+    long_path = "/#{"A" * 511}"
+    good = [
+      ["\x01\x00\x00\x00/\x00", :little, "/"],
+      ["\x20\x00\x00\x00/99Numbers/_And_Underscores/anyw\x00", :little, "/99Numbers/_And_Underscores/anyw"],
+      # no size limit like for other names
+      ["\x00\x02\x00\x00#{long_path}\x00", :little, long_path],
+      ["\x00\x00\x00\x01/\x00", :big, "/"],
+      ["\x00\x00\x00\x20/99Numbers/_And_Underscores/anyw\x00", :big, "/99Numbers/_And_Underscores/anyw"]
+    ]
+    _bad_but_valid = [
+      ["\x00\x00\x00\x00\x00", :little, DBus::InvalidPacketException, /Invalid object path/],
+      ["\x00\x00\x00\x00\x00", :big, DBus::InvalidPacketException, /Invalid object path/],
+      ["\x00\x00\x00\x05/_//_\x00", :big, DBus::InvalidPacketException, /Invalid object path/],
+      ["\x00\x00\x00\x05/_/_/\x00", :big, DBus::InvalidPacketException, /Invalid object path/],
+      ["\x00\x00\x00\x05/_/_ \x00", :big, DBus::InvalidPacketException, /Invalid object path/],
+      ["\x00\x00\x00\x05/_/_-\x00", :big, DBus::InvalidPacketException, /Invalid object path/],
+      # NUL in the middle
+      ["\x00\x00\x00\x05/_/_\x00\x00", :big, DBus::InvalidPacketException, /Invalid object path/],
+      # accented a
+      ["\x00\x00\x00\x05/_/\xC3\xA1\x00", :big, DBus::InvalidPacketException, /Invalid object path/]
+    ]
+    bad = [
+      # string-like baddies
+      ["\x00\x00\x00\x00\x55", :little, DBus::InvalidPacketException, /not nul-terminated/],
+      ["\x01\x00\x00\x00/\x55", :little, DBus::InvalidPacketException, /not nul-terminated/],
+      ["\x00\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
+      ["\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
+      ["\x00\x00", :little, DBus::IncompleteBufferException, /./],
+      ["\x00", :little, DBus::IncompleteBufferException, /./]
+    ]
+    include_examples "parses good data", good
+    include_examples "reports bad data", bad
+    include_examples "reports empty data"
+  end
+
+  context "SIGNATUREs" do
+    let(:signature) { "g" }
+    good = [
+      ["\x00\x00", :little, ""],
+      ["\x00\x00", :big, ""],
+      ["\x01b\x00", :little, "b"],
+      ["\x01b\x00", :big, "b"]
+
+    ]
+    _bad_but_valid = [
+      ["\x01!\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
+      ["\x01r\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
+      ["\x02ae\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
+      ["\x01a\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
+      # NUL in the middle
+      ["\x03a\x00y\x00", :big, DBus::InvalidPacketException, /Invalid signature/]
+    ]
+    bad = [
+      # string-like baddies
+      ["\x00\x55", :big, DBus::InvalidPacketException, /not nul-terminated/],
+      ["\x01b\x55", :big, DBus::InvalidPacketException, /not nul-terminated/],
+      ["\x00", :little, DBus::IncompleteBufferException, /./]
+    ]
+    include_examples "parses good data", good
+    include_examples "reports bad data", bad
+    include_examples "reports empty data"
+  end
+
+  # TODO: this is invalid but does not raise
+  # let(:signature) { "r" }
 end
