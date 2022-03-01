@@ -128,7 +128,7 @@ module DBus
     def read_signature
       str_sz = read(1).unpack1("C")
       ret = @buffy.slice(@idx, str_sz)
-      raise IncompleteBufferException if @idx + str_sz + 1 >= @buffy.bytesize
+      raise IncompleteBufferException if @idx + str_sz + 1 > @buffy.bytesize
 
       @idx += str_sz
       if @buffy[@idx].ord != 0
