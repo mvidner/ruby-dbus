@@ -115,7 +115,7 @@ module DBus
 
       @idx += str_sz
       if @buffy[@idx].ord != 0
-        raise InvalidPacketException, "String is not nul-terminated"
+        raise InvalidPacketException, "String is not NUL-terminated"
       end
 
       @idx += 1
@@ -132,7 +132,7 @@ module DBus
 
       @idx += str_sz
       if @buffy[@idx].ord != 0
-        raise InvalidPacketException, "Type is not nul-terminated"
+        raise InvalidPacketException, "Type is not NUL-terminated"
       end
 
       @idx += 1

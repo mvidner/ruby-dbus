@@ -236,8 +236,8 @@ describe DBus::PacketUnmarshaller do
 
     ]
     bad = [
-      ["\x00\x00\x00\x00\x55", :little, DBus::InvalidPacketException, /not nul-terminated/],
-      ["\x01\x00\x00\x00@\x55", :little, DBus::InvalidPacketException, /not nul-terminated/],
+      ["\x00\x00\x00\x00\x55", :little, DBus::InvalidPacketException, /not NUL-terminated/],
+      ["\x01\x00\x00\x00@\x55", :little, DBus::InvalidPacketException, /not NUL-terminated/],
       ["\x00\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
       ["\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
       ["\x00\x00", :little, DBus::IncompleteBufferException, /./],
@@ -273,8 +273,8 @@ describe DBus::PacketUnmarshaller do
     ]
     bad = [
       # string-like baddies
-      ["\x00\x00\x00\x00\x55", :little, DBus::InvalidPacketException, /not nul-terminated/],
-      ["\x01\x00\x00\x00/\x55", :little, DBus::InvalidPacketException, /not nul-terminated/],
+      ["\x00\x00\x00\x00\x55", :little, DBus::InvalidPacketException, /not NUL-terminated/],
+      ["\x01\x00\x00\x00/\x55", :little, DBus::InvalidPacketException, /not NUL-terminated/],
       ["\x00\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
       ["\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
       ["\x00\x00", :little, DBus::IncompleteBufferException, /./],
@@ -304,8 +304,8 @@ describe DBus::PacketUnmarshaller do
     ]
     bad = [
       # string-like baddies
-      ["\x00\x55", :big, DBus::InvalidPacketException, /not nul-terminated/],
-      ["\x01b\x55", :big, DBus::InvalidPacketException, /not nul-terminated/],
+      ["\x00\x55", :big, DBus::InvalidPacketException, /not NUL-terminated/],
+      ["\x01b\x55", :big, DBus::InvalidPacketException, /not NUL-terminated/],
       ["\x00", :little, DBus::IncompleteBufferException, /./]
     ]
     include_examples "parses good data", good
