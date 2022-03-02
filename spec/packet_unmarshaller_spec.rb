@@ -4,15 +4,29 @@
 require_relative "spec_helper"
 require "dbus"
 
+# Helper to access PacketUnmarshaller internals.
+# Add it to its public API?
+# @param pu [PacketUnmarshaller]
+# @return [String] the binary string with unconsumed data
+def remaining_buffer(p_u)
+  buf = p_u.instance_variable_get(:@buffy)
+  # This returns "" if idx is just past the end of the string,
+  # and nil if it is further.
+  buf[p_u.idx..-1]
+end
+
 RSpec.shared_examples "parses good data" do |cases|
   describe "parses all the instances of good test data" do
     cases.each_with_index do |(buffer, endianness, value), i|
       it "parses data ##{i}" do
         buffer = String.new(buffer, encoding: Encoding::BINARY)
         subject = described_class.new(buffer, endianness)
-        # note the singleton [value],
+
+        # NOTE: it's [value], not value.
         # unmarshall works on multiple signatures but we use one
         expect(subject.unmarshall(signature)).to eq([value])
+
+        expect(remaining_buffer(subject)).to be_empty
       end
     end
   end
@@ -292,7 +306,6 @@ describe DBus::PacketUnmarshaller do
       ["\x00\x00", :big, ""],
       ["\x01b\x00", :little, "b"],
       ["\x01b\x00", :big, "b"]
-
     ]
     _bad_but_valid = [
       ["\x01!\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
@@ -313,6 +326,112 @@ describe DBus::PacketUnmarshaller do
     include_examples "reports empty data"
   end
 
+  context "ARRAYs" do
+    # marshalling format:
+    # - (alignment of data_bytes)
+    # - UINT32 data_bytes (without any alignment padding)
+    # - (alignment of ITEM_TYPE, even if the array is empty)
+    # - ITEM_TYPE item1
+    # - (alignment of ITEM_TYPE)
+    # - ITEM_TYPE item2...
+    context "of BYTEs" do
+      # TODO: will want to special-case this
+      # and represent them as binary strings
+      let(:signature) { "ay" }
+
+      # Here we repeat the STRINGs test data (without the trailing NUL)
+      # but the outcomes are different
+      good = [
+        ["\x00\x00\x00\x00", :little, []],
+        ["\x02\x00\x00\x00\xC5\x98", :little, [0xC5, 0x98]],
+        ["\x03\x00\x00\x00\xEF\xBF\xBF", :little, [0xEF, 0xBF, 0xBF]],
+        ["\x00\x00\x00\x00", :big, []],
+        ["\x00\x00\x00\x02\xC5\x98", :big, [0xC5, 0x98]],
+        ["\x00\x00\x00\x03\xEF\xBF\xBF", :big, [0xEF, 0xBF, 0xBF]],
+        # maximal UTF-8 codepoint U+10FFFF
+        ["\x00\x00\x00\x04\xF4\x8F\xBF\xBF", :big, [0xF4, 0x8F, 0xBF, 0xBF]],
+        # NUL in the middle
+        ["\x03\x00\x00\x00a\x00b", :little, [0x61, 0, 0x62]],
+        # invalid UTF-8
+        ["\x04\x00\x00\x00\xFF\xFF\xFF\xFF", :little, [0xFF, 0xFF, 0xFF, 0xFF]],
+        # overlong sequence encoding an "A"
+        ["\x02\x00\x00\x00\xC1\x81", :little, [0xC1, 0x81]],
+        # first codepoint outside UTF-8, U+110000
+        ["\x04\x00\x00\x00\xF4\x90\xC0\xC0", :little, [0xF4, 0x90, 0xC0, 0xC0]]
+      ]
+      bad = [
+        # With basic types, by the time we have found the message to be invalid,
+        # it is nevertheless well-formed and we could read the next message.
+        # However, an overlong array (body longer than 64MiB) is a good enough
+        # reason to drop the connection, which is what InvalidPacketException
+        # does, right? Doesn't it?
+        # Well it does, by crashing the entire process.
+        # That should be made more graceful.
+
+        ["\x01\x00\x00\x04", :little, DBus::InvalidPacketException, /ARRAY body longer than 64MiB/],
+
+        ["\x02\x00\x00\x00\xAA", :little, DBus::IncompleteBufferException, /./],
+        ["\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
+        ["\x00\x00", :little, DBus::IncompleteBufferException, /./],
+        ["\x00", :little, DBus::IncompleteBufferException, /./]
+      ]
+      include_examples "parses good data", good
+      include_examples "reports bad data", bad
+      include_examples "reports empty data"
+    end
+
+    context "of UINT64s" do
+      let(:signature) { "at" }
+
+      good = [
+        [
+          # body size, padding
+          "\x00\x00\x00\x00" \
+          "\x00\x00\x00\x00", :little, []
+        ],
+        [
+          # body size, padding, item, item
+          "\x10\x00\x00\x00" \
+          "\x00\x00\x00\x00" \
+          "\x01\x00\x00\x00\x00\x00\x00\x00" \
+          "\x02\x00\x00\x00\x00\x00\x00\x00", :little, [1, 2]
+        ]
+      ]
+      bad = [
+        # missing padding
+        ["\x00\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
+        [
+          # (zero) body size, non-zero padding, (no items)
+          "\x00\x00\x00\x00" \
+          "\xDE\xAD\xBE\xEF", :little, DBus::InvalidPacketException, /./
+        ]
+      ]
+      include_examples "parses good data", good
+      include_examples "reports bad data", bad
+      include_examples "reports empty data"
+    end
+  end
+
   # TODO: this is invalid but does not raise
   # let(:signature) { "r" }
+  context "STRUCTs" do
+    context "(generic 'r' signature)" do
+      let(:signature) { "r" }
+    end
+
+    context "of two shorts" do
+      let(:signature) { "(qq)" }
+    end
+  end
+
+  # makes sense here? or in array? remember invalid sigs are rejected elsewhere
+  context "DICT_ENTRYs" do
+    context "(generic 'e' signature)" do
+      let(:signature) { "e" }
+    end
+  end
+
+  context "VARIANTs" do
+    let(:signature) { "v" }
+  end
 end

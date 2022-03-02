@@ -204,7 +204,9 @@ module DBus
         align(4)
         # checks please
         array_sz = read(4).unpack1(@uint32)
-        raise InvalidPacketException if array_sz > 67_108_864
+        if array_sz > 67_108_864
+          raise InvalidPacketException, "ARRAY body longer than 64MiB"
+        end
 
         align(signature.child.alignment)
         raise IncompleteBufferException if @idx + array_sz > @buffy.bytesize
