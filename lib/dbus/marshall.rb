@@ -84,8 +84,11 @@ module DBus
         nil
       when 2, 4, 8
         bits = alignment - 1
-        @idx = @idx + bits & ~bits
-        raise IncompleteBufferException if @idx > @buffy.bytesize
+        pad_size = ((@idx + bits) & ~bits) - @idx
+        pad = read(pad_size)
+        unless pad.bytes.all?(&:zero?)
+          raise InvalidPacketException, "Alignment bytes are not NUL"
+        end
       else
         raise ArgumentError, "Unsupported alignment #{alignment}"
       end
