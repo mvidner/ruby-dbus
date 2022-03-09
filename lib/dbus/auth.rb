@@ -127,7 +127,7 @@ module DBus
 
     # Start the authentication process.
     def authenticate
-      if RbConfig::CONFIG["target_os"] =~ /freebsd/
+      if Ractor.count < 2 && RbConfig::CONFIG["target_os"] =~ /freebsd/
         @socket.sendmsg(0.chr, 0, nil, [:SOCKET, :SCM_CREDS, ""])
       else
         @socket.write(0.chr)

@@ -17,17 +17,18 @@ module DBus
   # The default one logs to STDERR,
   # with DEBUG if $DEBUG is set, otherwise INFO.
   def logger
-    unless defined? @logger
-      @logger = Logger.new($stderr)
-      @logger.level = $DEBUG ? Logger::DEBUG : Logger::INFO
+    unless Ractor.current[:logger]
+      logger = Logger.new($stderr)
+      logger.level = $DEBUG ? Logger::DEBUG : Logger::INFO
+      Ractor.current[:logger] = logger
     end
-    @logger
+    Ractor.current[:logger]
   end
   module_function :logger
 
   # Set the logger for the DBus module
   def logger=(logger)
-    @logger = logger
+    Ractor.current[:logger] = logger
   end
   module_function :logger=
 end
