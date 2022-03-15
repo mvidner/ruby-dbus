@@ -22,9 +22,14 @@ RSpec.shared_examples "parses good data" do |cases|
         buffer = String.new(buffer, encoding: Encoding::BINARY)
         subject = described_class.new(buffer, endianness)
 
-        # NOTE: it's [value], not value.
+        results = subject.unmarshall(signature)
         # unmarshall works on multiple signatures but we use one
-        expect(subject.unmarshall(signature)).to eq([value])
+        expect(results).to be_an(Array)
+        expect(results.size).to eq(1)
+        result = results.first
+
+        result = result.value if result.is_a?(DBus::Data::Base)
+        expect(result).to eq(value)
 
         expect(remaining_buffer(subject)).to be_empty
       end
