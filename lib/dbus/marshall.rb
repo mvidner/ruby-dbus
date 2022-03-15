@@ -41,7 +41,7 @@ module DBus
     # @param buffer [String]
     # @param endianness [:little,:big]
     def initialize(buffer, endianness)
-      @raw_msg = RawMessage.new(buffer)
+      @raw_msg = RawMessage.new(buffer, endianness)
     end
 
     # Unmarshall the buffer for a given _signature_ and length _len_.

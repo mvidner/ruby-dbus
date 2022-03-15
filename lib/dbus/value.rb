@@ -11,10 +11,12 @@ module DBus
     attr_reader :endianness
 
     # @param bytes [String]
-    def initialize(bytes)
+    # @param endianness [:little,:big,nil]
+    #    if not given, read the 1st byte of *bytes*
+    def initialize(bytes, endianness = nil)
       @bytes = bytes
       @pos = 0
-      @endianness = self.class.endianness(@bytes[0])
+      @endianness = endianness || self.class.endianness(@bytes[0])
     end
 
     # Get the endiannes switch as a Symbol,
@@ -28,7 +30,7 @@ module DBus
       when BIG_END
         :big
       else
-        raise InvalidPacketException, "Incorrect endianness #{tag_char}.inspect"
+        raise InvalidPacketException, "Incorrect endianness #{tag_char.inspect}"
       end
     end
 
