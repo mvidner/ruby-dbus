@@ -312,6 +312,16 @@ describe DBus::PacketUnmarshaller do
       ["\x01r\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
       ["\x02ae\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
       ["\x01a\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
+      # dict_entry with other than 2 members
+      ["\x03a{}\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
+      ["\x04a{s}\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
+      ["\x06a{sss}\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
+      # dict_entry with non-basic key
+      ["\x05a{vs}\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
+      # dict_entry outside array
+      ["\x04{sv}\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
+      # dict_entry outside array
+      ["\x07a({sv})\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
       # NUL in the middle
       ["\x03a\x00y\x00", :big, DBus::InvalidPacketException, /Invalid signature/]
     ]
@@ -410,28 +420,157 @@ describe DBus::PacketUnmarshaller do
       include_examples "reports bad data", bad
       include_examples "reports empty data"
     end
+
+    # arrays let us demonstrate the padding of their elements
+    context "of STRUCT of 2 UINT16s" do
+      let(:signature) { "a(qq)" }
+
+      good = [
+        [
+          # body size, padding
+          "\x00\x00\x00\x00" \
+          "\x00\x00\x00\x00", :little, []
+        ],
+        [
+          # body size, padding, item, padding, item
+          "\x0C\x00\x00\x00" \
+          "\x00\x00\x00\x00" \
+          "\x01\x00\x02\x00" \
+          "\x00\x00\x00\x00" \
+          "\x03\x00\x04\x00", :little, [[1, 2], [3, 4]]
+        ],
+        [
+          # body size, padding, item, padding, item, padding, item
+          "\x14\x00\x00\x00" \
+          "\x00\x00\x00\x00" \
+          "\x05\x00\x06\x00" \
+          "\x00\x00\x00\x00" \
+          "\x07\x00\x08\x00" \
+          "\x00\x00\x00\x00" \
+          "\x09\x00\x0A\x00", :little, [[5, 6], [7, 8], [9, 10]]
+        ]
+      ]
+      bad = [
+        # missing padding
+        ["\x00\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
+        [
+          # (zero) body size, non-zero padding, (no items)
+          "\x00\x00\x00\x00" \
+          "\xDE\xAD\xBE\xEF", :little, DBus::InvalidPacketException, /./
+        ]
+      ]
+      include_examples "parses good data", good
+      include_examples "reports bad data", bad
+      include_examples "reports empty data"
+    end
+
+    context "of DICT_ENTRIES" do
+      let(:signature) { "a{yq}" }
+
+      good = [
+        [
+          # body size, padding
+          "\x00\x00\x00\x00" \
+          "\x00\x00\x00\x00", :little, {}
+        ],
+        [
+          # 4 body size,
+          # 4 (dict_entry) padding,
+          # 1 key, 1 padding, 2 value
+          # 4 (dict_entry) padding,
+          # 1 key, 1 padding, 2 value
+          "\x0C\x00\x00\x00" \
+          "\x00\x00\x00\x00" \
+          "\x01\x00\x02\x00" \
+          "\x00\x00\x00\x00" \
+          "\x03\x00\x04\x00", :little, { 1 => 2, 3 => 4 }
+        ],
+        [
+          # 4 body size,
+          # 4 (dict_entry) padding,
+          # 1 key, 1 padding, 2 value
+          # 4 (dict_entry) padding,
+          # 1 key, 1 padding, 2 value
+          "\x00\x00\x00\x0C" \
+          "\x00\x00\x00\x00" \
+          "\x01\x00\x00\x02" \
+          "\x00\x00\x00\x00" \
+          "\x03\x00\x00\x04", :big, { 1 => 2, 3 => 4 }
+        ]
+      ]
+      bad = [
+        # missing padding
+        ["\x00\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
+        [
+          # (zero) body size, non-zero padding, (no items)
+          "\x00\x00\x00\x00" \
+          "\xDE\xAD\xBE\xEF", :little, DBus::InvalidPacketException, /./
+        ]
+      ]
+      include_examples "parses good data", good
+      include_examples "reports bad data", bad
+      include_examples "reports empty data"
+    end
   end
 
-  # TODO: this is invalid but does not raise
-  # let(:signature) { "r" }
   context "STRUCTs" do
-    context "(generic 'r' signature)" do
+    # TODO: this is invalid but does not raise
+    context "(generic 'r' struct)" do
       let(:signature) { "r" }
     end
 
     context "of two shorts" do
       let(:signature) { "(qq)" }
+
+      good = [
+        ["\x01\x00\x02\x00", :little, [1, 2]],
+        ["\x00\x03\x00\x04", :big, [3, 4]]
+      ]
+      include_examples "parses good data", good
+      include_examples "reports empty data"
     end
   end
 
   # makes sense here? or in array? remember invalid sigs are rejected elsewhere
   context "DICT_ENTRYs" do
-    context "(generic 'e' signature)" do
+    context "(generic 'e' dict_entry)" do
       let(:signature) { "e" }
     end
   end
 
   context "VARIANTs" do
     let(:signature) { "v" }
+
+    good = [
+      ["\x01y\x00\xFF", :little, 255],
+      [
+        # signature, padding, value
+        "\x01u\x00" \
+        "\x00" \
+        "\x01\x00\x00\x00", :little, 1
+      ],
+      # nested variant
+      [
+        "\x01v\x00" \
+        "\x01y\x00\xFF", :little, 255
+      ]
+    ]
+    _bad_but_valid = [
+      # variant nested too deep
+      [
+        "#{"\x01v\x00" * 70}" \
+        "\x01y\x00\xFF", :little, DBus::InvalidPacketException, /nested too deep/
+      ]
+    ]
+    bad = [
+      # IDEA: test other libraries by sending them an empty variant?
+      # the signature has no type
+      ["\x00\x00", :little, DBus::InvalidPacketException, /1 value, 0 found/],
+      # the signature has more than one type
+      ["\x02yy\x00\xFF\xFF", :little, DBus::InvalidPacketException, /1 value, 2 found/]
+    ]
+    include_examples "parses good data", good
+    include_examples "reports bad data", bad
+    include_examples "reports empty data"
   end
 end
