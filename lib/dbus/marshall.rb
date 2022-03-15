@@ -230,7 +230,12 @@ module DBus
       when Type::VARIANT
         string = read_signature
         # error checking please
-        sig = Type::Parser.new(string).parse[0]
+        sigs = Type::Parser.new(string).parse
+        unless sigs.size == 1
+          raise InvalidPacketException, "VARIANT must contain 1 value, #{sigs.size} found"
+        end
+
+        sig = sigs.first
         align(sig.alignment)
         packet = do_parse(sig)
       when Type::OBJECT_PATH

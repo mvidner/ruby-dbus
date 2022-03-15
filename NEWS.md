@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+Bug fixes:
+ * Detect more malformed messages: non-NUL padding bytes, variants with
+   multiple or no value.
+
 ## Ruby D-Bus 0.18.0.beta1 - 2022-02-24
 
 API:
