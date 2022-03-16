@@ -110,14 +110,19 @@ module DBus
 
         when Type::VARIANT
           data_sig = do_parse(SIGNATURE_TYPE) # -> Data::Signature
-          type = Type::Parser.new(data_sig.value).parse[0] # -> Type::Type
+          types = Type::Parser.new(data_sig.value).parse # -> Array<Type::Type>
+          unless types.size == 1
+            raise InvalidPacketException, "VARIANT must contain 1 value, #{types.size} found"
+          end
 
-          value = do_parse(type)
+          value = do_parse(types.first)
           packet = data_class.from_child_base(value)
 
         when Type::ARRAY
           array_bytes = aligned_read_value(Data::UInt32)
-          raise InvalidPacketException if array_bytes > 67_108_864
+          if array_bytes > 67_108_864
+            raise InvalidPacketException, "ARRAY body longer than 64MiB"
+          end
 
           ## not needed unless the IncompleteBE matters
           # align(signature.child.alignment)
