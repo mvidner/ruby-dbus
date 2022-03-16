@@ -24,6 +24,9 @@ module DBus
   #
   # Class that handles the conversion (unmarshalling) of payload data
   # to Array.
+  #
+  # Spelling note: this codebase always uses a double L
+  # in the "marshall" word and its inflections.
   class PacketUnmarshaller
     # Index pointer that points to the byte in the data that is
     # currently being processed.
@@ -34,6 +37,10 @@ module DBus
 
     # Create a new unmarshaller for the given data _buffer_ and _endianness_.
     def initialize(buffer, endianness)
+      # forward compatibility with new tests
+      endianness = BIG_END if endianness == :big
+      endianness = LIL_END if endianness == :little
+
       @buffy = buffer.dup
       @endianness = endianness
       case @endianness
@@ -77,8 +84,11 @@ module DBus
         nil
       when 2, 4, 8
         bits = alignment - 1
-        @idx = @idx + bits & ~bits
-        raise IncompleteBufferException if @idx > @buffy.bytesize
+        pad_size = ((@idx + bits) & ~bits) - @idx
+        pad = read(pad_size)
+        unless pad.bytes.all?(&:zero?)
+          raise InvalidPacketException, "Alignment bytes are not NUL"
+        end
       else
         raise ArgumentError, "Unsupported alignment #{alignment}"
       end
@@ -108,7 +118,7 @@ module DBus
 
       @idx += str_sz
       if @buffy[@idx].ord != 0
-        raise InvalidPacketException, "String is not nul-terminated"
+        raise InvalidPacketException, "String is not NUL-terminated"
       end
 
       @idx += 1
@@ -121,11 +131,11 @@ module DBus
     def read_signature
       str_sz = read(1).unpack1("C")
       ret = @buffy.slice(@idx, str_sz)
-      raise IncompleteBufferException if @idx + str_sz + 1 >= @buffy.bytesize
+      raise IncompleteBufferException if @idx + str_sz + 1 > @buffy.bytesize
 
       @idx += str_sz
       if @buffy[@idx].ord != 0
-        raise InvalidPacketException, "Type is not nul-terminated"
+        raise InvalidPacketException, "Type is not NUL-terminated"
       end
 
       @idx += 1
@@ -185,14 +195,18 @@ module DBus
       when Type::BOOLEAN
         align(4)
         v = read(4).unpack1(@uint32)
-        raise InvalidPacketException if ![0, 1].member?(v)
+        unless [0, 1].member?(v)
+          raise InvalidPacketException, "BOOLEAN must be 0 or 1, found #{v}"
+        end
 
         packet = (v == 1)
       when Type::ARRAY
         align(4)
         # checks please
         array_sz = read(4).unpack1(@uint32)
-        raise InvalidPacketException if array_sz > 67_108_864
+        if array_sz > 67_108_864
+          raise InvalidPacketException, "ARRAY body longer than 64MiB"
+        end
 
         align(signature.child.alignment)
         raise IncompleteBufferException if @idx + array_sz > @buffy.bytesize
@@ -216,7 +230,12 @@ module DBus
       when Type::VARIANT
         string = read_signature
         # error checking please
-        sig = Type::Parser.new(string).parse[0]
+        sigs = Type::Parser.new(string).parse
+        unless sigs.size == 1
+          raise InvalidPacketException, "VARIANT must contain 1 value, #{sigs.size} found"
+        end
+
+        sig = sigs.first
         align(sig.alignment)
         packet = do_parse(sig)
       when Type::OBJECT_PATH
