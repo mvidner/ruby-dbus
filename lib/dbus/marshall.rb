@@ -60,6 +60,11 @@ module DBus
       @raw_msg.align(8)
     end
 
+    # @return [Integer]
+    def consumed_size
+      @raw_msg.pos
+    end
+
     private
 
     # @param data_class [Class] a subclass of Data::Base (specific?)
@@ -76,8 +81,9 @@ module DBus
     # Based on the _signature_ type, retrieve a packet from the buffer
     # and return it.
     # @param signature [Type::Type]
+    # @param mode [:plain,:exact]
     # @return [Data::Base]
-    def do_parse(signature)
+    def do_parse(signature, mode: :plain)
       # FIXME: better naming for packet vs value
       packet = nil
       data_class = Data::BY_TYPE_CODE[signature.sigtype]
@@ -85,12 +91,12 @@ module DBus
       if data_class.nil?
         raise NotImplementedError,
               "sigtype: #{signature.sigtype} (#{signature.sigtype.chr})"
-      end      
+      end
 
-      if data_class.is_fixed?
+      if data_class.fixed?
         value = aligned_read_value(data_class)
-        packet = data_class.from_raw(value)
-      elsif data_class.is_basic?
+        packet = data_class.from_raw(value, mode: mode)
+      elsif data_class.basic?
         size = aligned_read_value(data_class.size_class)
         value = @raw_msg.read(size)
         nul = @raw_msg.read(1)
@@ -98,25 +104,25 @@ module DBus
           raise InvalidPacketException, "#{data_class} is not NUL-terminated"
         end
 
-        packet = data_class.from_raw(value)
+        packet = data_class.from_raw(value, mode: mode)
       else
         @raw_msg.align(data_class.alignment)
         case signature.sigtype
         when Type::STRUCT, Type::DICT_ENTRY
           values = signature.members.map do |child_sig|
-            do_parse(child_sig)
+            do_parse(child_sig, mode: mode)
           end
-          packet = data_class.from_child_bases(values)
+          packet = data_class.from_items(values, mode: mode)
 
         when Type::VARIANT
-          data_sig = do_parse(SIGNATURE_TYPE) # -> Data::Signature
+          data_sig = do_parse(SIGNATURE_TYPE, mode: :exact) # -> Data::Signature
           types = Type::Parser.new(data_sig.value).parse # -> Array<Type::Type>
           unless types.size == 1
             raise InvalidPacketException, "VARIANT must contain 1 value, #{types.size} found"
           end
 
-          value = do_parse(types.first)
-          packet = data_class.from_child_base(value)
+          value = do_parse(types.first, mode: mode)
+          packet = data_class.from_items(value, mode: mode)
 
         when Type::ARRAY
           array_bytes = aligned_read_value(Data::UInt32)
@@ -124,23 +130,17 @@ module DBus
             raise InvalidPacketException, "ARRAY body longer than 64MiB"
           end
 
-          ## not needed unless the IncompleteBE matters
-          # align(signature.child.alignment)
-          ## peeks inside
-          # raise IncompleteBufferException if @idx + array_bytes > @buffy.bytesize
-          # IncompleteBE - could prealloc?
+          # needed here because of empty arrays
+          @raw_msg.align(signature.child.alignment)
 
           items = []
-          start_pos = @raw_msg.pos
-          while @raw_msg.pos < start_pos + array_bytes
-            item = do_parse(signature.child)
+          end_pos = @raw_msg.pos + array_bytes
+          while @raw_msg.pos < end_pos
+            item = do_parse(signature.child, mode: mode)
             items << item
           end
-          packet = data_class.from_child_bases(items)
-
-          if signature.child.sigtype == Type::DICT_ENTRY
-            packet = Hash[packet]
-          end
+          is_hash = signature.child.sigtype == Type::DICT_ENTRY
+          packet = data_class.from_items(items, mode: mode, hash: is_hash)
         end
       end
       packet

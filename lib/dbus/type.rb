@@ -67,6 +67,8 @@ module DBus
     # = D-Bus type conversion class
     #
     # Helper class for representing a D-Bus type.
+    #
+    # See also {DBus::Data::Signature}
     class Type
       # Returns the signature type number.
       attr_reader :sigtype

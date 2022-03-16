@@ -229,11 +229,11 @@ module DBus
           @signature = struct[1]
         end
       end
-      pu.align(8)
+      pu.align_body
       if @body_length.positive? && @signature
         @params = pu.unmarshall(@signature, @body_length)
       end
-      [self, pu.idx]
+      [self, pu.consumed_size]
     end
 
     # Make a new exception from ex, mark it as being caused by this message

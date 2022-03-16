@@ -417,6 +417,12 @@ describe DBus::PacketUnmarshaller do
           # (zero) body size, non-zero padding, (no items)
           "\x00\x00\x00\x00" \
           "\xDE\xAD\xBE\xEF", :little, DBus::InvalidPacketException, /./
+        ],
+        [
+
+          "\x08\x00\x00\x00" \
+          "\x00\x00\x00\x00" \
+          "\xAA", :little, DBus::IncompleteBufferException, /./
         ]
       ]
       include_examples "parses good data", good
