@@ -6,13 +6,11 @@ require "dbus"
 
 # Helper to access PacketUnmarshaller internals.
 # Add it to its public API?
-# @param pu [PacketUnmarshaller]
+# @param p_u [PacketUnmarshaller]
 # @return [String] the binary string with unconsumed data
 def remaining_buffer(p_u)
-  buf = p_u.instance_variable_get(:@buffy)
-  # This returns "" if idx is just past the end of the string,
-  # and nil if it is further.
-  buf[p_u.idx..-1]
+  raw_msg = p_u.instance_variable_get(:@raw_msg)
+  raw_msg.remaining_bytes
 end
 
 RSpec.shared_examples "parses good data" do |cases|

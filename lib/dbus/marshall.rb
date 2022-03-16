@@ -30,13 +30,6 @@ module DBus
   # Spelling note: this codebase always uses a double L
   # in the "marshall" word and its inflections.
   class PacketUnmarshaller
-    # Index pointer that points to the byte in the data that is
-    # currently being processed.
-    #
-    # Used to kown what part of the buffer has been consumed by unmarshalling.
-    # FIXME: Maybe should be accessed with a "consumed_size" method.
-    attr_reader :idx
-
     # Create a new unmarshaller for the given data *buffer*.
     # @param buffer [String]
     # @param endianness [:little,:big]
@@ -52,7 +45,7 @@ module DBus
     # @return [Array<::Object>]
     # @raise IncompleteBufferException
     def unmarshall(signature, len = nil)
-      raise IncompleteBufferException if len && @buffy.bytesize < @idx + len
+      @raw_msg.want!(len) if len
 
       sigtree = Type::Parser.new(signature).parse
       ret = []

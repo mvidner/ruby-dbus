@@ -34,13 +34,28 @@ module DBus
       end
     end
 
+    # @return [void]
+    # @raise IncompleteBufferException if there are not enough bytes remaining
+    def want!(size)
+      raise IncompleteBufferException if @pos + size > @bytes.bytesize
+    end
+
     # @return [String]
+    # @raise IncompleteBufferException if there are not enough bytes remaining
     # TODO: stress test this with encodings. always binary?
     def read(size)
-      raise IncompleteBufferException if @pos + size > @bytes.bytesize
+      want!(size)
       ret = @bytes.slice(@pos, size)
       @pos += size      
       ret
+    end
+
+    # @return [String]
+    # @api private
+    def remaining_bytes
+      # This returns "" if pos is just past the end of the string,
+      # and nil if it is further.
+      @bytes[@pos .. -1]
     end
 
     # Align the *pos* index on a multiple of *alignment*
@@ -255,6 +270,8 @@ module DBus
     class UnixFD < Fixed
       def self.type_code; "h"; end
       def self.alignment; 4; end
+      FORMAT = Format.new("L<", "L>")
+      def self.format; FORMAT; end
     end
 
     consts = constants.map { |c_sym| const_get(c_sym) }
