@@ -3,6 +3,28 @@
 
 require_relative "spec_helper"
 require "dbus"
+require "yaml"
+YAML_FILE = "marshall.yaml"
+
+def pieces(str)
+  pieces = []
+  str.split(/([[:print:]]+)/) do |sub|
+    if sub =~ /[[:print:]]+/
+      pieces << sub
+    else
+      pieces += sub.bytes
+    end
+  end
+  pieces
+end
+
+def append_item(item)
+  yaml_s = File.read(YAML_FILE) rescue "[]"
+  data = YAML.safe_load(yaml_s)
+  data << item
+  yaml_s = YAML.dump(data)
+  File.write(YAML_FILE, yaml_s)
+end
 
 # Helper to access PacketUnmarshaller internals.
 # Add it to its public API?
@@ -13,9 +35,21 @@ def remaining_buffer(p_u)
   raw_msg.remaining_bytes
 end
 
+
 RSpec.shared_examples "parses good data" do |cases|
   describe "parses all the instances of good test data" do
     cases.each_with_index do |(buffer, endianness, expected), i|
+      it "dumps the test data" do
+        buffer = String.new(buffer, encoding: Encoding::BINARY)
+        item = {
+          "sig" => signature,
+          "end" => endianness.to_s,
+          "buf" => pieces(buffer),
+          "val" => expected
+        }
+        append_item(item)
+      end
+
       it "parses plain data ##{i}" do
         buffer = String.new(buffer, encoding: Encoding::BINARY)
         subject = described_class.new(buffer, endianness)
@@ -60,6 +94,20 @@ end
 RSpec.shared_examples "reports bad data" do |cases|
   describe "reports all the instances of bad test data" do
     cases.each_with_index do |(buffer, endianness, exc_class, msg_re), i|
+      it "dumps the test data" do
+        buffer = String.new(buffer, encoding: Encoding::BINARY)
+        msg = msg_re.to_s.sub("(?-mix:", "").sub(/\)$/, "")
+        msg = "" if msg == "."
+        item = {
+          "sig" => signature,
+          "end" => endianness.to_s,
+          "buf" => pieces(buffer),
+          "exc" => exc_class.to_s,
+          "msg" => msg
+        }
+        append_item(item)
+      end
+
       it "reports data ##{i}" do
         buffer = String.new(buffer, encoding: Encoding::BINARY)
         subject = described_class.new(buffer, endianness)
@@ -68,6 +116,28 @@ RSpec.shared_examples "reports bad data" do |cases|
     end
   end
 end
+
+RSpec.shared_examples "write bad but valid data" do |cases|
+  describe "writes the bad but valid test data" do
+    cases.each_with_index do |(buffer, endianness, exc_class, msg_re), i|
+      it "dumps the test data" do
+        buffer = String.new(buffer, encoding: Encoding::BINARY)
+        msg = msg_re.to_s.sub("(?-mix:", "").sub(/\)$/, "")
+        msg = "" if msg == "."
+        item = {
+          "sig" => signature,
+          "end" => endianness.to_s,
+          "buf" => pieces(buffer),
+          "exc" => exc_class.to_s,
+          "msg" => msg,
+          "disabled" => true
+        }
+        append_item(item)
+      end
+    end
+  end
+end
+
 
 # this is necessary because we do an early switch on the signature
 RSpec.shared_examples "reports empty data" do
@@ -284,6 +354,7 @@ describe DBus::PacketUnmarshaller do
     ]
     include_examples "parses good data", good
     include_examples "reports bad data", bad
+    include_examples "write bad but valid data", _bad_but_valid
     include_examples "reports empty data"
   end
 
@@ -321,6 +392,7 @@ describe DBus::PacketUnmarshaller do
     ]
     include_examples "parses good data", good
     include_examples "reports bad data", bad
+    include_examples "write bad but valid data", _bad_but_valid
     include_examples "reports empty data"
   end
 
@@ -358,6 +430,7 @@ describe DBus::PacketUnmarshaller do
     ]
     include_examples "parses good data", good
     include_examples "reports bad data", bad
+    include_examples "write bad but valid data", _bad_but_valid
     include_examples "reports empty data"
   end
 
@@ -602,6 +675,7 @@ describe DBus::PacketUnmarshaller do
     ]
     include_examples "parses good data", good
     include_examples "reports bad data", bad
+    include_examples "write bad but valid data", _bad_but_valid
     include_examples "reports empty data"
   end
 end
