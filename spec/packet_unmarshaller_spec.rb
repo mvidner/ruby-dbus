@@ -15,19 +15,41 @@ end
 
 RSpec.shared_examples "parses good data" do |cases|
   describe "parses all the instances of good test data" do
-    cases.each_with_index do |(buffer, endianness, value), i|
-      it "parses data ##{i}" do
+    cases.each_with_index do |(buffer, endianness, expected), i|
+      it "parses plain data ##{i}" do
         buffer = String.new(buffer, encoding: Encoding::BINARY)
         subject = described_class.new(buffer, endianness)
 
-        results = subject.unmarshall(signature)
+        results = subject.unmarshall(signature, mode: :plain)
         # unmarshall works on multiple signatures but we use one
         expect(results).to be_an(Array)
         expect(results.size).to eq(1)
         result = results.first
 
-        result = result.value if result.is_a?(DBus::Data::Base)
-        expect(result).to eq(value)
+        expect(result).to eq(expected)
+
+        expect(remaining_buffer(subject)).to be_empty
+      end
+
+      it "parses exact data ##{i}" do
+        buffer = String.new(buffer, encoding: Encoding::BINARY)
+        subject = described_class.new(buffer, endianness)
+
+        results = subject.unmarshall(signature, mode: :exact)
+        # unmarshall works on multiple signatures but we use one
+        expect(results).to be_an(Array)
+        expect(results.size).to eq(1)
+        result = results.first
+
+        expect(result).to be_a(DBus::Data::Base)
+        if expected.is_a?(Hash)
+          expect(result.value.size).to eq(expected.size)
+          result.value.each_key do |result_key|
+            expect(result.value[result_key]).to eq(expected[result_key.value])
+          end
+        else
+          expect(result.value).to eq(expected)
+        end
 
         expect(remaining_buffer(subject)).to be_empty
       end

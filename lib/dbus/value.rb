@@ -19,6 +19,18 @@ module DBus
       def initialize(value)
         @value = value
       end
+
+      def ==(other)
+        @value == if other.is_a?(Base)
+                    other.value
+                  else
+                    other
+                  end
+      end
+
+      # Hash key equality
+      # See https://ruby-doc.org/core-3.0.0/Object.html#method-i-eql-3F
+      alias eql? ==
     end
 
     # A value that is not a {Container}.

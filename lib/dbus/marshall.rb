@@ -25,7 +25,7 @@ module DBus
   # = D-Bus packet unmarshaller class
   #
   # Class that handles the conversion (unmarshalling) of payload data
-  # to Array.
+  # to #{::Object}s (in **plain** mode) or to {Data::Base} (in **exact** mode)
   #
   # Spelling note: this codebase always uses a double L
   # in the "marshall" word and its inflections.
@@ -38,19 +38,23 @@ module DBus
     end
 
     # Unmarshall the buffer for a given _signature_ and length _len_.
-    # Return an array of unmarshalled objects
+    # Return an array of unmarshalled objects.
     # @param signature [Signature]
     # @param len [Integer,nil] if given, and there is not enough data
     #   in the buffer, raise {IncompleteBufferException}
-    # @return [Array<::Object>]
+    # @param mode [:plain,:exact]
+    # @return [Array<::Object,DBus::Data::Base>]
+    #    Objects in `:plain` mode, {DBus::Data::Base} in `:exact` mode
+    #    The array size corresponds to the number of types in *signature*.
     # @raise IncompleteBufferException
-    def unmarshall(signature, len = nil)
+    # @raise InvalidPacketException
+    def unmarshall(signature, len = nil, mode: :plain)
       @raw_msg.want!(len) if len
 
       sigtree = Type::Parser.new(signature).parse
       ret = []
       sigtree.each do |elem|
-        ret << do_parse(elem)
+        ret << do_parse(elem, mode: mode)
       end
       ret
     end
