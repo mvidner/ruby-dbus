@@ -31,35 +31,19 @@
   val: 255
 - sig: b
   end: little
-  buf:
-  - 1
-  - 0
-  - 0
-  - 0
+  buf: [1, 0, 0, 0]
   val: true
 - sig: b
   end: little
-  buf:
-  - 0
-  - 0
-  - 0
-  - 0
+  buf: [0, 0, 0, 0]
   val: false
 - sig: b
   end: big
-  buf:
-  - 0
-  - 0
-  - 0
-  - 1
+  buf: [0, 0, 0, 1]
   val: true
 - sig: b
   end: big
-  buf:
-  - 0
-  - 0
-  - 0
-  - 0
+  buf: [0, 0, 0, 0]
   val: false
 - sig: b
   end: little
@@ -1158,6 +1142,16 @@
   exc: DBus::InvalidPacketException
   msg: Invalid signature
   disabled: true
+
+# ARRAYs
+
+# marshalling format:
+# - (alignment of data_bytes)
+# - UINT32 data_bytes (without any alignment padding)
+# - (alignment of ITEM_TYPE, even if the array is empty)
+# - ITEM_TYPE item1
+# - (alignment of ITEM_TYPE)
+# - ITEM_TYPE item2...
 - sig: ay
   end: little
   buf:

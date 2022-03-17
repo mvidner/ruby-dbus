@@ -3,28 +3,12 @@
 
 require_relative "spec_helper"
 require "dbus"
+require "ostruct"
 require "yaml"
-YAML_FILE = "marshall.yaml"
 
-def pieces(str)
-  pieces = []
-  str.split(/([[:print:]]+)/) do |sub|
-    if sub =~ /[[:print:]]+/
-      pieces << sub
-    else
-      pieces += sub.bytes
-    end
-  end
-  pieces
-end
-
-def append_item(item)
-  yaml_s = File.read(YAML_FILE) rescue "[]"
-  data = YAML.safe_load(yaml_s)
-  data << item
-  yaml_s = YAML.dump(data)
-  File.write(YAML_FILE, yaml_s)
-end
+data_dir = File.expand_path("data", __dir__)
+marshall_yaml_s = File.read("#{data_dir}/marshall.yaml")
+marshall_yaml = YAML.safe_load(marshall_yaml_s)
 
 # Helper to access PacketUnmarshaller internals.
 # Add it to its public API?
@@ -35,21 +19,9 @@ def remaining_buffer(p_u)
   raw_msg.remaining_bytes
 end
 
-
 RSpec.shared_examples "parses good data" do |cases|
   describe "parses all the instances of good test data" do
     cases.each_with_index do |(buffer, endianness, expected), i|
-      it "dumps the test data" do
-        buffer = String.new(buffer, encoding: Encoding::BINARY)
-        item = {
-          "sig" => signature,
-          "end" => endianness.to_s,
-          "buf" => pieces(buffer),
-          "val" => expected
-        }
-        append_item(item)
-      end
-
       it "parses plain data ##{i}" do
         buffer = String.new(buffer, encoding: Encoding::BINARY)
         subject = described_class.new(buffer, endianness)
@@ -94,20 +66,6 @@ end
 RSpec.shared_examples "reports bad data" do |cases|
   describe "reports all the instances of bad test data" do
     cases.each_with_index do |(buffer, endianness, exc_class, msg_re), i|
-      it "dumps the test data" do
-        buffer = String.new(buffer, encoding: Encoding::BINARY)
-        msg = msg_re.to_s.sub("(?-mix:", "").sub(/\)$/, "")
-        msg = "" if msg == "."
-        item = {
-          "sig" => signature,
-          "end" => endianness.to_s,
-          "buf" => pieces(buffer),
-          "exc" => exc_class.to_s,
-          "msg" => msg
-        }
-        append_item(item)
-      end
-
       it "reports data ##{i}" do
         buffer = String.new(buffer, encoding: Encoding::BINARY)
         subject = described_class.new(buffer, endianness)
@@ -116,28 +74,6 @@ RSpec.shared_examples "reports bad data" do |cases|
     end
   end
 end
-
-RSpec.shared_examples "write bad but valid data" do |cases|
-  describe "writes the bad but valid test data" do
-    cases.each_with_index do |(buffer, endianness, exc_class, msg_re), i|
-      it "dumps the test data" do
-        buffer = String.new(buffer, encoding: Encoding::BINARY)
-        msg = msg_re.to_s.sub("(?-mix:", "").sub(/\)$/, "")
-        msg = "" if msg == "."
-        item = {
-          "sig" => signature,
-          "end" => endianness.to_s,
-          "buf" => pieces(buffer),
-          "exc" => exc_class.to_s,
-          "msg" => msg,
-          "disabled" => true
-        }
-        append_item(item)
-      end
-    end
-  end
-end
-
 
 # this is necessary because we do an early switch on the signature
 RSpec.shared_examples "reports empty data" do
@@ -149,154 +85,123 @@ RSpec.shared_examples "reports empty data" do
   end
 end
 
+def buffer_from_yaml(parts)
+  strings = parts.flatten.map do |part|
+    if part.is_a? Integer
+      part.chr
+    else
+      part
+    end
+  end
+  strings.join.force_encoding(Encoding::BINARY)
+end
+
 describe DBus::PacketUnmarshaller do
+  context "marshall.yaml" do
+    marshall_yaml.each do |test|
+      t = OpenStruct.new(test)
+      signature = t.sig
+      buffer = buffer_from_yaml(t.buf)
+      endianness = t.end.to_sym
+
+      # successful parse
+      if t.val
+        expected = t.val
+
+        it "parses a '#{signature}' to get #{t.val.inspect} (plain)" do
+          subject = described_class.new(buffer, endianness)
+          results = subject.unmarshall(signature, mode: :plain)
+          # unmarshall works on multiple signatures but we use one
+          expect(results).to be_an(Array)
+          expect(results.size).to eq(1)
+          result = results.first
+
+          expect(result).to eq(expected)
+          expect(remaining_buffer(subject)).to be_empty
+        end
+
+        it "parses a '#{t.sig}' to get #{t.val.inspect} (exact)" do
+          subject = described_class.new(buffer, endianness)
+          results = subject.unmarshall(signature, mode: :exact)
+          # unmarshall works on multiple signatures but we use one
+          expect(results).to be_an(Array)
+          expect(results.size).to eq(1)
+          result = results.first
+
+          expect(result).to be_a(DBus::Data::Base)
+          if expected.is_a?(Hash)
+            expect(result.value.size).to eq(expected.size)
+            result.value.each_key do |result_key|
+              expect(result.value[result_key]).to eq(expected[result_key.value])
+            end
+          else
+            expect(result.value).to eq(expected)
+          end
+
+          expect(remaining_buffer(subject)).to be_empty
+        end
+      elsif t.exc
+        next if t.disabled
+
+        exc_class = DBus.const_get(t.exc)
+        msg_re = Regexp.new(Regexp.escape(t.msg))
+
+        # TODO: InvalidPacketException is never rescued.
+        # The other end is sending invalid data. Can we do better than crashing?
+        # When we can test with peer connections, try it out.
+        it "parses a '#{signature} to report a #{t.exc}" do
+          subject = described_class.new(buffer, endianness)
+          expect { subject.unmarshall(signature, mode: :plain) }.to raise_error(exc_class, msg_re)
+
+          subject = described_class.new(buffer, endianness)
+          expect { subject.unmarshall(signature, mode: :exact) }.to raise_error(exc_class, msg_re)
+        end
+      end
+    end
+  end
+
   context "BYTEs" do
     let(:signature) { "y" }
-    good = [
-      ["\x00", :little, 0x00],
-      ["\x80", :little, 0x80],
-      ["\xff", :little, 0xff],
-      ["\x00", :big, 0x00],
-      ["\x80", :big, 0x80],
-      ["\xff", :big, 0xff]
-    ]
-    include_examples "parses good data", good
     include_examples "reports empty data"
   end
 
   context "BOOLEANs" do
     let(:signature) { "b" }
-
-    good = [
-      ["\x01\x00\x00\x00", :little, true],
-      ["\x00\x00\x00\x00", :little, false],
-      ["\x00\x00\x00\x01", :big, true],
-      ["\x00\x00\x00\x00", :big, false]
-    ]
-    include_examples "parses good data", good
-
-    # TODO: InvalidPacketException is never rescued.
-    # The other end is sending invalid data. Can we do better than crashing?
-    # When we can test with peer connections, try it out.
-    bad = [
-      ["\x00\xff\xff\x00", :little, DBus::InvalidPacketException, /BOOLEAN must be 0 or 1, found/],
-      ["\x00\xff\xff\x00", :big,    DBus::InvalidPacketException, /BOOLEAN must be 0 or 1, found/]
-    ]
-    include_examples "reports bad data", bad
     include_examples "reports empty data"
   end
 
   context "INT16s" do
     let(:signature) { "n" }
-
-    good = [
-      ["\x00\x00", :little, 0],
-      ["\xff\x7f", :little, 32_767],
-      ["\x00\x80", :little, -32_768],
-      ["\xff\xff", :little, -1],
-      ["\x00\x00", :big, 0],
-      ["\x7f\xff", :big, 32_767],
-      ["\x80\x00", :big, -32_768],
-      ["\xff\xff", :big, -1]
-    ]
-    include_examples "parses good data", good
     include_examples "reports empty data"
   end
 
   context "UINT16s" do
     let(:signature) { "q" }
-
-    good = [
-      ["\x00\x00", :little, 0],
-      ["\xff\x7f", :little, 32_767],
-      ["\x00\x80", :little, 32_768],
-      ["\xff\xff", :little, 65_535],
-      ["\x00\x00", :big, 0],
-      ["\x7f\xff", :big, 32_767],
-      ["\x80\x00", :big, 32_768],
-      ["\xff\xff", :big, 65_535]
-    ]
-    include_examples "parses good data", good
     include_examples "reports empty data"
   end
 
   context "INT32s" do
     let(:signature) { "i" }
-    good = [
-      ["\x00\x00\x00\x00", :little, 0],
-      ["\xff\xff\xff\x7f", :little, 2_147_483_647],
-      ["\x00\x00\x00\x80", :little, -2_147_483_648],
-      ["\xff\xff\xff\xff", :little, -1],
-      ["\x00\x00\x00\x00", :big, 0],
-      ["\x7f\xff\xff\xff", :big, 2_147_483_647],
-      ["\x80\x00\x00\x00", :big, -2_147_483_648],
-      ["\xff\xff\xff\xff", :big, -1]
-    ]
-    include_examples "parses good data", good
     include_examples "reports empty data"
   end
 
   context "UINT32s" do
     let(:signature) { "u" }
-    good = [
-      ["\x00\x00\x00\x00", :little, 0],
-      ["\xff\xff\xff\x7f", :little, 2_147_483_647],
-      ["\x00\x00\x00\x80", :little, 2_147_483_648],
-      ["\xff\xff\xff\xff", :little, 4_294_967_295],
-      ["\x00\x00\x00\x00", :big, 0],
-      ["\x7f\xff\xff\xff", :big, 2_147_483_647],
-      ["\x80\x00\x00\x00", :big, 2_147_483_648],
-      ["\xff\xff\xff\xff", :big, 4_294_967_295]
-    ]
-    include_examples "parses good data", good
     include_examples "reports empty data"
   end
 
   context "UNIX_FDs" do
     let(:signature) { "h" }
-    good = [
-      ["\x00\x00\x00\x00", :little, 0],
-      ["\xff\xff\xff\x7f", :little, 2_147_483_647],
-      ["\x00\x00\x00\x80", :little, 2_147_483_648],
-      ["\xff\xff\xff\xff", :little, 4_294_967_295],
-      ["\x00\x00\x00\x00", :big, 0],
-      ["\x7f\xff\xff\xff", :big, 2_147_483_647],
-      ["\x80\x00\x00\x00", :big, 2_147_483_648],
-      ["\xff\xff\xff\xff", :big, 4_294_967_295]
-    ]
-    include_examples "parses good data", good
     include_examples "reports empty data"
   end
 
   context "INT64s" do
     let(:signature) { "x" }
-    good = [
-      ["\x00\x00\x00\x00\x00\x00\x00\x00", :little, 0],
-      ["\xff\xff\xff\xff\xff\xff\xff\x7f", :little, 9_223_372_036_854_775_807],
-      ["\x00\x00\x00\x00\x00\x00\x00\x80", :little, -9_223_372_036_854_775_808],
-      ["\xff\xff\xff\xff\xff\xff\xff\xff", :little, -1],
-      ["\x00\x00\x00\x00\x00\x00\x00\x00", :big, 0],
-      ["\x7f\xff\xff\xff\xff\xff\xff\xff", :big, 9_223_372_036_854_775_807],
-      ["\x80\x00\x00\x00\x00\x00\x00\x00", :big, -9_223_372_036_854_775_808],
-      ["\xff\xff\xff\xff\xff\xff\xff\xff", :big, -1]
-    ]
-    include_examples "parses good data", good
     include_examples "reports empty data"
   end
 
   context "UINT64s" do
     let(:signature) { "t" }
-    good = [
-      ["\x00\x00\x00\x00\x00\x00\x00\x00", :little, 0],
-      ["\xff\xff\xff\xff\xff\xff\xff\x7f", :little, 9_223_372_036_854_775_807],
-      ["\x00\x00\x00\x00\x00\x00\x00\x80", :little, 9_223_372_036_854_775_808],
-      ["\xff\xff\xff\xff\xff\xff\xff\xff", :little, 18_446_744_073_709_551_615],
-      ["\x00\x00\x00\x00\x00\x00\x00\x00", :big, 0],
-      ["\x7f\xff\xff\xff\xff\xff\xff\xff", :big, 9_223_372_036_854_775_807],
-      ["\x80\x00\x00\x00\x00\x00\x00\x00", :big, 9_223_372_036_854_775_808],
-      ["\xff\xff\xff\xff\xff\xff\xff\xff", :big, 18_446_744_073_709_551_615]
-    ]
-    include_examples "parses good data", good
     include_examples "reports empty data"
   end
 
@@ -306,15 +211,11 @@ describe DBus::PacketUnmarshaller do
     # for binary representations
     # TODO: figure out IEEE754 comparisons
     good = [
-      ["\x00\x00\x00\x00\x00\x00\x00\x00", :little, 0.0],
       # But == cant distinguish -0.0
       ["\x00\x00\x00\x00\x00\x00\x00\x80", :little, -0.0],
-      ["\x00\x00\x00\x00\x00\x00\x00\x40", :little, 2.0],
       # But NaN == NaN is false!
       # ["\xff\xff\xff\xff\xff\xff\xff\xff", :little, Float::NAN],
-      ["\x00\x00\x00\x00\x00\x00\x00\x00", :big, 0.0],
-      ["\x80\x00\x00\x00\x00\x00\x00\x00", :big, -0.0],
-      ["\x40\x00\x00\x00\x00\x00\x00\x00", :big, 2.0]
+      ["\x80\x00\x00\x00\x00\x00\x00\x00", :big, -0.0]
       # ["\xff\xff\xff\xff\xff\xff\xff\xff", :big, Float::NAN]
     ]
     include_examples "parses good data", good
@@ -323,16 +224,6 @@ describe DBus::PacketUnmarshaller do
 
   context "STRINGs" do
     let(:signature) { "s" }
-    good = [
-      ["\x00\x00\x00\x00\x00", :little, ""],
-      ["\x02\x00\x00\x00\xC5\x98\x00", :little, "Ř"],
-      ["\x03\x00\x00\x00\xEF\xBF\xBF\x00", :little, "\uffff"],
-      ["\x00\x00\x00\x00\x00", :big, ""],
-      ["\x00\x00\x00\x02\xC5\x98\x00", :big, "Ř"],
-      ["\x00\x00\x00\x03\xEF\xBF\xBF\x00", :big, "\uffff"],
-      # maximal UTF-8 codepoint U+10FFFF
-      ["\x00\x00\x00\x04\xF4\x8F\xBF\xBF\x00", :big, "\u{10ffff}"]
-    ]
     _bad_but_valid = [
       # NUL in the middle
       ["\x03\x00\x00\x00a\x00b\x00", :little, DBus::InvalidPacketException, /Invalid string/],
@@ -344,31 +235,11 @@ describe DBus::PacketUnmarshaller do
       ["\x04\x00\x00\x00\xF4\x90\xC0\xC0\x00", :little, DBus::InvalidPacketException, /Invalid string/]
 
     ]
-    bad = [
-      ["\x00\x00\x00\x00\x55", :little, DBus::InvalidPacketException, /not NUL-terminated/],
-      ["\x01\x00\x00\x00@\x55", :little, DBus::InvalidPacketException, /not NUL-terminated/],
-      ["\x00\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
-      ["\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
-      ["\x00\x00", :little, DBus::IncompleteBufferException, /./],
-      ["\x00", :little, DBus::IncompleteBufferException, /./]
-    ]
-    include_examples "parses good data", good
-    include_examples "reports bad data", bad
-    include_examples "write bad but valid data", _bad_but_valid
     include_examples "reports empty data"
   end
 
   context "OBJECT_PATHs" do
     let(:signature) { "o" }
-    long_path = "/#{"A" * 511}"
-    good = [
-      ["\x01\x00\x00\x00/\x00", :little, "/"],
-      ["\x20\x00\x00\x00/99Numbers/_And_Underscores/anyw\x00", :little, "/99Numbers/_And_Underscores/anyw"],
-      # no size limit like for other names
-      ["\x00\x02\x00\x00#{long_path}\x00", :little, long_path],
-      ["\x00\x00\x00\x01/\x00", :big, "/"],
-      ["\x00\x00\x00\x20/99Numbers/_And_Underscores/anyw\x00", :big, "/99Numbers/_And_Underscores/anyw"]
-    ]
     _bad_but_valid = [
       ["\x00\x00\x00\x00\x00", :little, DBus::InvalidPacketException, /Invalid object path/],
       ["\x00\x00\x00\x00\x00", :big, DBus::InvalidPacketException, /Invalid object path/],
@@ -381,29 +252,11 @@ describe DBus::PacketUnmarshaller do
       # accented a
       ["\x00\x00\x00\x05/_/\xC3\xA1\x00", :big, DBus::InvalidPacketException, /Invalid object path/]
     ]
-    bad = [
-      # string-like baddies
-      ["\x00\x00\x00\x00\x55", :little, DBus::InvalidPacketException, /not NUL-terminated/],
-      ["\x01\x00\x00\x00/\x55", :little, DBus::InvalidPacketException, /not NUL-terminated/],
-      ["\x00\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
-      ["\x00\x00\x00", :little, DBus::IncompleteBufferException, /./],
-      ["\x00\x00", :little, DBus::IncompleteBufferException, /./],
-      ["\x00", :little, DBus::IncompleteBufferException, /./]
-    ]
-    include_examples "parses good data", good
-    include_examples "reports bad data", bad
-    include_examples "write bad but valid data", _bad_but_valid
     include_examples "reports empty data"
   end
 
   context "SIGNATUREs" do
     let(:signature) { "g" }
-    good = [
-      ["\x00\x00", :little, ""],
-      ["\x00\x00", :big, ""],
-      ["\x01b\x00", :little, "b"],
-      ["\x01b\x00", :big, "b"]
-    ]
     _bad_but_valid = [
       ["\x01!\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
       ["\x01r\x00", :big, DBus::InvalidPacketException, /Invalid signature/],
@@ -422,26 +275,10 @@ describe DBus::PacketUnmarshaller do
       # NUL in the middle
       ["\x03a\x00y\x00", :big, DBus::InvalidPacketException, /Invalid signature/]
     ]
-    bad = [
-      # string-like baddies
-      ["\x00\x55", :big, DBus::InvalidPacketException, /not NUL-terminated/],
-      ["\x01b\x55", :big, DBus::InvalidPacketException, /not NUL-terminated/],
-      ["\x00", :little, DBus::IncompleteBufferException, /./]
-    ]
-    include_examples "parses good data", good
-    include_examples "reports bad data", bad
-    include_examples "write bad but valid data", _bad_but_valid
     include_examples "reports empty data"
   end
 
   context "ARRAYs" do
-    # marshalling format:
-    # - (alignment of data_bytes)
-    # - UINT32 data_bytes (without any alignment padding)
-    # - (alignment of ITEM_TYPE, even if the array is empty)
-    # - ITEM_TYPE item1
-    # - (alignment of ITEM_TYPE)
-    # - ITEM_TYPE item2...
     context "of BYTEs" do
       # TODO: will want to special-case this
       # and represent them as binary strings
@@ -675,7 +512,6 @@ describe DBus::PacketUnmarshaller do
     ]
     include_examples "parses good data", good
     include_examples "reports bad data", bad
-    include_examples "write bad but valid data", _bad_but_valid
     include_examples "reports empty data"
   end
 end
