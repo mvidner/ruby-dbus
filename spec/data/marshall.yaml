@@ -16,7 +16,9 @@
 # - val: the unmarshalled value (for valid buffers)
 # - exc: exception name (for invalid buffers)
 # - msg: exception message substring (for invalid buffers)
-# - disabled: true or false, for test cases that are expected to fail
+# - marshall: true (default) or false,
+# - unmarshall: true (default) or false, for test cases that only work one way
+#               or are expected to fail
 
 - sig: "y"
   end: little
@@ -775,7 +777,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid string
-  disabled: true
+  unmarshall: false
 # invalid UTF-8
 - sig: s
   end: little
@@ -791,7 +793,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid string
-  disabled: true
+  unmarshall: false
 # overlong sequence encoding an "A"
 - sig: s
   end: little
@@ -805,7 +807,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid string
-  disabled: true
+  unmarshall: false
 # first codepoint outside UTF-8, U+110000
 - sig: s
   end: little
@@ -821,7 +823,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid string
-  disabled: true
+  unmarshall: false
 - sig: o
   end: little
   buf:
@@ -936,7 +938,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  disabled: true
+  unmarshall: false
 - sig: o
   end: big
   buf:
@@ -947,7 +949,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  disabled: true
+  unmarshall: false
 - sig: o
   end: big
   buf:
@@ -959,7 +961,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  disabled: true
+  unmarshall: false
 - sig: o
   end: big
   buf:
@@ -971,7 +973,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  disabled: true
+  unmarshall: false
 - sig: o
   end: big
   buf:
@@ -983,7 +985,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  disabled: true
+  unmarshall: false
 - sig: o
   end: big
   buf:
@@ -995,7 +997,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  disabled: true
+  unmarshall: false
 # NUL in the middle
 - sig: o
   end: big
@@ -1009,7 +1011,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  disabled: true
+  unmarshall: false
 # accented a
 - sig: o
   end: big
@@ -1024,7 +1026,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  disabled: true
+  unmarshall: false
 - sig: g
   end: little
   buf:
@@ -1079,7 +1081,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  disabled: true
+  unmarshall: false
 - sig: g
   end: big
   buf:
@@ -1088,7 +1090,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  disabled: true
+  unmarshall: false
 - sig: g
   end: big
   buf:
@@ -1097,7 +1099,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  disabled: true
+  unmarshall: false
 - sig: g
   end: big
   buf:
@@ -1106,7 +1108,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  disabled: true
+  unmarshall: false
 # dict_entry with other than 2 members
 - sig: g
   end: big
@@ -1116,7 +1118,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  disabled: true
+  unmarshall: false
 - sig: g
   end: big
   buf:
@@ -1125,7 +1127,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  disabled: true
+  unmarshall: false
 - sig: g
   end: big
   buf:
@@ -1134,7 +1136,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  disabled: true
+  unmarshall: false
 # dict_entry with non-basic key
 - sig: g
   end: big
@@ -1144,7 +1146,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  disabled: true
+  unmarshall: false
 # dict_entry outside array
 - sig: g
   end: big
@@ -1154,7 +1156,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  disabled: true
+  unmarshall: false
 # dict_entry not immediately in an array
 - sig: g
   end: big
@@ -1164,7 +1166,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  disabled: true
+  unmarshall: false
 # NUL in the middle
 - sig: g
   end: big
@@ -1176,7 +1178,7 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  disabled: true
+  unmarshall: false
 
 # ARRAYs
 
@@ -1583,6 +1585,7 @@
   # value
   - 255
   val: 255
+  marshall: false
 - sig: v
   end: little
   buf:
@@ -1593,6 +1596,7 @@
   # value
   - [1, 0, 0, 0]
   val: 1
+  marshall: false
 # nested variant
 - sig: v
   end: little
@@ -1605,7 +1609,7 @@
   # value
   - 255
   val: 255
-  val: 255
+  marshall: false
 # the signature has no type
 - sig: v
   end: little
@@ -1655,4 +1659,4 @@
   - 255
   exc: DBus::InvalidPacketException
   msg: nested too deep
-  disabled: true
+  unmarshall: false

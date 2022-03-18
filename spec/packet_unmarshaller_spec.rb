@@ -73,17 +73,6 @@ RSpec.shared_examples "reports empty data" do
   end
 end
 
-def buffer_from_yaml(parts)
-  strings = parts.flatten.map do |part|
-    if part.is_a? Integer
-      part.chr
-    else
-      part
-    end
-  end
-  strings.join.force_encoding(Encoding::BINARY)
-end
-
 describe DBus::PacketUnmarshaller do
   context "marshall.yaml" do
     marshall_yaml.each do |test|
@@ -129,7 +118,7 @@ describe DBus::PacketUnmarshaller do
           expect(remaining_buffer(subject)).to be_empty
         end
       elsif t.exc
-        next if t.disabled
+        next if t.unmarshall == false
 
         exc_class = DBus.const_get(t.exc)
         msg_re = Regexp.new(Regexp.escape(t.msg))

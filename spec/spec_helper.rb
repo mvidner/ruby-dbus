@@ -118,3 +118,15 @@ def with_service_by_activation(&block)
 
   system "pkill -f #{exec}"
 end
+
+# Make a binary string from readable YAML pieces; see data/marshall.yaml
+def buffer_from_yaml(parts)
+  strings = parts.flatten.map do |part|
+    if part.is_a? Integer
+      part.chr
+    else
+      part
+    end
+  end
+  strings.join.force_encoding(Encoding::BINARY)
+end
