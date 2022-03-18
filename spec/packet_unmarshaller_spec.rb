@@ -93,7 +93,7 @@ describe DBus::PacketUnmarshaller do
       endianness = t.end.to_sym
 
       # successful parse
-      if t.val
+      if !t.val.nil?
         expected = t.val
 
         it "parses a '#{signature}' to get #{t.val.inspect} (plain)" do
