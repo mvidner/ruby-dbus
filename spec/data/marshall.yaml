@@ -1,4 +1,23 @@
 ---
+# Test data for marshalling and unmarshalling of D-Bus values.
+# The intent is to be implementation independent.
+# More importantly, it should work both ways, for marshalling and unmarshalling.
+#
+# This file is a list of test cases.
+#
+# Each test case is a dictionary:
+# - sig: the signature of the data
+# - end: endianness of the byte buffer ("big" or "little")
+# - buf: the byte buffer. Logically it is an array of bytes but YAML
+#        would write that in base-64, obscuring the contents.
+#        So we write it as nested lists of integers (bytes), or UTF-8 strings.
+#        The nesting only matters for test case readability, the data is
+#        flattened before use.
+# - val: the unmarshalled value (for valid buffers)
+# - exc: exception name (for invalid buffers)
+# - msg: exception message substring (for invalid buffers)
+# - disabled: true or false, for test cases that are expected to fail
+
 - sig: "y"
   end: little
   buf:
@@ -742,6 +761,7 @@
   - 0
   exc: DBus::IncompleteBufferException
   msg: ''
+# NUL in the middle
 - sig: s
   end: little
   buf:
@@ -756,6 +776,7 @@
   exc: DBus::InvalidPacketException
   msg: Invalid string
   disabled: true
+# invalid UTF-8
 - sig: s
   end: little
   buf:
@@ -771,6 +792,7 @@
   exc: DBus::InvalidPacketException
   msg: Invalid string
   disabled: true
+# overlong sequence encoding an "A"
 - sig: s
   end: little
   buf:
@@ -778,12 +800,13 @@
   - 0
   - 0
   - 0
-  - 193
-  - 129
+  - 0xC1
+  - 0x81
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid string
   disabled: true
+# first codepoint outside UTF-8, U+110000
 - sig: s
   end: little
   buf:
@@ -791,10 +814,10 @@
   - 0
   - 0
   - 0
-  - 244
-  - 144
-  - 192
-  - 192
+  - 0xF4
+  - 0x90
+  - 0xC0
+  - 0xC0
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid string
@@ -812,21 +835,26 @@
 - sig: o
   end: little
   buf:
-  - " "
+  - 32
   - 0
   - 0
   - 0
   - "/99Numbers/_And_Underscores/anyw"
   - 0
   val: "/99Numbers/_And_Underscores/anyw"
+# no size limit like for other names; 512 characters are fine
 - sig: o
   end: little
   buf:
-  - 0
-  - 2
-  - 0
-  - 0
-  - "/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  - [0, 2, 0, 0]
+  - "/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  - "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  - "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  - "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  - "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  - "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  - "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  - "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
   - 0
   val: "/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 - sig: o
@@ -968,6 +996,7 @@
   exc: DBus::InvalidPacketException
   msg: Invalid object path
   disabled: true
+# NUL in the middle
 - sig: o
   end: big
   buf:
@@ -981,6 +1010,7 @@
   exc: DBus::InvalidPacketException
   msg: Invalid object path
   disabled: true
+# accented a
 - sig: o
   end: big
   buf:
@@ -1077,6 +1107,7 @@
   exc: DBus::InvalidPacketException
   msg: Invalid signature
   disabled: true
+# dict_entry with other than 2 members
 - sig: g
   end: big
   buf:
@@ -1104,6 +1135,7 @@
   exc: DBus::InvalidPacketException
   msg: Invalid signature
   disabled: true
+# dict_entry with non-basic key
 - sig: g
   end: big
   buf:
@@ -1113,6 +1145,7 @@
   exc: DBus::InvalidPacketException
   msg: Invalid signature
   disabled: true
+# dict_entry outside array
 - sig: g
   end: big
   buf:
@@ -1122,6 +1155,7 @@
   exc: DBus::InvalidPacketException
   msg: Invalid signature
   disabled: true
+# dict_entry not immediately in an array
 - sig: g
   end: big
   buf:
@@ -1131,6 +1165,7 @@
   exc: DBus::InvalidPacketException
   msg: Invalid signature
   disabled: true
+# NUL in the middle
 - sig: g
   end: big
   buf:
@@ -1152,6 +1187,9 @@
 # - ITEM_TYPE item1
 # - (alignment of ITEM_TYPE)
 # - ITEM_TYPE item2...
+
+# Here we repeat the STRINGs test data (without the trailing NUL)
+# but the outcomes are different
 - sig: ay
   end: little
   buf:
@@ -1294,6 +1332,14 @@
   - 144
   - 192
   - 192
+
+# With basic types, by the time we have found the message to be invalid,
+# it is nevertheless well-formed and we could read the next message.
+# However, an overlong array (body longer than 64MiB) is a good enough
+# reason to drop the connection, which is what InvalidPacketException
+# does, right? Doesn't it?
+# Well it does, by crashing the entire process.
+# That should be made more graceful.
 - sig: ay
   end: little
   buf:
@@ -1337,152 +1383,99 @@
 - sig: at
   end: little
   buf:
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
+  # body size
+  - [0, 0, 0, 0]
+  # padding
+  - [0, 0, 0, 0]
   val: []
 - sig: at
   end: little
   buf:
-  - 16
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 1
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 2
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
+  # body size
+  - [16, 0, 0, 0]
+  # padding
+  - [0, 0, 0, 0]
+  # item
+  - [1, 0, 0, 0, 0, 0, 0, 0]
+  # item
+  - [2, 0, 0, 0, 0, 0, 0, 0]
   val:
   - 1
   - 2
 - sig: at
   end: little
   buf:
-  - 0
-  - 0
-  - 0
-  - 0
+  # body size, missing padding
+  - [0, 0, 0, 0]
   exc: DBus::IncompleteBufferException
   msg: ''
 - sig: at
   end: little
   buf:
-  - 0
-  - 0
-  - 0
-  - 0
-  - 222
-  - 173
-  - 190
-  - 239
+  # body size
+  - [0, 0, 0, 0]
+  # nonzero padding
+  - [0xDE, 0xAD, 0xBE, 0xEF]
   exc: DBus::InvalidPacketException
   msg: ''
 - sig: at
   end: little
   buf:
-  - 8
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
+  # body size
+  - [8, 0, 0, 0]
+  # padding
+  - [0, 0, 0, 0]
+  # incomplete item
   - 170
   exc: DBus::IncompleteBufferException
   msg: ''
+
+# arrays of nontrivial types let us demonstrate the padding of their elements
 - sig: a(qq)
   end: little
   buf:
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
+  # body size
+  - [0, 0, 0, 0]
+  # padding
+  - [0, 0, 0, 0]
   val: []
 - sig: a(qq)
   end: little
   buf:
-  - 12
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 1
-  - 0
-  - 2
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 3
-  - 0
-  - 4
-  - 0
+  # body size
+  - [12, 0, 0, 0]
+  # padding
+  - [0, 0, 0, 0]
+  # item
+  - [1, 0, 2, 0]
+  # padding
+  - [0, 0, 0, 0]
+  # item
+  - [3, 0, 4, 0]
   val:
   - - 1
     - 2
   - - 3
     - 4
+# This illustrates that the specification is wrong in asserting that
+# the body size is divisible by the item count
 - sig: a(qq)
   end: little
   buf:
-  - 20
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 5
-  - 0
-  - 6
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 7
-  - 0
-  - 8
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 9
-  - 0
-  - 10
-  - 0
+  # body size
+  - [20, 0, 0, 0]
+  # padding
+  - [0, 0, 0, 0]
+  # item
+  - [5, 0, 6, 0]
+  # padding
+  - [0, 0, 0, 0]
+  # item
+  - [7, 0, 8, 0]
+  # padding
+  - [0, 0, 0, 0]
+  # item
+  - [9, 0, 10, 0]
   val:
   - - 5
     - 6
@@ -1493,109 +1486,73 @@
 - sig: a(qq)
   end: little
   buf:
-  - 0
-  - 0
-  - 0
-  - 0
+  # body size, missing padding
+  - [0, 0, 0, 0]
   exc: DBus::IncompleteBufferException
   msg: ''
 - sig: a(qq)
   end: little
   buf:
-  - 0
-  - 0
-  - 0
-  - 0
-  - 222
-  - 173
-  - 190
-  - 239
+  # body size
+  - [0, 0, 0, 0]
+  # nonzero padding
+  - [0xDE, 0xAD, 0xBE, 0xEF]
   exc: DBus::InvalidPacketException
   msg: ''
 - sig: a{yq}
   end: little
   buf:
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
+  # body size
+  - [0, 0, 0, 0]
+  # padding
+  - [0, 0, 0, 0]
   val: {}
 - sig: a{yq}
   end: little
   buf:
-  - 12
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 1
-  - 0
-  - 2
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 3
-  - 0
-  - 4
-  - 0
+  # body size
+  - [12, 0, 0, 0]
+  # dict_entry padding
+  - [0, 0, 0, 0]
+  # key, padding, value
+  - [1, 0, 2, 0]
+  # dict_entry padding
+  - [0, 0, 0, 0]
+  # key, padding, value
+  - [3, 0, 4, 0]
   val:
     1: 2
     3: 4
 - sig: a{yq}
   end: big
   buf:
-  - 0
-  - 0
-  - 0
-  - 12
-  - 0
-  - 0
-  - 0
-  - 0
-  - 1
-  - 0
-  - 0
-  - 2
-  - 0
-  - 0
-  - 0
-  - 0
-  - 3
-  - 0
-  - 0
-  - 4
+  # body size
+  - [0, 0, 0, 12]
+  # dict_entry padding
+  - [0, 0, 0, 0]
+  # key, padding, value
+  - [1, 0, 0, 2]
+  # dict_entry padding
+  - [0, 0, 0, 0]
+  # key, padding, value
+  - [3, 0, 0, 4]
   val:
     1: 2
     3: 4
 - sig: a{yq}
   end: little
   buf:
-  - 0
-  - 0
-  - 0
-  - 0
+  # body size, missing padding
+  - [0, 0, 0, 0]
   exc: DBus::IncompleteBufferException
   msg: ''
 - sig: a{yq}
   end: little
   buf:
-  - 0
-  - 0
-  - 0
-  - 0
-  - 222
-  - 173
-  - 190
-  - 239
+  # body size
+  - [0, 0, 0, 0]
+  # nonzero padding
+  - [0xDE, 0xAD, 0xBE, 0xEF]
   exc: DBus::InvalidPacketException
   msg: ''
 - sig: "(qq)"
@@ -1621,267 +1578,80 @@
 - sig: v
   end: little
   buf:
-  - 1
-  - "y"
-  - 0
+  # signature
+  - [1, "y", 0]
+  # value
   - 255
   val: 255
 - sig: v
   end: little
   buf:
-  - 1
-  - u
+  # signature
+  - [1, "u", 0]
+  # padding
   - 0
-  - 0
-  - 1
-  - 0
-  - 0
-  - 0
+  # value
+  - [1, 0, 0, 0]
   val: 1
+# nested variant
 - sig: v
   end: little
   buf:
-  - 1
-  - v
-  - 0
-  - 1
-  - "y"
-  - 0
+  # signature
+  - [1, "v", 0]
+  # value:
+  # signature
+  - [1, "y", 0]
+  # value
   - 255
   val: 255
+  val: 255
+# the signature has no type
 - sig: v
   end: little
   buf:
-  - 0
-  - 0
+  # signature
+  - [0, 0]
   exc: DBus::InvalidPacketException
   msg: 1 value, 0 found
+# the signature has more than one type
 - sig: v
   end: little
   buf:
-  - 2
-  - yy
-  - 0
+  # signature
+  - [2, "yy", 0]
+  # data
   - 255
   - 255
   exc: DBus::InvalidPacketException
   msg: 1 value, 2 found
+# a variant nested 69 levels
 - sig: v
   end: little
   buf:
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - v
-  - 0
-  - 1
-  - "y"
-  - 0
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+
+  - [1, "v", 0,   1, "v", 0,   1, "v", 0,   1, "v", 0]
+
+  - [1, "y", 0]
   - 255
   exc: DBus::InvalidPacketException
   msg: nested too deep
