@@ -345,7 +345,9 @@ module DBus
         if property.readable?
           ruby_name = property.ruby_name
           value = public_send(ruby_name)
-          [value]
+          # may raise, DBus.error or https://ruby-doc.com/core-3.1.0/TypeError.html
+          typed_value = Data.make_typed(property.type, value)
+          [typed_value]
         else
           raise DBus.error("org.freedesktop.DBus.Error.PropertyWriteOnly"),
                 "Property '#{interface_name}.#{property_name}' (on object '#{@path}') is not readable"
@@ -356,6 +358,7 @@ module DBus
         property = dbus_lookup_property(interface_name, property_name)
 
         if property.writable?
+          # TODO: from typed to plain?
           ruby_name_eq = "#{property.ruby_name}="
           public_send(ruby_name_eq, value)
         else
@@ -385,7 +388,10 @@ module DBus
             # > array.
             # so we will silently omit properties that fail to read.
             # Get'ting them individually will send DBus.Error
-            p_hash[p_name.to_s] = public_send(ruby_name)
+            value = public_send(ruby_name)
+            # may raise, DBus.error or https://ruby-doc.com/core-3.1.0/TypeError.html
+            typed_value = Data.make_typed(property.type, value)
+            p_hash[p_name.to_s] = typed_value
           rescue StandardError
             DBus.logger.debug "Property '#{interface_name}.#{p_name}' (on object '#{@path}')" \
                               " has raised during GetAll, omitting it"

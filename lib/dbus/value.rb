@@ -6,6 +6,16 @@ module DBus
   # basic vs container
   # basic is fixed or string-like
   module Data
+    # @param type [SingleCompleteType]
+    # @param value [Object]
+    # @return [Data::Base]
+    # @raise TypeError
+    def make_typed(_type, value)
+      # FIXME: TODO: implement
+      value
+    end
+    module_function :make_typed
+
     # The base class for explicitly typed values.
     #
     # A value is either {Basic} or a {Container}.
