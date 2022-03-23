@@ -10,8 +10,6 @@ data_dir = File.expand_path("data", __dir__)
 marshall_yaml_s = File.read("#{data_dir}/marshall.yaml")
 marshall_yaml = YAML.safe_load(marshall_yaml_s)
 
-native_endianness = DBus::RawMessage.endianness(DBus::HOST_END)
-
 describe DBus::PacketMarshaller do
   context "marshall.yaml" do
     marshall_yaml.each do |test|
@@ -22,12 +20,12 @@ describe DBus::PacketMarshaller do
 
       # while the marshaller can use only native endianness, skip the other
       endianness = t.end.to_sym
-      next unless endianness == native_endianness
 
       signature = t.sig
       expected = buffer_from_yaml(t.buf)
 
-      it "writes a '#{signature}' with value #{t.val.inspect}" do
+      it "writes a '#{signature}' with value #{t.val.inspect} (#{endianness})" do
+        subject = described_class.new(endianness: endianness)
         subject.append(signature, t.val)
         expect(subject.packet).to eq(expected)
       end

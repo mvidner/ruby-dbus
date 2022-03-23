@@ -172,7 +172,7 @@ module DBus
       @body_length = params.packet.bytesize
 
       marshaller = PacketMarshaller.new
-      marshaller.append(Type::BYTE, HOST_END)
+      marshaller.append(Type::BYTE, HOST_END.ord)
       marshaller.append(Type::BYTE, @message_type)
       marshaller.append(Type::BYTE, @flags)
       marshaller.append(Type::BYTE, @protocol)

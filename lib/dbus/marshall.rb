@@ -79,9 +79,6 @@ module DBus
       bytes.unpack1(data_class.format[@raw_msg.endianness])
     end
 
-    SIGNATURE_TYPE = Type::Type.new(Type::SIGNATURE).freeze
-    private_constant :SIGNATURE_TYPE
-
     # Based on the _signature_ type, retrieve a packet from the buffer
     # and return it.
     # @param signature [Type::Type]
@@ -119,14 +116,15 @@ module DBus
           packet = data_class.from_items(values, mode: mode)
 
         when Type::VARIANT
-          data_sig = do_parse(SIGNATURE_TYPE, mode: :exact) # -> Data::Signature
+          data_sig = do_parse(Data::Signature.type, mode: :exact) # -> Data::Signature
           types = Type::Parser.new(data_sig.value).parse # -> Array<Type::Type>
           unless types.size == 1
             raise InvalidPacketException, "VARIANT must contain 1 value, #{types.size} found"
           end
 
-          value = do_parse(types.first, mode: mode)
-          packet = data_class.from_items(value, mode: mode)
+          type = types.first
+          value = do_parse(type, mode: mode)
+          packet = data_class.from_items(value, type: type, mode: mode)
 
         when Type::ARRAY
           array_bytes = aligned_read_value(Data::UInt32)
@@ -161,9 +159,13 @@ module DBus
     # @return [String]
     attr_reader :packet
 
+    # @return [:little,:big]
+    attr_reader :endianness
+
     # Create a new marshaller, setting the current packet to the
     # empty packet.
-    def initialize(offset = 0)
+    def initialize(offset = 0, endianness: HOST_ENDIANNESS)
+      @endianness = endianness
       @packet = ""
       @offset = offset # for correct alignment of nested marshallers
     end
@@ -185,17 +187,6 @@ module DBus
       @packet = @packet.ljust(pad_count, 0.chr)
     end
 
-    # Append the the string _str_ itself to the packet.
-    def append_string(str)
-      align(4)
-      @packet += [str.bytesize].pack("L") + [str].pack("Z*")
-    end
-
-    # Append the the signature _signature_ itself to the packet.
-    def append_signature(str)
-      @packet += "#{str.bytesize.chr}#{str}\u0000"
-    end
-
     # Append the array type _type_ to the packet and allow for appending
     # the child elements.
     def array(type)
@@ -209,7 +200,8 @@ module DBus
       sz = @packet.bytesize - contentidx
       raise InvalidPacketException if sz > 67_108_864
 
-      @packet[sizeidx...sizeidx + 4] = [sz].pack("L")
+      sz_data = Data::UInt32.new(sz)
+      @packet[sizeidx...sizeidx + 4] = sz_data.marshall(endianness)
     end
 
     # Align and allow for appending struct fields.
@@ -229,79 +221,68 @@ module DBus
 
       type = type.chr if type.is_a?(Integer)
       type = Type::Parser.new(type).parse[0] if type.is_a?(String)
-      case type.sigtype
-      when Type::BYTE
-        @packet += val.chr
-      when Type::UINT32, Type::UNIX_FD
-        align(4)
-        @packet += [val].pack("L")
-      when Type::UINT64
-        align(8)
-        @packet += [val].pack("Q")
-      when Type::INT64
-        align(8)
-        @packet += [val].pack("q")
-      when Type::INT32
-        align(4)
-        @packet += [val].pack("l")
-      when Type::UINT16
-        align(2)
-        @packet += [val].pack("S")
-      when Type::INT16
-        align(2)
-        @packet += [val].pack("s")
-      when Type::DOUBLE
-        align(8)
-        @packet += [val].pack("d")
-      when Type::BOOLEAN
-        align(4)
-        @packet += if val
-                     [1].pack("L")
-                   else
-                     [0].pack("L")
-                   end
-      when Type::OBJECT_PATH
-        append_string(val)
-      when Type::STRING
-        append_string(val)
-      when Type::SIGNATURE
-        append_signature(val)
-      when Type::VARIANT
-        append_variant(val)
-      when Type::ARRAY
-        append_array(type.child, val)
-      when Type::STRUCT, Type::DICT_ENTRY
-        unless val.is_a?(Array) || val.is_a?(Struct)
-          type_name = Type::TYPE_MAPPING[type.sigtype].first
-          raise TypeException, "#{type_name} expects an Array or Struct"
-        end
-
-        if type.sigtype == Type::DICT_ENTRY && val.size != 2
-          raise TypeException, "DICT_ENTRY expects a pair"
-        end
-
-        if type.members.size != val.size
-          type_name = Type::TYPE_MAPPING[type.sigtype].first
-          raise TypeException, "#{type_name} has #{val.size} elements but type info for #{type.members.size}"
-        end
-
-        struct do
-          type.members.zip(val).each do |t, v|
-            append(t, v)
-          end
-        end
-      else
+      # type is [Type::Type] now
+      data_class = Data::BY_TYPE_CODE[type.sigtype]
+      if data_class.nil?
         raise NotImplementedError,
               "sigtype: #{type.sigtype} (#{type.sigtype.chr})"
+      end
+
+      if data_class.fixed?
+        align(data_class.alignment)
+        data = data_class.new(val)
+        @packet += data.marshall(endianness)
+      elsif data_class.basic?
+        align(data_class.size_class.alignment)
+        size_data = data_class.size_class.new(val.bytesize)
+        @packet += size_data.marshall(endianness)
+        # Z* makes a binary string, as opposed to interpolation
+        @packet += [val].pack("Z*")
+      else
+        case type.sigtype
+
+        when Type::VARIANT
+          append_variant(val)
+        when Type::ARRAY
+          append_array(type.child, val)
+        when Type::STRUCT, Type::DICT_ENTRY
+          unless val.is_a?(Array) || val.is_a?(Struct)
+            type_name = Type::TYPE_MAPPING[type.sigtype].first
+            raise TypeException, "#{type_name} expects an Array or Struct"
+          end
+
+          if type.sigtype == Type::DICT_ENTRY && val.size != 2
+            raise TypeException, "DICT_ENTRY expects a pair"
+          end
+
+          if type.members.size != val.size
+            type_name = Type::TYPE_MAPPING[type.sigtype].first
+            raise TypeException, "#{type_name} has #{val.size} elements but type info for #{type.members.size}"
+          end
+
+          struct do
+            type.members.zip(val).each do |t, v|
+              append(t, v)
+            end
+          end
+        else
+          raise NotImplementedError,
+                "sigtype: #{type.sigtype} (#{type.sigtype.chr})"
+        end
       end
     end
 
     def append_variant(val)
       vartype = nil
-      if val.is_a?(Array) && val.size == 2
+      if val.is_a?(DBus::Data::Base)
+        vartype = val.type # FIXME: box or unbox another variant?
+        vardata = val.value
+      elsif val.is_a?(Array) && val.size == 2
         case val[0]
         when DBus::Type::Type
           vartype, vardata = val
+        # Ambiguous but easy to use, because Type::Type
+        # cannot construct "as" "a{sv}" easily
         when String
           begin
             parsed = Type::Parser.new(val[0]).parse
@@ -317,9 +298,9 @@ module DBus
         vartype = Type::Parser.new(vartype).parse[0]
       end
 
-      append_signature(vartype.to_s)
+      append(Data::Signature.type, vartype.to_s)
       align(vartype.alignment)
-      sub = PacketMarshaller.new(@offset + @packet.bytesize)
+      sub = PacketMarshaller.new(@offset + @packet.bytesize, endianness: endianness)
       sub.append(vartype, vardata)
       @packet += sub.packet
     end

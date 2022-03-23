@@ -5,6 +5,10 @@ module DBus
 
   # basic vs container
   # basic is fixed or string-like
+  #
+  # FIXME: in general, when an API gives me, a user, a choice,
+  # remember to make it easy for the case of:
+  # "I don't CARE, I don't WANT to care, WHY should I care?"
   module Data
     # @param type [SingleCompleteType]
     # @param value [Object]
@@ -48,6 +52,17 @@ module DBus
       def self.basic?
         true
       end
+
+      # @return [Type::Type]
+      def self.type
+        # memoize
+        @type ||= Type::Type.new(type_code).freeze
+      end
+
+      def type
+        # The basic types can do this, unlike the containers
+        self.class.type
+      end
     end
 
     # A value that has a fixed size (unlike {StringLike}).
@@ -63,6 +78,11 @@ module DBus
         return value if mode == :plain
 
         new(value)
+      end
+
+      # @param endianness [:little,:big]
+      def marshall(endianness)
+        [value].pack(self.class.format[endianness])
       end
     end
 
@@ -163,6 +183,11 @@ module DBus
         super(value ? true : false)
       end
 
+      # @param endianness [:little,:big]
+      def marshall(endianness)
+        int = value ? 1 : 0
+        [int].pack(UInt32.format[endianness])
+      end
     end
 
     # Signed 16 bit integer.
@@ -437,10 +462,26 @@ module DBus
         1
       end
 
-      def self.from_items(value, mode:)
+      # @param type [Type::Type]
+      def self.from_items(value, type:, mode:)
         return value if mode == :plain
 
-        new(value)
+        new(value, type: type)
+      end
+
+      # @return [Type::Type]
+      attr_reader :type
+
+      # @param type [Type::Type]
+      def initialize(value, type:)
+        if value.is_a?(self.class)
+          # Copy the contained value instead of boxing it more
+          # TODO: except perhaps for round-tripping in exact mode?
+          type = value.type
+          value = value.value
+        end
+        @type = type
+        super(value)
       end
     end
 

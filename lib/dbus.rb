@@ -51,6 +51,10 @@ module DBus
                BIG_END
              end
 
+  # Comparing symbols is faster than strings
+  # @return [:little,:big]
+  HOST_ENDIANNESS = RawMessage.endianness(HOST_END)
+
   # General exceptions.
 
   # Exception raised when there is a problem with a type (may be unknown or
