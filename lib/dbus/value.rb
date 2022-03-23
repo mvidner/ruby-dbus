@@ -87,9 +87,26 @@ module DBus
     # Format strings for String#unpack, both little- and big-endian.
     Format = ::Struct.new(:little, :big)
 
+    # Represents integers
+    class Int < Fixed
+      # @param value [::Integer,DBus::Data::Int]
+      # @raise RangeError
+      def initialize(value)
+        value = value.value if value.is_a?(self.class)
+        r = self.class.range
+        raise RangeError, "#{value.inspect} is not a member of #{r}" unless r.member?(value)
+
+        super(value)
+      end
+
+      def self.range
+        raise NotImplementedError, "Abstract"
+      end
+    end
+
     # Byte.
     # TODO: ByteArray
-    class Byte < Fixed
+    class Byte < Int
       def self.type_code
         "y"
       end
@@ -100,6 +117,10 @@ module DBus
       FORMAT = Format.new("C", "C")
       def self.format
         FORMAT
+      end
+
+      def self.range
+        (0..255)
       end
     end
 
@@ -131,10 +152,21 @@ module DBus
 
         new(value)
       end
+
+      # Accept any *value*, store its Ruby truth value
+      # (excepting another instance of this class, where use its {#value}).
+      #
+      # So new(0).value is true.
+      # @param value [::Object,DBus::Data::Boolean]
+      def initialize(value)
+        value = value.value if value.is_a?(self.class)
+        super(value ? true : false)
+      end
+
     end
 
     # Signed 16 bit integer.
-    class Int16 < Fixed
+    class Int16 < Int
       def self.type_code
         "n"
       end
@@ -142,14 +174,19 @@ module DBus
       def self.alignment
         2
       end
+
       FORMAT = Format.new("s<", "s>")
       def self.format
         FORMAT
       end
+
+      def self.range
+        (-32_768..32_767)
+      end
     end
 
     # Unsigned 16 bit integer.
-    class UInt16 < Fixed
+    class UInt16 < Int
       def self.type_code
         "q"
       end
@@ -157,14 +194,19 @@ module DBus
       def self.alignment
         2
       end
+
       FORMAT = Format.new("S<", "S>")
       def self.format
         FORMAT
       end
+
+      def self.range
+        (0..65_535)
+      end
     end
 
     # Signed 32 bit integer.
-    class Int32 < Fixed
+    class Int32 < Int
       def self.type_code
         "i"
       end
@@ -172,14 +214,19 @@ module DBus
       def self.alignment
         4
       end
+
       FORMAT = Format.new("l<", "l>")
       def self.format
         FORMAT
       end
+
+      def self.range
+        (-2_147_483_648..2_147_483_647)
+      end
     end
 
     # Unsigned 32 bit integer.
-    class UInt32 < Fixed
+    class UInt32 < Int
       def self.type_code
         "u"
       end
@@ -187,14 +234,19 @@ module DBus
       def self.alignment
         4
       end
+
       FORMAT = Format.new("L<", "L>")
       def self.format
         FORMAT
       end
+
+      def self.range
+        (0..4_294_967_295)
+      end
     end
 
     # Signed 64 bit integer.
-    class Int64 < Fixed
+    class Int64 < Int
       def self.type_code
         "x"
       end
@@ -202,14 +254,19 @@ module DBus
       def self.alignment
         8
       end
+
       FORMAT = Format.new("q<", "q>")
       def self.format
         FORMAT
       end
+
+      def self.range
+        (-9_223_372_036_854_775_808..9_223_372_036_854_775_807)
+      end
     end
 
     # Unsigned 64 bit integer.
-    class UInt64 < Fixed
+    class UInt64 < Int
       def self.type_code
         "t"
       end
@@ -217,9 +274,14 @@ module DBus
       def self.alignment
         8
       end
+
       FORMAT = Format.new("Q<", "Q>")
       def self.format
         FORMAT
+      end
+
+      def self.range
+        (0..18_446_744_073_709_551_615)
       end
     end
 
@@ -232,9 +294,18 @@ module DBus
       def self.alignment
         8
       end
+
       FORMAT = Format.new("E", "G")
       def self.format
         FORMAT
+      end
+
+      # @param value [#to_f,DBus::Data::Double]
+      # @raise TypeError,ArgumentError
+      def initialize(value)
+        value = value.value if value.is_a?(self.class)
+        value = Kernel.Float(value)
+        super(value)
       end
     end
 
@@ -336,6 +407,8 @@ module DBus
     end
 
     # A fixed size, heterogenerous tuple.
+    #
+    # (The item count is fixed, not the byte size.)
     class Struct < Container
       def self.type_code
         "r"
@@ -391,17 +464,9 @@ module DBus
     end
 
     # Unix file descriptor, not implemented yet.
-    class UnixFD < Fixed
+    class UnixFD < UInt32
       def self.type_code
         "h"
-      end
-
-      def self.alignment
-        4
-      end
-      FORMAT = Format.new("L<", "L>")
-      def self.format
-        FORMAT
       end
     end
 
