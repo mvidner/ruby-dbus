@@ -158,6 +158,7 @@ module DBus
   class PacketMarshaller
     # The current or result packet.
     # FIXME: allow access only when marshalling is finished
+    # @return [String]
     attr_reader :packet
 
     # Create a new marshaller, setting the current packet to the
@@ -220,6 +221,9 @@ module DBus
     # Append a value _val_ to the packet based on its _type_.
     #
     # Host native endianness is used, declared in Message#marshall
+    #
+    # @param type [SingleCompleteType] (or {Integer} or {Type::Type})
+    # @param val [::Object]
     def append(type, val)
       raise TypeException, "Cannot send nil" if val.nil?
 

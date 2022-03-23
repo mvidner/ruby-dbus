@@ -67,12 +67,13 @@ module DBus
     # = D-Bus type conversion class
     #
     # Helper class for representing a D-Bus type.
+    # Corresponds to {SingleCompleteType}.
     #
     # See also {DBus::Data::Signature}
     class Type
-      # Returns the signature type number.
+      # @return [String] the signature type character, eg "s" or "e".
       attr_reader :sigtype
-      # Return contained member types.
+      # @return [Array<Type>] contained member types.
       attr_reader :members
 
       # Create a new type instance for type number _sigtype_.
@@ -162,6 +163,7 @@ module DBus
       end
 
       # Parse one character _char_ of the signature.
+      # @return [DBus::Type::Type]
       def parse_one(char)
         res = nil
         case char
@@ -191,6 +193,7 @@ module DBus
       end
 
       # Parse the entire signature, return a DBus::Type object.
+      # @return [Array<DBus::Type::Type>]
       def parse
         @idx = 0
         ret = []
@@ -205,12 +208,17 @@ module DBus
   # shortcuts
 
   # Parse a String to a DBus::Type::Type
+  # @param string_type [SingleCompleteType]
+  # @return [DBus::Type::Type]
   def type(string_type)
     Type::Parser.new(string_type).parse[0]
   end
   module_function :type
 
   # Make an explicit [Type, value] pair
+  # @param string_type [SingleCompleteType]
+  # @param value [::Object]
+  # @return [Array(DBus::Type::Type,::Object)]
   def variant(string_type, value)
     [type(string_type), value]
   end
