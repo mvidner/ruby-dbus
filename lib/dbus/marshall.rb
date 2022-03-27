@@ -403,7 +403,7 @@ module DBus
       vartype = nil
       if val.is_a?(Array) && val.size == 2
         case val[0]
-        when DBus::Type::Type
+        when Type
           vartype, vardata = val
         when String
           begin
@@ -427,7 +427,7 @@ module DBus
       @packet += sub.packet
     end
 
-    # @param child_type [DBus::Type::Type]
+    # @param child_type [Type]
     def append_array(child_type, val)
       if val.is_a?(Hash)
         raise TypeException, "Expected an Array but got a Hash" if child_type.sigtype != Type::DICT_ENTRY

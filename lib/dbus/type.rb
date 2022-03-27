@@ -33,7 +33,8 @@ module DBus
   #
   # This module containts the constants of the types specified in the D-Bus
   # protocol.
-  module Type
+  #
+  class Type
     # Mapping from type number to name and alignment.
     TYPE_MAPPING = {
       0 => ["INVALID", nil],
@@ -64,91 +65,117 @@ module DBus
     class SignatureException < Exception
     end
 
-    # = D-Bus type conversion class
+    # Formerly this was a Module and there was a DBus::Type::Type class
+    # but the class got too prominent to keep its double double name.
+    # This is for backward compatibility.
+    Type = self # rubocop:disable Naming/ConstantName
+
+    # Returns the signature type number.
+    attr_reader :sigtype
+    # Return contained member types.
+    attr_reader :members
+
+    # Use {DBus.type} instead, because this allows constructing
+    # incomplete or invalid types, for backward compatibility.
     #
-    # Helper class for representing a D-Bus type.
-    class Type
-      # Returns the signature type number.
-      attr_reader :sigtype
-      # Return contained member types.
-      attr_reader :members
-
-      # Create a new type instance for type number _sigtype_.
-      def initialize(sigtype)
-        if !TYPE_MAPPING.keys.member?(sigtype)
-          raise SignatureException, "Unknown key in signature: #{sigtype.chr}"
-        end
-
-        @sigtype = sigtype
-        @members = []
-      end
-
-      # Return the required alignment for the type.
-      def alignment
-        TYPE_MAPPING[@sigtype].last
-      end
-
-      # Return a string representation of the type according to the
-      # D-Bus specification.
-      def to_s
-        case @sigtype
-        when STRUCT
-          "(#{@members.collect(&:to_s).join})"
-        when ARRAY
-          "a#{child}"
-        when DICT_ENTRY
-          "{#{@members.collect(&:to_s).join}}"
+    # @param abstract [Boolean] allow abstract types "r" and "e"
+    #   (Enabled for internal usage by {Parser}.)
+    def initialize(sigtype, abstract: false)
+      if !TYPE_MAPPING.keys.member?(sigtype)
+        case sigtype
+        when ")"
+          raise SignatureException, "STRUCT unexpectedly closed: )"
+        when "}"
+          raise SignatureException, "DICT_ENTRY unexpectedly closed: }"
         else
-          if !TYPE_MAPPING.keys.member?(@sigtype)
-            raise NotImplementedError
+          raise SignatureException, "Unknown type code #{sigtype.inspect}"
+        end
+      end
+
+      unless abstract
+        case sigtype
+        when STRUCT
+          raise SignatureException, "Abstract STRUCT, use \"(...)\" instead of \"#{STRUCT}\""
+        when DICT_ENTRY
+          raise SignatureException, "Abstract DICT_ENTRY, use \"{..}\" instead of \"#{DICT_ENTRY}\""
+        end
+      end
+
+      @sigtype = sigtype
+      @members = []
+    end
+
+    # Return the required alignment for the type.
+    def alignment
+      TYPE_MAPPING[@sigtype].last
+    end
+
+    # Return a string representation of the type according to the
+    # D-Bus specification.
+    def to_s
+      case @sigtype
+      when STRUCT
+        "(#{@members.collect(&:to_s).join})"
+      when ARRAY
+        "a#{child}"
+      when DICT_ENTRY
+        "{#{@members.collect(&:to_s).join}}"
+      else
+        if !TYPE_MAPPING.keys.member?(@sigtype)
+          raise NotImplementedError
+        end
+
+        @sigtype.chr
+      end
+    end
+
+    # Add a new member type _item_.
+    def <<(item)
+      if ![STRUCT, ARRAY, DICT_ENTRY].member?(@sigtype)
+        raise SignatureException
+      end
+      raise SignatureException if @sigtype == ARRAY && !@members.empty?
+
+      if @sigtype == DICT_ENTRY
+        case @members.size
+        when 2
+          raise SignatureException, "DICT_ENTRY must have 2 subtypes, found 3 or more in #{@signature}"
+        when 0
+          if [STRUCT, ARRAY, DICT_ENTRY, VARIANT].member?(item.sigtype)
+            raise SignatureException, "DICT_ENTRY key must be basic (non-container)"
           end
-
-          @sigtype.chr
         end
       end
+      @members << item
+    end
 
-      # Add a new member type _item_.
-      def <<(item)
-        if ![STRUCT, ARRAY, DICT_ENTRY].member?(@sigtype)
-          raise SignatureException
-        end
-        raise SignatureException if @sigtype == ARRAY && !@members.empty?
+    # Return the first contained member type.
+    def child
+      @members[0]
+    end
 
-        if @sigtype == DICT_ENTRY
-          case @members.size
-          when 2
-            raise SignatureException, "Dict entries have exactly two members"
-          when 0
-            if [STRUCT, ARRAY, DICT_ENTRY].member?(item.sigtype)
-              raise SignatureException, "Dict entry keys must be basic types"
-            end
-          end
-        end
-        @members << item
+    def inspect
+      s = TYPE_MAPPING[@sigtype].first
+      if [STRUCT, ARRAY].member?(@sigtype)
+        s += ": #{@members.inspect}"
       end
-
-      # Return the first contained member type.
-      def child
-        @members[0]
-      end
-
-      def inspect
-        s = TYPE_MAPPING[@sigtype].first
-        if [STRUCT, ARRAY].member?(@sigtype)
-          s += ": #{@members.inspect}"
-        end
-        s
-      end
+      s
     end
 
     # = D-Bus type parser class
     #
     # Helper class to parse a type signature in the protocol.
+    # @api private
     class Parser
       # Create a new parser for the given _signature_.
       # @param signature [Signature]
       def initialize(signature)
         @signature = signature
+        if signature.size > 255
+          msg = "Potential signature is longer than 255 characters (#{@signature.size}): #{@signature}"
+          raise SignatureException, msg
+        end
+
         @idx = 0
       end
 
@@ -160,28 +187,44 @@ module DBus
       end
 
       # Parse one character _char_ of the signature.
-      def parse_one(char)
+      # @param for_array [Boolean] are we parsing an immediate child of an ARRAY
+      def parse_one(char, for_array: false)
         res = nil
         case char
         when "a"
           res = Type.new(ARRAY)
           char = nextchar
-          raise SignatureException, "Parse error in #{@signature}" if char.nil?
+          raise SignatureException, "Empty ARRAY in #{@signature}" if char.nil?
 
-          child = parse_one(char)
+          child = parse_one(char, for_array: true)
           res << child
         when "("
-          res = Type.new(STRUCT)
+          res = Type.new(STRUCT, abstract: true)
           while (char = nextchar) && char != ")"
             res << parse_one(char)
           end
-          raise SignatureException, "Parse error in #{@signature}" if char.nil?
+          raise SignatureException, "STRUCT not closed in #{@signature}" if char.nil?
+          raise SignatureException, "Empty STRUCT in #{@signature}" if res.members.empty?
         when "{"
-          res = Type.new(DICT_ENTRY)
-          while (char = nextchar) && char != "}"
+          raise SignatureException, "DICT_ENTRY not an immediate child of an ARRAY" unless for_array
+
+          res = Type.new(DICT_ENTRY, abstract: true)
+
+          # key type, value type
+          2.times do |i|
+            char = nextchar
+            raise SignatureException, "DICT_ENTRY not closed in #{@signature}" if char.nil?
+
+            raise SignatureException, "DICT_ENTRY must have 2 subtypes, found #{i} in #{@signature}" if char == "}"
+
             res << parse_one(char)
           end
-          raise SignatureException, "Parse error in #{@signature}" if char.nil?
+
+          # closing "}"
+          char = nextchar
+          raise SignatureException, "DICT_ENTRY not closed in #{@signature}" if char.nil?
+
+          raise SignatureException, "DICT_ENTRY must have 2 subtypes, found 3 or more in #{@signature}" if char != "}"
         else
           res = Type.new(char)
         end
@@ -189,6 +232,7 @@ module DBus
       end
 
       # Parse the entire signature, return a DBus::Type object.
+      # @return [Array<Type>]
       def parse
         @idx = 0
         ret = []
@@ -197,16 +241,42 @@ module DBus
         end
         ret
       end
+
+      # Parse one {SingleCompleteType}
+      # @return [Type]
+      def parse1
+        c = nextchar
+        raise SignatureException, "Empty signature, expecting a Single Complete Type" if c.nil?
+
+        t = parse_one(c)
+        raise SignatureException, "Has more than a Single Complete Type: #{@signature}" unless nextchar.nil?
+
+        t
+      end
     end
   end
 
   # shortcuts
 
-  # Parse a String to a DBus::Type::Type
+  # Parse a String to a valid {DBus::Type}.
+  # This is prefered to {Type#initialize} which allows
+  # incomplete or invalid types.
+  # @param string_type [SingleCompleteType]
+  # @return [DBus::Type]
+  # @raise SignatureException
   def type(string_type)
-    Type::Parser.new(string_type).parse[0]
+    Type::Parser.new(string_type).parse1
   end
   module_function :type
+
+  # Parse a String to zero or more {DBus::Type}s.
+  # @param string_type [Signature]
+  # @return [Array<DBus::Type>]
+  # @raise SignatureException
+  def types(string_type)
+    Type::Parser.new(string_type).parse
+  end
+  module_function :types
 
   # Make an explicit [Type, value] pair
   def variant(string_type, value)

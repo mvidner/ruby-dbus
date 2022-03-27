@@ -171,7 +171,7 @@ by the D-Bus signature.
 If the signature expects a Variant
 (which is the case for all Properties!) then an explicit mechanism is needed.
 
-1. A pair [{DBus::Type::Type}, value] specifies to marshall *value* as
+1. A pair [{DBus::Type}, value] specifies to marshall *value* as
    that specified type.
    The pair can be produced by {DBus.variant}(signature, value) which
    gives the  same result as [{DBus.type}(signature), value].
