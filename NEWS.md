@@ -2,7 +2,12 @@
 
 ## Unreleased
 
+API:
+ * Renamed the DBus::Type::Type class to DBus::Type
+   (which was previously a module).
+
 Bug fixes:
+ * Signature validation: Ensure DBus.type produces a valid Type
  * Detect more malformed messages: non-NUL padding bytes, variants with
    multiple or no value.
 
