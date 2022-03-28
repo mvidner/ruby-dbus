@@ -126,7 +126,7 @@ describe DBus::PacketUnmarshaller do
         # TODO: InvalidPacketException is never rescued.
         # The other end is sending invalid data. Can we do better than crashing?
         # When we can test with peer connections, try it out.
-        it "parses a '#{signature} to report a #{t.exc}" do
+        it "parses a '#{signature}' to report a #{t.exc}" do
           subject = described_class.new(buffer, endianness)
           expect { subject.unmarshall(signature, mode: :plain) }.to raise_error(exc_class, msg_re)
 

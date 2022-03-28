@@ -1081,7 +1081,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  unmarshall: false
 - sig: g
   end: big
   buf:
@@ -1090,7 +1089,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  unmarshall: false
 - sig: g
   end: big
   buf:
@@ -1099,7 +1097,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  unmarshall: false
 - sig: g
   end: big
   buf:
@@ -1108,7 +1105,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  unmarshall: false
 # dict_entry with other than 2 members
 - sig: g
   end: big
@@ -1118,7 +1114,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  unmarshall: false
 - sig: g
   end: big
   buf:
@@ -1127,7 +1122,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  unmarshall: false
 - sig: g
   end: big
   buf:
@@ -1136,7 +1130,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  unmarshall: false
 # dict_entry with non-basic key
 - sig: g
   end: big
@@ -1146,7 +1139,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  unmarshall: false
 # dict_entry outside array
 - sig: g
   end: big
@@ -1156,7 +1148,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  unmarshall: false
 # dict_entry not immediately in an array
 - sig: g
   end: big
@@ -1166,7 +1157,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  unmarshall: false
 # NUL in the middle
 - sig: g
   end: big
@@ -1178,7 +1168,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid signature
-  unmarshall: false
 
 # ARRAYs
 

@@ -361,6 +361,7 @@ module DBus
         validate_raw!(value)
         return value if mode == :plain
 
+        # FIXME: validation in String#initialize
         new(value)
       end
     end
@@ -390,7 +391,7 @@ module DBus
     end
 
     # Signature string, zero or more single complete types.
-    # See also {DBus::Type::Type}
+    # See also {DBus::Type}
     class Signature < StringLike
       def self.type_code
         "g"
@@ -404,8 +405,15 @@ module DBus
         Byte
       end
 
+      # @return [Array<Type>]
+      def self.validate_raw!(value)
+        DBus.types(value)
+      rescue Type::SignatureException => e
+        raise InvalidPacketException, "Invalid signature: #{e.message}"
+      end
+
       def self.from_raw(value, mode:)
-        # TODO: validate what got sent
+        _types = validate_raw!(value)
         return value if mode == :plain
 
         new(value)
