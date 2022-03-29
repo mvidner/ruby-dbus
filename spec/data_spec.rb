@@ -4,6 +4,8 @@
 require_relative "spec_helper"
 require "dbus"
 
+# The from_raw methods are tested in packet_unmarshaller_spec.rb
+
 RSpec.shared_examples "constructor accepts numeric range" do |min, max|
   describe "#initialize" do
     it "accepts the min value #{min}" do
@@ -30,13 +32,30 @@ end
 
 RSpec.shared_examples "constructor accepts plain or typed value" do |plain|
   describe "#initialize" do
-    it "accepts the plain value #{plain}" do
+    it "accepts the plain value #{plain.inspect}" do
       expect(described_class.new(plain).value).to eq(plain)
     end
 
-    it "accepts the typed value #{plain}" do
+    it "accepts the typed value #{plain.inspect}" do
       typed = described_class.new(plain)
       expect(described_class.new(typed).value).to eq(plain)
+    end
+  end
+end
+
+RSpec.shared_examples "constructor accepts plain or typed values from this list" do |plain_list|
+  plain_list.each do |plain|
+    include_examples "constructor accepts plain or typed value", plain
+  end
+end
+
+RSpec.shared_examples "constructor rejects values from this list" do |bad_list|
+  describe "#initialize" do
+    bad_list.each do |(value, exc_class, msg_substr)|
+      it "rejects #{value.inspect} with #{exc_class}: #{msg_substr}" do
+        msg_re = Regexp.new(Regexp.quote(msg_substr))
+        expect { described_class.new(value) }.to raise_error(exc_class, msg_re)
+      end
     end
   end
 end
@@ -113,6 +132,82 @@ describe DBus::Data do
         expect { described_class.new("one") }.to raise_error(ArgumentError)
         expect { described_class.new(/itsaregexp/) }.to raise_error(TypeError)
       end
+    end
+  end
+
+  describe "basic, string-like types" do
+    describe DBus::Data::String do
+      # TODO: what about strings with good codepoints but encoded in
+      # let's say Encoding::ISO8859_2?
+      good = [
+        "",
+        "Ř",
+        # a Noncharacter, but well-formed Unicode
+        # https://www.unicode.org/versions/corrigendum9.html
+        "\uffff",
+        # maximal UTF-8 codepoint U+10FFFF
+        "\u{10ffff}"
+      ]
+
+      bad = [
+        # NUL in the middle
+        ["a\x00b", DBus::InvalidPacketException, "contains NUL"],
+        # invalid UTF-8
+        ["\xFF\xFF\xFF\xFF", DBus::InvalidPacketException, "not in UTF-8"],
+        # overlong sequence encoding an "A"
+        ["\xC1\x81", DBus::InvalidPacketException, "not in UTF-8"],
+        # first codepoint outside UTF-8, U+110000
+        ["\xF4\x90\xC0\xC0", DBus::InvalidPacketException, "not in UTF-8"]
+      ]
+
+      include_examples "constructor accepts plain or typed values from this list", good
+      include_examples "constructor rejects values from this list", bad
+    end
+
+    describe DBus::Data::ObjectPath do
+      good = [
+        "/"
+        # TODO: others
+      ]
+
+      bad = [
+        ["", DBus::InvalidPacketException, "Invalid object path"]
+        # TODO: others
+      ]
+
+      include_examples "constructor accepts plain or typed values from this list", good
+      include_examples "constructor rejects values from this list", bad
+    end
+
+    describe DBus::Data::Signature do
+      good = [
+        "",
+        "i",
+        "ii"
+        # TODO: others
+      ]
+
+      bad = [
+        ["!", DBus::InvalidPacketException, "Unknown type code"]
+        # TODO: others
+      ]
+
+      include_examples "constructor accepts plain or typed values from this list", good
+      include_examples "constructor rejects values from this list", bad
+    end
+  end
+
+  describe "containers" do
+    describe DBus::Data::Array do
+    end
+
+    describe DBus::Data::Struct do
+    end
+
+    describe DBus::Data::Variant do
+    end
+
+    describe DBus::Data::DictEntry do
     end
   end
 end

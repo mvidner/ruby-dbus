@@ -91,6 +91,16 @@ module DBus
       def self.fixed?
         false
       end
+
+      def initialize(value)
+        if value.is_a?(self.class)
+          value = value.value
+        else
+          self.class.validate_raw!(value)
+        end
+
+        super(value)
+      end
     end
 
     # Contains one or more other values.
@@ -358,10 +368,11 @@ module DBus
 
       def self.from_raw(value, mode:)
         value.force_encoding(Encoding::UTF_8)
-        validate_raw!(value)
-        return value if mode == :plain
+        if mode == :plain
+          validate_raw!(value)
+          return value
+        end
 
-        # FIXME: validation in String#initialize
         new(value)
       end
     end
@@ -380,13 +391,20 @@ module DBus
         UInt32
       end
 
-      def self.from_raw(value, mode:)
-        value = DBus::ObjectPath.new(value)
-        return value if mode == :plain
-
-        new(value)
+      # @raise InvalidPacketException
+      def self.validate_raw!(value)
+        DBus::ObjectPath.new(value)
       rescue DBus::Error => e
         raise InvalidPacketException, e.message
+      end
+
+      def self.from_raw(value, mode:)
+        if mode == :plain
+          validate_raw!(value)
+          return value
+        end
+
+        new(value)
       end
     end
 
@@ -413,8 +431,10 @@ module DBus
       end
 
       def self.from_raw(value, mode:)
-        _types = validate_raw!(value)
-        return value if mode == :plain
+        if mode == :plain
+          _types = validate_raw!(value)
+          return value
+        end
 
         new(value)
       end

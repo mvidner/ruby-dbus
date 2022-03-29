@@ -777,7 +777,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid string
-  unmarshall: false
 # invalid UTF-8
 - sig: s
   end: little
@@ -793,7 +792,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid string
-  unmarshall: false
 # overlong sequence encoding an "A"
 - sig: s
   end: little
@@ -807,7 +805,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid string
-  unmarshall: false
 # first codepoint outside UTF-8, U+110000
 - sig: s
   end: little
@@ -823,7 +820,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid string
-  unmarshall: false
 - sig: o
   end: little
   buf:
@@ -938,7 +934,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  unmarshall: false
 - sig: o
   end: big
   buf:
@@ -949,7 +944,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  unmarshall: false
 - sig: o
   end: big
   buf:
@@ -961,7 +955,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  unmarshall: false
 - sig: o
   end: big
   buf:
@@ -973,7 +966,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  unmarshall: false
 - sig: o
   end: big
   buf:
@@ -985,7 +977,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  unmarshall: false
 - sig: o
   end: big
   buf:
@@ -997,7 +988,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  unmarshall: false
 # NUL in the middle
 - sig: o
   end: big
@@ -1011,7 +1001,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  unmarshall: false
 # accented a
 - sig: o
   end: big
@@ -1026,7 +1015,6 @@
   - 0
   exc: DBus::InvalidPacketException
   msg: Invalid object path
-  unmarshall: false
 - sig: g
   end: little
   buf:
