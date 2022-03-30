@@ -3,20 +3,25 @@
 module DBus
   # better Type
 
-  # basic vs container
-  # basic is fixed or string-like
-  #
   # FIXME: in general, when an API gives me, a user, a choice,
   # remember to make it easy for the case of:
   # "I don't CARE, I don't WANT to care, WHY should I care?"
   module Data
-    # @param type [SingleCompleteType]
-    # @param value [Object]
+    # Given a plain Ruby *value* and wanting a D-Bus *type*,
+    # construct an appropriate {Data::Base} instance.
+    #
+    # @param type [SingleCompleteType,Type]
+    # @param value [::Object]
     # @return [Data::Base]
     # @raise TypeError
-    def make_typed(_type, value)
+    def make_typed(type, value)
+      type = DBus.type(type) unless type.is_a?(Type)
+      data_class = Data::BY_TYPE_CODE[type.sigtype]
+      # not nil because DBus.type validates
+
+      data_class.from_typed(value, member_types: type.members)
+
       # FIXME: TODO: implement
-      value
     end
     module_function :make_typed
 
@@ -25,11 +30,22 @@ module DBus
     # A value is either {Basic} or a {Container}.
     # {Basic} values are either {Fixed}-size or {StringLike}.
     class Base
-      # value: from raw_message
-      # def initialize
+      # @!method self.basic?
+      # @return [Boolean]
 
+      # @!method self.fixed?
+      # @return [Boolean]
+
+      # @return appropriately-typed, valid value
       attr_reader :value
 
+      # @!method type
+      # @abstract
+      # Note that for Variants type=="v",
+      # for the specific see {Variant#member_type}
+      # @return [Type] the exact type of this value
+
+      # Child classes must validate *value*.
       def initialize(value)
         @value = value
       end
@@ -62,6 +78,14 @@ module DBus
       def type
         # The basic types can do this, unlike the containers
         self.class.type
+      end
+
+      # @param value [::Object]
+      # @param member_types [::Array<Type>] (ignored, will be empty)
+      # @return [Basic]
+      def self.from_typed(value, member_types:) # rubocop:disable Lint/UnusedMethodArgument
+        # assert member_types.empty?
+        new(value)
       end
     end
 
@@ -280,6 +304,13 @@ module DBus
       end
     end
 
+    # Unix file descriptor, not implemented yet.
+    class UnixFD < UInt32
+      def self.type_code
+        "h"
+      end
+    end
+
     # Signed 64 bit integer.
     class Int64 < Int
       def self.type_code
@@ -450,12 +481,57 @@ module DBus
         4
       end
 
+      # @return [Type]
+      attr_reader :member_type
+
+      def type
+        return @type if @type
+
+        # TODO: reconstructing the type is cumbersome; have #initialize take *type* instead?
+        # TODO: or rather add Type::Array[t]
+        @type = Type.new("a")
+        @type << member_type
+        @type
+      end
+
       # TODO: check that Hash keys are basic types
-      def self.from_items(value, mode:, hash: false)
+      # @param mode [:plain,:exact]
+      # @param member_type [Type]
+      # @param hash [Boolean] are we unmarshalling an ARRAY of DICT_ENTRY
+      # @return [Data::Array]
+      def self.from_items(value, mode:, member_type:, hash: false)
         value = Hash[value] if hash
         return value if mode == :plain
 
-        new(value)
+        new(value, member_type: member_type)
+      end
+
+      # @param value [::Object]
+      # @param member_types [::Array<Type>]
+      # @return [Data::Array]
+      def self.from_typed(value, member_types:)
+        # TODO: validation
+        member_type = member_types.first
+
+        # TODO: Dict??
+        items = value.map do |i|
+          Data.make_typed(member_type, i)
+        end
+
+        new(items) # initialize(::Array<Data::Base>)
+      end
+
+      # FIXME: should Data::Array be mutable?
+      # if it is, is its type mutable too?
+
+      # TODO: specify type or guess type?
+      # Data is the exact type, so its constructor should be exact
+      # and guesswork should be clearly labeled
+      # @param type [Type,nil]
+      def initialize(value, member_type:)
+        # TODO: copy from another Data::Array
+        @member_type = member_type || Variant.guess_type
+        super(value)
       end
     end
 
@@ -471,12 +547,48 @@ module DBus
         8
       end
 
+      # @return [::Array<Type>]
+      attr_reader :member_types
+
+      def type
+        return @type if @type
+
+        # TODO: reconstructing the type is cumbersome; have #initialize take *type* instead?
+        # TODO: or rather add Type::Struct[t1, t2, ...]
+        @type = Type.new(self.class.type_code, abstract: true)
+        @member_types.each do |member_type|
+          @type << member_type
+        end
+        @type
+      end
+
       # @param value [::Array]
-      def self.from_items(value, mode:)
+      def self.from_items(value, mode:, member_types:)
         value.freeze
         return value if mode == :plain
 
-        new(value)
+        new(value, member_types: member_types)
+      end
+
+      # @param value [::Object] (#size, #each)
+      # @param member_types [::Array<Type>]
+      # @return [Struct]
+      def self.from_typed(value, member_types:)
+        # TODO: validation
+        raise unless value.size == member_types.size
+
+        @member_types = member_types
+
+        items = member_types.zip(value).map do |item_type, item|
+          Data.make_typed(item_type, item)
+        end
+
+        new(items, member_types: member_types) # initialize(::Array<Data::Base>)
+      end
+
+      def initialize(value, member_types:)
+        @member_types = member_types
+        super(value)
       end
     end
 
@@ -490,25 +602,49 @@ module DBus
         1
       end
 
-      # @param type [Type::Type]
-      def self.from_items(value, type:, mode:)
+      # @param type [Type]
+      def self.from_items(value, mode:, member_type:)
         return value if mode == :plain
 
-        new(value, type: type)
+        new(value, member_type: member_type)
       end
 
-      # @return [Type::Type]
-      attr_reader :type
+      # @param value [::Object]
+      # @param member_types [::Array<Type>]
+      # @return [Variant]
+      def self.from_typed(value, member_types:) # rubocop:disable Lint/UnusedMethodArgument
+        # assert member_types.empty?
 
-      # @param type [Type::Type]
-      def initialize(value, type:)
+        # decide on type of value
+        new(value)
+      end
+
+      # Note that for Variants type=="v",
+      # for the specific see {Variant#member_type}
+      # @return [Type] the exact type of this value
+      def type
+        "v"
+      end
+
+      # @return [Type]
+      attr_reader :member_type
+
+      def self.guess_type(value)
+        sct, = PacketMarshaller.make_variant(value)
+        DBus.type(sct)
+      end
+
+      # @param type [Type,nil]
+      def initialize(value, member_type:)
+        # TODO: validate that the given *member_type* matches *value*
         if value.is_a?(self.class)
           # Copy the contained value instead of boxing it more
           # TODO: except perhaps for round-tripping in exact mode?
-          type = value.type
+          @member_type = value.member_type
           value = value.value
+        else
+          @member_type = member_type || self.class.guess_type(value)
         end
-        @type = type
         super(value)
       end
     end
@@ -524,18 +660,30 @@ module DBus
         8
       end
 
+      # @return [::Array<Type>]
+      attr_reader :member_types
+
+      def type
+        return @type if @type
+
+        # TODO: reconstructing the type is cumbersome; have #initialize take *type* instead?
+        @type = Type.new(self.class.type_code, abstract: true)
+        @member_types.each do |member_type|
+          @type << member_type
+        end
+        @type
+      end
+
       # @param value [::Array]
-      def self.from_items(value, mode:) # rubocop:disable Lint/UnusedMethodArgument
+      def self.from_items(value, mode:, member_types:) # rubocop:disable Lint/UnusedMethodArgument
         value.freeze
         # DictEntry ignores the :exact mode
         value
       end
-    end
 
-    # Unix file descriptor, not implemented yet.
-    class UnixFD < UInt32
-      def self.type_code
-        "h"
+      def initialize(value, member_types:)
+        @member_types = member_types
+        super(value)
       end
     end
 

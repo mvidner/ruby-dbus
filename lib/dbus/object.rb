@@ -61,15 +61,8 @@ module DBus
           retdata = [*retdata]
 
           reply = Message.method_return(msg)
-          if iface.name == PROPERTY_INTERFACE && member_sym == :Get
-            # Use the specific property type instead of the generic variant
-            # returned by Get.
-            # TODO: GetAll and Set still missing
-            property = dbus_lookup_property(msg.params[0], msg.params[1])
-            rsigs = [property.type]
-          else
-            rsigs = meth.rets.map(&:type)
-          end
+          # FIXME: test that Get/GetAll returns proper types
+          rsigs = meth.rets.map(&:type)
           rsigs.zip(retdata).each do |rsig, rdata|
             reply.add_param(rsig, rdata)
           end

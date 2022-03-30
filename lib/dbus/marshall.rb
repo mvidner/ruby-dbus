@@ -113,7 +113,7 @@ module DBus
           values = signature.members.map do |child_sig|
             do_parse(child_sig, mode: mode)
           end
-          packet = data_class.from_items(values, mode: mode)
+          packet = data_class.from_items(values, mode: mode, member_types: signature.members)
 
         when Type::VARIANT
           data_sig = do_parse(Data::Signature.type, mode: :exact) # -> Data::Signature
@@ -124,7 +124,7 @@ module DBus
 
           type = types.first
           value = do_parse(type, mode: mode)
-          packet = data_class.from_items(value, type: type, mode: mode)
+          packet = data_class.from_items(value, mode: mode, member_type: type)
 
         when Type::ARRAY
           array_bytes = aligned_read_value(Data::UInt32)
@@ -142,7 +142,7 @@ module DBus
             items << item
           end
           is_hash = signature.child.sigtype == Type::DICT_ENTRY
-          packet = data_class.from_items(items, mode: mode, hash: is_hash)
+          packet = data_class.from_items(items, mode: mode, member_type: signature.child, hash: is_hash)
         end
       end
       packet
@@ -233,6 +233,7 @@ module DBus
         data = data_class.new(val)
         @packet += data.marshall(endianness)
       elsif data_class.basic?
+        val = val.value if val.is_a?(Data::Basic)
         align(data_class.size_class.alignment)
         size_data = data_class.size_class.new(val.bytesize)
         @packet += size_data.marshall(endianness)
@@ -246,9 +247,10 @@ module DBus
         when Type::ARRAY
           append_array(type.child, val)
         when Type::STRUCT, Type::DICT_ENTRY
+          val = val.value if val.is_a?(Data::Struct)
           unless val.is_a?(Array) || val.is_a?(Struct)
             type_name = Type::TYPE_MAPPING[type.sigtype].first
-            raise TypeException, "#{type_name} expects an Array or Struct"
+            raise TypeException, "#{type_name} expects an Array or Struct, seen #{val.class}"
           end
 
           if type.sigtype == Type::DICT_ENTRY && val.size != 2
