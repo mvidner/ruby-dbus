@@ -81,7 +81,7 @@ module DBus
 
     # Based on the _signature_ type, retrieve a packet from the buffer
     # and return it.
-    # @param signature [Type::Type]
+    # @param signature [Type]
     # @param mode [:plain,:exact]
     # @return [Data::Base]
     def do_parse(signature, mode: :plain)
@@ -117,7 +117,7 @@ module DBus
 
         when Type::VARIANT
           data_sig = do_parse(Data::Signature.type, mode: :exact) # -> Data::Signature
-          types = Type::Parser.new(data_sig.value).parse # -> Array<Type::Type>
+          types = Type::Parser.new(data_sig.value).parse # -> Array<Type>
           unless types.size == 1
             raise InvalidPacketException, "VARIANT must contain 1 value, #{types.size} found"
           end
@@ -214,14 +214,14 @@ module DBus
     #
     # Host native endianness is used, declared in Message#marshall
     #
-    # @param type [SingleCompleteType] (or {Integer} or {Type::Type})
+    # @param type [SingleCompleteType] (or {Integer} or {Type})
     # @param val [::Object]
     def append(type, val)
       raise TypeException, "Cannot send nil" if val.nil?
 
       type = type.chr if type.is_a?(Integer)
       type = Type::Parser.new(type).parse[0] if type.is_a?(String)
-      # type is [Type::Type] now
+      # type is [Type] now
       data_class = Data::BY_TYPE_CODE[type.sigtype]
       if data_class.nil?
         raise NotImplementedError,
@@ -281,7 +281,7 @@ module DBus
         case val[0]
         when Type
           vartype, vardata = val
-        # Ambiguous but easy to use, because Type::Type
+        # Ambiguous but easy to use, because Type
         # cannot construct "as" "a{sv}" easily
         when String
           begin

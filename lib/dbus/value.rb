@@ -53,10 +53,10 @@ module DBus
         true
       end
 
-      # @return [Type::Type]
+      # @return [Type]
       def self.type
         # memoize
-        @type ||= Type::Type.new(type_code).freeze
+        @type ||= Type.new(type_code).freeze
       end
 
       def type
