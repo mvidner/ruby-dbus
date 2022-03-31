@@ -531,6 +531,7 @@ module DBus
       def initialize(value, member_type:)
         # TODO: copy from another Data::Array
         @member_type = member_type || Variant.guess_type
+        @type = nil
         super(value)
       end
     end
@@ -588,6 +589,7 @@ module DBus
 
       def initialize(value, member_types:)
         @member_types = member_types
+        @type = nil
         super(value)
       end
     end
@@ -683,6 +685,7 @@ module DBus
 
       def initialize(value, member_types:)
         @member_types = member_types
+        @type = nil
         super(value)
       end
     end
