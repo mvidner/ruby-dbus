@@ -122,5 +122,29 @@ describe "PropertyTest" do
       struct = @iface["MyStruct"]
       expect(struct).to be_frozen
     end
+
+    it "Get returns the correctly typed value (check with dbus-send)" do
+      # As big as the DBus::Data branch is,
+      # it still does not handle the :exact mode on the client/proxy side.
+      # So we resort to parsing dbus-send output.
+      cmd = "dbus-send --print-reply " \
+            "--dest=org.ruby.service " \
+            "/org/ruby/MyInstance " \
+            "org.freedesktop.DBus.Properties.Get " \
+            "string:org.ruby.SampleInterface " \
+            "string:MyStruct"
+      reply = `#{cmd}`
+      expect(reply).to match(/variant\s+struct {\s+string "three"\s+string "strings"\s+string "in a struct"\s+}/)
+    end
+
+    it "GetAll returns the correctly typed value (check with dbus-send)" do
+      cmd = "dbus-send --print-reply " \
+            "--dest=org.ruby.service " \
+            "/org/ruby/MyInstance " \
+            "org.freedesktop.DBus.Properties.GetAll " \
+            "string:org.ruby.SampleInterface "
+      reply = `#{cmd}`
+      expect(reply).to match(/variant\s+struct {\s+string "three"\s+string "strings"\s+string "in a struct"\s+}/)
+    end
   end
 end
