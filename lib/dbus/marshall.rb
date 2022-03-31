@@ -214,7 +214,7 @@ module DBus
     #
     # Host native endianness is used, declared in Message#marshall
     #
-    # @param type [SingleCompleteType] (or {Integer} or {Type})
+    # @param type [SingleCompleteType] (or Integer or {Type})
     # @param val [::Object]
     def append(type, val)
       raise TypeException, "Cannot send nil" if val.nil?

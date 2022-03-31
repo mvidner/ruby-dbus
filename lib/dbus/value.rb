@@ -527,7 +527,7 @@ module DBus
       # TODO: specify type or guess type?
       # Data is the exact type, so its constructor should be exact
       # and guesswork should be clearly labeled
-      # @param type [Type,nil]
+      # @param member_type [Type,nil]
       def initialize(value, member_type:)
         # TODO: copy from another Data::Array
         @member_type = member_type || Variant.guess_type
@@ -602,7 +602,7 @@ module DBus
         1
       end
 
-      # @param type [Type]
+      # @param member_type [Type]
       def self.from_items(value, mode:, member_type:)
         return value if mode == :plain
 
@@ -634,7 +634,7 @@ module DBus
         DBus.type(sct)
       end
 
-      # @param type [Type,nil]
+      # @param member_type [Type,nil]
       def initialize(value, member_type:)
         # TODO: validate that the given *member_type* matches *value*
         if value.is_a?(self.class)
