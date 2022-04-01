@@ -30,22 +30,33 @@ RSpec.shared_examples "constructor accepts numeric range" do |min, max|
   end
 end
 
-RSpec.shared_examples "constructor accepts plain or typed value" do |plain|
+RSpec.shared_examples "constructor accepts plain or typed values" do |plain_list|
   describe "#initialize" do
-    it "accepts the plain value #{plain.inspect}" do
-      expect(described_class.new(plain).value).to eq(plain)
-    end
+    Array(plain_list).each do |plain|
+      it "accepts the plain value #{plain.inspect}" do
+        expect(described_class.new(plain).value).to eq(plain)
+      end
 
-    it "accepts the typed value #{plain.inspect}" do
-      typed = described_class.new(plain)
-      expect(described_class.new(typed).value).to eq(plain)
+      it "accepts the typed value #{plain.inspect}" do
+        typed = described_class.new(plain)
+        expect(described_class.new(typed).value).to eq(plain)
+      end
     end
   end
 end
 
-RSpec.shared_examples "constructor accepts plain or typed values from this list" do |plain_list|
-  plain_list.each do |plain|
-    include_examples "constructor accepts plain or typed value", plain
+RSpec.shared_examples "constructor (kwargs) accepts values" do |list|
+  describe "#initialize" do
+    list.each do |value, kwargs_hash|
+      it "accepts the plain value #{value.inspect}, #{kwargs_hash.inspect}" do
+        expect(described_class.new(value, **kwargs_hash).value).to eq(value)
+      end
+
+      it "accepts the typed value #{value.inspect}, #{kwargs_hash.inspect}" do
+        typed = described_class.new(value, **kwargs_hash)
+        expect(described_class.new(typed, **kwargs_hash).value).to eq(value)
+      end
+    end
   end
 end
 
@@ -55,6 +66,17 @@ RSpec.shared_examples "constructor rejects values from this list" do |bad_list|
       it "rejects #{value.inspect} with #{exc_class}: #{msg_substr}" do
         msg_re = Regexp.new(Regexp.quote(msg_substr))
         expect { described_class.new(value) }.to raise_error(exc_class, msg_re)
+      end
+    end
+  end
+end
+
+RSpec.shared_examples "constructor (kwargs) rejects values" do |bad_list|
+  describe "#initialize" do
+    bad_list.each do |(value, kwargs_hash, exc_class, msg_substr)|
+      it "rejects #{value.inspect}, #{kwargs_hash.inspect} with #{exc_class}: #{msg_substr}" do
+        msg_re = Regexp.new(Regexp.quote(msg_substr))
+        expect { described_class.new(value, **kwargs_hash) }.to raise_error(exc_class, msg_re)
       end
     end
   end
@@ -72,37 +94,37 @@ describe DBus::Data do
 
   describe DBus::Data::Byte do
     include_examples "constructor accepts numeric range", 0, 2**8 - 1
-    include_examples "constructor accepts plain or typed value", 42
+    include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::Int16 do
     include_examples "constructor accepts numeric range", -2**15, 2**15 - 1
-    include_examples "constructor accepts plain or typed value", 42
+    include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::UInt16 do
     include_examples "constructor accepts numeric range", 0, 2**16 - 1
-    include_examples "constructor accepts plain or typed value", 42
+    include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::Int32 do
     include_examples "constructor accepts numeric range", -2**31, 2**31 - 1
-    include_examples "constructor accepts plain or typed value", 42
+    include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::UInt32 do
     include_examples "constructor accepts numeric range", 0, 2**32 - 1
-    include_examples "constructor accepts plain or typed value", 42
+    include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::Int64 do
     include_examples "constructor accepts numeric range", -2**63, 2**63 - 1
-    include_examples "constructor accepts plain or typed value", 42
+    include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::UInt64 do
     include_examples "constructor accepts numeric range", 0, 2**64 - 1
-    include_examples "constructor accepts plain or typed value", 42
+    include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::Boolean do
@@ -120,11 +142,11 @@ describe DBus::Data do
       end
     end
 
-    include_examples "constructor accepts plain or typed value", false
+    include_examples "constructor accepts plain or typed values", false
   end
 
   describe DBus::Data::Double do
-    include_examples "constructor accepts plain or typed value", Math::PI
+    include_examples "constructor accepts plain or typed values", Math::PI
 
     describe "#initialize" do
       it "raises on values that can't be made a Float" do
@@ -151,6 +173,7 @@ describe DBus::Data do
 
       bad = [
         # NUL in the middle
+        # FIXME: InvalidPacketException is wrong here, it should be ArgumentError
         ["a\x00b", DBus::InvalidPacketException, "contains NUL"],
         # invalid UTF-8
         ["\xFF\xFF\xFF\xFF", DBus::InvalidPacketException, "not in UTF-8"],
@@ -160,7 +183,7 @@ describe DBus::Data do
         ["\xF4\x90\xC0\xC0", DBus::InvalidPacketException, "not in UTF-8"]
       ]
 
-      include_examples "constructor accepts plain or typed values from this list", good
+      include_examples "constructor accepts plain or typed values", good
       include_examples "constructor rejects values from this list", bad
     end
 
@@ -175,7 +198,7 @@ describe DBus::Data do
         # TODO: others
       ]
 
-      include_examples "constructor accepts plain or typed values from this list", good
+      include_examples "constructor accepts plain or typed values", good
       include_examples "constructor rejects values from this list", bad
     end
 
@@ -192,13 +215,31 @@ describe DBus::Data do
         # TODO: others
       ]
 
-      include_examples "constructor accepts plain or typed values from this list", good
+      include_examples "constructor accepts plain or typed values", good
       include_examples "constructor rejects values from this list", bad
     end
   end
 
   describe "containers" do
     describe DBus::Data::Array do
+      good = [
+        # [[1, 2, 3], member_type: nil],
+        [[1, 2, 3], { member_type: "q" }],
+        [[1, 2, 3], { member_type: DBus::Type::UINT16 }],
+        [[1, 2, 3], { member_type: DBus.type("q") }],
+        [[DBus::Data::UInt16.new(1), DBus::Data::UInt16.new(2), DBus::Data::UInt16.new(3)], { member_type: "q" }]
+        # TODO: others
+      ]
+
+      bad = [
+        # undesirable type guessing
+        ## [[1, 2, 3], { member_type: nil }, DBus::InvalidPacketException, "Unknown type code"],
+        ## [[1, 2, 3], { member_type: "!" }, DBus::InvalidPacketException, "Unknown type code"]
+        # TODO: others
+      ]
+
+      include_examples "constructor (kwargs) accepts values", good
+      include_examples "constructor (kwargs) rejects values", bad
     end
 
     describe DBus::Data::Struct do
