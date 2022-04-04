@@ -15,6 +15,8 @@ if coverage
   SimpleCov.add_filter "_spec.rb"
   # do not cover the activesupport helpers
   SimpleCov.add_filter "/core_ext/"
+  # measure all if/else branches on a line
+  SimpleCov.enable_coverage :branch
 
   SimpleCov.start
 
