@@ -14,6 +14,7 @@ require_relative "dbus/api_options"
 require_relative "dbus/auth"
 require_relative "dbus/bus"
 require_relative "dbus/bus_name"
+require_relative "dbus/data"
 require_relative "dbus/error"
 require_relative "dbus/introspect"
 require_relative "dbus/logger"
@@ -26,6 +27,7 @@ require_relative "dbus/object_path"
 require_relative "dbus/proxy_object"
 require_relative "dbus/proxy_object_factory"
 require_relative "dbus/proxy_object_interface"
+require_relative "dbus/raw_message"
 require_relative "dbus/type"
 require_relative "dbus/xml"
 
@@ -48,6 +50,10 @@ module DBus
              else
                BIG_END
              end
+
+  # Comparing symbols is faster than strings
+  # @return [:little,:big]
+  HOST_ENDIANNESS = RawMessage.endianness(HOST_END)
 
   # General exceptions.
 

@@ -34,6 +34,9 @@ module DBus
   # This module containts the constants of the types specified in the D-Bus
   # protocol.
   #
+  # Corresponds to {SingleCompleteType}.
+  #
+  # See also {DBus::Data::Signature}
   class Type
     # Mapping from type number to name and alignment.
     TYPE_MAPPING = {
@@ -70,9 +73,9 @@ module DBus
     # This is for backward compatibility.
     Type = self # rubocop:disable Naming/ConstantName
 
-    # Returns the signature type number.
+    # @return [String] the signature type character, eg "s" or "e".
     attr_reader :sigtype
-    # Return contained member types.
+    # @return [Array<Type>] contained member types.
     attr_reader :members
 
     # Use {DBus.type} instead, because this allows constructing
@@ -188,6 +191,7 @@ module DBus
 
       # Parse one character _char_ of the signature.
       # @param for_array [Boolean] are we parsing an immediate child of an ARRAY
+      # @return [Type]
       def parse_one(char, for_array: false)
         res = nil
         case char
@@ -279,6 +283,9 @@ module DBus
   module_function :types
 
   # Make an explicit [Type, value] pair
+  # @param string_type [SingleCompleteType]
+  # @param value [::Object]
+  # @return [Array(DBus::Type::Type,::Object)]
   def variant(string_type, value)
     [type(string_type), value]
   end

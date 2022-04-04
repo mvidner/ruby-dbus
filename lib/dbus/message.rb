@@ -172,7 +172,7 @@ module DBus
       @body_length = params.packet.bytesize
 
       marshaller = PacketMarshaller.new
-      marshaller.append(Type::BYTE, HOST_END)
+      marshaller.append(Type::BYTE, HOST_END.ord)
       marshaller.append(Type::BYTE, @message_type)
       marshaller.append(Type::BYTE, @flags)
       marshaller.append(Type::BYTE, @protocol)
@@ -204,13 +204,7 @@ module DBus
     #   the detected message (self) and
     #   the index pointer of the buffer where the message data ended.
     def unmarshall_buffer(buf)
-      buf = buf.dup
-      endianness = if buf[0] == "l"
-                     LIL_END
-                   else
-                     BIG_END
-                   end
-      pu = PacketUnmarshaller.new(buf, endianness)
+      pu = PacketUnmarshaller.new(buf, RawMessage.endianness(buf[0]))
       mdata = pu.unmarshall(MESSAGE_SIGNATURE)
       _, @message_type, @flags, @protocol, @body_length, @serial,
         headers = mdata
@@ -235,11 +229,11 @@ module DBus
           @signature = struct[1]
         end
       end
-      pu.align(8)
+      pu.align_body
       if @body_length.positive? && @signature
         @params = pu.unmarshall(@signature, @body_length)
       end
-      [self, pu.idx]
+      [self, pu.consumed_size]
     end
 
     # Make a new exception from ex, mark it as being caused by this message

@@ -9,7 +9,8 @@
 # See the file "COPYING" for the exact licensing terms.
 
 module DBus
-  # A {::String} that validates at initialization time
+  # A {::String} that validates at initialization time.
+  # See also {DBus::Data::ObjectPath}
   # @see https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-marshaling-object-path
   class ObjectPath < String
     # @raise Error if not a valid object path

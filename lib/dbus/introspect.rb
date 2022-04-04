@@ -240,6 +240,7 @@ module DBus
   class Property
     # @return [String] The name of the property, for example FooBar.
     attr_reader :name
+    # @return [SingleCompleteType]
     attr_reader :type
     # @return [Symbol] :read :write or :readwrite
     attr_reader :access

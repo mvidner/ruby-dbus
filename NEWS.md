@@ -5,11 +5,15 @@
 API:
  * Renamed the DBus::Type::Type class to DBus::Type
    (which was previously a module).
+ * Introduced DBus::Data classes, use them in Properties.Get,
+   Properties.GetAll to return correct types as declared (still [#97][]).
 
 Bug fixes:
  * Signature validation: Ensure DBus.type produces a valid Type
  * Detect more malformed messages: non-NUL padding bytes, variants with
    multiple or no value.
+ * Added thorough tests (`spec/data/marshall.yaml`) to detect nearly all
+   invalid data at unmarshalling time.
 
 ## Ruby D-Bus 0.18.0.beta1 - 2022-02-24
 
