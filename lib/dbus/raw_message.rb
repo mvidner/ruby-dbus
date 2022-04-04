@@ -1,5 +1,13 @@
 # frozen_string_literal: true
 
+# This file is part of the ruby-dbus project
+# Copyright (C) 2022 Martin Vidner
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License, version 2.1 as published by the Free Software Foundation.
+# See the file "COPYING" for the exact licensing terms.
+
 module DBus
   # A message while it is being parsed: a binary string,
   # with a position cursor (*pos*), and an *endianness* tag.
