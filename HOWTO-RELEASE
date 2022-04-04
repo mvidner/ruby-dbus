@@ -24,13 +24,13 @@ Push the versioned commit; tag
     git push
     git push --tags
 
-Push gem
-
-    gem push package/ruby-dbus-$(cat VERSION).gem
-
 Build, and submit + SR to OBS
 
     rake osc:sr
+
+Push gem
+
+    gem push package/ruby-dbus-$(cat VERSION).gem
 
 Publicize
 

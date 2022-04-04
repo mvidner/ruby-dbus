@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.18.0.beta2 - 2022-04-04
+
 API:
  * Renamed the DBus::Type::Type class to DBus::Type
    (which was previously a module).

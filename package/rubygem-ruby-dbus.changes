@@ -1,4 +1,22 @@
 -------------------------------------------------------------------
+Mon Apr  4 09:58:54 UTC 2022 - Martin Vidner <mvidner@suse.com>
+
+- 0.18.0.beta2
+ API:
+ * Renamed the DBus::Type::Type class to DBus::Type
+   (which was previously a module).
+ * Introduced DBus::Data classes, use them in Properties.Get,
+   Properties.GetAll to return correct types as declared (still
+   gh#mvidner/ruby-dbus#97).
+
+ Bug fixes:
+ * Signature validation: Ensure DBus.type produces a valid Type
+ * Detect more malformed messages: non-NUL padding bytes, variants with
+   multiple or no value.
+ * Added thorough tests (spec/data/marshall.yaml) to detect nearly all
+   invalid data at unmarshalling time.
+
+-------------------------------------------------------------------
 Thu Feb 24 09:48:24 UTC 2022 - Martin Vidner <mvidner@suse.com>
 
 - 0.18.0.beta1
