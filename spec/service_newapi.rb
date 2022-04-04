@@ -13,16 +13,23 @@ PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
 class Test < DBus::Object
   Point2D = Struct.new(:x, :y)
 
+  attr_writer :main_loop
+
   INTERFACE = "org.ruby.SampleInterface"
   def initialize(path)
     super path
     @read_me = "READ ME"
     @read_or_write_me = "READ OR WRITE ME"
     @my_struct = ["three", "strings", "in a struct"].freeze
+    @main_loop = nil
   end
 
   # Create an interface aggregating all upcoming dbus_method defines.
   dbus_interface INTERFACE do
+    dbus_method :quit, "" do
+      @main_loop&.quit
+    end
+
     dbus_method :hello, "in name:s, in name2:s" do |name, name2|
       puts "hello(#{name}, #{name2})"
     end
@@ -193,6 +200,7 @@ end
 puts "listening, with ruby-#{RUBY_VERSION}"
 main = DBus::Main.new
 main << bus
+myobj.main_loop = main
 begin
   main.run
 rescue SystemCallError
