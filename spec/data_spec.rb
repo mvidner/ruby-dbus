@@ -243,6 +243,52 @@ describe DBus::Data do
     end
 
     describe DBus::Data::Struct do
+      three_words = ::Struct.new(:a, :b, :c)
+
+      qqq = ["q", "q", "q"]
+      integers = [1, 2, 3]
+      uints = [DBus::Data::UInt16.new(1), DBus::Data::UInt16.new(2), DBus::Data::UInt16.new(3)]
+
+      # TODO: all the reasonable initialization params
+      # need to be normalized into one/few internal representation.
+      # So check what is the result
+      #
+      # Internally, it must be Data::Base
+      # Perhaps distinguish #value => Data::Base
+      # and #plain_value => plain Ruby
+      #
+      # but then, can they mutate?
+      #
+      # TODO: also check data ownership: reasonable to own the data?
+      # can make it explicit?
+      good = [
+        # from plain array; various m_t styles
+        [integers, { member_types: ["q", "q", "q"] }],
+        [integers, { member_types: [DBus::Type::UINT16, DBus::Type::UINT16, DBus::Type::UINT16] }],
+        [integers, { member_types: DBus.types("qqq") }],
+        # plain array of data
+        [uints, { member_types: DBus.types("qqq") }],
+        # ::Struct
+        [three_words.new(*integers), { member_types: qqq }],
+        [three_words.new(*uints), { member_types: qqq }]
+        # TODO: others
+      ]
+
+      _bad_but_valid = [
+        # Wrong member_types arg:
+        # hmm this is another reason to pass the type
+        # as the entire struct type, not the members:
+        # empty struct will be caught naturally
+        [integers, { member_types: [] }, ArgumentError, "???"],
+        [integers, { member_types: ["!"] }, DBus::InvalidPacketException, "Unknown type code"],
+        # STRUCT specific: member count mismatch
+        [[1, 2], { member_types: DBus.types("qqq") }, ArgumentError, "???"],
+        [[1, 2, 3, 4], { member_types: DBus.types("qqq") }, ArgumentError, "???"]
+        # TODO: others
+      ]
+
+      include_examples "constructor (kwargs) accepts values", good
+      # include_examples "constructor (kwargs) rejects values", bad
     end
 
     describe DBus::Data::Variant do
