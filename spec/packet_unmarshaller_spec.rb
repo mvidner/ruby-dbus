@@ -216,8 +216,6 @@ describe DBus::PacketUnmarshaller do
 
   context "ARRAYs" do
     context "of BYTEs" do
-      # TODO: will want to special-case this
-      # and represent them as binary strings
       let(:signature) { "ay" }
       include_examples "reports empty data"
     end

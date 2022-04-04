@@ -82,9 +82,7 @@ RSpec.shared_examples "constructor (kwargs) rejects values" do |bad_list|
   end
 end
 
-# FIXME: copy constructors should work: Data::Base.new(other_data_base) should take its value,
-# also one exception where Boolean would look inside to produce false
-# Look at conversions? to_str, to_int?
+# TODO: Look at conversions? to_str, to_int?
 
 describe DBus::Data do
   # test initialization, from user code, or from packet (from_raw)

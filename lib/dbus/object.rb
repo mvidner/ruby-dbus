@@ -61,7 +61,6 @@ module DBus
           retdata = [*retdata]
 
           reply = Message.method_return(msg)
-          # FIXME: test that Get/GetAll returns proper types
           rsigs = meth.rets.map(&:type)
           rsigs.zip(retdata).each do |rsig, rdata|
             reply.add_param(rsig, rdata)
@@ -351,8 +350,10 @@ module DBus
         property = dbus_lookup_property(interface_name, property_name)
 
         if property.writable?
-          # TODO: from typed to plain?
           ruby_name_eq = "#{property.ruby_name}="
+          # TODO: declare dbus_method :Set to take :exact argument
+          # and type check it here before passing its :plain value
+          # to the implementation
           public_send(ruby_name_eq, value)
         else
           raise DBus.error("org.freedesktop.DBus.Error.PropertyReadOnly"),

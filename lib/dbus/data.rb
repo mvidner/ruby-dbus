@@ -20,8 +20,6 @@ module DBus
       # not nil because DBus.type validates
 
       data_class.from_typed(value, member_types: type.members)
-
-      # FIXME: TODO: implement
     end
     module_function :make_typed
 
@@ -159,7 +157,9 @@ module DBus
     end
 
     # Byte.
-    # TODO: ByteArray
+    #
+    # TODO: a specialized ByteArray for `ay` may be useful,
+    # to save memory and for natural handling
     class Byte < Int
       def self.type_code
         "y"
