@@ -1,11 +1,27 @@
 # frozen_string_literal: true
 
 module DBus
-  # better Type
-
   # FIXME: in general, when an API gives me, a user, a choice,
   # remember to make it easy for the case of:
   # "I don't CARE, I don't WANT to care, WHY should I care?"
+
+  # Exact/explicit representation of D-Bus data types:
+  #
+  # - {Boolean}
+  # - {Byte}, {Int16}, {Int32}, {Int64}, {UInt16}, {UInt32}, {UInt64}
+  # - {Double}
+  # - {String}, {ObjectPath}, {Signature}
+  # - {Array}, {DictEntry}, {Struct}
+  # - {UnixFD}
+  # - {Variant}
+  #
+  # The common base type is {Base}.
+  #
+  # There are other intermediate classes in the inheritance hierarchy, using
+  # the names the specification uses, but they are an implementation detail:
+  #
+  # - A value is either {Basic} or a {Container}.
+  # - Basic values are either {Fixed}-size or {StringLike}.
   module Data
     # Given a plain Ruby *value* and wanting a D-Bus *type*,
     # construct an appropriate {Data::Base} instance.
