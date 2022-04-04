@@ -64,7 +64,6 @@ module DBus
 
   # Exception raised when an unmarshalled buffer is truncated and
   # incomplete.
-  # FIXME: it needs the buffer.dup because otherwise the buffer would be consumed? or not? via idx/pos?
   class IncompleteBufferException < Exception
   end
 

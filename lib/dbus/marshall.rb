@@ -34,6 +34,9 @@ module DBus
     # @param buffer [String]
     # @param endianness [:little,:big]
     def initialize(buffer, endianness)
+      # TODO: this dup can be avoided if we can prove
+      # that an IncompleteBufferException leaves the original *buffer* intact
+      buffer = buffer.dup
       @raw_msg = RawMessage.new(buffer, endianness)
     end
 
