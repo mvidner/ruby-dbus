@@ -165,6 +165,9 @@ module DBus
 
     # Represents integers
     class Int < Fixed
+      # @!method self.range
+      # @return [Range] the full range of allowed values
+
       # @param value [::Integer,DBus::Data::Int]
       # @raise RangeError
       def initialize(value)
@@ -173,10 +176,6 @@ module DBus
         raise RangeError, "#{value.inspect} is not a member of #{r}" unless r.member?(value)
 
         super(value)
-      end
-
-      def self.range
-        raise NotImplementedError, "Abstract"
       end
     end
 
