@@ -250,7 +250,7 @@ module DBus
         when Type::ARRAY
           append_array(type.child, val)
         when Type::STRUCT, Type::DICT_ENTRY
-          val = val.value if val.is_a?(Data::Struct)
+          val = val.value if val.is_a?(Data::Struct) || val.is_a?(Data::DictEntry)
           unless val.is_a?(Array) || val.is_a?(Struct)
             type_name = Type::TYPE_MAPPING[type.sigtype].first
             raise TypeException, "#{type_name} expects an Array or Struct, seen #{val.class}"

@@ -603,8 +603,6 @@ module DBus
         # TODO: validation
         raise unless value.size == member_types.size
 
-        @member_types = member_types
-
         items = member_types.zip(value).map do |item_type, item|
           Data.make_typed(item_type, item)
         end
@@ -712,6 +710,22 @@ module DBus
         value.freeze
         # DictEntry ignores the :exact mode
         value
+      end
+
+      # @param value [::Object] (#size, #each)
+      # @param member_types [::Array<Type>]
+      # @return [DictEntry]
+      def self.from_typed(value, member_types:)
+        # assert member_types.size == 2
+        # TODO: duplicated from Struct. Inherit/delegate?
+        # TODO: validation
+        raise unless value.size == member_types.size
+
+        items = member_types.zip(value).map do |item_type, item|
+          Data.make_typed(item_type, item)
+        end
+
+        new(items, member_types: member_types) # initialize(::Array<Data::Base>)
       end
 
       def initialize(value, member_types:)
