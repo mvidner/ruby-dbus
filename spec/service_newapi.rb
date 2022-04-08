@@ -21,6 +21,13 @@ class Test < DBus::Object
     @read_me = "READ ME"
     @read_or_write_me = "READ OR WRITE ME"
     @my_struct = ["three", "strings", "in a struct"].freeze
+    @my_array = [42, 43]
+    @my_dict = {
+      "one" => 1,
+      "two" => "dva",
+      "three" => [3, 3, 3]
+    }
+    @my_variant = @my_array.dup
     @main_loop = nil
   end
 
@@ -101,6 +108,9 @@ class Test < DBus::Object
     dbus_reader :explosive, "s"
 
     dbus_attr_reader :my_struct, "(sss)"
+    dbus_attr_reader :my_array, "aq"
+    dbus_attr_reader :my_dict, "a{sv}"
+    dbus_attr_reader :my_variant, "v"
   end
 
   # closing and reopening the same interface

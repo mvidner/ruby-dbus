@@ -52,7 +52,7 @@ describe "PropertyTest" do
 
   it "tests get all" do
     all = @iface.all_properties
-    expect(all.keys.sort).to eq(["MyStruct", "ReadMe", "ReadOrWriteMe"])
+    expect(all.keys.sort).to eq(["MyArray", "MyDict", "MyStruct", "MyVariant", "ReadMe", "ReadOrWriteMe"])
   end
 
   it "tests get all on a V1 object" do
@@ -60,7 +60,7 @@ describe "PropertyTest" do
     iface = obj["org.ruby.SampleInterface"]
 
     all = iface.all_properties
-    expect(all.keys.sort).to eq(["MyStruct", "ReadMe", "ReadOrWriteMe"])
+    expect(all.keys.sort).to eq(["MyArray", "MyDict", "MyStruct", "MyVariant", "ReadMe", "ReadOrWriteMe"])
   end
 
   it "tests unknown property reading" do
@@ -145,6 +145,31 @@ describe "PropertyTest" do
             "string:org.ruby.SampleInterface "
       reply = `#{cmd}`
       expect(reply).to match(/variant\s+struct {\s+string "three"\s+string "strings"\s+string "in a struct"\s+}/)
+    end
+  end
+
+  context "an array-typed property" do
+    it "gets read as an array" do
+      val = @iface["MyArray"]
+      expect(val).to eq([42, 43])
+    end
+  end
+
+  context "an dict-typed property" do
+    it "gets read as a hash" do
+      val = @iface["MyDict"]
+      expect(val).to eq({
+                          "one" => 1,
+                          "two" => "dva",
+                          "three" => [3, 3, 3]
+                        })
+    end
+  end
+
+  context "a variant-typed property" do
+    it "gets read at all" do
+      val = @iface["MyVariant"]
+      expect(val).to eq([42, 43])
     end
   end
 end
