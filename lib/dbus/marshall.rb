@@ -102,6 +102,8 @@ module DBus
         packet = data_class.from_raw(value, mode: mode)
       elsif data_class.basic?
         size = aligned_read_value(data_class.size_class)
+        # @raw_msg.align(data_class.alignment)
+        # ^ is not necessary because we've just read a suitably-aligned *size*
         value = @raw_msg.read(size)
         nul = @raw_msg.read(1)
         if nul != "\u0000"
@@ -250,7 +252,7 @@ module DBus
         when Type::ARRAY
           append_array(type.child, val)
         when Type::STRUCT, Type::DICT_ENTRY
-          val = val.value if val.is_a?(Data::Struct)
+          val = val.value if val.is_a?(Data::Struct) || val.is_a?(Data::DictEntry)
           unless val.is_a?(Array) || val.is_a?(Struct)
             type_name = Type::TYPE_MAPPING[type.sigtype].first
             raise TypeException, "#{type_name} expects an Array or Struct, seen #{val.class}"

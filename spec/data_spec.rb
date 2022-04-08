@@ -183,6 +183,14 @@ describe DBus::Data do
 
       include_examples "constructor accepts plain or typed values", good
       include_examples "constructor rejects values from this list", bad
+
+      describe ".alignment" do
+        # this overly specific test avoids a redundant alignment call
+        # in the production code
+        it "returns the correct value" do
+          expect(described_class.alignment).to eq 4
+        end
+      end
     end
 
     describe DBus::Data::ObjectPath do
@@ -198,6 +206,14 @@ describe DBus::Data do
 
       include_examples "constructor accepts plain or typed values", good
       include_examples "constructor rejects values from this list", bad
+
+      describe ".alignment" do
+        # this overly specific test avoids a redundant alignment call
+        # in the production code
+        it "returns the correct value" do
+          expect(described_class.alignment).to eq 4
+        end
+      end
     end
 
     describe DBus::Data::Signature do
@@ -215,6 +231,14 @@ describe DBus::Data do
 
       include_examples "constructor accepts plain or typed values", good
       include_examples "constructor rejects values from this list", bad
+
+      describe ".alignment" do
+        # this overly specific test avoids a redundant alignment call
+        # in the production code
+        it "returns the correct value" do
+          expect(described_class.alignment).to eq 1
+        end
+      end
     end
   end
 
@@ -238,6 +262,13 @@ describe DBus::Data do
 
       include_examples "constructor (kwargs) accepts values", good
       include_examples "constructor (kwargs) rejects values", bad
+
+      describe ".from_typed" do
+        it "creates new instance from given object and type" do
+          type = DBus::Type.new("s")
+          expect(described_class.from_typed(["test", "lest"], member_types: [type])).to be_a(described_class)
+        end
+      end
     end
 
     describe DBus::Data::Struct do
@@ -287,9 +318,33 @@ describe DBus::Data do
 
       include_examples "constructor (kwargs) accepts values", good
       # include_examples "constructor (kwargs) rejects values", bad
+
+      describe ".from_typed" do
+        it "creates new instance from given object and type" do
+          type = DBus::Type.new("s")
+          expect(described_class.from_typed(["test", "lest"].freeze, member_types: [type, type]))
+            .to be_a(described_class)
+        end
+      end
     end
 
     describe DBus::Data::Variant do
+      describe ".from_typed" do
+        it "creates new instance from given object and type" do
+          type = DBus::Type.new("s")
+          expect(described_class.from_typed("test", member_types: [type])).to be_a(described_class)
+        end
+
+        it "ignores the member_types argument" do
+          type = DBus::Type.new("s")
+          # Base.from_typed is a generic interface with a fixed signature;
+          # So it must offer the member_types parameter, which is misleading
+          # for a Variant
+          value = described_class.from_typed("test", member_types: [type])
+          expect(value.type.to_s).to eq "v"
+          expect(value.member_type.to_s).to eq "s"
+        end
+      end
     end
 
     describe DBus::Data::DictEntry do

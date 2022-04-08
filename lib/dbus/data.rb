@@ -165,6 +165,9 @@ module DBus
 
     # Represents integers
     class Int < Fixed
+      # @!method self.range
+      # @return [Range] the full range of allowed values
+
       # @param value [::Integer,DBus::Data::Int]
       # @raise RangeError
       def initialize(value)
@@ -173,10 +176,6 @@ module DBus
         raise RangeError, "#{value.inspect} is not a member of #{r}" unless r.member?(value)
 
         super(value)
-      end
-
-      def self.range
-        raise NotImplementedError, "Abstract"
       end
     end
 
@@ -542,7 +541,7 @@ module DBus
           Data.make_typed(member_type, i)
         end
 
-        new(items) # initialize(::Array<Data::Base>)
+        new(items, member_type: member_type) # initialize(::Array<Data::Base>)
       end
 
       # FIXME: should Data::Array be mutable?
@@ -603,8 +602,6 @@ module DBus
         # TODO: validation
         raise unless value.size == member_types.size
 
-        @member_types = member_types
-
         items = member_types.zip(value).map do |item_type, item|
           Data.make_typed(item_type, item)
         end
@@ -643,14 +640,20 @@ module DBus
         # assert member_types.empty?
 
         # decide on type of value
-        new(value)
+        new(value, member_type: nil)
       end
 
-      # Note that for Variants type=="v",
+      # @return [Type]
+      def self.type
+        # memoize
+        @type ||= Type.new(type_code).freeze
+      end
+
+      # Note that for Variants type.to_s=="v",
       # for the specific see {Variant#member_type}
       # @return [Type] the exact type of this value
       def type
-        "v"
+        self.class.type
       end
 
       # @return [Type]
@@ -706,6 +709,22 @@ module DBus
         value.freeze
         # DictEntry ignores the :exact mode
         value
+      end
+
+      # @param value [::Object] (#size, #each)
+      # @param member_types [::Array<Type>]
+      # @return [DictEntry]
+      def self.from_typed(value, member_types:)
+        # assert member_types.size == 2
+        # TODO: duplicated from Struct. Inherit/delegate?
+        # TODO: validation
+        raise unless value.size == member_types.size
+
+        items = member_types.zip(value).map do |item_type, item|
+          Data.make_typed(item_type, item)
+        end
+
+        new(items, member_types: member_types) # initialize(::Array<Data::Base>)
       end
 
       def initialize(value, member_types:)
