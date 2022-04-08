@@ -646,11 +646,17 @@ module DBus
         new(value, member_type: nil)
       end
 
-      # Note that for Variants type=="v",
+      # @return [Type]
+      def self.type
+        # memoize
+        @type ||= Type.new(type_code).freeze
+      end
+
+      # Note that for Variants type.to_s=="v",
       # for the specific see {Variant#member_type}
       # @return [Type] the exact type of this value
       def type
-        "v"
+        self.class.type
       end
 
       # @return [Type]
