@@ -643,7 +643,7 @@ module DBus
         # assert member_types.empty?
 
         # decide on type of value
-        new(value, member_type: member_types.first)
+        new(value, member_type: nil)
       end
 
       # Note that for Variants type=="v",

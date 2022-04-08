@@ -310,6 +310,16 @@ describe DBus::Data do
           type = DBus::Type.new("s")
           expect(described_class.from_typed("test", member_types: [type])).to be_a(described_class)
         end
+
+        it "ignores the member_types argument" do
+          type = DBus::Type.new("s")
+          # Base.from_typed is a generic interface with a fixed signature;
+          # So it must offer the member_types parameter, which is misleading
+          # for a Variant
+          value = described_class.from_typed("test", member_types: [type])
+          expect(value.type.to_s).to eq "v"
+          expect(value.member_type.to_s).to eq "s"
+        end
       end
     end
 
