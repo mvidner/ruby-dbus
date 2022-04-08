@@ -294,9 +294,23 @@ describe DBus::Data do
 
       include_examples "constructor (kwargs) accepts values", good
       # include_examples "constructor (kwargs) rejects values", bad
+
+      describe ".from_typed" do
+        it "creates new instance from given object and type" do
+          type = DBus::Type.new("s")
+          expect(described_class.from_typed(["test", "lest"].freeze, member_types: [type, type]))
+            .to be_a(described_class)
+        end
+      end
     end
 
     describe DBus::Data::Variant do
+      describe ".from_typed" do
+        it "creates new instance from given object and type" do
+          type = DBus::Type.new("s")
+          expect(described_class.from_typed("test", member_types: [type])).to be_a(described_class)
+        end
+      end
     end
 
     describe DBus::Data::DictEntry do
