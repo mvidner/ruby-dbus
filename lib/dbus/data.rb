@@ -542,7 +542,7 @@ module DBus
           Data.make_typed(member_type, i)
         end
 
-        new(items) # initialize(::Array<Data::Base>)
+        new(items, member_type: member_type) # initialize(::Array<Data::Base>)
       end
 
       # FIXME: should Data::Array be mutable?
