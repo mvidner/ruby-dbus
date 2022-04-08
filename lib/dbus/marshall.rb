@@ -102,6 +102,8 @@ module DBus
         packet = data_class.from_raw(value, mode: mode)
       elsif data_class.basic?
         size = aligned_read_value(data_class.size_class)
+        # @raw_msg.align(data_class.alignment)
+        # ^ is not necessary because we've just read a suitably-aligned *size*
         value = @raw_msg.read(size)
         nul = @raw_msg.read(1)
         if nul != "\u0000"

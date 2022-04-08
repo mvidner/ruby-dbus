@@ -183,6 +183,14 @@ describe DBus::Data do
 
       include_examples "constructor accepts plain or typed values", good
       include_examples "constructor rejects values from this list", bad
+
+      describe ".alignment" do
+        # this overly specific test avoids a redundant alignment call
+        # in the production code
+        it "returns the correct value" do
+          expect(described_class.alignment).to eq 4
+        end
+      end
     end
 
     describe DBus::Data::ObjectPath do
@@ -198,6 +206,14 @@ describe DBus::Data do
 
       include_examples "constructor accepts plain or typed values", good
       include_examples "constructor rejects values from this list", bad
+
+      describe ".alignment" do
+        # this overly specific test avoids a redundant alignment call
+        # in the production code
+        it "returns the correct value" do
+          expect(described_class.alignment).to eq 4
+        end
+      end
     end
 
     describe DBus::Data::Signature do
@@ -215,6 +231,14 @@ describe DBus::Data do
 
       include_examples "constructor accepts plain or typed values", good
       include_examples "constructor rejects values from this list", bad
+
+      describe ".alignment" do
+        # this overly specific test avoids a redundant alignment call
+        # in the production code
+        it "returns the correct value" do
+          expect(described_class.alignment).to eq 1
+        end
+      end
     end
   end
 
