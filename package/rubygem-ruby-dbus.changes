@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Sun Apr 10 06:26:55 UTC 2022 - Martin Vidner <mvidner@suse.com>
+
+- 0.18.0.beta3
+ Bug fixes:
+ * Service-side properties: Fix Properties.Get, Properties.GetAll
+   for Array, Dict, and Variant types (gh#mvidner/ruby-dbus#105).
+
+-------------------------------------------------------------------
 Mon Apr  4 09:58:54 UTC 2022 - Martin Vidner <mvidner@suse.com>
 
 - 0.18.0.beta2

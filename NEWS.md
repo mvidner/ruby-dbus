@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.18.0.beta3 - 2022-04-10
+
+Bug fixes:
+ * Service-side properties: Fix Properties.Get, Properties.GetAll for Array,
+   Dict, and Variant types ([#105][]).
+
+[#105]: https://github.com/mvidner/ruby-dbus/pull/105
+
 ## Ruby D-Bus 0.18.0.beta2 - 2022-04-04
 
 API:
