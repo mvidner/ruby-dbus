@@ -168,7 +168,9 @@ describe "PropertyTest" do
 
   context "a variant-typed property" do
     it "gets read at all" do
-      val = @iface["MyVariant"]
+      obj = @svc.object("/org/ruby/MyDerivedInstance")
+      iface = obj["org.ruby.SampleInterface"]
+      val = iface["MyVariant"]
       expect(val).to eq([42, 43])
     end
   end
