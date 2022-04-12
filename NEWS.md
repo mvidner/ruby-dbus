@@ -5,6 +5,8 @@
 Bug fixes:
  * Service-side properties: Fix Properties.Get, Properties.GetAll for
    properties that contain arrays, on other than outermost level ([#109][]).
+ * Sending variants: fixed make_variant to correctly guess the signature
+   for UInt64.
 
 [#109]: https://github.com/mvidner/ruby-dbus/pull/109
 

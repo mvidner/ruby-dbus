@@ -359,10 +359,12 @@ module DBus
         ["s", value.to_str]
       elsif value.respond_to? :to_int
         i = value.to_int
-        if (-2_147_483_648...2_147_483_648).cover?(i)
+        if Data::Int32.range.cover?(i)
           ["i", i]
-        else
+        elsif Data::Int64.range.cover?(i)
           ["x", i]
+        else
+          ["t", i]
         end
       end
     end
