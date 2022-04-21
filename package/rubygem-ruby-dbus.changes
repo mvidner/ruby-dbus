@@ -1,4 +1,15 @@
 -------------------------------------------------------------------
+Thu Apr 21 11:37:14 UTC 2022 - Martin Vidner <mvidner@suse.com>
+
+- 0.18.0.beta4
+ Bug fixes:
+ * Service-side properties: Fix Properties.Get, Properties.GetAll
+   for properties that contain arrays, on other than outermost
+   level (gh#mvidner/ruby-dbus#109).
+ * Sending variants: fixed make_variant to correctly guess the
+   signature for UInt64 and number-keyed hashes/dictionaries.
+
+-------------------------------------------------------------------
 Sun Apr 10 06:26:55 UTC 2022 - Martin Vidner <mvidner@suse.com>
 
 - 0.18.0.beta3

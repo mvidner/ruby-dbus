@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.18.0.beta4 - 2022-04-21
+
 Bug fixes:
  * Service-side properties: Fix Properties.Get, Properties.GetAll for
    properties that contain arrays, on other than outermost level ([#109][]).
