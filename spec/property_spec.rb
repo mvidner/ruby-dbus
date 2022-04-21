@@ -4,6 +4,14 @@
 require_relative "spec_helper"
 require "dbus"
 
+# FIXME: factor out DBus::TestFixtures::Value in spec_helper
+require "ostruct"
+require "yaml"
+
+data_dir = File.expand_path("data", __dir__)
+marshall_yaml_s = File.read("#{data_dir}/marshall.yaml")
+marshall_yaml = YAML.safe_load(marshall_yaml_s)
+
 describe "PropertyTest" do
   before(:each) do
     @session_bus = DBus::ASessionBus.new
@@ -168,8 +176,29 @@ describe "PropertyTest" do
 
   context "a variant-typed property" do
     it "gets read at all" do
-      val = @iface["MyVariant"]
+      obj = @svc.object("/org/ruby/MyDerivedInstance")
+      iface = obj["org.ruby.SampleInterface"]
+      val = iface["MyVariant"]
       expect(val).to eq([42, 43])
+    end
+  end
+
+  context "marshall.yaml round-trip via a VARIANT property" do
+    marshall_yaml.each do |test|
+      t = OpenStruct.new(test)
+      next if t.val.nil?
+
+      # Round trips do not work yet because the properties
+      # must present a plain Ruby value so the exact D-Bus type is lost.
+      # Round trips will work once users can declare accepting DBus::Data
+      # in properties and method arguments.
+      it "Sets #{t.sig.inspect}:#{t.val.inspect} and Gets something back" do
+        before = DBus::Data.make_typed(t.sig, t.val)
+        expect { @iface["MyVariant"] = before }.to_not raise_error
+        expect { _after = @iface["MyVariant"] }.to_not raise_error
+        # round-trip:
+        # expect(after).to eq(before.value)
+      end
     end
   end
 end

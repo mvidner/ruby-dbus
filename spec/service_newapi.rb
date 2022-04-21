@@ -107,10 +107,10 @@ class Test < DBus::Object
     end
     dbus_reader :explosive, "s"
 
-    dbus_attr_reader :my_struct, "(sss)"
-    dbus_attr_reader :my_array, "aq"
-    dbus_attr_reader :my_dict, "a{sv}"
-    dbus_attr_reader :my_variant, "v"
+    dbus_attr_accessor :my_struct, "(sss)"
+    dbus_attr_accessor :my_array, "aq"
+    dbus_attr_accessor :my_dict, "a{sv}"
+    dbus_attr_accessor :my_variant, "v"
   end
 
   # closing and reopening the same interface

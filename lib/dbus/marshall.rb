@@ -354,15 +354,23 @@ module DBus
       elsif value.is_a? Hash
         h = {}
         value.each_key { |k| h[k] = make_variant(value[k]) }
-        ["a{sv}", h]
+        key_type = if value.empty?
+                     "s"
+                   else
+                     t, = make_variant(value.first.first)
+                     t
+                   end
+        ["a{#{key_type}v}", h]
       elsif value.respond_to? :to_str
         ["s", value.to_str]
       elsif value.respond_to? :to_int
         i = value.to_int
-        if (-2_147_483_648...2_147_483_648).cover?(i)
+        if Data::Int32.range.cover?(i)
           ["i", i]
-        else
+        elsif Data::Int64.range.cover?(i)
           ["x", i]
+        else
+          ["t", i]
         end
       end
     end
