@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+Bug fixes:
+ * Service-side properties: Fix Properties.Get, Properties.GetAll for
+   properties that contain arrays, on other than outermost level ([#109][]).
+
+[#109]: https://github.com/mvidner/ruby-dbus/pull/109
+
 ## Ruby D-Bus 0.18.0.beta3 - 2022-04-10
 
 Bug fixes:

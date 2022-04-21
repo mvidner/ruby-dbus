@@ -250,6 +250,7 @@ module DBus
         when Type::VARIANT
           append_variant(val)
         when Type::ARRAY
+          val = val.value if val.is_a?(Data::Array)
           append_array(type.child, val)
         when Type::STRUCT, Type::DICT_ENTRY
           val = val.value if val.is_a?(Data::Struct) || val.is_a?(Data::DictEntry)

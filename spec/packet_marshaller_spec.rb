@@ -29,6 +29,13 @@ describe DBus::PacketMarshaller do
         subject.append(signature, t.val)
         expect(subject.packet).to eq(expected)
       end
+
+      it "writes a '#{signature}' with typed value #{t.val.inspect} (#{endianness})" do
+        subject = described_class.new(endianness: endianness)
+        typed_val = DBus::Data.make_typed(signature, t.val)
+        subject.append(signature, typed_val)
+        expect(subject.packet).to eq(expected)
+      end
     end
   end
 end
