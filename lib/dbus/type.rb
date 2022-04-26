@@ -124,10 +124,6 @@ module DBus
       when DICT_ENTRY
         "{#{@members.collect(&:to_s).join}}"
       else
-        if !TYPE_MAPPING.keys.member?(@sigtype)
-          raise NotImplementedError
-        end
-
         @sigtype.chr
       end
     end
