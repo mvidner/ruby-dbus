@@ -80,11 +80,13 @@ RSpec.shared_examples "constructor accepts plain or typed values" do |plain_list
     Array(plain_list).each do |plain|
       it "accepts the plain value #{plain.inspect}" do
         expect(described_class.new(plain).value).to eql(plain)
+        expect(described_class.new(plain)).to eq(plain)
       end
 
       it "accepts the typed value #{plain.inspect}" do
         typed = described_class.new(plain)
         expect(described_class.new(typed).value).to eql(plain)
+        expect(described_class.new(typed)).to eq(plain)
       end
     end
   end
@@ -95,12 +97,12 @@ RSpec.shared_examples "constructor (kwargs) accepts values" do |list|
   describe "#initialize" do
     list.each do |value, kwargs_hash|
       it "accepts the plain value #{value.inspect}, #{kwargs_hash.inspect}" do
-        expect(described_class.new(value, **kwargs_hash).value).to eq(value)
+        expect(described_class.new(value, **kwargs_hash)).to eq(value)
       end
 
       it "accepts the typed value #{value.inspect}, #{kwargs_hash.inspect}" do
         typed = described_class.new(value, **kwargs_hash)
-        expect(described_class.new(typed, **kwargs_hash).value).to eq(value)
+        expect(described_class.new(typed, **kwargs_hash)).to eq(value)
       end
     end
   end
@@ -393,6 +395,38 @@ describe DBus::Data do
           expect(value).to be_a(described_class)
           expect(value.type.to_s).to eq "v"
           expect(value.member_type.to_s).to eq "s"
+        end
+      end
+
+      describe "#initialize" do
+        it "takes a plain value" do
+          input = 42
+
+          type = DBus.type(T::INT16)
+          value = described_class.new(input, member_type: type)
+          expect(value).to be_a(described_class)
+          expect(value.type.to_s).to eq "v"
+          expect(value.member_type.to_s).to eq "n"
+          expect(value.value).to eq 42
+        end
+
+        # FIXME: verify that @value has the correct class
+        it "takes an exact value" do
+          input = DBus::Data::Int16.new(42)
+
+          type = DBus.type(T::INT16)
+          value = described_class.new(input, member_type: type)
+          expect(value).to be_a(described_class)
+          expect(value.type.to_s).to eq "v"
+          expect(value.member_type.to_s).to eq "n"
+          expect(value.value).to eq 42
+        end
+
+        it "checks the type of the exact value" do
+          input = DBus::Data::UInt16.new(42)
+
+          type = DBus.type(T::INT16)
+          expect { described_class.new(input, member_type: type) }.to raise_error
         end
       end
     end

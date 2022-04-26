@@ -48,14 +48,7 @@ RSpec.shared_examples "parses good data" do |cases|
         result = results.first
 
         expect(result).to be_a(DBus::Data::Base)
-        if expected.is_a?(Hash)
-          expect(result.value.size).to eq(expected.size)
-          result.value.each_key do |result_key|
-            expect(result.value[result_key]).to eq(expected[result_key.value])
-          end
-        else
-          expect(result.value).to eq(expected)
-        end
+        expect(result.value).to eq(expected)
 
         expect(remaining_buffer(subject)).to be_empty
       end
@@ -106,14 +99,7 @@ describe DBus::PacketUnmarshaller do
           result = results.first
 
           expect(result).to be_a(DBus::Data::Base)
-          if expected.is_a?(Hash)
-            expect(result.value.size).to eq(expected.size)
-            result.value.each_key do |result_key|
-              expect(result.value[result_key]).to eq(expected[result_key.value])
-            end
-          else
-            expect(result.value).to eq(expected)
-          end
+          expect(result.value).to eq(expected)
 
           expect(remaining_buffer(subject)).to be_empty
         end

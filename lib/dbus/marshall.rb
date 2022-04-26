@@ -250,10 +250,10 @@ module DBus
         when Type::VARIANT
           append_variant(val)
         when Type::ARRAY
-          val = val.value if val.is_a?(Data::Array)
+          val = val.exact_value if val.is_a?(Data::Array)
           append_array(type.child, val)
         when Type::STRUCT, Type::DICT_ENTRY
-          val = val.value if val.is_a?(Data::Struct) || val.is_a?(Data::DictEntry)
+          val = val.exact_value if val.is_a?(Data::Struct) || val.is_a?(Data::DictEntry)
           unless val.is_a?(Array) || val.is_a?(Struct)
             type_name = Type::TYPE_MAPPING[type.sigtype].first
             raise TypeException, "#{type_name} expects an Array or Struct, seen #{val.class}"
@@ -284,7 +284,10 @@ module DBus
       vartype = nil
       if val.is_a?(DBus::Data::Variant)
         vartype = val.member_type
-        vardata = val.value
+        vardata = val.exact_value
+      elsif val.is_a?(DBus::Data::Container)
+        vartype = val.type
+        vardata = val.exact_value
       elsif val.is_a?(DBus::Data::Base)
         vartype = val.type
         vardata = val.value

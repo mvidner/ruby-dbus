@@ -35,7 +35,7 @@ module DBus
     # construct an appropriate {Data::Base} instance.
     #
     # @param type [SingleCompleteType,Type]
-    # @param value [::Object]
+    # @param value [::Object,Data::Base] a plain value; exact values also allowed
     # @return [Data::Base]
     # @raise TypeError
     def make_typed(type, value)
@@ -58,8 +58,12 @@ module DBus
       # @!method self.fixed?
       # @return [Boolean]
 
-      # @return appropriately-typed, valid value
+      # @return [::Object] a valid value, plain-Ruby typed.
+      # @see Data::Container#exact_value
       attr_reader :value
+
+      # @!method self.type_code
+      # @return [String] a single-character string, for example "a" for arrays
 
       # @!method type
       # @abstract
@@ -486,7 +490,7 @@ module DBus
         Byte
       end
 
-      # @return [Array<Type>]
+      # @return [::Array<Type>]
       def self.validate_raw!(value)
         DBus.types(value)
       rescue Type::SignatureException => e
@@ -516,6 +520,29 @@ module DBus
       # For containers, the type varies among instances
       # @see Base#type
       attr_reader :type
+
+      # @return something that is, or contains, {Data::Base}.
+      #   Er, this docs kinda sucks.
+      def exact_value
+        @value
+      end
+
+      def value
+        @value.map(&:value)
+      end
+
+      # Hash key equality
+      # See https://ruby-doc.org/core-3.0.0/Object.html#method-i-eql-3F
+      # Stricter than #== (RSpec: eq), 1==1.0 but 1.eql(1.0)->false
+      def eql?(other)
+        return false unless other.class == self.class
+
+        other.exact_value.eql?(exact_value)
+      end
+
+#      def ==(other)
+#        eql?(other) || super
+#      end
     end
 
     # An Array, or a Dictionary (Hash).
@@ -544,16 +571,17 @@ module DBus
       # @param type [Type]
       # @return [Data::Array]
       def self.from_typed(value, type:)
-        assert_type_matches_class(type)
-        # TODO: validation
-        member_type = type.child
+        new(value, type: type) # initialize(::Array<Data::Base>)
+      end
 
-        # TODO: Dict??
-        items = value.map do |i|
-          Data.make_typed(member_type, i)
+      def value
+        v = super
+        if type.child.sigtype == Type::DICT_ENTRY
+          # BTW this makes a copy so mutating it is pointless
+          v.to_h
+        else
+          v
         end
-
-        new(items, type: type) # initialize(::Array<Data::Base>)
       end
 
       # FIXME: should Data::Array be mutable?
@@ -562,13 +590,26 @@ module DBus
       # TODO: specify type or guess type?
       # Data is the exact type, so its constructor should be exact
       # and guesswork should be clearly labeled
+
+      # @param value [Data::Array,Enumerable]
       # @param type [SingleCompleteType,Type]
       def initialize(value, type:)
-        type = DBus.type(type) unless type.is_a?(Type)
+        type = Type::Factory.make_type(type)
         self.class.assert_type_matches_class(type)
         @type = type
-        # TODO: copy from another Data::Array
-        super(value)
+
+        typed_value = case value
+                      when Data::Array
+                        raise ArgumentError, "Expected #{type} seen #{value.type}" unless value.type == type
+
+                        value.exact_value
+                      else
+                        # TODO: Dict??
+                        value.map do |i|
+                          Data.make_typed(type.child, i)
+                        end
+                      end
+        super(typed_value)
       end
     end
 
@@ -596,84 +637,35 @@ module DBus
       # @param type [Type]
       # @return [Struct]
       def self.from_typed(value, type:)
-        # TODO: validation
-        member_types = type.members
-        raise unless value.size == member_types.size
-
-        items = member_types.zip(value).map do |item_type, item|
-          Data.make_typed(item_type, item)
-        end
-
-        new(items, type: type) # initialize(::Array<Data::Base>)
+        new(value, type: type)
       end
 
       def initialize(value, type:)
         self.class.assert_type_matches_class(type)
         @type = type
-        super(value)
-      end
-    end
+        typed_value = case value
+                      when Data::Struct
+                        value.exact_value
+                      else
+                        # TODO: validation
+                        member_types = type.members
+                        raise unless value.size == member_types.size
 
-    # A generic type
-    class Variant < Container
-      def self.type_code
-        "v"
-      end
-
-      def self.alignment
-        1
-      end
-
-      # @param member_type [Type]
-      def self.from_items(value, mode:, member_type:)
-        return value if mode == :plain
-
-        new(value, member_type: member_type)
+                        member_types.zip(value).map do |item_type, item|
+                          Data.make_typed(item_type, item)
+                        end
+                      end
+        super(typed_value)
       end
 
-      # @param value [::Object]
-      # @param type [Type]
-      # @return [Variant]
-      def self.from_typed(value, type:)
-        assert_type_matches_class(type)
-
-        # decide on type of value
-        new(value, member_type: nil)
-      end
-
-      # @return [Type]
-      def self.type
-        # memoize
-        @type ||= Type.new(type_code).freeze
-      end
-
-      # Note that for Variants type.to_s=="v",
-      # for the specific see {Variant#member_type}
-      # @return [Type] the exact type of this value
-      def type
-        self.class.type
-      end
-
-      # @return [Type]
-      attr_reader :member_type
-
-      def self.guess_type(value)
-        sct, = PacketMarshaller.make_variant(value)
-        DBus.type(sct)
-      end
-
-      # @param member_type [Type,nil]
-      def initialize(value, member_type:)
-        # TODO: validate that the given *member_type* matches *value*
-        if value.is_a?(self.class)
-          # Copy the contained value instead of boxing it more
-          # TODO: except perhaps for round-tripping in exact mode?
-          @member_type = value.member_type
-          value = value.value
+      def ==(other)
+        case other
+        when ::Struct
+          @value.size == other.size &&
+            @value.zip(other.to_a).all? { |i, other_i| i == other_i }
         else
-          @member_type = member_type || self.class.guess_type(value)
+          super
         end
-        super(value)
       end
     end
 
@@ -716,6 +708,76 @@ module DBus
       def initialize(value, type:)
         self.class.assert_type_matches_class(type)
         @type = type
+        super(value)
+      end
+    end
+
+    # A generic type.
+    #
+    # Implementation note: @value is a {Data::Base}.
+    class Variant < Container
+      def self.type_code
+        "v"
+      end
+
+      def self.alignment
+        1
+      end
+
+      def value
+        @value.value
+      end
+
+      # @param member_type [Type]
+      def self.from_items(value, mode:, member_type:)
+        return value if mode == :plain
+
+        new(value, member_type: member_type)
+      end
+
+      # @param value [::Object]
+      # @param type [Type]
+      # @return [Variant]
+      def self.from_typed(value, type:)
+        assert_type_matches_class(type)
+
+        # nil: decide on type of value
+        new(value, member_type: nil)
+      end
+
+      # @return [Type]
+      def self.type
+        # memoize
+        @type ||= Type.new(type_code).freeze
+      end
+
+      # Note that for Variants type.to_s=="v",
+      # for the specific see {Variant#member_type}
+      # @return [Type] the exact type of this value
+      def type
+        self.class.type
+      end
+
+      # @return [Type]
+      attr_reader :member_type
+
+      def self.guess_type(value)
+        sct, = PacketMarshaller.make_variant(value)
+        DBus.type(sct)
+      end
+
+      # @param member_type [Type,nil]
+      def initialize(value, member_type:)
+        # TODO: validate that the given *member_type* matches *value*
+        if value.is_a?(self.class)
+          # Copy the contained value instead of boxing it more
+          # TODO: except perhaps for round-tripping in exact mode?
+          @member_type = value.member_type
+          value = value.exact_value
+        else
+          @member_type = member_type || self.class.guess_type(value)
+          value = Data.make_typed(@member_type, value)
+        end
         super(value)
       end
     end
