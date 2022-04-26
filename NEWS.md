@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+API:
+ * DBus::Type instances are frozen.
+ * Data::Container classes (Array, Struct, DictEntry, but not Variant)
+   constructors (#initialize, .from_items, .from_typed) changed to have
+   a *type* argument instead of *member_type* or *member_types*.
+ * Added type factories
+   * Type::Array[type]
+   * Type::Hash[key_type, value_type]
+   * Type::Struct[type1, type2...]
+
 Bug fixes:
  * Properties containing Variants would return them doubly wrapped.
 

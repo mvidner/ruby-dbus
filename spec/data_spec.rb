@@ -85,6 +85,8 @@ end
 # TODO: Look at conversions? to_str, to_int?
 
 describe DBus::Data do
+  T = DBus::Type unless const_defined? "T"
+
   # test initialization, from user code, or from packet (from_raw)
   # remember to unpack if initializing from Data::Base
   # #value should recurse inside so that the user doesnt have to
@@ -245,18 +247,18 @@ describe DBus::Data do
   describe "containers" do
     describe DBus::Data::Array do
       good = [
-        # [[1, 2, 3], member_type: nil],
-        [[1, 2, 3], { member_type: "q" }],
-        [[1, 2, 3], { member_type: DBus::Type::UINT16 }],
-        [[1, 2, 3], { member_type: DBus.type("q") }],
-        [[DBus::Data::UInt16.new(1), DBus::Data::UInt16.new(2), DBus::Data::UInt16.new(3)], { member_type: "q" }]
+        # [[1, 2, 3], type: nil],
+        [[1, 2, 3], { type: "aq" }],
+        [[1, 2, 3], { type: T::Array[T::UINT16] }],
+        [[1, 2, 3], { type: T::Array["q"] }],
+        [[DBus::Data::UInt16.new(1), DBus::Data::UInt16.new(2), DBus::Data::UInt16.new(3)], { type: T::Array["q"] }]
         # TODO: others
       ]
 
       bad = [
         # undesirable type guessing
-        ## [[1, 2, 3], { member_type: nil }, DBus::InvalidPacketException, "Unknown type code"],
-        ## [[1, 2, 3], { member_type: "!" }, DBus::InvalidPacketException, "Unknown type code"]
+        ## [[1, 2, 3], { type: nil }, DBus::InvalidPacketException, "Unknown type code"],
+        ## [[1, 2, 3], { type: "!" }, DBus::InvalidPacketException, "Unknown type code"]
         # TODO: others
       ]
 
@@ -265,8 +267,8 @@ describe DBus::Data do
 
       describe ".from_typed" do
         it "creates new instance from given object and type" do
-          type = DBus::Type.new("s")
-          expect(described_class.from_typed(["test", "lest"], member_types: [type])).to be_a(described_class)
+          type = T::Array[String]
+          expect(described_class.from_typed(["test", "lest"], type: type)).to be_a(described_class)
         end
       end
     end
@@ -274,7 +276,7 @@ describe DBus::Data do
     describe DBus::Data::Struct do
       three_words = ::Struct.new(:a, :b, :c)
 
-      qqq = ["q", "q", "q"]
+      qqq = T::Struct[T::UINT16, T::UINT16, T::UINT16]
       integers = [1, 2, 3]
       uints = [DBus::Data::UInt16.new(1), DBus::Data::UInt16.new(2), DBus::Data::UInt16.new(3)]
 
@@ -291,28 +293,25 @@ describe DBus::Data do
       # TODO: also check data ownership: reasonable to own the data?
       # can make it explicit?
       good = [
-        # from plain array; various m_t styles
-        [integers, { member_types: ["q", "q", "q"] }],
-        [integers, { member_types: [DBus::Type::UINT16, DBus::Type::UINT16, DBus::Type::UINT16] }],
-        [integers, { member_types: DBus.types("qqq") }],
+        # from plain array; various *type* styles
+        [integers, { type: DBus.type("(qqq)") }],
+        [integers, { type: T::Struct["q", "q", "q"] }],
+        [integers, { type: T::Struct[T::UINT16, T::UINT16, T::UINT16] }],
+        [integers, { type: T::Struct[*DBus.types("qqq")] }],
         # plain array of data
-        [uints, { member_types: DBus.types("qqq") }],
+        [uints, { type: qqq }],
         # ::Struct
-        [three_words.new(*integers), { member_types: qqq }],
-        [three_words.new(*uints), { member_types: qqq }]
+        [three_words.new(*integers), { type: qqq }],
+        [three_words.new(*uints), { type: qqq }]
         # TODO: others
       ]
 
+      # check these only when canonicalizing @value, because that will
+      # type-check the value deeply
       _bad_but_valid = [
-        # Wrong member_types arg:
-        # hmm this is another reason to pass the type
-        # as the entire struct type, not the members:
-        # empty struct will be caught naturally
-        [integers, { member_types: [] }, ArgumentError, "???"],
-        [integers, { member_types: ["!"] }, DBus::InvalidPacketException, "Unknown type code"],
         # STRUCT specific: member count mismatch
-        [[1, 2], { member_types: DBus.types("qqq") }, ArgumentError, "???"],
-        [[1, 2, 3, 4], { member_types: DBus.types("qqq") }, ArgumentError, "???"]
+        [[1, 2], { type: qqq }, ArgumentError, "???"],
+        [[1, 2, 3, 4], { type: qqq }, ArgumentError, "???"]
         # TODO: others
       ]
 
@@ -321,8 +320,8 @@ describe DBus::Data do
 
       describe ".from_typed" do
         it "creates new instance from given object and type" do
-          type = DBus::Type.new("s")
-          expect(described_class.from_typed(["test", "lest"].freeze, member_types: [type, type]))
+          type = T::Struct[T::STRING, T::STRING]
+          expect(described_class.from_typed(["test", "lest"].freeze, type: type))
             .to be_a(described_class)
         end
       end
@@ -331,16 +330,9 @@ describe DBus::Data do
     describe DBus::Data::Variant do
       describe ".from_typed" do
         it "creates new instance from given object and type" do
-          type = DBus::Type.new("s")
-          expect(described_class.from_typed("test", member_types: [type])).to be_a(described_class)
-        end
-
-        it "ignores the member_types argument" do
-          type = DBus::Type.new("s")
-          # Base.from_typed is a generic interface with a fixed signature;
-          # So it must offer the member_types parameter, which is misleading
-          # for a Variant
-          value = described_class.from_typed("test", member_types: [type])
+          type = DBus.type(T::VARIANT)
+          value = described_class.from_typed("test", type: type)
+          expect(value).to be_a(described_class)
           expect(value.type.to_s).to eq "v"
           expect(value.member_type.to_s).to eq "s"
         end
