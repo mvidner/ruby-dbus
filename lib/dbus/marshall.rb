@@ -282,8 +282,11 @@ module DBus
 
     def append_variant(val)
       vartype = nil
-      if val.is_a?(DBus::Data::Base)
-        vartype = val.type # FIXME: box or unbox another variant?
+      if val.is_a?(DBus::Data::Variant)
+        vartype = val.member_type
+        vardata = val.value
+      elsif val.is_a?(DBus::Data::Base)
+        vartype = val.type
         vardata = val.value
       elsif val.is_a?(Array) && val.size == 2
         case val[0]

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+Bug fixes:
+ * Properties containing Variants would return them doubly wrapped.
+
 ## Ruby D-Bus 0.18.0.beta4 - 2022-04-21
 
 Bug fixes:

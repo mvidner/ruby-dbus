@@ -163,7 +163,7 @@ describe "PropertyTest" do
     end
   end
 
-  context "an dict-typed property" do
+  context "a dict-typed property" do
     it "gets read as a hash" do
       val = @iface["MyDict"]
       expect(val).to eq({
@@ -171,6 +171,23 @@ describe "PropertyTest" do
                           "two" => "dva",
                           "three" => [3, 3, 3]
                         })
+    end
+
+    it "Get returns the correctly typed value (check with dbus-send)" do
+      cmd = "dbus-send --print-reply " \
+            "--dest=org.ruby.service " \
+            "/org/ruby/MyInstance " \
+            "org.freedesktop.DBus.Properties.Get " \
+            "string:org.ruby.SampleInterface " \
+            "string:MyDict"
+      reply = `#{cmd}`
+      # a bug about variant nesting lead to a "variant variant int32 1" value
+      match_rx = /variant \s+ array \s \[ \s+
+         dict \s entry\( \s+
+            string \s "one" \s+
+            variant \s+ int32 \s 1 \s+
+         \)/x
+      expect(reply).to match(match_rx)
     end
   end
 
