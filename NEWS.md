@@ -3,6 +3,7 @@
 ## Unreleased
 
 API:
+ * DBus::Type instances are frozen.
  * Data::Container classes (Array, Struct, DictEntry, but not Variant)
    constructors (#initialize, .from_items, .from_typed) changed to have
    a *type* argument instead of *member_type* or *member_types*.

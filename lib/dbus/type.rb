@@ -29,14 +29,12 @@ module DBus
   # For documentation purposes only.
   class Prototype < String; end
 
-  # = D-Bus type module
-  #
-  # This module containts the constants of the types specified in the D-Bus
-  # protocol.
+  # Represents the D-Bus types.
   #
   # Corresponds to {SingleCompleteType}.
+  # Instances are immutable/frozen once fully constructed.
   #
-  # See also {DBus::Data::Signature}
+  # See also {DBus::Data::Signature} which is "type on the wire".
   class Type
     # Mapping from type number to name and alignment.
     TYPE_MAPPING = {
@@ -104,8 +102,9 @@ module DBus
         end
       end
 
-      @sigtype = sigtype
-      @members = []
+      @sigtype = sigtype.freeze
+      @members = [] # not frozen yet, Parser#parse_one or Factory will do it
+      freeze
     end
 
     # Return the required alignment for the type.
@@ -231,6 +230,7 @@ module DBus
         else
           res = Type.new(char)
         end
+        res.members.freeze
         res
       end
 
@@ -242,7 +242,7 @@ module DBus
         while (c = nextchar)
           ret << parse_one(c)
         end
-        ret
+        ret.freeze
       end
 
       # Parse one {SingleCompleteType}
@@ -254,14 +254,14 @@ module DBus
         t = parse_one(c)
         raise SignatureException, "Has more than a Single Complete Type: #{@signature}" unless nextchar.nil?
 
-        t
+        t.freeze
       end
     end
 
     class Factory
       # @param type [Type,SingleCompleteType,Class]
       # @see from_plain_class
-      # @return [Type]
+      # @return [Type] (frozen)
       def self.make_type(type)
         case type
         when Type
@@ -282,15 +282,15 @@ module DBus
       # - DBus::ObjectPath
       # - DBus::Signature, DBus::SingleCompleteType
       # @param klass [Class]
-      # @return [Type]
+      # @return [Type] (frozen)
       def self.from_plain_class(klass)
-        @signature_type ||= Type.new(SIGNATURE)
+        @signature_type ||= DBus.type(SIGNATURE)
         @class_to_type ||= {
-          DBus::ObjectPath => Type.new(OBJECT_PATH),
+          DBus::ObjectPath => DBus.type(OBJECT_PATH),
           DBus::Signature => @signature_type,
           DBus::SingleCompleteType => @signature_type,
-          String => Type.new(STRING),
-          Float => Type.new(DOUBLE)
+          String => DBus.type(STRING),
+          Float => DBus.type(DOUBLE)
         }
         t = @class_to_type[klass]
         raise ArgumentError, "Cannot convert plain class #{klass} to a D-Bus type" if t.nil?
@@ -305,9 +305,11 @@ module DBus
     #   t = Type::Array[Type::INT16]
     class ArrayFactory < Factory
       # @param member_type [Type,SingleCompleteType]
+      # @return [Type] (frozen)
       def self.[](member_type)
         t = Type.new(ARRAY)
         t << make_type(member_type)
+        t.members.freeze
         t
       end
     end
@@ -323,12 +325,15 @@ module DBus
     class HashFactory < Factory
       # @param key_type [Type,SingleCompleteType]
       # @param value_type [Type,SingleCompleteType]
+      # @return [Type] (frozen)
       def self.[](key_type, value_type)
         t = Type.new(ARRAY)
         de = Type.new(DICT_ENTRY, abstract: true)
         de << make_type(key_type)
         de << make_type(value_type)
+        de.members.freeze
         t << de
+        t.members.freeze
         t
       end
     end
@@ -343,6 +348,7 @@ module DBus
     #   t = Type::Struct[Type::INT16, Type::STRING]
     class StructFactory < Factory
       # @param member_types [::Array<Type,SingleCompleteType>]
+      # @return [Type] (frozen)
       def self.[](*member_types)
         raise ArgumentError if member_types.empty?
 
@@ -350,6 +356,7 @@ module DBus
         member_types.each do |mt|
           t << make_type(mt)
         end
+        t.members.freeze
         t
       end
     end
@@ -365,7 +372,7 @@ module DBus
   # This is prefered to {Type#initialize} which allows
   # incomplete or invalid types.
   # @param string_type [SingleCompleteType]
-  # @return [DBus::Type]
+  # @return [DBus::Type] (frozen)
   # @raise SignatureException
   def type(string_type)
     Type::Parser.new(string_type).parse1
@@ -374,7 +381,7 @@ module DBus
 
   # Parse a String to zero or more {DBus::Type}s.
   # @param string_type [Signature]
-  # @return [Array<DBus::Type>]
+  # @return [Array<DBus::Type>] (frozen)
   # @raise SignatureException
   def types(string_type)
     Type::Parser.new(string_type).parse
