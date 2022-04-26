@@ -118,7 +118,7 @@ module DBus
           values = signature.members.map do |child_sig|
             do_parse(child_sig, mode: mode)
           end
-          packet = data_class.from_items(values, mode: mode, member_types: signature.members)
+          packet = data_class.from_items(values, mode: mode, type: signature)
 
         when Type::VARIANT
           data_sig = do_parse(Data::Signature.type, mode: :exact) # -> Data::Signature
@@ -147,7 +147,7 @@ module DBus
             items << item
           end
           is_hash = signature.child.sigtype == Type::DICT_ENTRY
-          packet = data_class.from_items(items, mode: mode, member_type: signature.child, hash: is_hash)
+          packet = data_class.from_items(items, mode: mode, type: signature, hash: is_hash)
         end
       end
       packet

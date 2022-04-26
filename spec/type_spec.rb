@@ -79,4 +79,70 @@ describe DBus do
       end
     end
   end
+
+  describe DBus::Type do
+    describe "#<<" do
+      it "raises if the argument is not a Type" do
+        t = DBus::Type.new(DBus::Type::ARRAY)
+        expect { t << "s" }.to raise_error(ArgumentError)
+      end
+    end
+
+    describe DBus::Type::Array do
+      describe ".[]" do
+        it "takes Type argument" do
+          t = DBus::Type::Array[DBus::Type.new("s")]
+          expect(t.to_s).to eq "as"
+        end
+
+        it "takes 's':String argument" do
+          t = DBus::Type::Array["s"]
+          expect(t.to_s).to eq "as"
+        end
+
+        it "takes String:Class argument" do
+          t = DBus::Type::Array[String]
+          expect(t.to_s).to eq "as"
+        end
+      end
+    end
+
+    describe DBus::Type::Hash do
+      describe ".[]" do
+        it "takes Type arguments" do
+          t = DBus::Type::Hash[DBus::Type.new("s"), DBus::Type.new("v")]
+          expect(t.to_s).to eq "a{sv}"
+        end
+
+        it "takes 's':String arguments" do
+          t = DBus::Type::Hash["s", "v"]
+          expect(t.to_s).to eq "a{sv}"
+        end
+
+        it "takes String:Class argument" do
+          t = DBus::Type::Hash[String, DBus::Type::VARIANT]
+          expect(t.to_s).to eq "a{sv}"
+        end
+      end
+    end
+
+    describe DBus::Type::Struct do
+      describe ".[]" do
+        it "takes Type arguments" do
+          t = DBus::Type::Struct[DBus::Type.new("s"), DBus::Type.new("v")]
+          expect(t.to_s).to eq "(sv)"
+        end
+
+        it "takes 's':String arguments" do
+          t = DBus::Type::Struct["s", "v"]
+          expect(t.to_s).to eq "(sv)"
+        end
+
+        it "takes String:Class argument" do
+          t = DBus::Type::Struct[String, DBus::Type::VARIANT]
+          expect(t.to_s).to eq "(sv)"
+        end
+      end
+    end
+  end
 end
