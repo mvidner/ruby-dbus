@@ -132,34 +132,6 @@ module DBus
       end
     end
 
-    # {DBus::Data::String}, {DBus::Data::ObjectPath}, or {DBus::Data::Signature}.
-    class StringLike < Basic
-      def self.fixed?
-        false
-      end
-
-      def initialize(value)
-        if value.is_a?(self.class)
-          value = value.value
-        else
-          self.class.validate_raw!(value)
-        end
-
-        super(value)
-      end
-    end
-
-    # Contains one or more other values.
-    class Container < Base
-      def self.basic?
-        false
-      end
-
-      def self.fixed?
-        false
-      end
-    end
-
     # Format strings for String#unpack, both little- and big-endian.
     Format = ::Struct.new(:little, :big)
 
@@ -398,6 +370,23 @@ module DBus
       end
     end
 
+    # {DBus::Data::String}, {DBus::Data::ObjectPath}, or {DBus::Data::Signature}.
+    class StringLike < Basic
+      def self.fixed?
+        false
+      end
+
+      def initialize(value)
+        if value.is_a?(self.class)
+          value = value.value
+        else
+          self.class.validate_raw!(value)
+        end
+
+        super(value)
+      end
+    end
+
     # UTF-8 encoded string.
     class String < StringLike
       def self.type_code
@@ -491,6 +480,17 @@ module DBus
         end
 
         new(value)
+      end
+    end
+
+    # Contains one or more other values.
+    class Container < Base
+      def self.basic?
+        false
+      end
+
+      def self.fixed?
+        false
       end
     end
 
