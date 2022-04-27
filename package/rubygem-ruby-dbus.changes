@@ -13,7 +13,8 @@ Wed Apr 27 08:29:35 UTC 2022 - Martin Vidner <mvidner@suse.com>
    * Type::Struct[type1, type2...]
 
  Bug fixes:
- * Properties containing Variants would return them doubly wrapped.
+ * Properties containing Variants would return them doubly wrapped
+   (gh#mvidner/ruby-dbus#111).
 
 -------------------------------------------------------------------
 Thu Apr 21 11:37:14 UTC 2022 - Martin Vidner <mvidner@suse.com>

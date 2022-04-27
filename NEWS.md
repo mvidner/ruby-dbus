@@ -15,7 +15,9 @@ API:
    * Type::Struct[type1, type2...]
 
 Bug fixes:
- * Properties containing Variants would return them doubly wrapped.
+ * Properties containing Variants would return them doubly wrapped ([#111][]).
+
+[#111]: https://github.com/mvidner/ruby-dbus/pull/111
 
 ## Ruby D-Bus 0.18.0.beta4 - 2022-04-21
 

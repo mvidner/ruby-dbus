@@ -12,7 +12,7 @@ Edit VERSION NEWS.md package/rubygem-ruby-dbus.spec
 
     osc vc package
     git commit -m "Releasing version $(cat VERSION)."
-    rake package
+    rake check:changelog # implies :package
     gem2rpm --template opensuse --config package/gem2rpm.yml \
       package/ruby-dbus-$(cat VERSION).gem > package/rubygem-ruby-dbus.spec
     git commit -a --amend
