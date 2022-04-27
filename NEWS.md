@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.18.0.beta5 - 2022-04-27
+
 API:
  * DBus::Type instances are frozen.
  * Data::Container classes (Array, Struct, DictEntry, but not Variant)
