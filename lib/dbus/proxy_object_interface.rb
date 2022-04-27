@@ -15,13 +15,16 @@ module DBus
   # A class similar to the normal Interface used as a proxy for remote
   # object interfaces.
   class ProxyObjectInterface
-    # The proxied methods contained in the interface.
-    attr_accessor :methods
-    # The proxied signals contained in the interface.
-    attr_accessor :signals
-    # The proxy object to which this interface belongs.
+    # @return [Hash{String => DBus::Method}]
+    attr_reader :methods
+    # @return [Hash{String => Signal}]
+    attr_reader :signals
+    # @return [Hash{Symbol => Property}]
+    attr_reader :properties
+
+    # @return [ProxyObject] The proxy object to which this interface belongs.
     attr_reader :object
-    # The name of the interface.
+    # @return [String] The name of the interface.
     attr_reader :name
 
     # Creates a new proxy interface for the given proxy _object_
@@ -31,6 +34,7 @@ module DBus
       @name = name
       @methods = {}
       @signals = {}
+      @properties = {}
     end
 
     # Returns the string representation of the interface (the name).
@@ -81,13 +85,21 @@ module DBus
       @signals[sig.name] = sig
     end
 
+    # @param prop [Property]
+    def define_property_from_descriptor(prop)
+      @properties[prop.name] = prop
+    end
+
     # Defines a signal or method based on the descriptor _ifc_el_.
+    # @param ifc_el [DBus::Method,Signal,Property]
     def define(ifc_el)
       case ifc_el
       when Method
         define_method_from_descriptor(ifc_el)
       when Signal
         define_signal_from_descriptor(ifc_el)
+      when Property
+        define_property_from_descriptor(ifc_el)
       end
     end
 
@@ -129,10 +141,20 @@ module DBus
     end
 
     # Write a property.
-    # @param propname [String]
+    # @param property_name [String]
     # @param value [Object]
-    def []=(propname, value)
-      object[PROPERTY_INTERFACE].Set(name, propname, value)
+    def []=(property_name, value)
+      property = properties[property_name.to_sym]
+      if !property
+        raise DBus.error("org.freedesktop.DBus.Error.UnknownProperty"),
+              "Property '#{name}.#{property_name}' (on object '#{object.path}') not found"
+      end
+
+      type = property.type
+      type = DBus.type(type) unless type.is_a?(Type)
+      typed_value = Data.make_typed(type, value)
+      variant = Data::Variant.new(typed_value, member_type: type)
+      object[PROPERTY_INTERFACE].Set(name, property_name, variant)
     end
 
     # Read all properties at once, as a hash.

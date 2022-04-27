@@ -1,5 +1,9 @@
 # Ruby D-Bus NEWS
 
+Bug fixes:
+ * Client-side properties: When calling Properties.Set in
+   ProxyObjectInterface#[]=, use the correct type ([#108][]).
+
 ## Unreleased
 
 ## Ruby D-Bus 0.18.0.beta6 - 2022-05-25

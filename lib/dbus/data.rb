@@ -751,7 +751,13 @@ module DBus
       # @return [Type]
       attr_reader :member_type
 
+      # Determine the type of *value*
+      # @param value [::Object]
+      # @return [Type]
+      # See also {PacketMarshaller.make_variant}
       def self.guess_type(value)
+        return value.type if value.is_a?(Data::Base)
+
         sct, = PacketMarshaller.make_variant(value)
         DBus.type(sct)
       end
