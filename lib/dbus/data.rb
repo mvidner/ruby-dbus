@@ -91,7 +91,13 @@ module DBus
 
       # Hash key equality
       # See https://ruby-doc.org/core-3.0.0/Object.html#method-i-eql-3F
-      alias eql? ==
+      # Stricter than #== (RSpec: eq), 1==1.0 but 1.eql(1.0)->false
+      def eql?(other)
+        return false unless other.class == self.class
+
+        other.value.eql?(@value)
+        # TODO: this should work, now check derived classes, exact_value
+      end
 
       # @param type [Type]
       def self.assert_type_matches_class(type)

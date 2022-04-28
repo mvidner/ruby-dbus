@@ -6,14 +6,59 @@ require "dbus"
 
 # The from_raw methods are tested in packet_unmarshaller_spec.rb
 
+RSpec.shared_examples "#== and #eql? work for basic types" do |*args|
+  plain_a = args.fetch(0, 22)
+  plain_b = args.fetch(1, 222)
+
+  describe "#eql?" do
+    it "returns true for same class and value" do
+      a = described_class.new(plain_a)
+      b = described_class.new(plain_a)
+      expect(a).to eql(b)
+    end
+
+    it "returns false for same class, different value" do
+      a = described_class.new(plain_a)
+      b = described_class.new(plain_b)
+      expect(a).to_not eql(b)
+    end
+
+    it "returns false for same value but plain class" do
+      a = described_class.new(plain_a)
+      b = plain_a
+      expect(a).to_not eql(b)
+    end
+  end
+
+  describe "#==" do
+    it "returns true for same class and value" do
+      a = described_class.new(plain_a)
+      b = described_class.new(plain_a)
+      expect(a).to eq(b)
+    end
+
+    it "returns false for same class, different value" do
+      a = described_class.new(plain_a)
+      b = described_class.new(plain_b)
+      expect(a).to_not eq(b)
+    end
+
+    it "returns true for same value but plain class" do
+      a = described_class.new(plain_a)
+      b = plain_a
+      expect(a).to eq(b)
+    end
+  end
+end
+
 RSpec.shared_examples "constructor accepts numeric range" do |min, max|
   describe "#initialize" do
     it "accepts the min value #{min}" do
-      expect(described_class.new(min).value).to eq(min)
+      expect(described_class.new(min).value).to eql(min)
     end
 
     it "accepts the max value #{max}" do
-      expect(described_class.new(max).value).to eq(max)
+      expect(described_class.new(max).value).to eql(max)
     end
 
     it "raises on too small a value #{min - 1}" do
@@ -34,17 +79,18 @@ RSpec.shared_examples "constructor accepts plain or typed values" do |plain_list
   describe "#initialize" do
     Array(plain_list).each do |plain|
       it "accepts the plain value #{plain.inspect}" do
-        expect(described_class.new(plain).value).to eq(plain)
+        expect(described_class.new(plain).value).to eql(plain)
       end
 
       it "accepts the typed value #{plain.inspect}" do
         typed = described_class.new(plain)
-        expect(described_class.new(typed).value).to eq(plain)
+        expect(described_class.new(typed).value).to eql(plain)
       end
     end
   end
 end
 
+# FIXME: decide eq and eql here
 RSpec.shared_examples "constructor (kwargs) accepts values" do |list|
   describe "#initialize" do
     list.each do |value, kwargs_hash|
@@ -93,36 +139,43 @@ describe DBus::Data do
   # Kick InvalidPacketException out of here?
 
   describe DBus::Data::Byte do
+    include_examples "#== and #eql? work for basic types"
     include_examples "constructor accepts numeric range", 0, 2**8 - 1
     include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::Int16 do
+    include_examples "#== and #eql? work for basic types"
     include_examples "constructor accepts numeric range", -2**15, 2**15 - 1
     include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::UInt16 do
+    include_examples "#== and #eql? work for basic types"
     include_examples "constructor accepts numeric range", 0, 2**16 - 1
     include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::Int32 do
+    include_examples "#== and #eql? work for basic types"
     include_examples "constructor accepts numeric range", -2**31, 2**31 - 1
     include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::UInt32 do
+    include_examples "#== and #eql? work for basic types"
     include_examples "constructor accepts numeric range", 0, 2**32 - 1
     include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::Int64 do
+    include_examples "#== and #eql? work for basic types"
     include_examples "constructor accepts numeric range", -2**63, 2**63 - 1
     include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::UInt64 do
+    include_examples "#== and #eql? work for basic types"
     include_examples "constructor accepts numeric range", 0, 2**64 - 1
     include_examples "constructor accepts plain or typed values", 42
   end
@@ -142,10 +195,12 @@ describe DBus::Data do
       end
     end
 
+    include_examples "#== and #eql? work for basic types", false, true
     include_examples "constructor accepts plain or typed values", false
   end
 
   describe DBus::Data::Double do
+    include_examples "#== and #eql? work for basic types"
     include_examples "constructor accepts plain or typed values", Math::PI
 
     describe "#initialize" do
@@ -183,6 +238,7 @@ describe DBus::Data do
         ["\xF4\x90\xC0\xC0", DBus::InvalidPacketException, "not in UTF-8"]
       ]
 
+      include_examples "#== and #eql? work for basic types", "foo", "bar"
       include_examples "constructor accepts plain or typed values", good
       include_examples "constructor rejects values from this list", bad
 
@@ -206,6 +262,7 @@ describe DBus::Data do
         # TODO: others
       ]
 
+      include_examples "#== and #eql? work for basic types", "/foo", "/bar"
       include_examples "constructor accepts plain or typed values", good
       include_examples "constructor rejects values from this list", bad
 
@@ -231,6 +288,7 @@ describe DBus::Data do
         # TODO: others
       ]
 
+      include_examples "#== and #eql? work for basic types", "aah", "aaaaah"
       include_examples "constructor accepts plain or typed values", good
       include_examples "constructor rejects values from this list", bad
 
