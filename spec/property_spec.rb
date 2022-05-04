@@ -201,21 +201,32 @@ describe "PropertyTest" do
   end
 
   context "a byte-typed property" do
-    it "gets set with a correct type (#108)" do
-      # Slightly advanced RSpec:
-      # https://rspec.info/documentation/3.9/rspec-expectations/RSpec/Matchers.html#satisfy-instance_method
-      a_byte_in_a_variant = \
-        satisfying { |x| x.is_a?(DBus::Data::Variant) && x.member_type.to_s == DBus::Type::BYTE }
+    # Slightly advanced RSpec:
+    # https://rspec.info/documentation/3.9/rspec-expectations/RSpec/Matchers.html#satisfy-instance_method
+    let(:a_byte_in_a_variant) do
+      satisfying { |x| x.is_a?(DBus::Data::Variant) && x.member_type.to_s == DBus::Type::BYTE }
       # ^ This formatting keeps the matcher on a single line
       # which enables RSpect to cite it if it fails, instead of saying "block".
+    end
 
-      prop_iface = @obj[DBus::PROPERTY_INTERFACE]
+    let(:prop_iface) { @obj[DBus::PROPERTY_INTERFACE] }
+
+    it "gets set with a correct type (#108)" do
       expect(prop_iface).to receive(:Set).with(
         "org.ruby.SampleInterface",
         "MyByte",
         a_byte_in_a_variant
       )
       @iface["MyByte"] = 1
+    end
+
+    it "gets set with a correct type (#108), when using the DBus.variant workaround" do
+      expect(prop_iface).to receive(:Set).with(
+        "org.ruby.SampleInterface",
+        "MyByte",
+        a_byte_in_a_variant
+      )
+      @iface["MyByte"] = DBus.variant("y", 1)
     end
   end
 
