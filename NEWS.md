@@ -1,10 +1,16 @@
 # Ruby D-Bus NEWS
 
+## Unreleased
+
+API:
+ * DBus.variant(type, value) is deprecated in favor of
+   Data::Variant.new(value, member_type:)
+
 Bug fixes:
  * Client-side properties: When calling Properties.Set in
    ProxyObjectInterface#[]=, use the correct type ([#108][]).
 
-## Unreleased
+[#108]: https://github.com/mvidner/ruby-dbus/issues/108
 
 ## Ruby D-Bus 0.18.0.beta6 - 2022-05-25
 

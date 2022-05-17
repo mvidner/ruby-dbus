@@ -150,10 +150,18 @@ module DBus
               "Property '#{name}.#{property_name}' (on object '#{object.path}') not found"
       end
 
-      type = property.type
-      type = DBus.type(type) unless type.is_a?(Type)
-      typed_value = Data.make_typed(type, value)
-      variant = Data::Variant.new(typed_value, member_type: type)
+      case value
+      # accommodate former need to explicitly make a variant with the right type
+      when Data::Variant
+        variant = value
+      else
+        type = property.type
+        type = DBus.type(type) unless type.is_a?(Type)
+
+        typed_value = Data.make_typed(type, value)
+        variant = Data::Variant.new(typed_value, member_type: type)
+      end
+
       object[PROPERTY_INTERFACE].Set(name, property_name, variant)
     end
 

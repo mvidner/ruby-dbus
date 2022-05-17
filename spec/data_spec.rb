@@ -632,6 +632,36 @@ describe DBus::Data do
 
       include_examples "#== and #eql? work for container types (1 value)",
                        "/foo", { member_type: DBus.type(T::STRING) }
+
+      describe "DBus.variant compatibility" do
+        let(:v) { DBus.variant("o", "/foo") }
+
+        describe "#[]" do
+          it "returns the type for 0" do
+            expect(v[0]).to eq DBus.type(DBus::Type::OBJECT_PATH)
+          end
+
+          it "returns the value for 1" do
+            expect(v[1]).to eq DBus::ObjectPath.new("/foo")
+          end
+
+          it "returns an error for other indices" do
+            expect { v[2] }.to raise_error(ArgumentError, /DBus.variant can only be indexed with 0 or 1/)
+          end
+        end
+
+        describe "#first" do
+          it "returns the type" do
+            expect(v.first).to eq DBus.type(DBus::Type::OBJECT_PATH)
+          end
+        end
+
+        describe "#last" do
+          it "returns the value" do
+            expect(v.last).to eq DBus::ObjectPath.new("/foo")
+          end
+        end
+      end
     end
   end
 end
