@@ -157,7 +157,7 @@ module DBus
 
     def inspect
       s = TYPE_MAPPING[@sigtype].first
-      if [STRUCT, ARRAY].member?(@sigtype)
+      if [STRUCT, ARRAY, DICT_ENTRY].member?(@sigtype)
         s += ": #{@members.inspect}"
       end
       s
