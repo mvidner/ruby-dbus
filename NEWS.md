@@ -7,7 +7,7 @@ API:
    Data::Container#exact_value contains Data::Base.
  * Data::Base#initialize and .from_typed allow plain or exact values, validate
    argument types.
- * Implement #== (converting) and #eql? (strict) for Data::Base.
+ * Implement #== (converting) and #eql? (strict) for Data::Base and DBus::Type.
 
 ## Ruby D-Bus 0.18.0.beta5 - 2022-04-27
 

@@ -107,6 +107,29 @@ module DBus
       freeze
     end
 
+    # A Type is equal to
+    # - another Type with the same string representation
+    # - a String ({SingleCompleteType}) describing the type
+    def ==(other)
+      case other
+      when ::String
+        to_s == other
+      else
+        eql?(other)
+      end
+    end
+
+    # A Type is eql? to
+    # - another Type with the same string representation
+    #
+    # Hash key equality
+    # See https://ruby-doc.org/core-3.0.0/Object.html#method-i-eql-3F
+    def eql?(other)
+      return false unless other.is_a?(Type)
+
+      @sigtype == other.sigtype && @members == other.members
+    end
+
     # Return the required alignment for the type.
     def alignment
       TYPE_MAPPING[@sigtype].last

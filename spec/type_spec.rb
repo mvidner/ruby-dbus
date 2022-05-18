@@ -82,6 +82,46 @@ describe DBus do
   end
 
   describe DBus::Type do
+    let(:as1) { DBus.type("as") }
+    let(:as2) { DBus.type("as") }
+    let(:aas) { DBus.type("aas") }
+
+    describe "#==" do
+      it "is true for same types" do
+        expect(as1).to eq(as2)
+      end
+
+      it "is true for a type and its string representation" do
+        expect(as1).to eq("as")
+      end
+
+      it "is false for different types" do
+        expect(as1).to_not eq(aas)
+      end
+
+      it "is false for a type and a different string" do
+        expect(as1).to_not eq("aas")
+      end
+    end
+
+    describe "#eql?" do
+      it "is true for same types" do
+        expect(as1).to eql(as2)
+      end
+
+      it "is false for a type and its string representation" do
+        expect(as1).to_not eql("as")
+      end
+
+      it "is false for different types" do
+        expect(as1).to_not eql(aas)
+      end
+
+      it "is false for a type and a different string" do
+        expect(as1).to_not eql("aas")
+      end
+    end
+
     describe "#<<" do
       it "raises if the argument is not a Type" do
         t = DBus::Type.new(DBus::Type::ARRAY)
