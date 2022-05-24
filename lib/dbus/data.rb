@@ -540,9 +540,9 @@ module DBus
         other.exact_value.eql?(exact_value)
       end
 
-#      def ==(other)
-#        eql?(other) || super
-#      end
+      # def ==(other)
+      #   eql?(other) || super
+      # end
     end
 
     # An Array, or a Dictionary (Hash).

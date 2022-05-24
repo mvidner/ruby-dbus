@@ -10,43 +10,124 @@ RSpec.shared_examples "#== and #eql? work for basic types" do |*args|
   plain_a = args.fetch(0, 22)
   plain_b = args.fetch(1, 222)
 
-  describe "#eql?" do
-    it "returns true for same class and value" do
-      a = described_class.new(plain_a)
-      b = described_class.new(plain_a)
-      expect(a).to eql(b)
+  context "with #{plain_a.inspect} and #{plain_b.inspect}" do
+    describe "#eql?" do
+      it "returns true for same class and value" do
+        a = described_class.new(plain_a)
+        b = described_class.new(plain_a)
+        expect(a).to eql(b)
+      end
+
+      it "returns false for same class, different value" do
+        a = described_class.new(plain_a)
+        b = described_class.new(plain_b)
+        expect(a).to_not eql(b)
+      end
+
+      it "returns false for same value but plain class" do
+        a = described_class.new(plain_a)
+        b = plain_a
+        expect(a).to_not eql(b)
+      end
     end
 
-    it "returns false for same class, different value" do
-      a = described_class.new(plain_a)
-      b = described_class.new(plain_b)
-      expect(a).to_not eql(b)
-    end
+    describe "#==" do
+      it "returns true for same class and value" do
+        a = described_class.new(plain_a)
+        b = described_class.new(plain_a)
+        expect(a).to eq(b)
+      end
 
-    it "returns false for same value but plain class" do
-      a = described_class.new(plain_a)
-      b = plain_a
-      expect(a).to_not eql(b)
+      it "returns false for same class, different value" do
+        a = described_class.new(plain_a)
+        b = described_class.new(plain_b)
+        expect(a).to_not eq(b)
+      end
+
+      it "returns true for same value but plain class" do
+        a = described_class.new(plain_a)
+        b = plain_a
+        expect(a).to eq(b)
+      end
     end
   end
+end
 
-  describe "#==" do
-    it "returns true for same class and value" do
-      a = described_class.new(plain_a)
-      b = described_class.new(plain_a)
-      expect(a).to eq(b)
+RSpec.shared_examples "#== and #eql? work for container types (1 value)" do |plain_a, a_kwargs|
+  a1 = described_class.new(plain_a, **a_kwargs)
+  a2 = described_class.new(plain_a, **a_kwargs)
+
+  context "with #{plain_a.inspect}, #{a_kwargs.inspect}" do
+    describe "#eql?" do
+      it "returns true for same class and value" do
+        expect(a1).to eql(a2)
+      end
+
+      it "returns false for same value but plain class" do
+        expect(a1).to_not eql(plain_a)
+      end
     end
 
-    it "returns false for same class, different value" do
-      a = described_class.new(plain_a)
-      b = described_class.new(plain_b)
-      expect(a).to_not eq(b)
+    describe "#==" do
+      it "returns true for same class and value" do
+        expect(a1).to eq(a2)
+      end
+
+      it "returns true for same value but plain class" do
+        expect(a1).to eq(plain_a)
+      end
+    end
+  end
+end
+
+RSpec.shared_examples "#== and #eql? work for container types (inequal)" do |plain_a, a_kwargs, plain_b, b_kwargs|
+  # RSpec note: if the shared_examples is used via include_examples more than
+  # once in a single context, `let` would take value from just one of them.
+  # So use plain assignment.
+  a = described_class.new(plain_a, **a_kwargs)
+  b = described_class.new(plain_b, **b_kwargs)
+
+  include_examples "#== and #eql? work for container types (1 value)", plain_a, a_kwargs
+
+  context "with #{plain_a.inspect}, #{a_kwargs.inspect} and #{plain_b.inspect}, #{b_kwargs.inspect}" do
+    describe "#eql?" do
+      it "returns false for same class, different value" do
+        expect(a).to_not eql(b)
+      end
     end
 
-    it "returns true for same value but plain class" do
-      a = described_class.new(plain_a)
-      b = plain_a
-      expect(a).to eq(b)
+    describe "#==" do
+      it "returns false for same class, different value" do
+        expect(a).to_not eq(b)
+      end
+    end
+  end
+end
+
+RSpec.shared_examples "#== and #eql? work for container types (equal)" do |plain_a, a_kwargs, plain_b, b_kwargs|
+  a = described_class.new(plain_a, **a_kwargs)
+  b = described_class.new(plain_b, **b_kwargs)
+
+  include_examples "#== and #eql? work for container types (1 value)", plain_a, a_kwargs
+
+  context "with #{plain_a.inspect}, #{a_kwargs.inspect} and #{plain_b.inspect}, #{b_kwargs.inspect}" do
+    describe "#eql?" do
+      it "returns true for same class, differently expressed value" do
+        expect(a).to eql(b)
+      end
+    end
+
+    describe "#==" do
+      it "returns true for same class, differently expressed value" do
+        expect(a).to eq(b)
+      end
+    end
+
+    describe "#==" do
+      it "returns true for plain, differently expressed value" do
+        expect(a).to eq(plain_b)
+        expect(b).to eq(plain_a)
+      end
     end
   end
 end
@@ -322,6 +403,15 @@ describe DBus::Data do
         # TODO: others
       ]
 
+      include_examples "#== and #eql? work for container types (inequal)",
+                       [1, 2, 3], { type: "aq" },
+                       [3, 2, 1], { type: "aq" }
+
+      include_examples "#== and #eql? work for container types (inequal)",
+                       [[1, 2, 3]], { type: "aaq" },
+                       [[3, 2, 1]], { type: "aaq" }
+
+
       include_examples "constructor (kwargs) accepts values", good
       include_examples "constructor (kwargs) rejects values", bad
 
@@ -374,6 +464,14 @@ describe DBus::Data do
         [[1, 2, 3, 4], { type: qqq }, ArgumentError, "???"]
         # TODO: others
       ]
+
+      include_examples "#== and #eql? work for container types (inequal)",
+                       [1, 2, 3], { type: qqq },
+                       [3, 2, 1], { type: qqq }
+
+      include_examples "#== and #eql? work for container types (equal)",
+                       three_words.new(*integers), { type: qqq },
+                       [1, 2, 3], { type: qqq }
 
       include_examples "constructor (kwargs) accepts values", good
       # include_examples "constructor (kwargs) rejects values", bad
