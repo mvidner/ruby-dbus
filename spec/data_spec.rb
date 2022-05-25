@@ -411,7 +411,6 @@ describe DBus::Data do
                        [[1, 2, 3]], { type: "aaq" },
                        [[3, 2, 1]], { type: "aaq" }
 
-
       include_examples "constructor (kwargs) accepts values", good
       include_examples "constructor (kwargs) rejects values", bad
 
@@ -481,6 +480,49 @@ describe DBus::Data do
           type = T::Struct[T::STRING, T::STRING]
           expect(described_class.from_typed(["test", "lest"].freeze, type: type))
             .to be_a(described_class)
+        end
+      end
+
+      describe "#initialize" do
+        it "converts type to Type" do
+          value = [1, 2, 3]
+          type = "(uuu)"
+          result = described_class.new(value, type: type)
+          expect(result.type).to be_a DBus::Type
+        end
+
+        it "checks that type matches class" do
+          value = [1, 2, 3]
+          type = T::Array[T::INT32]
+          expect { described_class.new(value, type: type) }
+            .to raise_error(ArgumentError, /Expecting "r"/)
+        end
+
+        it "checks type of a Data::Struct value" do
+          value1 = [1, 2, 3]
+          type1 = "(uuu)"
+          result1 = described_class.new(value1, type: type1)
+
+          value2 = result1
+          type2 = "(xxx)"
+          expect { described_class.new(value2, type: type2) }
+            .to raise_error(ArgumentError, /value type is .uuu./)
+        end
+
+        it "checks that size of type and value match" do
+          value = [1, 2, 3, 4]
+          type = "(uuu)"
+          expect { described_class.new(value, type: type) }
+            .to raise_error(ArgumentError, /type has 3 members.*value has 4 members/)
+        end
+
+        it "converts value to ::Array of Data::Base" do
+          value = three_words.new(*integers)
+          type = T::Struct[T::INT32, T::INT32, T::INT32]
+          result = described_class.new(value, type: type)
+
+          expect(result.exact_value).to be_an(::Array)
+          expect(result.exact_value[0]).to be_a(DBus::Data::Base)
         end
       end
     end

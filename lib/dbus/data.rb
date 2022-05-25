@@ -105,7 +105,8 @@ module DBus
 
       # @param type [Type]
       def self.assert_type_matches_class(type)
-        raise ArgumentError unless type.sigtype == type_code
+        raise ArgumentError, "Expecting #{type_code.inspect} for class #{self}, got #{type.sigtype.inspect}" \
+          unless type.sigtype == type_code
       end
     end
 
@@ -600,7 +601,8 @@ module DBus
 
         typed_value = case value
                       when Data::Array
-                        raise ArgumentError, "Expected #{type} seen #{value.type}" unless value.type == type
+                        raise ArgumentError, "Specified type is #{type} but value type is #{value.type}" \
+                          unless value.type == type
 
                         value.exact_value
                       else
@@ -640,16 +642,23 @@ module DBus
         new(value, type: type)
       end
 
+      # @param value [Data::Struct,Enumerable]
+      # @param type [SingleCompleteType,Type]
       def initialize(value, type:)
+        type = Type::Factory.make_type(type)
         self.class.assert_type_matches_class(type)
         @type = type
+
         typed_value = case value
                       when Data::Struct
+                        raise ArgumentError, "Specified type is #{type} but value type is #{value.type}" \
+                          unless value.type == type
+
                         value.exact_value
                       else
-                        # TODO: validation
                         member_types = type.members
-                        raise unless value.size == member_types.size
+                        raise ArgumentError, "Specified type has #{member_types.size} members but value has #{value.size} members" \
+                          unless value.size == member_types.size
 
                         member_types.zip(value).map do |item_type, item|
                           Data.make_typed(item_type, item)
