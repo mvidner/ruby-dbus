@@ -527,6 +527,65 @@ describe DBus::Data do
       end
     end
 
+    describe DBus::Data::DictEntry do
+      describe ".from_typed" do
+        it "creates new instance from given object and type" do
+          type = T::Hash[String, T::INT16].child
+          expect(described_class.from_typed(["test", 12], type: type))
+            .to be_a(described_class)
+        end
+      end
+
+      describe "#initialize" do
+        it "checks that type matches class" do
+          value = [1, 2]
+          type = T::Array[T::INT32]
+
+          expect { described_class.new(value, type: type) }
+            .to raise_error(ArgumentError, /Expecting "e"/)
+        end
+
+        it "checks type of a Data::DictEntry value" do
+          value1 = [1, 2]
+          type1 = T::Hash[T::UINT32, T::UINT32].child
+          result1 = described_class.new(value1, type: type1)
+
+          value2 = result1
+          type2 = T::Hash[T::UINT64, T::UINT64].child
+          expect { described_class.new(value2, type: type2) }
+            .to raise_error(ArgumentError, /value type is .uu./)
+        end
+
+        it "checks that size of type and value match" do
+          value = [1, 2, 3]
+          type = T::Hash[T::UINT32, T::UINT32].child
+          expect { described_class.new(value, type: type) }
+            .to raise_error(ArgumentError, /type has 2 members.*value has 3 members/)
+        end
+
+        it "converts value to ::Array of Data::Base" do
+          two_words = ::Struct.new(:k, :v)
+          value = two_words.new(1, 2)
+          type = T::Hash[T::UINT32, T::UINT32].child
+          result = described_class.new(value, type: type)
+
+          expect(result.exact_value).to be_an(::Array)
+          expect(result.exact_value[0]).to be_a(DBus::Data::Base)
+        end
+
+        it "takes a plain value" do
+          input = ["test", 23]
+
+          type = T::Hash[String, T::INT16].child
+          value = described_class.new(input, type: type)
+
+          expect(value).to be_a(described_class)
+          expect(value.type.to_s).to eq "{sn}"
+          expect(value.value).to eql input
+        end
+      end
+    end
+
     describe DBus::Data::Variant do
       describe ".from_typed" do
         it "creates new instance from given object and type" do

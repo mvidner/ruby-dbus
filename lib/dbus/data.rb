@@ -650,15 +650,17 @@ module DBus
         @type = type
 
         typed_value = case value
-                      when Data::Struct
+                      when self.class
                         raise ArgumentError, "Specified type is #{type} but value type is #{value.type}" \
                           unless value.type == type
 
                         value.exact_value
                       else
                         member_types = type.members
-                        raise ArgumentError, "Specified type has #{member_types.size} members but value has #{value.size} members" \
-                          unless value.size == member_types.size
+                        unless value.size == member_types.size
+                          raise ArgumentError, "Specified type has #{member_types.size} members " \
+                                               "but value has #{value.size} members"
+                        end
 
                         member_types.zip(value).map do |item_type, item|
                           Data.make_typed(item_type, item)
@@ -680,13 +682,9 @@ module DBus
 
     # Dictionary/Hash entry.
     # TODO: shouldn't instantiate?
-    class DictEntry < Container
+    class DictEntry < Struct
       def self.type_code
         "e"
-      end
-
-      def self.alignment
-        8
       end
 
       # @param value [::Array]
@@ -700,24 +698,7 @@ module DBus
       # @param type [Type]
       # @return [DictEntry]
       def self.from_typed(value, type:)
-        assert_type_matches_class(type)
-        member_types = type.members
-        # assert member_types.size == 2
-        # TODO: duplicated from Struct. Inherit/delegate?
-        # TODO: validation
-        raise unless value.size == member_types.size
-
-        items = member_types.zip(value).map do |item_type, item|
-          Data.make_typed(item_type, item)
-        end
-
-        new(items, type: type) # initialize(::Array<Data::Base>)
-      end
-
-      def initialize(value, type:)
-        self.class.assert_type_matches_class(type)
-        @type = type
-        super(value)
+        new(value, type: type)
       end
     end
 
