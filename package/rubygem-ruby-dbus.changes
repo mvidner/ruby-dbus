@@ -1,4 +1,15 @@
 -------------------------------------------------------------------
+Wed May 25 13:20:39 UTC 2022 - Martin Vidner <mvidner@suse.com>
+
+- 0.18.0.beta6
+ API:
+ * Data::Base#value returns plain Ruby types;
+   Data::Container#exact_value contains Data::Base (gh#mvidner/ruby-dbus#114).
+ * Data::Base#initialize and .from_typed allow plain or exact values, validate
+   argument types.
+ * Implement #== (converting) and #eql? (strict) for Data::Base and DBus::Type.
+
+-------------------------------------------------------------------
 Wed Apr 27 08:29:35 UTC 2022 - Martin Vidner <mvidner@suse.com>
 
 - 0.18.0.beta5

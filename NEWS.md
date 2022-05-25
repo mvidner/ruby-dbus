@@ -2,12 +2,16 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.18.0.beta6 - 2022-05-25
+
 API:
  * Data::Base#value returns plain Ruby types;
-   Data::Container#exact_value contains Data::Base.
+   Data::Container#exact_value contains Data::Base ([#114][]).
  * Data::Base#initialize and .from_typed allow plain or exact values, validate
    argument types.
  * Implement #== (converting) and #eql? (strict) for Data::Base and DBus::Type.
+
+[#114]: https://github.com/mvidner/ruby-dbus/pull/114
 
 ## Ruby D-Bus 0.18.0.beta5 - 2022-04-27
 
