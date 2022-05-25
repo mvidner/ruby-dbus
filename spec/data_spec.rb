@@ -625,12 +625,13 @@ describe DBus::Data do
           input = DBus::Data::UInt16.new(42)
 
           type = DBus.type(T::INT16)
-          expect { described_class.new(input, member_type: type) }.to raise_error
+          expect { described_class.new(input, member_type: type) }
+            .to raise_error(ArgumentError, /Variant type n does not match value type q/)
         end
       end
-    end
 
-    describe DBus::Data::DictEntry do
+      include_examples "#== and #eql? work for container types (1 value)",
+                       "/foo", { member_type: DBus.type(T::STRING) }
     end
   end
 end

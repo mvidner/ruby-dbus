@@ -759,11 +759,16 @@ module DBus
       # @param member_type [Type,nil]
       def initialize(value, member_type:)
         # TODO: validate that the given *member_type* matches *value*
-        if value.is_a?(self.class)
+        case value
+        when Data::Variant
           # Copy the contained value instead of boxing it more
           # TODO: except perhaps for round-tripping in exact mode?
           @member_type = value.member_type
           value = value.exact_value
+        when Data::Base
+          @member_type = member_type || value.type
+          raise ArgumentError, "Variant type #{@member_type} does not match value type #{value.type}" \
+            unless @member_type == value.type
         else
           @member_type = member_type || self.class.guess_type(value)
           value = Data.make_typed(@member_type, value)
