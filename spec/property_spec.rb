@@ -60,7 +60,7 @@ describe "PropertyTest" do
 
   it "tests get all" do
     all = @iface.all_properties
-    expect(all.keys.sort).to eq(["MyArray", "MyDict", "MyStruct", "MyVariant", "ReadMe", "ReadOrWriteMe"])
+    expect(all.keys.sort).to eq(["MyArray", "MyByte", "MyDict", "MyStruct", "MyVariant", "ReadMe", "ReadOrWriteMe"])
   end
 
   it "tests get all on a V1 object" do
@@ -68,7 +68,7 @@ describe "PropertyTest" do
     iface = obj["org.ruby.SampleInterface"]
 
     all = iface.all_properties
-    expect(all.keys.sort).to eq(["MyArray", "MyDict", "MyStruct", "MyVariant", "ReadMe", "ReadOrWriteMe"])
+    expect(all.keys.sort).to eq(["MyArray", "MyByte", "MyDict", "MyStruct", "MyVariant", "ReadMe", "ReadOrWriteMe"])
   end
 
   it "tests unknown property reading" do
@@ -197,6 +197,36 @@ describe "PropertyTest" do
       iface = obj["org.ruby.SampleInterface"]
       val = iface["MyVariant"]
       expect(val).to eq([42, 43])
+    end
+  end
+
+  context "a byte-typed property" do
+    # Slightly advanced RSpec:
+    # https://rspec.info/documentation/3.9/rspec-expectations/RSpec/Matchers.html#satisfy-instance_method
+    let(:a_byte_in_a_variant) do
+      satisfying { |x| x.is_a?(DBus::Data::Variant) && x.member_type.to_s == DBus::Type::BYTE }
+      # ^ This formatting keeps the matcher on a single line
+      # which enables RSpect to cite it if it fails, instead of saying "block".
+    end
+
+    let(:prop_iface) { @obj[DBus::PROPERTY_INTERFACE] }
+
+    it "gets set with a correct type (#108)" do
+      expect(prop_iface).to receive(:Set).with(
+        "org.ruby.SampleInterface",
+        "MyByte",
+        a_byte_in_a_variant
+      )
+      @iface["MyByte"] = 1
+    end
+
+    it "gets set with a correct type (#108), when using the DBus.variant workaround" do
+      expect(prop_iface).to receive(:Set).with(
+        "org.ruby.SampleInterface",
+        "MyByte",
+        a_byte_in_a_variant
+      )
+      @iface["MyByte"] = DBus.variant("y", 1)
     end
   end
 

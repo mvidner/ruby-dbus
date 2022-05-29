@@ -134,6 +134,10 @@ module DBus
           parse_methsig(se, s)
           i << s
         end
+        e.each("property") do |pe|
+          p = Property.from_xml(pe)
+          i << p
+        end
       end
       d = Time.now - t
       if d > 2

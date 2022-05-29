@@ -166,12 +166,21 @@ D-Bus has stricter typing than Ruby, so the library must decide
 which D-Bus type to choose. Most of the time the choice is dictated
 by the D-Bus signature.
 
+For exact representation of D-Bus data types, use subclasses
+of {DBus::Data::Base}, such as {DBus::Data::Int16} or {DBus::Data::UInt64}.
+
 ##### Variants
 
 If the signature expects a Variant
 (which is the case for all Properties!) then an explicit mechanism is needed.
 
-1. A pair [{DBus::Type}, value] specifies to marshall *value* as
+1. Any {DBus::Data::Base}.
+
+2. A {DBus::Data::Variant} made by {DBus.variant}(signature, value).
+   (Formerly this produced the type+value pair below, now it is just an alias
+   to the Variant constructor.)
+
+3. A pair [{DBus::Type}, value] specifies to marshall *value* as
    that specified type.
    The pair can be produced by {DBus.variant}(signature, value) which
    gives the  same result as [{DBus.type}(signature), value].
@@ -181,13 +190,13 @@ If the signature expects a Variant
 
    `foo_i["Bar"] = DBus.variant("au", [0, 1, 1, 2, 3, 5, 8])`
 
-2. Other values are tried to fit one of these:
+4. Other values are tried to fit one of these:
    Boolean, Double, Array of Variants, Hash of String keyed Variants,
    String, Int32, Int64.
 
-3. **Deprecated:** A pair [String, value], where String is a valid
+5. **Deprecated:** A pair [String, value], where String is a valid
    signature of a single complete type, marshalls value as that
-   type. This will hit you when you rely on method (2) but happen to have
+   type. This will hit you when you rely on method (4) but happen to have
    a particular string value in an array.
 
 ##### Structs

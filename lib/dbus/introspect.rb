@@ -238,19 +238,20 @@ module DBus
   # An (exported) property
   # https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-properties
   class Property
-    # @return [String] The name of the property, for example FooBar.
+    # @return [Symbol] The name of the property, for example FooBar.
     attr_reader :name
     # @return [SingleCompleteType]
     attr_reader :type
     # @return [Symbol] :read :write or :readwrite
     attr_reader :access
 
-    # @return [Symbol] What to call at Ruby side.
+    # @return [Symbol,nil] What to call at Ruby side.
     #   (Always without the trailing `=`)
+    #   It is `nil` IFF representing a client-side proxy.
     attr_reader :ruby_name
 
     def initialize(name, type, access, ruby_name:)
-      @name = name
+      @name = name.to_sym
       @type = type
       @access = access
       @ruby_name = ruby_name
@@ -269,6 +270,15 @@ module DBus
     # Return introspection XML string representation of the property.
     def to_xml
       "    <property type=\"#{@type}\" name=\"#{@name}\" access=\"#{@access}\"/>\n"
+    end
+
+    # @param xml_node [AbstractXML::Node]
+    # @return [Property]
+    def self.from_xml(xml_node)
+      name = xml_node["name"].to_sym
+      type = xml_node["type"]
+      access = xml_node["access"].to_sym
+      new(name, type, access, ruby_name: nil)
     end
   end
 end

@@ -29,11 +29,13 @@ module DBus
     # @param pobj [ProxyObject]
     # @param xml [String]
     def self.introspect_into(pobj, xml)
+      # intfs [Array<Interface>], subnodes [Array<String>]
       intfs, pobj.subnodes = IntrospectXMLParser.new(xml).parse
       intfs.each do |i|
         poi = ProxyObjectInterface.new(pobj, i.name)
         i.methods.each_value { |m| poi.define(m) }
         i.signals.each_value { |s| poi.define(s) }
+        i.properties.each_value { |p| poi.define(p) }
         pobj[i.name] = poi
       end
       pobj.introspected = true

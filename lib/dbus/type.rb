@@ -415,8 +415,9 @@ module DBus
   # @param string_type [SingleCompleteType]
   # @param value [::Object]
   # @return [Array(DBus::Type::Type,::Object)]
+  # @deprecated Use {Data::Variant.new} instead
   def variant(string_type, value)
-    [type(string_type), value]
+    Data::Variant.new(value, member_type: string_type)
   end
   module_function :variant
 end

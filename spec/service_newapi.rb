@@ -28,6 +28,8 @@ class Test < DBus::Object
       "three" => [3, 3, 3]
     }
     @my_variant = @my_array.dup
+    # 201 is a RET instruction for ZX Spectrum which has turned 40 recently
+    @my_byte = 201
     @main_loop = nil
   end
 
@@ -111,6 +113,8 @@ class Test < DBus::Object
     dbus_attr_accessor :my_array, "aq"
     dbus_attr_accessor :my_dict, "a{sv}"
     dbus_attr_accessor :my_variant, "v"
+
+    dbus_attr_accessor :my_byte, "y"
   end
 
   # closing and reopening the same interface

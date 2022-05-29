@@ -601,8 +601,10 @@ module DBus
 
         typed_value = case value
                       when Data::Array
-                        raise ArgumentError, "Specified type is #{type} but value type is #{value.type}" \
-                          unless value.type == type
+                        unless value.type == type
+                          raise ArgumentError,
+                                "Specified type is #{type.inspect} but value type is #{value.type.inspect}"
+                        end
 
                         value.exact_value
                       else
@@ -651,8 +653,10 @@ module DBus
 
         typed_value = case value
                       when self.class
-                        raise ArgumentError, "Specified type is #{type} but value type is #{value.type}" \
-                          unless value.type == type
+                        unless value.type == type
+                          raise ArgumentError,
+                                "Specified type is #{type.inspect} but value type is #{value.type.inspect}"
+                        end
 
                         value.exact_value
                       else
@@ -751,13 +755,19 @@ module DBus
       # @return [Type]
       attr_reader :member_type
 
+      # Determine the type of *value*
+      # @param value [::Object]
+      # @return [Type]
+      # @api private
+      # See also {PacketMarshaller.make_variant}
       def self.guess_type(value)
         sct, = PacketMarshaller.make_variant(value)
         DBus.type(sct)
       end
 
-      # @param member_type [Type,nil]
+      # @param member_type [SingleCompleteType,Type,nil]
       def initialize(value, member_type:)
+        member_type = Type::Factory.make_type(member_type) if member_type
         # TODO: validate that the given *member_type* matches *value*
         case value
         when Data::Variant
@@ -774,6 +784,30 @@ module DBus
           value = Data.make_typed(@member_type, value)
         end
         super(value)
+      end
+
+      # Internal helpers to keep the {DBus.variant} method working.
+      # Formerly it returned just a pair of [DBus.type(string_type), value]
+      # so let's provide [0], [1], .first, .last
+      def [](index)
+        case index
+        when 0
+          member_type
+        when 1
+          value
+        else
+          raise ArgumentError, "DBus.variant can only be indexed with 0 or 1, seen #{index.inspect}"
+        end
+      end
+
+      # @see #[]
+      def first
+        self[0]
+      end
+
+      # @see #[]
+      def last
+        self[1]
       end
     end
 
