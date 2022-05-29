@@ -156,8 +156,6 @@ module DBus
         variant = value
       else
         type = property.type
-        type = DBus.type(type) unless type.is_a?(Type)
-
         typed_value = Data.make_typed(type, value)
         variant = Data::Variant.new(typed_value, member_type: type)
       end
