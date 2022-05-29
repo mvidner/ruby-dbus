@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Sun May 29 08:24:04 UTC 2022 - Martin Vidner <mvidner@suse.com>
+
+- 0.18.0.beta7
+ API:
+ * DBus.variant(type, value) is deprecated in favor of
+   Data::Variant.new(value, member_type:)
+
+ Bug fixes:
+ * Client-side properties: When calling Properties.Set in
+   ProxyObjectInterface#[]=, use the correct type (gh#mvidner/ruby-dbus#108).
+
+-------------------------------------------------------------------
 Wed May 25 13:20:39 UTC 2022 - Martin Vidner <mvidner@suse.com>
 
 - 0.18.0.beta6

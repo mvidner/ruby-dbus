@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.18.0.beta7 - 2022-05-29
+
 API:
  * DBus.variant(type, value) is deprecated in favor of
    Data::Variant.new(value, member_type:)
