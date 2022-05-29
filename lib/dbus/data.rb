@@ -754,10 +754,9 @@ module DBus
       # Determine the type of *value*
       # @param value [::Object]
       # @return [Type]
+      # @api private
       # See also {PacketMarshaller.make_variant}
       def self.guess_type(value)
-        return value.type if value.is_a?(Data::Base)
-
         sct, = PacketMarshaller.make_variant(value)
         DBus.type(sct)
       end
