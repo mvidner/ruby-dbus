@@ -601,8 +601,10 @@ module DBus
 
         typed_value = case value
                       when Data::Array
-                        raise ArgumentError, "Specified type is #{type} but value type is #{value.type}" \
-                          unless value.type == type
+                        unless value.type == type
+                          raise ArgumentError,
+                                "Specified type is #{type.inspect} but value type is #{value.type.inspect}"
+                        end
 
                         value.exact_value
                       else
@@ -651,8 +653,10 @@ module DBus
 
         typed_value = case value
                       when self.class
-                        raise ArgumentError, "Specified type is #{type} but value type is #{value.type}" \
-                          unless value.type == type
+                        unless value.type == type
+                          raise ArgumentError,
+                                "Specified type is #{type.inspect} but value type is #{value.type.inspect}"
+                        end
 
                         value.exact_value
                       else

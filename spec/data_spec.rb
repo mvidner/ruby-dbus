@@ -193,7 +193,7 @@ RSpec.shared_examples "constructor rejects values from this list" do |bad_list|
   describe "#initialize" do
     bad_list.each do |(value, exc_class, msg_substr)|
       it "rejects #{value.inspect} with #{exc_class}: #{msg_substr}" do
-        msg_re = Regexp.new(Regexp.quote(msg_substr))
+        msg_re = Regexp.try_convert(msg_substr) || Regexp.new(Regexp.quote(msg_substr))
         expect { described_class.new(value) }.to raise_error(exc_class, msg_re)
       end
     end
@@ -204,7 +204,7 @@ RSpec.shared_examples "constructor (kwargs) rejects values" do |bad_list|
   describe "#initialize" do
     bad_list.each do |(value, kwargs_hash, exc_class, msg_substr)|
       it "rejects #{value.inspect}, #{kwargs_hash.inspect} with #{exc_class}: #{msg_substr}" do
-        msg_re = Regexp.new(Regexp.quote(msg_substr))
+        msg_re = Regexp.try_convert(msg_substr) || Regexp.new(Regexp.quote(msg_substr))
         expect { described_class.new(value, **kwargs_hash) }.to raise_error(exc_class, msg_re)
       end
     end
@@ -387,8 +387,9 @@ describe DBus::Data do
 
   describe "containers" do
     describe DBus::Data::Array do
+      aq = DBus::Data::Array.new([1, 2, 3], type: "aq")
+
       good = [
-        # [[1, 2, 3], type: nil],
         [[1, 2, 3], { type: "aq" }],
         [[1, 2, 3], { type: T::Array[T::UINT16] }],
         [[1, 2, 3], { type: T::Array["q"] }],
@@ -398,9 +399,14 @@ describe DBus::Data do
 
       bad = [
         # undesirable type guessing
-        ## [[1, 2, 3], { type: nil }, DBus::InvalidPacketException, "Unknown type code"],
-        ## [[1, 2, 3], { type: "!" }, DBus::InvalidPacketException, "Unknown type code"]
-        # TODO: others
+        [[1, 2, 3], { type: nil }, ArgumentError, /Expecting DBus::Type.*got nil/],
+        [[1, 2, 3], { type: "!" }, DBus::Type::SignatureException, "Unknown type code"],
+        [aq, { type: "q" }, ArgumentError, "Expecting \"a\""],
+        [aq, { type: "ao" }, ArgumentError,
+         "Specified type is ARRAY: [OBJECT_PATH] but value type is ARRAY: [UINT16]"]
+        # TODO: how to handle these?
+        # [{1 => 2, 3 => 4}, { type: "aq" }, ArgumentError, "?"],
+        # [/i am not an array/, { type: "aq" }, ArgumentError, "?"],
       ]
 
       include_examples "#== and #eql? work for container types (inequal)",
@@ -506,7 +512,7 @@ describe DBus::Data do
           value2 = result1
           type2 = "(xxx)"
           expect { described_class.new(value2, type: type2) }
-            .to raise_error(ArgumentError, /value type is .uuu./)
+            .to raise_error(ArgumentError, /value type is STRUCT.*UINT32/)
         end
 
         it "checks that size of type and value match" do
@@ -553,7 +559,7 @@ describe DBus::Data do
           value2 = result1
           type2 = T::Hash[T::UINT64, T::UINT64].child
           expect { described_class.new(value2, type: type2) }
-            .to raise_error(ArgumentError, /value type is .uu./)
+            .to raise_error(ArgumentError, /value type is DICT_ENTRY.*UINT32/)
         end
 
         it "checks that size of type and value match" do
