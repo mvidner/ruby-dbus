@@ -167,7 +167,7 @@ module DBus
       property = Property.new(dbus_name, type, :readwrite, ruby_name: ruby_name)
       @@cur_intf.define(property)
 
-      dbus_watcher(ruby_name, dbus_name: dbus_name)
+      dbus_watcher(ruby_name, dbus_name: dbus_name, type: property.type)
     end
 
     # A read-only property accessing a reader method (which must already exist).
@@ -206,7 +206,7 @@ module DBus
       property = Property.new(dbus_name, type, :write, ruby_name: ruby_name)
       @@cur_intf.define(property)
 
-      dbus_watcher(ruby_name, dbus_name: dbus_name)
+      dbus_watcher(ruby_name, dbus_name: dbus_name, type: property.type)
     end
 
     # Enables automatic sending of the PropertiesChanged signal.
@@ -218,8 +218,9 @@ module DBus
     # @param dbus_name [String] if not given it is made
     #   by CamelCasing the ruby_name. foo_bar becomes FooBar
     #   to convert the Ruby convention to the DBus convention.
+    # @param type [SingleCompleteType,Type] the type of the property
     # @return [void]
-    def self.dbus_watcher(ruby_name, dbus_name: nil)
+    def self.dbus_watcher(ruby_name, type:, dbus_name: nil)
       raise UndefinedInterface, ruby_name if @@cur_intf.nil?
 
       cur_intf = @@cur_intf
@@ -237,7 +238,9 @@ module DBus
 
         # TODO: respect EmitsChangedSignal to use invalidated_properties instead
         # PropertiesChanged, "interface:s, changed_properties:a{sv}, invalidated_properties:as"
-        PropertiesChanged(cur_intf.name, { dbus_name.to_s => value }, [])
+        typed_value = Data.make_typed(type, value)
+        variant = Data::Variant.new(typed_value, member_type: type)
+        PropertiesChanged(cur_intf.name, { dbus_name.to_s => variant }, [])
       end
     end
 
