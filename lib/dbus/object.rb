@@ -126,12 +126,13 @@ module DBus
     #
     # Whenever the property value gets changed from "inside" the object,
     # you should emit the `PropertiesChanged` signal by calling
+    # {#dbus_properties_changed}.
     #
-    #   object[DBus::PROPERTY_INTERFACE].PropertiesChanged(interface_name, {dbus_name.to_s => value}, [])
+    #   dbus_properties_changed(interface_name, {dbus_name.to_s => value}, [])
     #
     # or, omitting the value in the signal,
     #
-    #   object[DBus::PROPERTY_INTERFACE].PropertiesChanged(interface_name, {}, [dbus_name.to_s])
+    #   dbus_properties_changed(interface_name, {}, [dbus_name.to_s])
     #
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
@@ -175,12 +176,13 @@ module DBus
     #
     # Whenever the property value gets changed from "inside" the object,
     # you should emit the `PropertiesChanged` signal by calling
+    # {#dbus_properties_changed}.
     #
-    #   object[DBus::PROPERTY_INTERFACE].PropertiesChanged(interface_name, {dbus_name.to_s => value}, [])
+    #   dbus_properties_changed(interface_name, {dbus_name.to_s => value}, [])
     #
     # or, omitting the value in the signal,
     #
-    #   object[DBus::PROPERTY_INTERFACE].PropertiesChanged(interface_name, {}, [dbus_name.to_s])
+    #   dbus_properties_changed(interface_name, {}, [dbus_name.to_s])
     #
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
@@ -223,7 +225,7 @@ module DBus
     def self.dbus_watcher(ruby_name, type:, dbus_name: nil)
       raise UndefinedInterface, ruby_name if @@cur_intf.nil?
 
-      cur_intf = @@cur_intf
+      interface_name = @@cur_intf.name
 
       ruby_name = ruby_name.to_s.sub(/=$/, "").to_sym
       ruby_name_eq = "#{ruby_name}=".to_sym
@@ -236,11 +238,12 @@ module DBus
       define_method ruby_name_eq do |value|
         public_send(original_ruby_name_eq, value)
 
-        # TODO: respect EmitsChangedSignal to use invalidated_properties instead
-        # PropertiesChanged, "interface:s, changed_properties:a{sv}, invalidated_properties:as"
-        typed_value = Data.make_typed(type, value)
-        variant = Data::Variant.new(typed_value, member_type: type)
-        PropertiesChanged(cur_intf.name, { dbus_name.to_s => variant }, [])
+        dbus_property_changed4(
+          interface_name: interface_name,
+          dbus_name: dbus_name,
+          value: value,
+          type: type
+        )
       end
     end
 
@@ -302,6 +305,35 @@ module DBus
     def self.make_dbus_name(ruby_name, dbus_name: nil)
       dbus_name ||= camelize(ruby_name.to_s)
       dbus_name.to_sym
+    end
+
+    # Use this instead of calling PropertiesChanged directly. This one
+    # considers not only the PC signature (which says that all property values
+    # are variants) but also the specific property type.
+    # @param interface_name [String] interface name like "org.example.ManagerManager"
+    # @param changed_props [Hash{String => ::Object}]
+    #   changed properties (D-Bus names) and their values.
+    # @param invalidated_props [Array<String>]
+    #   names of properties whose changed value is not specified
+    def dbus_properties_changed(interface_name, changed_props, invalidated_props)
+      typed_changed_props = changed_props.map do |dbus_name, value|
+        property = dbus_lookup_property(interface_name, dbus_name)
+        type = property.type
+        typed_value = Data.make_typed(type, value)
+        variant = Data::Variant.new(typed_value, member_type: type)
+        [dbus_name, variant]
+      end.to_h
+      PropertiesChanged(interface_name, typed_changed_props, invalidated_props)
+    end
+
+    # 4 individual necessary arguments
+    # @api private
+    def dbus_property_changed4(interface_name:, dbus_name:, value:, type:)
+      # TODO: respect EmitsChangedSignal to use invalidated_properties instead
+
+      typed_value = Data.make_typed(type, value)
+      variant = Data::Variant.new(typed_value, member_type: type)
+      PropertiesChanged(interface_name, { dbus_name.to_s => variant }, [])
     end
 
     # @param interface_name [String]

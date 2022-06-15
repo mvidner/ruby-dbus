@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+Bug fixes:
+ * Introduced Object#dbus_properties_changed to send correctly typed property
+   values ([#115][]). Avoid calling PropertiesChanged directly as it will
+   guess the types.
+
+API:
+ * Object.dbus_watcher now needs an additional _type_ argument.
+
+[#115]: https://github.com/mvidner/ruby-dbus/issues/115
+
 ## Ruby D-Bus 0.18.0.beta7 - 2022-05-29
 
 API:
