@@ -171,15 +171,11 @@ module DBus
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 '
       xml += "<node name=\"#{node_opath}\">\n"
-      each_pair do |k, _v|
+      each_key do |k|
         xml += "  <node name=\"#{k}\" />\n"
       end
-      @object&.intfs&.each_pair do |_k, v|
-        xml += "  <interface name=\"#{v.name}\">\n"
-        v.methods.each_value { |m| xml += m.to_xml }
-        v.signals.each_value { |m| xml += m.to_xml }
-        v.properties.each_value { |m| xml += m.to_xml }
-        xml += "  </interface>\n"
+      @object&.intfs&.each_value do |v|
+        xml += v.to_xml
       end
       xml += "</node>"
       xml

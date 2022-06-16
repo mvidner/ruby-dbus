@@ -85,6 +85,17 @@ module DBus
       define(m)
     end
     alias declare_method define_method
+
+    # Return introspection XML string representation of the property.
+    # @return [String]
+    def to_xml
+      xml = "  <interface name=\"#{name}\">\n"
+      methods.each_value { |m| xml += m.to_xml }
+      signals.each_value { |m| xml += m.to_xml }
+      properties.each_value { |m| xml += m.to_xml }
+      xml += "  </interface>\n"
+      xml
+    end
   end
 
   # = A formal parameter has a name and a type
