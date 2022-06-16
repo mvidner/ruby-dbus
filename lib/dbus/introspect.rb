@@ -26,7 +26,7 @@ module DBus
   # method call instantiates and configures this class for us.
   #
   # It also is the local definition of interface exported by the program.
-  # At the client side, see ProxyObjectInterface
+  # At the client side, see {ProxyObjectInterface}.
   class Interface
     # @return [String] The name of the interface.
     attr_reader :name
