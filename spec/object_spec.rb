@@ -20,7 +20,7 @@ describe DBus::Object do
       let(:a_struct_in_a_variant) do
         satisfying { |x| x.is_a?(DBus::Data::Variant) && x.member_type.to_s == "(ss)" }
         # ^ This formatting keeps the matcher on a single line
-        # which enables RSpect to cite it if it fails, instead of saying "block".
+        # which enables RSpec to cite it if it fails, instead of saying "block".
       end
 
       it "emits PropertyChanged with correctly typed argument" do
