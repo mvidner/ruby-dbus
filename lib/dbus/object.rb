@@ -236,7 +236,7 @@ module DBus
       # the argument order is alias_method(new_name, existing_name)
       alias_method original_ruby_name_eq, ruby_name_eq
       define_method ruby_name_eq do |value|
-        public_send(original_ruby_name_eq, value)
+        result = public_send(original_ruby_name_eq, value)
 
         dbus_property_changed4(
           interface_name: interface_name,
@@ -244,6 +244,8 @@ module DBus
           value: value,
           type: type
         )
+
+        result
       end
     end
 
