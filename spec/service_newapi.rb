@@ -115,6 +115,15 @@ class Test < DBus::Object
     dbus_attr_accessor :my_variant, "v"
 
     dbus_attr_accessor :my_byte, "y"
+
+    # to test dbus_properties_changed
+    dbus_method :SetTwoProperties, "in read_me:s, in byte:y" do |read_me, byte|
+      @read_me = read_me
+      @my_byte = byte
+      dbus_properties_changed(INTERFACE,
+                              { "ReadMe" => read_me, "MyByte" => byte },
+                              [])
+    end
   end
 
   # closing and reopening the same interface

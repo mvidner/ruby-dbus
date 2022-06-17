@@ -110,6 +110,7 @@ describe "PropertyTest" do
     end
 
     @iface["ReadOrWriteMe"] = "VALUE"
+    @iface.SetTwoProperties("REAMDE", 255)
 
     # loop to process the signal. complicated :-( see signal_spec.rb
     loop = DBus::Main.new
@@ -123,6 +124,8 @@ describe "PropertyTest" do
     quitter.join
 
     expect(received["ReadOrWriteMe"]).to eq("VALUE")
+    expect(received["ReadMe"]).to eq("REAMDE")
+    expect(received["MyByte"]).to eq(255)
   end
 
   context "a struct-typed property" do
