@@ -110,6 +110,7 @@ describe "PropertyTest" do
     end
 
     @iface["ReadOrWriteMe"] = "VALUE"
+    @iface.SetTwoProperties("REAMDE", 255)
 
     # loop to process the signal. complicated :-( see signal_spec.rb
     loop = DBus::Main.new
@@ -123,6 +124,8 @@ describe "PropertyTest" do
     quitter.join
 
     expect(received["ReadOrWriteMe"]).to eq("VALUE")
+    expect(received["ReadMe"]).to eq("REAMDE")
+    expect(received["MyByte"]).to eq(255)
   end
 
   context "a struct-typed property" do
@@ -206,7 +209,7 @@ describe "PropertyTest" do
     let(:a_byte_in_a_variant) do
       satisfying { |x| x.is_a?(DBus::Data::Variant) && x.member_type.to_s == DBus::Type::BYTE }
       # ^ This formatting keeps the matcher on a single line
-      # which enables RSpect to cite it if it fails, instead of saying "block".
+      # which enables RSpec to cite it if it fails, instead of saying "block".
     end
 
     let(:prop_iface) { @obj[DBus::PROPERTY_INTERFACE] }
