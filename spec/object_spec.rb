@@ -12,7 +12,7 @@ class ObjectTest < DBus::Object
 
     attr_accessor :read_only_for_dbus
 
-    dbus_reader :read_only_for_dbus, T::STRING
+    dbus_reader :read_only_for_dbus, T::STRING, emits_changed_signal: :invalidates
   end
 end
 
@@ -49,10 +49,8 @@ describe DBus::Object do
         obj = ObjectTest.new("/test")
         expect(obj).to receive(:PropertiesChanged).with(
           "org.ruby.ServerTest",
-          {
-            "ReadOnlyForDbus" => DBus::Data::Variant
-          },
-          []
+          {},
+          ["ReadOnlyForDbus"]
         )
         obj.read_only_for_dbus = "myvalue"
       end
