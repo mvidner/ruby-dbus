@@ -58,4 +58,32 @@ describe DBus::Object do
       end
     end
   end
+
+  describe ".emits_changed_signal" do
+    it "raises UndefinedInterface when so" do
+      expect { ObjectTest.emits_changed_signal = false }
+        .to raise_error DBus::Object::UndefinedInterface
+    end
+
+    it "assigns to the current interface" do
+      ObjectTest.instance_exec do
+        dbus_interface "org.ruby.Interface" do
+          self.emits_changed_signal = false
+        end
+      end
+      ecs = ObjectTest.intfs["org.ruby.Interface"].emits_changed_signal
+      expect(ecs).to eq false
+    end
+
+    it "only can be assigned once" do
+      expect do
+        Class.new(DBus::Object) do
+          dbus_interface "org.ruby.Interface" do
+            self.emits_changed_signal = false
+            self.emits_changed_signal = :invalidates
+          end
+        end
+      end.to raise_error(RuntimeError, /assigned more than once/)
+    end
+  end
 end

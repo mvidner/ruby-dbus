@@ -25,4 +25,25 @@ describe DBus::EmitsChangedSignal do
       expect { described_class.new(nil, interface: nil) }.to raise_error(ArgumentError, /Both/)
     end
   end
+
+  describe "#==" do
+    it "is true for two different objects with the same value" do
+      const_a = described_class.new(:const)
+      const_b = described_class.new(:const)
+      expect(const_a == const_b).to be true
+    end
+  end
+
+  describe "#to_xml" do
+    it "uses a string value" do
+      expect(described_class.new(:const).to_xml)
+        .to eq "    <annotation name=\"org.freedesktop.DBus.Property.EmitsChangedSignal\" value=\"const\"/>\n"
+    end
+  end
+
+  describe "#to_s" do
+    it "uses a string value" do
+      expect(described_class.new(:const).to_s).to eq "const"
+    end
+  end
 end
