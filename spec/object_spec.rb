@@ -9,6 +9,10 @@ class ObjectTest < DBus::Object
 
   dbus_interface "org.ruby.ServerTest" do
     dbus_attr_writer :write_me, T::Struct[String, String]
+
+    attr_accessor :read_only_for_dbus
+
+    dbus_reader :read_only_for_dbus, T::STRING
   end
 end
 
@@ -35,6 +39,22 @@ describe DBus::Object do
         # bug: call PC with simply the assigned value,
         # which will need type guessing
         obj.write_me = ["two", "strings"]
+      end
+    end
+  end
+
+  describe ".dbus_reader, when paired with attr_accessor" do
+    describe "the declared assignment method" do
+      it "emits PropertyChanged" do
+        obj = ObjectTest.new("/test")
+        expect(obj).to receive(:PropertiesChanged).with(
+          "org.ruby.ServerTest",
+          {
+            "ReadOnlyForDbus" => DBus::Data::Variant
+          },
+          []
+        )
+        obj.read_only_for_dbus = "myvalue"
       end
     end
   end

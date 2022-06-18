@@ -188,7 +188,14 @@ module DBus
     # A read-only property accessing a reader method (which must already exist).
     # (To directly access an instance variable, use {.dbus_attr_reader} instead)
     #
-    # Whenever the property value gets changed from "inside" the object,
+    # At the D-Bus side the property is read only but it makes perfect sense to
+    # implement it with a read-write attr_accessor. In that case this method
+    # uses {.dbus_watcher} to set up the PropertiesChanged signal.
+    #
+    #   attr_accessor :foo_bar
+    #   dbus_reader :foo_bar, "s"
+    #
+    # If the property value should change by other means than its attr_writer,
     # you should emit the `PropertiesChanged` signal by calling
     # {#dbus_properties_changed}.
     #
@@ -206,6 +213,11 @@ module DBus
       dbus_name = make_dbus_name(ruby_name, dbus_name: dbus_name)
       property = Property.new(dbus_name, type, :read, ruby_name: ruby_name)
       @@cur_intf.define(property)
+
+      ruby_name_eq = "#{ruby_name}=".to_sym
+      return unless method_defined?(ruby_name_eq)
+
+      dbus_watcher(ruby_name, dbus_name: dbus_name, emits_changed_signal: emits_changed_signal)
     end
 
     # A write-only property accessing a writer method (which must already exist).

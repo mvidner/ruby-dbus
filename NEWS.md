@@ -6,6 +6,11 @@ Bug fixes:
  * Introduced Object#dbus_properties_changed to send correctly typed property
    values ([#115][]). Avoid calling PropertiesChanged directly as it will
    guess the types.
+ * Fix Object.dbus_reader to work with attr_accessor and automatically produce
+   dbus_properties_changed for properties that are read-write at
+   implementation side and read-only at D-Bus side ([#96][])
+
+[#96]: https://github.com/mvidner/ruby-dbus/issues/96
 
 API:
  * Service side `emits_changed_signal` to control emission of
