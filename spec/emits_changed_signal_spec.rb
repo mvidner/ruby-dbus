@@ -47,3 +47,12 @@ describe DBus::EmitsChangedSignal do
     end
   end
 end
+
+describe DBus::Interface do
+  describe ".emits_changed_signal=" do
+    it "only allows an EmitsChangedSignal as argument" do
+      ifc = described_class.new("org.ruby.Interface")
+      expect { ifc.emits_changed_signal = :const }.to raise_error(TypeError)
+    end
+  end
+end

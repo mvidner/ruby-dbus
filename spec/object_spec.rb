@@ -43,6 +43,26 @@ describe DBus::Object do
     end
   end
 
+  describe ".dbus_accessor" do
+    it "can only be used within a dbus_interface" do
+      expect do
+        ObjectTest.instance_exec do
+          dbus_accessor :foo, DBus::Type::STRING
+        end
+      end.to raise_error(DBus::Object::UndefinedInterface)
+    end
+  end
+
+  describe ".dbus_reader" do
+    it "can only be used within a dbus_interface" do
+      expect do
+        ObjectTest.instance_exec do
+          dbus_reader :foo, DBus::Type::STRING
+        end
+      end.to raise_error(DBus::Object::UndefinedInterface)
+    end
+  end
+
   describe ".dbus_reader, when paired with attr_accessor" do
     describe "the declared assignment method" do
       it "emits PropertyChanged" do
@@ -54,6 +74,37 @@ describe DBus::Object do
         )
         obj.read_only_for_dbus = "myvalue"
       end
+    end
+  end
+
+  describe ".dbus_writer" do
+    it "can only be used within a dbus_interface" do
+      expect do
+        ObjectTest.instance_exec do
+          dbus_writer :foo, DBus::Type::STRING
+        end
+      end.to raise_error(DBus::Object::UndefinedInterface)
+    end
+  end
+
+  describe ".dbus_watcher" do
+    it "can only be used within a dbus_interface" do
+      expect do
+        ObjectTest.instance_exec do
+          dbus_watcher :foo
+        end
+      end.to raise_error(DBus::Object::UndefinedInterface)
+    end
+  end
+
+  describe ".dbus_method" do
+    it "can only be used within a dbus_interface" do
+      expect do
+        ObjectTest.instance_exec do
+          dbus_method :foo do
+          end
+        end
+      end.to raise_error(DBus::Object::UndefinedInterface)
     end
   end
 
