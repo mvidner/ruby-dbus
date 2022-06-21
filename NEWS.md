@@ -6,11 +6,19 @@ Bug fixes:
  * Introduced Object#dbus_properties_changed to send correctly typed property
    values ([#115][]). Avoid calling PropertiesChanged directly as it will
    guess the types.
+ * Fix Object.dbus_reader to work with attr_accessor and automatically produce
+   dbus_properties_changed for properties that are read-write at
+   implementation side and read-only at D-Bus side ([#96][])
+
+[#96]: https://github.com/mvidner/ruby-dbus/issues/96
 
 API:
- * Object.dbus_watcher now needs an additional _type_ argument.
+ * Service side `emits_changed_signal` to control emission of
+   PropertiesChanged: can be assigned within `dbus_interface` or as an option
+   when declaring properties ([#117][]).
 
 [#115]: https://github.com/mvidner/ruby-dbus/issues/115
+[#117]: https://github.com/mvidner/ruby-dbus/pulls/117
 
 ## Ruby D-Bus 0.18.0.beta7 - 2022-05-29
 

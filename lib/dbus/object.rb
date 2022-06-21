@@ -102,6 +102,18 @@ module DBus
       end
     end
 
+    # Declare the behavior of PropertiesChanged signal,
+    # common for all properties in this interface
+    # (individual properties may override it)
+    # @example
+    #   self.emits_changed_signal = :invalidates
+    # @param [true,false,:const,:invalidates] value
+    def self.emits_changed_signal=(value)
+      raise UndefinedInterface, :emits_changed_signal if @@cur_intf.nil?
+
+      @@cur_intf.emits_changed_signal = EmitsChangedSignal.new(value)
+    end
+
     # A read-write property accessing an instance variable.
     # A combination of `attr_accessor` and {.dbus_accessor}.
     #
@@ -114,11 +126,13 @@ module DBus
     # @param dbus_name [String] if not given it is made
     #   by CamelCasing the ruby_name. foo_bar becomes FooBar
     #   to convert the Ruby convention to the DBus convention.
+    # @param emits_changed_signal [true,false,:const,:invalidates]
+    #   see {EmitsChangedSignal}; if unspecified, ask the interface.
     # @return [void]
-    def self.dbus_attr_accessor(ruby_name, type, dbus_name: nil)
+    def self.dbus_attr_accessor(ruby_name, type, dbus_name: nil, emits_changed_signal: nil)
       attr_accessor(ruby_name)
 
-      dbus_accessor(ruby_name, type, dbus_name: dbus_name)
+      dbus_accessor(ruby_name, type, dbus_name: dbus_name, emits_changed_signal: emits_changed_signal)
     end
 
     # A read-only property accessing an instance variable.
@@ -136,10 +150,10 @@ module DBus
     #
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
-    def self.dbus_attr_reader(ruby_name, type, dbus_name: nil)
+    def self.dbus_attr_reader(ruby_name, type, dbus_name: nil, emits_changed_signal: nil)
       attr_reader(ruby_name)
 
-      dbus_reader(ruby_name, type, dbus_name: dbus_name)
+      dbus_reader(ruby_name, type, dbus_name: dbus_name, emits_changed_signal: emits_changed_signal)
     end
 
     # A write-only property accessing an instance variable.
@@ -147,10 +161,10 @@ module DBus
     #
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
-    def self.dbus_attr_writer(ruby_name, type, dbus_name: nil)
+    def self.dbus_attr_writer(ruby_name, type, dbus_name: nil, emits_changed_signal: nil)
       attr_writer(ruby_name)
 
-      dbus_writer(ruby_name, type, dbus_name: dbus_name)
+      dbus_writer(ruby_name, type, dbus_name: dbus_name, emits_changed_signal: emits_changed_signal)
     end
 
     # A read-write property using a pair of reader/writer methods
@@ -161,20 +175,27 @@ module DBus
     #
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
-    def self.dbus_accessor(ruby_name, type, dbus_name: nil)
+    def self.dbus_accessor(ruby_name, type, dbus_name: nil, emits_changed_signal: nil)
       raise UndefinedInterface, ruby_name if @@cur_intf.nil?
 
       dbus_name = make_dbus_name(ruby_name, dbus_name: dbus_name)
       property = Property.new(dbus_name, type, :readwrite, ruby_name: ruby_name)
       @@cur_intf.define(property)
 
-      dbus_watcher(ruby_name, dbus_name: dbus_name, type: property.type)
+      dbus_watcher(ruby_name, dbus_name: dbus_name, emits_changed_signal: emits_changed_signal)
     end
 
     # A read-only property accessing a reader method (which must already exist).
     # (To directly access an instance variable, use {.dbus_attr_reader} instead)
     #
-    # Whenever the property value gets changed from "inside" the object,
+    # At the D-Bus side the property is read only but it makes perfect sense to
+    # implement it with a read-write attr_accessor. In that case this method
+    # uses {.dbus_watcher} to set up the PropertiesChanged signal.
+    #
+    #   attr_accessor :foo_bar
+    #   dbus_reader :foo_bar, "s"
+    #
+    # If the property value should change by other means than its attr_writer,
     # you should emit the `PropertiesChanged` signal by calling
     # {#dbus_properties_changed}.
     #
@@ -186,12 +207,17 @@ module DBus
     #
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
-    def self.dbus_reader(ruby_name, type, dbus_name: nil)
+    def self.dbus_reader(ruby_name, type, dbus_name: nil, emits_changed_signal: nil)
       raise UndefinedInterface, ruby_name if @@cur_intf.nil?
 
       dbus_name = make_dbus_name(ruby_name, dbus_name: dbus_name)
       property = Property.new(dbus_name, type, :read, ruby_name: ruby_name)
       @@cur_intf.define(property)
+
+      ruby_name_eq = "#{ruby_name}=".to_sym
+      return unless method_defined?(ruby_name_eq)
+
+      dbus_watcher(ruby_name, dbus_name: dbus_name, emits_changed_signal: emits_changed_signal)
     end
 
     # A write-only property accessing a writer method (which must already exist).
@@ -201,14 +227,14 @@ module DBus
     #
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
-    def self.dbus_writer(ruby_name, type, dbus_name: nil)
+    def self.dbus_writer(ruby_name, type, dbus_name: nil, emits_changed_signal: nil)
       raise UndefinedInterface, ruby_name if @@cur_intf.nil?
 
       dbus_name = make_dbus_name(ruby_name, dbus_name: dbus_name)
       property = Property.new(dbus_name, type, :write, ruby_name: ruby_name)
       @@cur_intf.define(property)
 
-      dbus_watcher(ruby_name, dbus_name: dbus_name, type: property.type)
+      dbus_watcher(ruby_name, dbus_name: dbus_name, emits_changed_signal: emits_changed_signal)
     end
 
     # Enables automatic sending of the PropertiesChanged signal.
@@ -220,9 +246,10 @@ module DBus
     # @param dbus_name [String] if not given it is made
     #   by CamelCasing the ruby_name. foo_bar becomes FooBar
     #   to convert the Ruby convention to the DBus convention.
-    # @param type [SingleCompleteType,Type] the type of the property
+    # @param emits_changed_signal [true,false,:const,:invalidates]
+    #   see {EmitsChangedSignal}; if unspecified, ask the interface.
     # @return [void]
-    def self.dbus_watcher(ruby_name, type:, dbus_name: nil)
+    def self.dbus_watcher(ruby_name, dbus_name: nil, emits_changed_signal: nil)
       raise UndefinedInterface, ruby_name if @@cur_intf.nil?
 
       interface_name = @@cur_intf.name
@@ -233,17 +260,25 @@ module DBus
 
       dbus_name = make_dbus_name(ruby_name, dbus_name: dbus_name)
 
+      emits_changed_signal = EmitsChangedSignal.new(emits_changed_signal, interface: @@cur_intf)
+
       # the argument order is alias_method(new_name, existing_name)
       alias_method original_ruby_name_eq, ruby_name_eq
       define_method ruby_name_eq do |value|
         result = public_send(original_ruby_name_eq, value)
 
-        dbus_property_changed4(
-          interface_name: interface_name,
-          dbus_name: dbus_name,
-          value: value,
-          type: type
-        )
+        case emits_changed_signal.value
+        when true
+          # signature: "interface:s, changed_props:a{sv}, invalidated_props:as"
+          dbus_properties_changed(interface_name, { dbus_name.to_s => value }, [])
+        when :invalidates
+          dbus_properties_changed(interface_name, {}, [dbus_name.to_s])
+        when :const
+          # Oh my, seeing a value change of a supposedly constant property.
+          # Maybe should have raised at declaration time, don't make a fuss now.
+        when false
+          # Do nothing
+        end
 
         result
       end
@@ -326,16 +361,6 @@ module DBus
         [dbus_name, variant]
       end.to_h
       PropertiesChanged(interface_name, typed_changed_props, invalidated_props)
-    end
-
-    # 4 individual necessary arguments
-    # @api private
-    def dbus_property_changed4(interface_name:, dbus_name:, value:, type:)
-      # TODO: respect EmitsChangedSignal to use invalidated_properties instead
-
-      typed_value = Data.make_typed(type, value)
-      variant = Data::Variant.new(typed_value, member_type: type)
-      PropertiesChanged(interface_name, { dbus_name.to_s => variant }, [])
     end
 
     # @param interface_name [String]

@@ -26,7 +26,7 @@ module DBus
   # method call instantiates and configures this class for us.
   #
   # It also is the local definition of interface exported by the program.
-  # At the client side, see ProxyObjectInterface
+  # At the client side, see {ProxyObjectInterface}.
   class Interface
     # @return [String] The name of the interface.
     attr_reader :name
@@ -38,6 +38,9 @@ module DBus
     # @return [Hash{Symbol => Property}]
     attr_reader :properties
 
+    # @return [EmitsChangedSignal]
+    attr_reader :emits_changed_signal
+
     # Creates a new interface with a given _name_.
     def initialize(name)
       validate_name(name)
@@ -45,6 +48,20 @@ module DBus
       @methods = {}
       @signals = {}
       @properties = {}
+      @emits_changed_signal = EmitsChangedSignal::DEFAULT_ECS
+    end
+
+    # Helper for {Object.emits_changed_signal=}.
+    # @api private
+    def emits_changed_signal=(ecs)
+      raise TypeError unless ecs.is_a? EmitsChangedSignal
+      # equal?: object identity
+      unless @emits_changed_signal.equal?(EmitsChangedSignal::DEFAULT_ECS) ||
+             @emits_changed_signal.value == ecs.value
+        raise "emits_change_signal was assigned more than once"
+      end
+
+      @emits_changed_signal = ecs
     end
 
     # Validates a service _name_.
@@ -85,6 +102,18 @@ module DBus
       define(m)
     end
     alias declare_method define_method
+
+    # Return introspection XML string representation of the property.
+    # @return [String]
+    def to_xml
+      xml = "  <interface name=\"#{name}\">\n"
+      xml += emits_changed_signal.to_xml
+      methods.each_value { |m| xml += m.to_xml }
+      signals.each_value { |m| xml += m.to_xml }
+      properties.each_value { |m| xml += m.to_xml }
+      xml += "  </interface>\n"
+      xml
+    end
   end
 
   # = A formal parameter has a name and a type
@@ -190,6 +219,7 @@ module DBus
     end
 
     # Return an XML string representation of the method interface elment.
+    # @return [String]
     def to_xml
       xml = "    <method name=\"#{@name}\">\n"
       @params.each do |param|
