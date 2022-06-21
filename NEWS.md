@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.18.0.beta8 - 2022-06-21
+
 Bug fixes:
  * Introduced Object#dbus_properties_changed to send correctly typed property
    values ([#115][]). Avoid calling PropertiesChanged directly as it will

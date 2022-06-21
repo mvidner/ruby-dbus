@@ -1,4 +1,20 @@
 -------------------------------------------------------------------
+Tue Jun 21 09:54:22 UTC 2022 - Martin Vidner <mvidner@suse.com>
+
+- 0.18.0.beta8
+ Bug fixes:
+ * Introduced Object#dbus_properties_changed to send correctly typed property
+   values (gh#mvidner/ruby-dbus#115). Avoid calling PropertiesChanged directly
+   as it will guess the types.
+ * Fix Object.dbus_reader to work with attr_accessor and automatically produce
+   dbus_properties_changed for properties that are read-write at
+   implementation side and read-only at D-Bus side (gh#mvidner/ruby-dbus#96)
+ API:
+ * Service side `emits_changed_signal` to control emission of
+   PropertiesChanged: can be assigned within `dbus_interface` or as an option
+   when declaring properties (gh#mvidner/ruby-dbus#117).
+
+-------------------------------------------------------------------
 Sun May 29 08:24:04 UTC 2022 - Martin Vidner <mvidner@suse.com>
 
 - 0.18.0.beta7
