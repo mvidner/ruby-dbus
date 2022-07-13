@@ -2,6 +2,42 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.18.1 - 2022-07-13
+
+No changes since 0.18.0.beta8.
+Repeating the most important changes since 0.17.0:
+
+API:
+ * Introduced DBus::Data classes, use them in Properties.Get,
+   Properties.GetAll to return correct types as declared ([#97][]).
+ * Introduced Object#dbus_properties_changed to send correctly typed property
+   values ([#115][]). Avoid calling PropertiesChanged directly as it will
+   guess the types.
+ * Service side `emits_changed_signal` to control emission of
+   PropertiesChanged: can be assigned within `dbus_interface` or as an option
+   when declaring properties ([#117][]).
+ * DBus.variant(type, value) is deprecated in favor of
+   Data::Variant.new(value, member_type:)
+ * Added type factories
+   * Type::Array[type]
+   * Type::Hash[key_type, value_type]
+   * Type::Struct[type1, type2...]
+
+Bug fixes:
+ * Fix Object.dbus_reader to work with attr_accessor and automatically produce
+   dbus_properties_changed for properties that are read-write at
+   implementation side and read-only at D-Bus side ([#96][])
+ * Service-side properties: Fix Properties.Get, Properties.GetAll
+   to use the specific property signature, not the generic
+   Variant ([#97][], [#105][], [#109][]).
+ * Client-side properties: When calling Properties.Set in
+   ProxyObjectInterface#[]=, use the correct type ([#108][]).
+ * Added thorough tests (`spec/data/marshall.yaml`) to detect nearly all
+   invalid data at unmarshalling time.
+
+Requirements:
+ * Require Ruby 2.4, because of RuboCop 1.0.
+
 ## Ruby D-Bus 0.18.0.beta8 - 2022-06-21
 
 Bug fixes:

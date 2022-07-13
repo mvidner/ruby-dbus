@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Jul 13 06:09:32 UTC 2022 - Martin Vidner <mvidner@suse.com>
+
+- 0.18.1
+ Most important change since 0.17.0:
+ * Introduced DBus::Data classes, use them in Properties.Get,
+   Properties.GetAll to return correct types as declared
+   (gh#mvidner/ruby-dbus#97).
+
+-------------------------------------------------------------------
 Tue Jun 21 09:54:22 UTC 2022 - Martin Vidner <mvidner@suse.com>
 
 - 0.18.0.beta8
