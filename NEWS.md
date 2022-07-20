@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+Bug fixes:
+ * dbus_attr_accessor and friends validate the signature ([#120][]).
+
+[#120]: https://github.com/mvidner/ruby-dbus/issues/120
+
 ## Ruby D-Bus 0.18.1 - 2022-07-13
 
 No changes since 0.18.0.beta8.

@@ -270,7 +270,7 @@ module DBus
   class Property
     # @return [Symbol] The name of the property, for example FooBar.
     attr_reader :name
-    # @return [SingleCompleteType]
+    # @return [Type]
     attr_reader :type
     # @return [Symbol] :read :write or :readwrite
     attr_reader :access
@@ -282,6 +282,7 @@ module DBus
 
     def initialize(name, type, access, ruby_name:)
       @name = name.to_sym
+      type = DBus.type(type) unless type.is_a?(Type)
       @type = type
       @access = access
       @ruby_name = ruby_name

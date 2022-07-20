@@ -61,6 +61,16 @@ describe DBus::Object do
         end
       end.to raise_error(DBus::Object::UndefinedInterface)
     end
+
+    it "fails when the signature is invalid" do
+      expect do
+        ObjectTest.instance_exec do
+          dbus_interface "org.ruby.ServerTest" do
+            dbus_reader :foo2, "!"
+          end
+        end
+      end.to raise_error(DBus::Type::SignatureException)
+    end
   end
 
   describe ".dbus_reader, when paired with attr_accessor" do

@@ -89,8 +89,11 @@ module DBus
           # while the superclass keeps the old one.
           self.intfs = intfs.merge(name => @@cur_intf)
         end
-        yield
-        @@cur_intf = nil
+        begin
+          yield
+        ensure
+          @@cur_intf = nil
+        end
       end
     end
 
@@ -122,7 +125,8 @@ module DBus
     #
     # @param ruby_name [Symbol] :foo_bar is exposed as FooBar;
     #   use dbus_name to override
-    # @param type a signature like "s" or "a(uus)" or Type::STRING
+    # @param type [Type,SingleCompleteType]
+    #   a signature like "s" or "a(uus)" or Type::STRING
     # @param dbus_name [String] if not given it is made
     #   by CamelCasing the ruby_name. foo_bar becomes FooBar
     #   to convert the Ruby convention to the DBus convention.
