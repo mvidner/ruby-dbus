@@ -463,5 +463,12 @@ module DBus
 
       dbus_signal :PropertiesChanged, "interface:s, changed_properties:a{sv}, invalidated_properties:as"
     end
+
+    dbus_interface "org.freedesktop.DBus.Introspectable" do
+      dbus_method :Introspect, "out xml_data:s" do
+        # The body is not used, Connection#process handles it instead
+        # which is more efficient and handles paths without objects.
+      end
+    end
   end
 end
