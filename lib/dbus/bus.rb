@@ -252,7 +252,6 @@ module DBus
       @method_call_msgs = {}
       @signal_matchrules = {}
       @proxy = nil
-      @object_root = Node.new("/")
     end
 
     # Dispatch all messages that are available in the queue,
