@@ -114,9 +114,6 @@ module DBus
         end
         n = n[elem]
       end
-      if n.nil?
-        DBus.logger.debug "Warning, unknown object #{path}"
-      end
       n
     end
 
