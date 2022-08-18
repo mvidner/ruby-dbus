@@ -157,3 +157,8 @@ Style/AccessModifierDeclarations:
 Style/OptionalArguments:
   Exclude:
     - 'lib/dbus/proxy_object_interface.rb'
+
+Style/AsciiComments:
+  Exclude:
+    # Spell author name correctly
+    - 'lib/dbus/object_manager.rb'
