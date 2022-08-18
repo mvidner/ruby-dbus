@@ -21,6 +21,18 @@ module DBus
       end
     end
 
+    # @param object [DBus::Object]
+    # @return [void]
+    def object_added(object)
+      InterfacesAdded(object.path, object.interfaces_and_properties)
+    end
+
+    # @param object [DBus::Object]
+    # @return [void]
+    def object_removed(object)
+      InterfacesRemoved(object.path, object.intfs.keys)
+    end
+
     def self.included(base)
       base.class_eval do
         dbus_interface OBJECT_MANAGER_INTERFACE do

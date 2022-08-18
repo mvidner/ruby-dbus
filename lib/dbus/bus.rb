@@ -76,6 +76,7 @@ module DBus
     def export(obj)
       obj.service = self
       get_node(obj.path, create: true).object = obj
+      object_manager_for(obj)&.object_added(obj)
     end
 
     # Undo exporting an object _obj_.
@@ -93,6 +94,7 @@ module DBus
       parent_node = get_node(parent_path, create: false)
       return false unless parent_node
 
+      object_manager_for(obj)&.object_removed(obj)
       obj.service = nil
       parent_node.delete(node_name).object
     end
@@ -118,11 +120,31 @@ module DBus
       n
     end
 
+    def object_manager_for(object)
+      path = object.path
+      node_chain = get_node_chain(path)
+      om_node = node_chain.reverse_each.find do |node|
+        node.object&.is_a? DBus::ObjectManager
+      end
+      om_node&.object
+    end
     #########
 
     private
 
     #########
+
+    def get_node_chain(path)
+      n = @root
+      result = [n]
+      path.sub(%r{^/}, "").split("/").each do |elem|
+        n = n[elem]
+        raise ArgumentError, "Object path #{path} doesn't exist" if n.nil?
+
+        result.push(n)
+      end
+      result
+    end
 
     # Perform a recursive retrospection on the given current _node_
     # on the given _path_.
