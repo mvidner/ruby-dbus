@@ -399,7 +399,7 @@ module DBus
     # object path and interface. If an interface has no properties, the empty
     # hash is returned.
     #
-    # @return [Hash]
+    # @return [Hash{String => Hash{String => Data::Base}}] interface -> property -> value
     def interfaces_and_properties
       get_all_method = self.class.make_method_name("org.freedesktop.DBus.Properties", :GetAll)
 

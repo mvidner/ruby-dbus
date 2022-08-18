@@ -117,6 +117,9 @@ module DBus
       n
     end
 
+    # Find the (closest) parent of *object*
+    # implementing the ObjectManager interface, or nil
+    # @return [DBus::Object,nil]
     def object_manager_for(object)
       path = object.path
       node_chain = get_node_chain(path)
@@ -125,12 +128,25 @@ module DBus
       end
       om_node&.object
     end
+
+    # All objects (not paths) under this path (except itself).
+    # @param path [ObjectPath]
+    # @return [Array<DBus::Object>]
+    # @raise ArgumentError if the *path* does not exist
+    def descendants_for(path)
+      node = get_node(path, create: false)
+      raise ArgumentError, "Object path #{path} doesn't exist" if node.nil?
+
+      node.descendant_objects
+    end
+
     #########
 
     private
 
     #########
 
+    # @raise ArgumentError if the *path* does not exist
     def get_node_chain(path)
       n = @root
       result = [n]
@@ -216,6 +232,15 @@ module DBus
                              .map { |k| "#{k} => #{self[k].sub_inspect}" }
                              .join(",")
       "#{s}{#{contents_sub_inspect}}"
+    end
+
+    # All objects (not paths) under this path (except itself).
+    # @return [Array<DBus::Object>]
+    def descendant_objects
+      children_objects = values.map(&:object).compact
+      descendants = values.map(&:descendant_objects)
+      flat_descendants = descendants.reduce([], &:+)
+      children_objects + flat_descendants
     end
   end
 

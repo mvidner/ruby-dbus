@@ -14,9 +14,12 @@ module DBus
   module ObjectManager
     OBJECT_MANAGER_INTERFACE = "org.freedesktop.DBus.ObjectManager"
 
+    # @return [Hash{ObjectPath => Hash{String => Hash{String => Data::Base}}}]
+    #   object -> interface -> property -> value
     def managed_objects
-      # FIXME: find exported_questions which is CHILDREN objects, not self
-      exported_questions.each_with_object({}) do |obj, hash|
+      # FIXME: also fix the "service" concept
+      descendant_objects = @service.descendants_for(path)
+      descendant_objects.each_with_object({}) do |obj, hash|
         hash[obj.path] = obj.interfaces_and_properties
       end
     end
