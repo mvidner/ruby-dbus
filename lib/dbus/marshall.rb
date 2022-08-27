@@ -327,7 +327,7 @@ module DBus
         # Damn ruby rocks here
         val = val.to_a
       end
-      # If string is recieved and ay is expected, explode the string
+      # If string is received and ay is expected, explode the string
       if val.is_a?(String) && child_type.sigtype == Type::BYTE
         val = val.bytes
       end
