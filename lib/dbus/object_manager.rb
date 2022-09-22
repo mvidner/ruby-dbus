@@ -10,7 +10,13 @@
 # See the file "COPYING" for the exact licensing terms.
 
 module DBus
-  # a mixin for DBus::Object
+  # A mixin for {DBus::Object} implementing
+  # {https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-objectmanager
+  # org.freedesktop.DBus.ObjectManager}.
+  #
+  # {Service#export} and {Service#unexport} will look for an ObjectManager
+  # parent in the path hierarchy. If found, it will emit InterfacesAdded
+  # or InterfacesRemoved, as appropriate.
   module ObjectManager
     OBJECT_MANAGER_INTERFACE = "org.freedesktop.DBus.ObjectManager"
 
