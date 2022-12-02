@@ -102,6 +102,12 @@ class Test < DBus::Object
       [coords]
     end
 
+    # Two OUT arguments
+    dbus_method :EvenOdd, "in numbers:ai, out even:ai, out odd:ai" do |numbers|
+      even, odd = numbers.partition(&:even?)
+      [even, odd]
+    end
+
     # Properties:
     # ReadMe:string, returns "READ ME" at first, then what WriteMe received
     # WriteMe:string
