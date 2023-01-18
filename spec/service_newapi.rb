@@ -10,10 +10,23 @@ require "dbus"
 
 PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
 
+class TestChild < DBus::Object
+  def initialize(opath)
+    @name = opath.split("/").last.capitalize
+    super
+  end
+
+  dbus_interface "org.ruby.TestChild" do
+    dbus_attr_reader :name, "s"
+  end
+end
+
 class Test < DBus::Object
   Point2D = Struct.new(:x, :y)
 
   attr_writer :main_loop
+
+  include DBus::ObjectManager
 
   INTERFACE = "org.ruby.SampleInterface"
   def initialize(path)
@@ -152,6 +165,21 @@ class Test < DBus::Object
   dbus_interface "org.ruby.Ticket30" do
     dbus_method :Sybilla, "in choices:av, out advice:s" do |choices|
       ["Do #{choices[0]}"]
+    end
+  end
+
+  dbus_interface "org.ruby.TestParent" do
+    dbus_method :New, "in name:s, out opath:o" do |name|
+      child = TestChild.new("#{path}/#{name}")
+      @service.export(child)
+      [child.path]
+    end
+
+    dbus_method :Delete, "in opath:o" do |opath|
+      raise ArgumentError unless opath.start_with?(path)
+
+      obj = @service.get_node(opath)&.object
+      @service.unexport(obj)
     end
   end
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+API:
+ * Added a ObjectManager mix-in to implement the service-side
+   [ObjectManager][objmgr] interface.
+
 Bug fixes:
  * dbus_attr_accessor and friends validate the signature ([#120][]).
  * Declare the Introspectable interface in exported objects([#99][]).
@@ -11,6 +15,7 @@ Bug fixes:
 [#120]: https://github.com/mvidner/ruby-dbus/issues/120
 [#99]: https://github.com/mvidner/ruby-dbus/issues/99
 [#121]: https://github.com/mvidner/ruby-dbus/issues/121
+[objmgr]: https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-objectmanager
 
 ## Ruby D-Bus 0.18.1 - 2022-07-13
 
