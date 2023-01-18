@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.19.0 - 2023-01-18
+
 API:
  * Added a ObjectManager mix-in to implement the service-side
    [ObjectManager][objmgr] interface.

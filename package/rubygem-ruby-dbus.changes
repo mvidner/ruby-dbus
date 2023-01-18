@@ -1,4 +1,20 @@
 -------------------------------------------------------------------
+Wed Jan 18 12:08:21 UTC 2023 - Martin Vidner <mvidner@suse.com>
+
+- 0.19.0
+ API:
+ * Added a ObjectManager mix-in to implement the service-side
+   ObjectManager interface.
+
+ Bug fixes:
+ * dbus_attr_accessor and friends validate the signature
+ * (gh#mvidner/ruby-dbus#120).
+ * Declare the Introspectable interface in exported
+ * objects (gh#mvidner/ruby-dbus#99).
+ * Do reply with an error when calling a nonexisting object
+   with an existing path prefix (gh#mvidner/ruby-dbus#121).
+
+-------------------------------------------------------------------
 Wed Jul 13 06:09:32 UTC 2022 - Martin Vidner <mvidner@suse.com>
 
 - 0.18.1
