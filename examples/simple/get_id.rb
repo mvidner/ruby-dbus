@@ -6,7 +6,9 @@ $LOAD_PATH.unshift File.expand_path("../../lib", __dir__)
 
 require "dbus"
 
-bus = DBus::SystemBus.instance
+busname = ARGV.fetch(0, "system")
+bus = busname == "session" ? DBus::SessionBus.instance : DBus::SystemBus.instance
+
 driver_svc = bus["org.freedesktop.DBus"]
 # p driver_svc
 driver_obj = driver_svc["/"]
@@ -15,4 +17,4 @@ driver_ifc = driver_obj["org.freedesktop.DBus"]
 # p driver_ifc
 
 bus_id = driver_ifc.GetId
-puts "The system bus id is #{bus_id}"
+puts "The #{busname} bus id is #{bus_id}"
