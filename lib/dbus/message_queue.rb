@@ -129,7 +129,7 @@ module DBus
 
     # Initialize the connection to the bus.
     def init_connection
-      client = Client.new(@socket)
+      client = Authentication::Client.new(@socket)
       client.authenticate
     end
 
