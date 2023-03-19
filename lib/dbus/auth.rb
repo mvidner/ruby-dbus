@@ -127,10 +127,15 @@ module DBus
       # NOTE: not implemented yet in upper layers
       attr_reader :unix_fd
 
+      # @return [String]
+      attr_reader :address_uuid
+
       # Create a new authentication client.
       # @param mechs [Array<Mechanism,Class>,nil] custom list of auth Mechanism objects or classes
       def initialize(socket, mechs = nil)
         @unix_fd = false
+        @address_uuid = nil
+
         @socket = socket
         @state = nil
         @auth_list = mechs || [

@@ -46,7 +46,7 @@ describe DBus::Authentication::Client do
   context "with EXTERNAL" do
     let(:subject) { described_class.new(socket, [DBus::Authentication::External]) }
 
-    it "authentication passes" do
+    it "authentication passes, and address_uuid is set" do
       expect_protocol [
         ["AUTH EXTERNAL 393939\r\n", "OK ffffffffffffffffffffffffffffffff\r\n"],
         ["NEGOTIATE_UNIX_FD\r\n", "AGREE_UNIX_FD\r\n"],
@@ -54,6 +54,7 @@ describe DBus::Authentication::Client do
       ]
 
       expect { subject.authenticate }.to_not raise_error
+      expect(subject.address_uuid).to eq "ffffffffffffffffffffffffffffffff"
     end
 
     context "when the server says superfluous things before an OK" do
