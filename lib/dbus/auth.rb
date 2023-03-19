@@ -38,54 +38,44 @@ module DBus
       end
     end
 
-    # = Anonymous authentication class
+    # Anonymous authentication class.
+    # https://dbus.freedesktop.org/doc/dbus-specification.html#auth-mechanisms-anonymous
     class Anonymous < Mechanism
       def call(_challenge)
-        "527562792044427573" # Hex encoded version of "Ruby DBus"
+        [:MechOk, "Ruby DBus"]
       end
     end
 
-    # = External authentication class
-    #
     # Class for 'external' type authentication.
+    # https://dbus.freedesktop.org/doc/dbus-specification.html#auth-mechanisms-external
     class External < Mechanism
       # Performs the authentication.
       def call(_challenge)
-        # Take the user id (eg integer 1000) make a string out of it "1000", take
-        # each character and determin hex value "1" => 0x31, "0" => 0x30. You
-        # obtain for "1000" => 31303030 This is what the server is expecting.
-        # Why? I dunno. How did I come to that conclusion? by looking at rbus
-        # code. I have no idea how he found that out.
-        Process.uid.to_s.split(//).map { |d| d.ord.to_s(16) }.join
+        [:MechOk, Process.uid.to_s]
       end
     end
 
-    # = Authentication class using SHA1 crypto algorithm
-    #
-    # Class for 'CookieSHA1' type authentication.
     # Implements the AUTH DBUS_COOKIE_SHA1 mechanism.
+    # https://dbus.freedesktop.org/doc/dbus-specification.html#auth-mechanisms-sha
     class DBusCookieSHA1 < Mechanism
-      # the autenticate method (called in stage one of authentification)
-      def call(challenge)
-        return data(challenge) if challenge
-
-        require "etc"
-        # number of retries we have for auth
-        @retries = 1
-        hex_encode(Etc.getlogin).to_s # server expects it to be binary
-      end
-
       # returns the modules name
       def name
         "DBUS_COOKIE_SHA1"
       end
 
-      # handles the interesting crypto stuff, check the rbus-project for more info: http://rbus.rubyforge.org/
-      def data(hexdata)
+      # First we are called with nil and we reply with our username.
+      # Then we prove that we can read that user's cookie file.
+      def call(challenge)
+        if challenge.nil?
+          require "etc"
+          # number of retries we have for auth
+          @retries = 1
+          return [:MechContinue, Etc.getlogin]
+        end
+
         require "digest/sha1"
-        data = hex_decode(hexdata)
         # name of cookie file, id of cookie in file, servers random challenge
-        context, id, s_challenge = data.split(" ")
+        context, id, s_challenge = challenge.split(" ")
         # Random client challenge
         c_challenge = 1.upto(s_challenge.bytesize / 2).map { rand(255).to_s }.join
         # Search cookie file for id
@@ -99,10 +89,8 @@ module DBus
             # Concatenate and encrypt
             to_encrypt = [s_challenge, c_challenge, cookie].join(":")
             sha = Digest::SHA1.hexdigest(to_encrypt)
-            # the almighty tcp server wants everything hex encoded
-            hex_response = hex_encode("#{c_challenge} #{sha}")
             # Return response
-            response = [:MechOk, hex_response]
+            response = [:MechOk, "#{c_challenge} #{sha}"]
             return response
           end
         end
@@ -113,23 +101,9 @@ module DBus
         puts "ERROR: Unable to locate cookie, retry in 1 second."
         @retries -= 1
         sleep 1
-        data(hexdata)
-      end
-
-      # encode plain to hex
-      def hex_encode(plain)
-        return nil if plain.nil?
-
-        plain.to_s.unpack1("H*")
-      end
-
-      # decode hex to plain
-      def hex_decode(encoded)
-        encoded.scan(/[[:xdigit:]]{2}/).map { |h| h.hex.chr }.join
+        call(challenge)
       end
     end
-
-    # Note: this following stuff is tested with External mechanism only!
 
     # = Authentication client class.
     #
@@ -148,6 +122,7 @@ module DBus
       end
 
       # Start the authentication process.
+      # @raise [AuthenticationFailed]
       def authenticate
         send_nul_byte
         next_mechanism
@@ -176,6 +151,18 @@ module DBus
         end
       end
 
+      # encode plain to hex
+      def hex_encode(plain)
+        return nil if plain.nil?
+
+        plain.unpack1("H*")
+      end
+
+      # decode hex to plain
+      def hex_decode(encoded)
+        [encoded].pack("H*")
+      end
+
       # Send a string to the socket; good place for test mocks.
       def write_line(str)
         DBus.logger.debug "auth_write: #{str.inspect}"
@@ -193,9 +180,10 @@ module DBus
         raise AuthenticationFailed if @auth_list.empty?
 
         @mechanism = @auth_list.shift.new
-        auth_msg = ["AUTH", @mechanism.name, @mechanism.call(nil)]
-        DBus.logger.debug "auth_msg: #{auth_msg.inspect}"
-        send(auth_msg)
+        action, response = @mechanism.call(nil)
+        auth_msg = ["AUTH", @mechanism.name, hex_encode(response)]
+        DBus.logger.debug ":Starting action: #{action.inspect}"
+        send(* auth_msg)
       rescue AuthenticationFailed
         @socket.close
         raise
@@ -253,18 +241,18 @@ module DBus
           DBus.logger.debug ":WaitingForData msg: #{msg[0].inspect}"
           case msg[0]
           when "DATA"
-            chall = msg[1]
-            resp, chall = @mechanism.call(chall)
-            DBus.logger.debug ":WaitingForData/DATA resp: #{resp.inspect}"
-            case resp
+            challenge = hex_decode(msg[1])
+            action, response = @mechanism.call(challenge)
+            DBus.logger.debug ":WaitingForData/DATA action: #{action.inspect}"
+            case action
             when :MechContinue
-              send("DATA", chall)
+              send("DATA", hex_encode(response))
               @state = :WaitingForData
             when :MechOk
-              send("DATA", chall)
+              send("DATA", hex_encode(response))
               @state = :WaitingForOk
             when :MechError
-              send("ERROR")
+              send("ERROR", response)
               @state = :WaitingForData
             end
           when "REJECTED"
