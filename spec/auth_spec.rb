@@ -96,6 +96,26 @@ describe DBus::Authentication::Client do
     end
   end
 
+  context "with EXTERNAL without uid" do
+    let(:subject) do
+      described_class.new(socket, [DBus::Authentication::External, DBus::Authentication::ExternalWithoutUid])
+    end
+
+    it "authentication passes" do
+      expect_protocol [
+        ["AUTH EXTERNAL 393939\r\n", "REJECTED EXTERNAL\r\n"],
+        # this succeeds when we connect to a privileged container,
+        # where outside-non-root becomes inside-root
+        ["AUTH EXTERNAL\r\n", "DATA\r\n"],
+        ["DATA\r\n", "OK ffffffffffffffffffffffffffffffff\r\n"],
+        ["NEGOTIATE_UNIX_FD\r\n", "AGREE_UNIX_FD\r\n"],
+        ["BEGIN\r\n"]
+      ]
+
+      expect { subject.authenticate }.to_not raise_error
+    end
+  end
+
   context "with a rejected mechanism and then EXTERNAL" do
     let(:rejected_mechanism) do
       double("Mechanism", name: "WIMP", call: [:MechContinue, "I expect to be rejected"])

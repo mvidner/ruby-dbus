@@ -55,6 +55,18 @@ module DBus
       end
     end
 
+    # A variant of EXTERNAL that doesn't say our UID.
+    # Seen busctl do this and it worked across a container boundary.
+    class ExternalWithoutUid < External
+      def name
+        "EXTERNAL"
+      end
+
+      def call(_challenge)
+        [:MechContinue, nil]
+      end
+    end
+
     # Implements the AUTH DBUS_COOKIE_SHA1 mechanism.
     # https://dbus.freedesktop.org/doc/dbus-specification.html#auth-mechanisms-sha
     class DBusCookieSHA1 < Mechanism
@@ -124,6 +136,7 @@ module DBus
         @auth_list = mechs || [
           External,
           DBusCookieSHA1,
+          ExternalWithoutUid,
           Anonymous
         ]
       end
@@ -141,6 +154,7 @@ module DBus
         send(command)
 
         loop do
+          DBus.logger.debug "auth STATE: #{@state}"
           words = next_msg
 
           @state, command = next_state(words).to_a
@@ -278,7 +292,6 @@ module DBus
       def next_state(received_words)
         msg = received_words
 
-        DBus.logger.debug "auth STATE: #{@state}"
         case @state
         when :WaitingForData
           case msg[0]
