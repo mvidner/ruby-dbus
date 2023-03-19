@@ -20,17 +20,27 @@ module DBus
   #
   # @api private
   module Authentication
-    # = General class for authentication.
-    class Authenticator
-      # Returns the name of the authenticator.
+    # Base class of authentication mechanisms
+    class Mechanism
+      # @!method call(challenge)
+      # @abstract
+      # Replies to server *challenge*, or sends an initial response if the challenge is `nil`.
+      # @param challenge [String,nil]
+      # @return [Array(Symbol,String)] pair [action, response], where
+      #   - [:MechContinue, response] caller should send "DATA response" and go to :WaitingForData
+      #   - [:MechOk,       response] caller should send "DATA response" and go to :WaitingForOk
+      #   - [:MechError,    message]  caller should send "ERROR message" and go to :WaitingForData
+
+      # Uppercase mechanism name, as sent to the server
+      # @return [String]
       def name
         self.class.to_s.upcase.sub(/.*::/, "")
       end
     end
 
     # = Anonymous authentication class
-    class Anonymous < Authenticator
-      def authenticate
+    class Anonymous < Mechanism
+      def call(_challenge)
         "527562792044427573" # Hex encoded version of "Ruby DBus"
       end
     end
@@ -38,9 +48,9 @@ module DBus
     # = External authentication class
     #
     # Class for 'external' type authentication.
-    class External < Authenticator
+    class External < Mechanism
       # Performs the authentication.
-      def authenticate
+      def call(_challenge)
         # Take the user id (eg integer 1000) make a string out of it "1000", take
         # each character and determin hex value "1" => 0x31, "0" => 0x30. You
         # obtain for "1000" => 31303030 This is what the server is expecting.
@@ -54,9 +64,11 @@ module DBus
     #
     # Class for 'CookieSHA1' type authentication.
     # Implements the AUTH DBUS_COOKIE_SHA1 mechanism.
-    class DBusCookieSHA1 < Authenticator
+    class DBusCookieSHA1 < Mechanism
       # the autenticate method (called in stage one of authentification)
-      def authenticate
+      def call(challenge)
+        return data(challenge) if challenge
+
         require "etc"
         # number of retries we have for auth
         @retries = 1
@@ -90,7 +102,7 @@ module DBus
             # the almighty tcp server wants everything hex encoded
             hex_response = hex_encode("#{c_challenge} #{sha}")
             # Return response
-            response = [:AuthOk, hex_response]
+            response = [:MechOk, hex_response]
             return response
           end
         end
@@ -117,27 +129,28 @@ module DBus
       end
     end
 
-    # Note: this following stuff is tested with External authenticator only!
+    # Note: this following stuff is tested with External mechanism only!
 
     # = Authentication client class.
     #
     # Class tha performs the actional authentication.
     class Client
       # Create a new authentication client.
-      def initialize(socket)
+      # @param mechs [Array<Class>,nil] custom list of auth Mechanism classes
+      def initialize(socket, mechs = nil)
         @socket = socket
         @state = nil
-        @auth_list = [External, DBusCookieSHA1, Anonymous]
+        @auth_list = mechs || [
+          External,
+          DBusCookieSHA1,
+          Anonymous
+        ]
       end
 
       # Start the authentication process.
       def authenticate
-        if RbConfig::CONFIG["target_os"] =~ /freebsd/
-          @socket.sendmsg(0.chr, 0, nil, [:SOCKET, :SCM_CREDS, ""])
-        else
-          @socket.write(0.chr)
-        end
-        next_authenticator
+        send_nul_byte
+        next_mechanism
         @state = :Starting
         while @state != :Authenticated
           r = next_state
@@ -152,19 +165,35 @@ module DBus
 
       ##########
 
-      # Send an authentication method _meth_ with arguments _args_ to the
-      # server.
-      def send(meth, *args)
-        o = ([meth] + args).join(" ")
-        @socket.write("#{o}\r\n")
+      # The authentication protocol requires a nul byte
+      # that may carry credentials.
+      # @return [void]
+      def send_nul_byte
+        if RbConfig::CONFIG["target_os"] =~ /freebsd/
+          @socket.sendmsg(0.chr, 0, nil, [:SOCKET, :SCM_CREDS, ""])
+        else
+          @socket.write(0.chr)
+        end
       end
 
-      # Try authentication using the next authenticator.
-      def next_authenticator
+      # Send a string to the socket; good place for test mocks.
+      def write_line(str)
+        DBus.logger.debug "auth_write: #{str.inspect}"
+        @socket.write(str)
+      end
+
+      # Send *words* to the server as a single CRLF terminated string.
+      def send(*words)
+        joined = words.compact.join(" ")
+        write_line("#{joined}\r\n")
+      end
+
+      # Try authentication using the next mechanism.
+      def next_mechanism
         raise AuthenticationFailed if @auth_list.empty?
 
-        @authenticator = @auth_list.shift.new
-        auth_msg = ["AUTH", @authenticator.name, @authenticator.authenticate]
+        @mechanism = @auth_list.shift.new
+        auth_msg = ["AUTH", @mechanism.name, @mechanism.call(nil)]
         DBus.logger.debug "auth_msg: #{auth_msg.inspect}"
         send(auth_msg)
       rescue AuthenticationFailed
@@ -174,7 +203,15 @@ module DBus
 
       # Read data (a buffer) from the bus until CR LF is encountered.
       # Return the buffer without the CR LF characters.
+      # @return [Array<String>] received words
       def next_msg
+        read_line.chomp.split(" ")
+      end
+
+      # Read a line from the socket; good place for test mocks.
+      # @return [String] CRLF (\r\n) terminated
+      def read_line
+        # TODO: probably can simply call @socket.readline
         data = ""
         crlf = "\r\n"
         left = 1024 # 1024 byte, no idea if it's ever getting bigger
@@ -186,9 +223,8 @@ module DBus
           data += buf
           break if data.include? crlf # crlf means line finished, the TCP socket keeps on listening, so we break
         end
-        readline = data.chomp.split(" ")
-        DBus.logger.debug "readline: #{readline.inspect}"
-        readline
+        DBus.logger.debug "auth_read: #{data.inspect}"
+        data
       end
 
       #     # Read data (a buffer) from the bus until CR LF is encountered.
@@ -218,21 +254,21 @@ module DBus
           case msg[0]
           when "DATA"
             chall = msg[1]
-            resp, chall = @authenticator.data(chall)
+            resp, chall = @mechanism.call(chall)
             DBus.logger.debug ":WaitingForData/DATA resp: #{resp.inspect}"
             case resp
-            when :AuthContinue
+            when :MechContinue
               send("DATA", chall)
               @state = :WaitingForData
-            when :AuthOk
+            when :MechOk
               send("DATA", chall)
               @state = :WaitingForOk
-            when :AuthError
+            when :MechError
               send("ERROR")
               @state = :WaitingForData
             end
           when "REJECTED"
-            next_authenticator
+            next_mechanism
             @state = :WaitingForData
           when "ERROR"
             send("CANCEL")
@@ -251,7 +287,7 @@ module DBus
             send("BEGIN")
             @state = :Authenticated
           when "REJECT"
-            next_authenticator
+            next_mechanism
             @state = :WaitingForData
           when "DATA", "ERROR"
             send("CANCEL")
@@ -264,7 +300,7 @@ module DBus
           DBus.logger.debug ":WaitingForReject msg: #{msg[0].inspect}"
           case msg[0]
           when "REJECT"
-            next_authenticator
+            next_mechanism
             @state = :WaitingForOk
           else
             @socket.close
