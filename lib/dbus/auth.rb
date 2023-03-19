@@ -248,15 +248,16 @@ module DBus
       #       @socket.readline.chomp.split(" ")
       #     end
 
-      # @param hex_challenge [String,nil] nil: send AUTH, String: reply to DATA with our DATA
+      # @param hex_challenge [String,nil] (nil when the server said "DATA\r\n")
+      # @param use_data [Boolean] say DATA instead of AUTH
       # @return [NextState]
-      def next_state_via_mechanism(hex_challenge = nil)
+      def next_state_via_mechanism(hex_challenge = nil, use_data: false)
         challenge = hex_decode(hex_challenge)
 
         action, response = @mechanism.call(challenge)
         DBus.logger.debug "auth mechanism action: #{action.inspect}"
 
-        command = challenge.nil? ? ["AUTH", @mechanism.name] : ["DATA"]
+        command = use_data ? ["DATA"] : ["AUTH", @mechanism.name]
 
         case action
         when :MechError
@@ -282,7 +283,7 @@ module DBus
         when :WaitingForData
           case msg[0]
           when "DATA"
-            next_state_via_mechanism(msg[1])
+            next_state_via_mechanism(msg[1], use_data: true)
           when "REJECTED"
             use_next_mechanism
             next_state_via_mechanism
@@ -316,7 +317,8 @@ module DBus
             use_next_mechanism
             next_state_via_mechanism
           else
-            NextState.new(:TerminatedError, []) # TODO: spec says to close socket, clarify
+            # TODO: spec says to close socket, clarify
+            NextState.new(:TerminatedError, ["Unknown server reply #{msg[0].inspect} when expecting REJECTED"])
           end
         when :WaitingForAgreeUnixFD
           case msg[0]
@@ -327,8 +329,11 @@ module DBus
             @unix_fd = false
             NextState.new(:TerminatedOk, [])
           else
-            NextState.new(:TerminatedError, []) # TODO: spec says to close socket, clarify
+            # TODO: spec says to close socket, clarify
+            NextState.new(:TerminatedError, ["Unknown server reply #{msg[0].inspect} to NEGOTIATE_UNIX_FD"])
           end
+        else
+          raise "Internal error: unhandled state #{@state.inspect}"
         end
       end
     end
