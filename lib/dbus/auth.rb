@@ -105,13 +105,20 @@ module DBus
       end
     end
 
-    # = Authentication client class.
-    #
-    # Class tha performs the actional authentication.
+    # Declare client state transitions, for ease of code reading.
+    # It is just a pair.
+    NextState = Struct.new(:state, :command_words)
+
+    # Authenticates the connection before messages can be exchanged.
     class Client
+      # @return [Boolean] have we negotiated Unix file descriptor passing
+      # NOTE: not implemented yet in upper layers
+      attr_reader :unix_fd
+
       # Create a new authentication client.
-      # @param mechs [Array<Class>,nil] custom list of auth Mechanism classes
+      # @param mechs [Array<Mechanism,Class>,nil] custom list of auth Mechanism objects or classes
       def initialize(socket, mechs = nil)
+        @unix_fd = false
         @socket = socket
         @state = nil
         @auth_list = mechs || [
@@ -122,16 +129,29 @@ module DBus
       end
 
       # Start the authentication process.
+      # @return [void]
       # @raise [AuthenticationFailed]
       def authenticate
+        DBus.logger.debug "Authenticating"
         send_nul_byte
-        next_mechanism
-        @state = :Starting
-        while @state != :Authenticated
-          r = next_state
-          return r if !r
+
+        use_next_mechanism
+
+        @state, command = next_state_via_mechanism.to_a
+        send(command)
+
+        loop do
+          words = next_msg
+
+          @state, command = next_state(words).to_a
+          break if [:TerminatedOk, :TerminatedError].include? @state
+
+          send(command)
         end
-        true
+
+        raise AuthenticationFailed, command.first if @state == :TerminatedError
+
+        send("BEGIN")
       end
 
       ##########
@@ -152,6 +172,8 @@ module DBus
       end
 
       # encode plain to hex
+      # @param plain [String,nil]
+      # @return [String,nil]
       def hex_encode(plain)
         return nil if plain.nil?
 
@@ -159,7 +181,11 @@ module DBus
       end
 
       # decode hex to plain
+      # @param encoded [String,nil]
+      # @return [String,nil]
       def hex_decode(encoded)
+        return nil if encoded.nil?
+
         [encoded].pack("H*")
       end
 
@@ -170,21 +196,22 @@ module DBus
       end
 
       # Send *words* to the server as a single CRLF terminated string.
-      def send(*words)
-        joined = words.compact.join(" ")
+      # @param words [Array<String>,String]
+      def send(words)
+        joined = Array(words).compact.join(" ")
         write_line("#{joined}\r\n")
       end
 
       # Try authentication using the next mechanism.
-      def next_mechanism
-        raise AuthenticationFailed if @auth_list.empty?
+      # @raise [AuthenticationFailed] if there are no more left
+      # @return [void]
+      def use_next_mechanism
+        raise AuthenticationFailed, "Authentication mechanisms exhausted" if @auth_list.empty?
 
-        @mechanism = @auth_list.shift.new
-        action, response = @mechanism.call(nil)
-        auth_msg = ["AUTH", @mechanism.name, hex_encode(response)]
-        DBus.logger.debug ":Starting action: #{action.inspect}"
-        send(* auth_msg)
+        @mechanism = @auth_list.shift
+        @mechanism = @mechanism.new if @mechanism.is_a? Class
       rescue AuthenticationFailed
+        # TODO: make this caller's responsibility
         @socket.close
         raise
       end
@@ -221,81 +248,88 @@ module DBus
       #       @socket.readline.chomp.split(" ")
       #     end
 
-      # Try to reach the next state based on the current state.
-      def next_state
-        msg = next_msg
-        if @state == :Starting
-          DBus.logger.debug ":Starting msg: #{msg[0].inspect}"
-          case msg[0]
-          when "OK"
-            @state = :WaitingForOk
-          when "CONTINUE"
-            @state = :WaitingForData
-          when "REJECTED" # needed by tcp, unix-path/abstract doesn't get here
-            @state = :WaitingForData
-          end
+      # @param hex_challenge [String,nil] nil: send AUTH, String: reply to DATA with our DATA
+      # @return [NextState]
+      def next_state_via_mechanism(hex_challenge = nil)
+        challenge = hex_decode(hex_challenge)
+
+        action, response = @mechanism.call(challenge)
+        DBus.logger.debug "auth mechanism action: #{action.inspect}"
+
+        command = challenge.nil? ? ["AUTH", @mechanism.name] : ["DATA"]
+
+        case action
+        when :MechError
+          NextState.new(:WaitingForData, ["ERROR", response])
+        when :MechContinue
+          NextState.new(:WaitingForData, command + [hex_encode(response)])
+        when :MechOk
+          NextState.new(:WaitingForOk, command + [hex_encode(response)])
+        else
+          raise AuthenticationFailed, "internal error, unknown action #{action.inspect} " \
+                                      "from our mechanism #{@mechanism.inspect}"
         end
-        DBus.logger.debug "state: #{@state}"
+      end
+
+      # Try to reach the next state based on the current state.
+      # @param received_words [Array<String>]
+      # @return [NextState]
+      def next_state(received_words)
+        msg = received_words
+
+        DBus.logger.debug "auth STATE: #{@state}"
         case @state
         when :WaitingForData
-          DBus.logger.debug ":WaitingForData msg: #{msg[0].inspect}"
           case msg[0]
           when "DATA"
-            challenge = hex_decode(msg[1])
-            action, response = @mechanism.call(challenge)
-            DBus.logger.debug ":WaitingForData/DATA action: #{action.inspect}"
-            case action
-            when :MechContinue
-              send("DATA", hex_encode(response))
-              @state = :WaitingForData
-            when :MechOk
-              send("DATA", hex_encode(response))
-              @state = :WaitingForOk
-            when :MechError
-              send("ERROR", response)
-              @state = :WaitingForData
-            end
+            next_state_via_mechanism(msg[1])
           when "REJECTED"
-            next_mechanism
-            @state = :WaitingForData
+            use_next_mechanism
+            next_state_via_mechanism
           when "ERROR"
-            send("CANCEL")
-            @state = :WaitingForReject
+            NextState.new(:WaitingForReject, ["CANCEL"])
           when "OK"
-            send("BEGIN")
-            @state = :Authenticated
+            @address_uuid = msg[1]
+            # NextState.new(:TerminatedOk, [])
+            NextState.new(:WaitingForAgreeUnixFD, ["NEGOTIATE_UNIX_FD"])
           else
-            send("ERROR")
-            @state = :WaitingForData
+            NextState.new(:WaitingForData, ["ERROR"])
           end
         when :WaitingForOk
-          DBus.logger.debug ":WaitingForOk msg: #{msg[0].inspect}"
           case msg[0]
           when "OK"
-            send("BEGIN")
-            @state = :Authenticated
-          when "REJECT"
-            next_mechanism
-            @state = :WaitingForData
+            @address_uuid = msg[1]
+            # NextState.new(:TerminatedOk, [])
+            NextState.new(:WaitingForAgreeUnixFD, ["NEGOTIATE_UNIX_FD"])
+          when "REJECTED"
+            use_next_mechanism
+            next_state_via_mechanism
           when "DATA", "ERROR"
-            send("CANCEL")
-            @state = :WaitingForReject
+            NextState.new(:WaitingForReject, ["CANCEL"])
           else
-            send("ERROR")
-            @state = :WaitingForOk
+            # we don't understand server's response but still wait for a successful auth completion
+            NextState.new(:WaitingForOk, ["ERROR"])
           end
         when :WaitingForReject
-          DBus.logger.debug ":WaitingForReject msg: #{msg[0].inspect}"
           case msg[0]
-          when "REJECT"
-            next_mechanism
-            @state = :WaitingForOk
+          when "REJECTED"
+            use_next_mechanism
+            next_state_via_mechanism
           else
-            @socket.close
-            return false
+            NextState.new(:TerminatedError, []) # TODO: spec says to close socket, clarify
+          end
+        when :WaitingForAgreeUnixFD
+          case msg[0]
+          when "AGREE_UNIX_FD"
+            @unix_fd = true
+            NextState.new(:TerminatedOk, [])
+          when "ERROR"
+            @unix_fd = false
+            NextState.new(:TerminatedOk, [])
+          else
+            NextState.new(:TerminatedError, []) # TODO: spec says to close socket, clarify
           end
         end
-        true
       end
     end
   end

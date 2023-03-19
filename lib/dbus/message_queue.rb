@@ -19,6 +19,7 @@ module DBus
     attr_reader :socket
 
     def initialize(address)
+      DBus.logger.debug "MessageQueue: #{address}"
       @address = address
       @buffer = ""
       @is_tcp = false
