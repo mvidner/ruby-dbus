@@ -23,6 +23,7 @@ module DBus
       @address = address
       @buffer = ""
       @is_tcp = false
+      @mutex = Mutex.new
       connect
     end
 
@@ -33,23 +34,28 @@ module DBus
     # @raise EOFError
     # @todo failure modes
     def pop(blocking: true)
-      buffer_from_socket_nonblock
-      message = message_from_buffer_nonblock
-      if blocking
-        # we can block
-        while message.nil?
-          r, _d, _d = IO.select([@socket])
-          if r && r[0] == @socket
-            buffer_from_socket_nonblock
-            message = message_from_buffer_nonblock
+      # FIXME: this is not enough, the R/W test deadlocks on shared connections
+      @mutex.synchronize do
+        buffer_from_socket_nonblock
+        message = message_from_buffer_nonblock
+        if blocking
+          # we can block
+          while message.nil?
+            r, _d, _d = IO.select([@socket])
+            if r && r[0] == @socket
+              buffer_from_socket_nonblock
+              message = message_from_buffer_nonblock
+            end
           end
         end
+        message
       end
-      message
     end
 
     def push(message)
-      @socket.write(message.marshall)
+      @mutex.synchronize do
+        @socket.write(message.marshall)
+      end
     end
     alias << push
 
