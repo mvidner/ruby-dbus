@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Tue Mar 21 15:39:33 UTC 2023 - Martin Vidner <mvidner@suse.com>
+
+- 0.20.0
+ Features:
+ * For EXTERNAL authentication, try also without the user id, to work with
+   containers (gh#mvidner/ruby-dbus#126).
+ * Thread safety, as long as the non-main threads only send signals.
+
+-------------------------------------------------------------------
 Wed Jan 18 12:08:21 UTC 2023 - Martin Vidner <mvidner@suse.com>
 
 - 0.19.0
