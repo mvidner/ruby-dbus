@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+Features:
+ * For EXTERNAL authentication, try also without the user id, to work with
+   containers ([#126][]).
+
+[#126]: https://github.com/mvidner/ruby-dbus/issues/126
+
 ## Ruby D-Bus 0.19.0 - 2023-01-18
 
 API:

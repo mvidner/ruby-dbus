@@ -19,6 +19,7 @@ module DBus
     attr_reader :socket
 
     def initialize(address)
+      DBus.logger.debug "MessageQueue: #{address}"
       @address = address
       @buffer = ""
       @is_tcp = false
@@ -129,7 +130,7 @@ module DBus
 
     # Initialize the connection to the bus.
     def init_connection
-      client = Client.new(@socket)
+      client = Authentication::Client.new(@socket)
       client.authenticate
     end
 

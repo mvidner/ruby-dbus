@@ -31,7 +31,7 @@ if coverage
       c.single_report_path = "coverage/lcov.info"
     end
 
-    SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+    SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new [
       SimpleCov::Formatter::HTMLFormatter,
       SimpleCov::Formatter::LcovFormatter
     ]
