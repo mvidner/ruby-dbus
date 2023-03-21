@@ -5,6 +5,7 @@
 Features:
  * For EXTERNAL authentication, try also without the user id, to work with
    containers ([#126][]).
+ * Thread safety, as long as the non-main threads only send signals.
 
 [#126]: https://github.com/mvidner/ruby-dbus/issues/126
 
