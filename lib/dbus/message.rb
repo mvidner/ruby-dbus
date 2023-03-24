@@ -165,11 +165,11 @@ module DBus
         raise InvalidDestinationName
       end
 
-      params = PacketMarshaller.new
-      @params.each do |param|
-        params.append(param[0], param[1])
+      params_marshaller = PacketMarshaller.new
+      @params.each do |type, value|
+        params_marshaller.append(type, value)
       end
-      @body_length = params.packet.bytesize
+      @body_length = params_marshaller.packet.bytesize
 
       marshaller = PacketMarshaller.new
       marshaller.append(Type::BYTE, HOST_END.ord)
@@ -191,10 +191,8 @@ module DBus
       marshaller.append("a(yv)", headers)
 
       marshaller.align(8)
-      @params.each do |param|
-        marshaller.append(param[0], param[1])
-      end
-      marshaller.packet
+
+      marshaller.packet + params_marshaller.packet
     end
 
     # Unmarshall a packet contained in the buffer _buf_ and set the

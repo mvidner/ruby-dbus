@@ -4,6 +4,7 @@
 
 Bug fixes:
  * Reduce socket buffer allocations ([#129][]).
+ * Message#marshall speedup: don't marshall the body twice.
 
 [#129]: https://github.com/mvidner/ruby-dbus/pull/129
 
