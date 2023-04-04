@@ -42,6 +42,7 @@ module DBus
     end
 
     # Generates, sets up and returns the proxy object.
+    # @return [ProxyObject]
     def build
       po = ProxyObject.new(@bus, @dest, @path, api: @api)
       ProxyObjectFactory.introspect_into(po, @xml)

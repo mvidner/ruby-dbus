@@ -224,11 +224,13 @@ module DBus
       xml = "    <method name=\"#{@name}\">\n"
       @params.each do |param|
         name = param.name ? "name=\"#{param.name}\" " : ""
-        xml += "      <arg #{name}direction=\"in\" type=\"#{param.type}\"/>\n"
+        xml += "      <arg #{name}direction=\"in\" type=\"#{param.type}\">\n" \
+               "      </arg>\n"
       end
       @rets.each do |param|
         name = param.name ? "name=\"#{param.name}\" " : ""
-        xml += "      <arg #{name}direction=\"out\" type=\"#{param.type}\"/>\n"
+        xml += "      <arg #{name}direction=\"out\" type=\"#{param.type}\">\n" \
+               "      </arg>\n"
       end
       xml += "    </method>\n"
       xml
@@ -258,7 +260,8 @@ module DBus
       xml = "    <signal name=\"#{@name}\">\n"
       @params.each do |param|
         name = param.name ? "name=\"#{param.name}\" " : ""
-        xml += "      <arg #{name}type=\"#{param.type}\"/>\n"
+        xml += "      <arg #{name}type=\"#{param.type}\">\n" \
+               "      </arg>\n"
       end
       xml += "    </signal>\n"
       xml
@@ -300,7 +303,8 @@ module DBus
 
     # Return introspection XML string representation of the property.
     def to_xml
-      "    <property type=\"#{@type}\" name=\"#{@name}\" access=\"#{@access}\"/>\n"
+      "    <property type=\"#{@type}\" name=\"#{@name}\" access=\"#{@access}\">\n" \
+      "    </property>\n"
     end
 
     # @param xml_node [AbstractXML::Node]
