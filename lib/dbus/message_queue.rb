@@ -26,8 +26,7 @@ module DBus
       @address = address
       @buffer = ""
       # Reduce allocations by using a single buffer for our socket
-      @read_buffer = String.new("", capacity: MSG_BUF_SIZE)
-      @read_buffer.force_encoding(Encoding::BINARY)
+      @read_buffer = String.new(capacity: MSG_BUF_SIZE)
       @is_tcp = false
       @mutex = Mutex.new
       connect
