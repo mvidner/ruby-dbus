@@ -18,10 +18,15 @@ module DBus
     # The socket that is used to connect with the bus.
     attr_reader :socket
 
+    # The buffer size for messages.
+    MSG_BUF_SIZE = 4096
+
     def initialize(address)
       DBus.logger.debug "MessageQueue: #{address}"
       @address = address
       @buffer = ""
+      # Reduce allocations by using a single buffer for our socket
+      @read_buffer = String.new(capacity: MSG_BUF_SIZE)
       @is_tcp = false
       @mutex = Mutex.new
       connect
@@ -157,15 +162,12 @@ module DBus
       ret
     end
 
-    # The buffer size for messages.
-    MSG_BUF_SIZE = 4096
-
     # Fill (append) the buffer from data that might be available on the
     # socket.
     # @return [void]
     # @raise EOFError
     def buffer_from_socket_nonblock
-      @buffer += @socket.read_nonblock(MSG_BUF_SIZE)
+      @buffer += @socket.read_nonblock(MSG_BUF_SIZE, @read_buffer)
     rescue EOFError
       raise # the caller expects it
     rescue Errno::EAGAIN
