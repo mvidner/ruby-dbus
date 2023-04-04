@@ -87,7 +87,7 @@ API:
    when declaring properties ([#117][]).
 
 [#115]: https://github.com/mvidner/ruby-dbus/issues/115
-[#117]: https://github.com/mvidner/ruby-dbus/pulls/117
+[#117]: https://github.com/mvidner/ruby-dbus/pull/117
 
 ## Ruby D-Bus 0.18.0.beta7 - 2022-05-29
 
@@ -455,7 +455,7 @@ Bug fixes:
  * Handle more ways which tell us that a bus connection has died.
 
 [#3]: https://github.com/mvidner/ruby-dbus/issue/3
-[bsc#617350]: https://bugzilla.novell.com/show_bug.cgi?id=617350
+[bsc#617350]: https://bugzilla.suse.com/show_bug.cgi?id=617350
 
 ## Ruby D-Bus 0.3.0 - 2010-03-28
 
@@ -523,8 +523,8 @@ Bug fixes:
  * Fixed an endless sleep in DBus::Main.run ([bsc#537401][]).
  * Added details to PacketMarshaller exceptions ([bsc#538050][]).
 
-[bsc#537401]: https://bugzilla.novell.com/show_bug.cgi?id=537401
-[bsc#538050]: https://bugzilla.novell.com/show_bug.cgi?id=538050
+[bsc#537401]: https://bugzilla.suse.com/show_bug.cgi?id=537401
+[bsc#538050]: https://bugzilla.suse.com/show_bug.cgi?id=538050
 
 ## Ruby D-Bus "I'm not dead" 0.2.9 - 2009-08-26
 
