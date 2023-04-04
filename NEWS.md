@@ -2,8 +2,12 @@
 
 ## Unreleased
 
+Features:
+ * Respect env RUBY_DBUS_ENDIANNESS=B (or =l) for outgoing messages.
+
 Bug fixes:
  * Reduce socket buffer allocations ([#129][]).
+ * Message#marshall speedup: don't marshall the body twice.
 
 [#129]: https://github.com/mvidner/ruby-dbus/pull/129
 

@@ -10,6 +10,21 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
+module DBus
+  # Byte signifying big endianness.
+  BIG_END = "B"
+  # Byte signifying little endianness.
+  LIL_END = "l"
+
+  # Byte signifying the host's endianness.
+  HOST_END = if [0x01020304].pack("L").unpack1("V") == 0x01020304
+               LIL_END
+             else
+               BIG_END
+             end
+end
+# ^ That's because dbus/message needs HOST_END early
+
 require_relative "dbus/api_options"
 require_relative "dbus/auth"
 require_relative "dbus/bus"
@@ -40,18 +55,6 @@ require "socket"
 module DBus
   # Default socket name for the system bus.
   SYSTEM_BUS_ADDRESS = "unix:path=/var/run/dbus/system_bus_socket"
-
-  # Byte signifying big endianness.
-  BIG_END = "B"
-  # Byte signifying little endianness.
-  LIL_END = "l"
-
-  # Byte signifying the host's endianness.
-  HOST_END = if [0x01020304].pack("L").unpack1("V") == 0x01020304
-               LIL_END
-             else
-               BIG_END
-             end
 
   # Comparing symbols is faster than strings
   # @return [:little,:big]

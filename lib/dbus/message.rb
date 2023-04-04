@@ -10,6 +10,8 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
+require_relative "raw_message"
+
 # = D-Bus main module
 #
 # Module containing all the D-Bus modules and classes.
@@ -144,6 +146,10 @@ module DBus
       @params << [type, val]
     end
 
+    # "l" or "B"
+    ENDIANNESS_CHAR = ENV.fetch("RUBY_DBUS_ENDIANNESS", HOST_END)
+    ENDIANNESS = RawMessage.endianness(ENDIANNESS_CHAR)
+
     # FIXME: what are these? a message element constant enumeration?
     # See method below, in a message, you have and array of optional parameters
     # that come with an index, to determine their meaning. The values are in
@@ -165,14 +171,14 @@ module DBus
         raise InvalidDestinationName
       end
 
-      params = PacketMarshaller.new
-      @params.each do |param|
-        params.append(param[0], param[1])
+      params_marshaller = PacketMarshaller.new(endianness: ENDIANNESS)
+      @params.each do |type, value|
+        params_marshaller.append(type, value)
       end
-      @body_length = params.packet.bytesize
+      @body_length = params_marshaller.packet.bytesize
 
-      marshaller = PacketMarshaller.new
-      marshaller.append(Type::BYTE, HOST_END.ord)
+      marshaller = PacketMarshaller.new(endianness: ENDIANNESS)
+      marshaller.append(Type::BYTE, ENDIANNESS_CHAR.ord)
       marshaller.append(Type::BYTE, @message_type)
       marshaller.append(Type::BYTE, @flags)
       marshaller.append(Type::BYTE, @protocol)
@@ -191,10 +197,8 @@ module DBus
       marshaller.append("a(yv)", headers)
 
       marshaller.align(8)
-      @params.each do |param|
-        marshaller.append(param[0], param[1])
-      end
-      marshaller.packet
+
+      marshaller.packet + params_marshaller.packet
     end
 
     # Unmarshall a packet contained in the buffer _buf_ and set the
