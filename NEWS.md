@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+Bug fixes:
+ * Reduce socket buffer allocations ([#129][]).
+
+[#129]: https://github.com/mvidner/ruby-dbus/pull/129
+
 ## Ruby D-Bus 0.20.0 - 2023-03-21
 
 Features:
