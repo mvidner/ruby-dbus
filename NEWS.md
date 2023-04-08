@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.21.0 - 2023-04-08
+
 Features:
  * Respect env RUBY_DBUS_ENDIANNESS=B (or =l) for outgoing messages.
 

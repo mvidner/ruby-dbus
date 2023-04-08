@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Sat Apr  8 07:36:20 UTC 2023 - Martin Vidner <mvidner@suse.com>
+
+- 0.21.0
+ Features:
+ * Respect env RUBY_DBUS_ENDIANNESS=B (or =l) for outgoing messages.
+
+ Bug fixes:
+ * Reduce socket buffer allocations (gh#mvidner/ruby-dbus#129).
+ * Message#marshall speedup: don't marshall the body twice.
+
+
+-------------------------------------------------------------------
 Tue Mar 21 15:39:33 UTC 2023 - Martin Vidner <mvidner@suse.com>
 
 - 0.20.0
