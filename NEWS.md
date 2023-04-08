@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+Other:
+ * examples/gdbus split off to its own repository,
+   https://github.com/mvidner/dbus-gui-gtk
+
 ## Ruby D-Bus 0.21.0 - 2023-04-08
 
 Features:

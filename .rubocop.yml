@@ -66,7 +66,6 @@ Lint/SuppressedException:
 # Offense count: 5
 Lint/RescueException:
   Exclude:
-    - 'examples/gdbus/gdbus'
     - 'examples/no-introspect/nm-test.rb'
     - 'lib/dbus/bus.rb'
     - 'lib/dbus/message_queue.rb'
@@ -75,15 +74,6 @@ Naming/PredicateName:
   NamePrefix:
     # has_ and have_ are allowed
     - is_
-
-# Offense count: 1
-Security/Eval:
-  Exclude:
-    - 'examples/gdbus/gdbus'
-
-Style/RescueStandardError:
-  Exclude:
-    - 'examples/gdbus/gdbus'
 
 # Offense count: 1
 Lint/NestedMethodDefinition:
@@ -138,7 +128,6 @@ Style/Documentation:
   Exclude:
     - 'spec/**/*'
     - 'test/**/*'
-    - 'examples/gdbus/gdbus'
     - 'examples/service/service_newapi.rb'
     - 'lib/dbus/api_options.rb'
     - 'lib/dbus/error.rb'
