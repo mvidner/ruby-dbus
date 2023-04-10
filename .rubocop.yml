@@ -1,5 +1,8 @@
+inherit_from: .rubocop_todo.yml
+
 AllCops:
   TargetRubyVersion: 2.4
+  NewCops: enable
   Exclude:
     # Do not check code borrowed from ActiveSupport
     - 'lib/dbus/core_ext/**/*.rb'
