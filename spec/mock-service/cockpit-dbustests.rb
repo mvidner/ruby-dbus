@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "dbus"
+
+SERVICE_NAME = "org.rubygems.ruby_dbus.DBusTests"
+ROOT_OPATH = "/otree/frobber"
+
+class DBusTests < DBus::Object
+  FROBBER_INTERFACE = "com.redhat.Cockpit.DBusTests.Frobber"
+
+  dbus_interface FROBBER_INTERFACE do
+    dbus_method :HelloWorld, "in greeting:s, out response:s" do |greeting|
+      # TODO: return the same thing as the original implementation
+      # and try substituting it?
+      [format("Word! You said `%s'. I'm Skeleton, btw!", greeting)]
+    end
+  end
+
+  def initialize(opath)
+    super(opath)
+  end
+end
+
+bus = DBus::SessionBus.instance
+svc = bus.request_service(SERVICE_NAME)
+svc.export(DBusTests.new(ROOT_OPATH))
+DBus::Main.new.tap { |m| m << bus }.run
