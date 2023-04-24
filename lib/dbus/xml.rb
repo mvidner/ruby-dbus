@@ -12,10 +12,16 @@
 # See the file "COPYING" for the exact licensing terms.
 
 # TODO: check if it is slow, make replaceable
-require "rexml/document"
+# make it possible to load either rexml or nokogiri
 begin
-  require "nokogiri"
+  require "rexml/document"
 rescue LoadError
+  require "nokogiri"
+else
+  begin
+    require "nokogiri"
+  rescue LoadError
+  end
 end
 
 module DBus
