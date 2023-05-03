@@ -318,10 +318,13 @@ module DBus
 <node>
   <interface name="org.freedesktop.DBus.Introspectable">
     <method name="Introspect">
-      <arg name="data" direction="out" type="s"/>
+      <arg direction="out" type="s"/>
     </method>
   </interface>
   <interface name="org.freedesktop.DBus">
+    <method name="Hello">
+      <arg direction="out" type="s"/>
+    </method>
     <method name="RequestName">
       <arg direction="in" type="s"/>
       <arg direction="in" type="u"/>
@@ -336,8 +339,8 @@ module DBus
       <arg direction="in" type="u"/>
       <arg direction="out" type="u"/>
     </method>
-    <method name="Hello">
-      <arg direction="out" type="s"/>
+    <method name="UpdateActivationEnvironment">
+      <arg direction="in" type="a{ss}"/>
     </method>
     <method name="NameHasOwner">
       <arg direction="in" type="s"/>
@@ -371,12 +374,29 @@ module DBus
       <arg direction="in" type="s"/>
       <arg direction="out" type="u"/>
     </method>
+    <method name="GetAdtAuditSessionData">
+      <arg direction="in" type="s"/>
+      <arg direction="out" type="ay"/>
+    </method>
     <method name="GetConnectionSELinuxSecurityContext">
       <arg direction="in" type="s"/>
       <arg direction="out" type="ay"/>
     </method>
     <method name="ReloadConfig">
     </method>
+    <method name="GetId">
+      <arg direction="out" type="s"/>
+    </method>
+    <method name="GetConnectionCredentials">
+      <arg direction="in" type="s"/>
+      <arg direction="out" type="a{sv}"/>
+    </method>
+    <property name="Features" type="as" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+    <property name="Interfaces" type="as" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
     <signal name="NameOwnerChanged">
       <arg type="s"/>
       <arg type="s"/>
@@ -480,7 +500,15 @@ module DBus
       proxy.RequestName(name, NAME_FLAG_REPLACE_EXISTING) do |rmsg, r|
         # check and report errors first
         raise rmsg if rmsg.is_a?(Error)
-        raise NameRequestError unless r == REQUEST_NAME_REPLY_PRIMARY_OWNER
+
+        details = if r == REQUEST_NAME_REPLY_IN_QUEUE
+                    other = proxy.GetNameOwner(name).first
+                    other_creds = proxy.GetConnectionCredentials(other).first
+                    "already owned by #{other}, #{other_creds.inspect}"
+                  else
+                    "error code #{r}"
+                  end
+        raise NameRequestError, "Could not request #{name}, #{details}" unless r == REQUEST_NAME_REPLY_PRIMARY_OWNER
       end
       @service = Service.new(name, self)
       @service

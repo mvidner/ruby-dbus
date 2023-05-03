@@ -3,6 +3,7 @@
 ## Unreleased
 
 Other:
+ * For NameRequestError, mention who is the other owner.
  * examples/gdbus split off to its own repository,
    https://github.com/mvidner/dbus-gui-gtk
 
