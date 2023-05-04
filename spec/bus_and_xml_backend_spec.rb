@@ -5,7 +5,9 @@
 require_relative "spec_helper"
 
 require "rubygems"
-require "nokogiri"
+# If we have nokogiri, rexml is normally omitted
+# but here we include it for test coverage
+require "rexml"
 require "dbus"
 
 describe "BusAndXmlBackendTest" do

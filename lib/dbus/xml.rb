@@ -11,11 +11,17 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
-# TODO: check if it is slow, make replaceable
-require "rexml/document"
+# Our gemspec says rexml is needed and nokogiri is optional
+# but in fact either will do
+
 begin
   require "nokogiri"
 rescue LoadError
+  begin
+    require "rexml/document"
+  rescue LoadError
+    raise LoadError, "cannot load nokogiri OR rexml/document"
+  end
 end
 
 module DBus
