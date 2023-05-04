@@ -11,16 +11,16 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
-# TODO: check if it is slow, make replaceable
-# make it possible to load either rexml or nokogiri
+# Our gemspec says rexml is needed and nokogiri is optional
+# but in fact either will do
+
 begin
-  require "rexml/document"
-rescue LoadError
   require "nokogiri"
-else
+rescue LoadError
   begin
-    require "nokogiri"
+    require "rexml/document"
   rescue LoadError
+    raise LoadError, "cannot load nokogiri OR rexml/document"
   end
 end
 
