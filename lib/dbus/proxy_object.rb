@@ -126,8 +126,9 @@ module DBus
     # It uses _default_iface_ which must have been set.
     # @return [void]
     def on_signal(name, &block)
-      # TODO: improve
-      raise NoMethodError unless @default_iface && has_iface?(@default_iface)
+      unless @default_iface && has_iface?(@default_iface)
+        raise NoMethodError, "undefined signal `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
+      end
 
       @interfaces[@default_iface].on_signal(name, &block)
     end

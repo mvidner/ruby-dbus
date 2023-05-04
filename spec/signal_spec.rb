@@ -103,4 +103,14 @@ describe "SignalHandlerTest" do
   it "tests removing a nonexistent rule" do
     @obj.on_signal "DoesNotExist"
   end
+
+  describe DBus::ProxyObject do
+    describe "#on_signal" do
+      it "raises a descriptive error when the default_iface is wrong" do
+        @obj.default_iface = "org.ruby.NoSuchInterface"
+        expect { @obj.on_signal("Foo") {} }
+          .to raise_error(NoMethodError, /undefined signal.*interface `org.ruby.NoSuchInterface'/)
+      end
+    end
+  end
 end
