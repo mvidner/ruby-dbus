@@ -22,9 +22,10 @@ GEMSPEC = Gem::Specification.new do |s|
 
   s.required_ruby_version = ">= 2.4.0"
 
-  s.add_dependency "rexml"
-
-  # This is optional
+  # Either of rexml and nokogiri is required
+  # but AFAIK gemspec cannot express that.
+  # Nokogiri is recommended as rexml is dead slow.
+  s.add_runtime_dependency "rexml"
   # s.add_runtime_dependency "nokogiri"
 
   s.add_development_dependency "packaging_rake_tasks"
