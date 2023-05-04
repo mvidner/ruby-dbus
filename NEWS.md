@@ -2,10 +2,15 @@
 
 ## Unreleased
 
+Features:
+ * Enable using nokogiri without rexml (by Dominik Andreas Schorpp, [#132][])
+
 Other:
  * For NameRequestError, mention who is the other owner.
  * examples/gdbus split off to its own repository,
    https://github.com/mvidner/dbus-gui-gtk
+
+[#132]: https://github.com/mvidner/ruby-dbus/pull/132
 
 ## Ruby D-Bus 0.21.0 - 2023-04-08
 
