@@ -4,6 +4,23 @@
 require_relative "spec_helper"
 require "dbus"
 
+describe DBus::ASystemBus do
+  describe "#initialize" do
+    it "will use DBUS_SYSTEM_BUS_ADDRESS or the well known address" do
+      expect(ENV)
+        .to receive(:[])
+        .with("DBUS_SYSTEM_BUS_ADDRESS")
+        .and_return(nil)
+      expect(DBus::MessageQueue)
+        .to receive(:new)
+        .with("unix:path=/var/run/dbus/system_bus_socket")
+      expect_any_instance_of(described_class).to receive(:send_hello)
+
+      described_class.new
+    end
+  end
+end
+
 describe DBus::ASessionBus do
   subject(:dbus_session_bus_address) { "unix:abstract=/tmp/dbus-foo,guid=123" }
 

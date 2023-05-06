@@ -53,9 +53,6 @@ require "socket"
 #
 # Module containing all the D-Bus modules and classes.
 module DBus
-  # Default socket name for the system bus.
-  SYSTEM_BUS_ADDRESS = "unix:path=/var/run/dbus/system_bus_socket"
-
   # Comparing symbols is faster than strings
   # @return [:little,:big]
   HOST_ENDIANNESS = RawMessage.endianness(HOST_END)

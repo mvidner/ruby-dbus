@@ -760,6 +760,9 @@ module DBus
     include Singleton
   end
 
+  # Default socket name for the system bus.
+  SYSTEM_BUS_ADDRESS = "unix:path=/var/run/dbus/system_bus_socket"
+
   # = D-Bus system bus class
   #
   # The system bus is a system-wide bus mostly used for global or
@@ -770,8 +773,12 @@ module DBus
   class ASystemBus < Connection
     # Get the default system bus.
     def initialize
-      super(SYSTEM_BUS_ADDRESS)
+      super(self.class.system_bus_address)
       send_hello
+    end
+
+    def self.system_bus_address
+      ENV["DBUS_SYSTEM_BUS_ADDRESS"] || SYSTEM_BUS_ADDRESS
     end
   end
 
