@@ -16,9 +16,9 @@ my_dbus_launch () {
     # wait for the daemon to print the info
     TRIES=0
     while [ ! -s $AF -o ! -s $PF ]; do
-	sleep 0.1
-	TRIES=`expr $TRIES + 1`
-	if [ $TRIES -gt 100 ]; then echo "dbus-daemon failed?"; exit 1; fi
+        sleep 0.1
+        TRIES=`expr $TRIES + 1`
+        if [ $TRIES -gt 100 ]; then echo "dbus-daemon failed?"; exit 1; fi
     done
     DBUS_SESSION_BUS_PID=$(cat $PF)
     export DBUS_SESSION_BUS_ADDRESS=$(cat $AF)
@@ -26,10 +26,10 @@ my_dbus_launch () {
 #    dbus-monitor &
 }
 
-my_dbus_launch
-
 # Clean up at exit.
 trap "kill \$KILLS; rm -rf \$RM_FILES" EXIT TERM INT
+
+my_dbus_launch
 
 # run the payload; the return value is passed on
 "$@"
