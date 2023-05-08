@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.22.0 - 2023-05-08
+
 Features:
  * Enable using nokogiri without rexml (by Dominik Andreas Schorpp, [#132][])
 
