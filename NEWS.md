@@ -5,8 +5,13 @@
 Features:
  * Enable using nokogiri without rexml (by Dominik Andreas Schorpp, [#132][])
 
+Bug fixes:
+ * Respect DBUS_SYSTEM_BUS_ADDRESS environment variable.
+
 Other:
  * For NameRequestError, mention who is the other owner.
+ * Session bus autolaunch still does not work, but: don't try launchd except
+   on macOS, and improve the error message.
  * examples/gdbus split off to its own repository,
    https://github.com/mvidner/dbus-gui-gtk
 

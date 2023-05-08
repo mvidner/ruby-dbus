@@ -41,6 +41,7 @@ require_relative "dbus/message_queue"
 require_relative "dbus/object"
 require_relative "dbus/object_manager"
 require_relative "dbus/object_path"
+require_relative "dbus/platform"
 require_relative "dbus/proxy_object"
 require_relative "dbus/proxy_object_factory"
 require_relative "dbus/proxy_object_interface"
@@ -53,9 +54,6 @@ require "socket"
 #
 # Module containing all the D-Bus modules and classes.
 module DBus
-  # Default socket name for the system bus.
-  SYSTEM_BUS_ADDRESS = "unix:path=/var/run/dbus/system_bus_socket"
-
   # Comparing symbols is faster than strings
   # @return [:little,:big]
   HOST_ENDIANNESS = RawMessage.endianness(HOST_END)

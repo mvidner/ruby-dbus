@@ -4,6 +4,23 @@
 require_relative "spec_helper"
 require "dbus"
 
+describe DBus::ASystemBus do
+  describe "#initialize" do
+    it "will use DBUS_SYSTEM_BUS_ADDRESS or the well known address" do
+      expect(ENV)
+        .to receive(:[])
+        .with("DBUS_SYSTEM_BUS_ADDRESS")
+        .and_return(nil)
+      expect(DBus::MessageQueue)
+        .to receive(:new)
+        .with("unix:path=/var/run/dbus/system_bus_socket")
+      expect_any_instance_of(described_class).to receive(:send_hello)
+
+      described_class.new
+    end
+  end
+end
+
 describe DBus::ASessionBus do
   subject(:dbus_session_bus_address) { "unix:abstract=/tmp/dbus-foo,guid=123" }
 
@@ -17,6 +34,22 @@ describe DBus::ASessionBus do
     it "returns DBUS_SESSION_BUS_ADDRESS as it is" do
       ENV["DBUS_SESSION_BUS_ADDRESS"] = dbus_session_bus_address
       expect(DBus::ASessionBus.session_bus_address).to eq(dbus_session_bus_address)
+    end
+
+    it "uses launchd on macOS when ENV and file fail" do
+      ENV["DBUS_SESSION_BUS_ADDRESS"] = nil
+      expect(described_class).to receive(:address_from_file).and_return(nil)
+      expect(DBus::Platform).to receive(:macos?).and_return(true)
+
+      expect(described_class.session_bus_address).to start_with "launchd:"
+    end
+
+    it "raises a readable exception when all addresses fail" do
+      ENV["DBUS_SESSION_BUS_ADDRESS"] = nil
+      expect(described_class).to receive(:address_from_file).and_return(nil)
+      expect(DBus::Platform).to receive(:macos?).and_return(false)
+
+      expect { described_class.session_bus_address }.to raise_error(NotImplementedError, /Cannot find session bus/)
     end
   end
 

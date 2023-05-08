@@ -8,8 +8,6 @@
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
 
-require "rbconfig"
-
 module DBus
   # Exception raised when authentication fails somehow.
   class AuthenticationFailed < StandardError
@@ -183,7 +181,7 @@ module DBus
       # that may carry credentials.
       # @return [void]
       def send_nul_byte
-        if RbConfig::CONFIG["target_os"] =~ /freebsd/
+        if Platform.freebsd?
           @socket.sendmsg(0.chr, 0, nil, [:SOCKET, :SCM_CREDS, ""])
         else
           @socket.write(0.chr)
