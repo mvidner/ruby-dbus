@@ -18,5 +18,9 @@ module DBus
     def freebsd?
       RbConfig::CONFIG["target_os"] =~ /freebsd/
     end
+
+    def macos?
+      RbConfig::CONFIG["target_os"] =~ /darwin/
+    end
   end
 end

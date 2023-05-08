@@ -35,6 +35,22 @@ describe DBus::ASessionBus do
       ENV["DBUS_SESSION_BUS_ADDRESS"] = dbus_session_bus_address
       expect(DBus::ASessionBus.session_bus_address).to eq(dbus_session_bus_address)
     end
+
+    it "uses launchd on macOS when ENV and file fail" do
+      ENV["DBUS_SESSION_BUS_ADDRESS"] = nil
+      expect(described_class).to receive(:address_from_file).and_return(nil)
+      expect(DBus::Platform).to receive(:macos?).and_return(true)
+
+      expect(described_class.session_bus_address).to start_with "launchd:"
+    end
+
+    it "raises a readable exception when all addresses fail" do
+      ENV["DBUS_SESSION_BUS_ADDRESS"] = nil
+      expect(described_class).to receive(:address_from_file).and_return(nil)
+      expect(DBus::Platform).to receive(:macos?).and_return(false)
+
+      expect { described_class.session_bus_address }.to raise_error(NotImplementedError, /Cannot find session bus/)
+    end
   end
 
   describe "#address_from_file" do

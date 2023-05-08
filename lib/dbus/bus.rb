@@ -730,7 +730,8 @@ module DBus
     def self.session_bus_address
       ENV["DBUS_SESSION_BUS_ADDRESS"] ||
         address_from_file ||
-        "launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET"
+        ("launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET" if Platform.macos?) ||
+        (raise NotImplementedError, "Cannot find session bus; sorry, haven't figured out autolaunch yet")
     end
 
     def self.address_from_file
