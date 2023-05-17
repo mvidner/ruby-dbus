@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.22.1 - 2023-05-17
+
 Bug fixes:
  * Fix OBS building by disabling IPv6 tests, [#134][].
 

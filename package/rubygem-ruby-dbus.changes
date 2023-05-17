@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed May 17 08:29:42 UTC 2023 - Martin Vidner <mvidner@suse.com>
+
+- 0.22.1
+ Bug fixes:
+ * Fix OBS building by disabling IPv6 tests, gh#mvidner/ruby-dbus#134.
+
+-------------------------------------------------------------------
 Mon May  8 19:06:21 UTC 2023 - Martin Vidner <mvidner@suse.com>
 
 - 0.22.0
