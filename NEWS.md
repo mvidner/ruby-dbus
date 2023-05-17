@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+Bug fixes:
+ * Fix OBS building by disabling IPv6 tests, [#134][].
+
+[#134]: https://github.com/mvidner/ruby-dbus/pull/134
+
 ## Ruby D-Bus 0.22.0 - 2023-05-08
 
 Features:
