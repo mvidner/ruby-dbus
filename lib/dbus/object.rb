@@ -324,7 +324,7 @@ module DBus
 
       cur_intf = @@cur_intf
       signal = Signal.new(sym.to_s).from_prototype(prototype)
-      cur_intf.define(Signal.new(sym.to_s).from_prototype(prototype))
+      cur_intf.define(signal)
 
       # ::Module#define_method(name) { body }
       define_method(sym.to_s) do |*args|

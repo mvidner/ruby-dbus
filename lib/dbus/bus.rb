@@ -178,7 +178,6 @@ module DBus
     # @param obj [DBus::Object]
     def unexport(obj)
       raise ArgumentError, "Expecting a DBus::Object argument" unless obj.is_a?(DBus::Object)
-      return false unless obj.path
 
       last_path_separator_idx = obj.path.rindex("/")
       parent_path = obj.path[1..last_path_separator_idx - 1]
