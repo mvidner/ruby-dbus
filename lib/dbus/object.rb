@@ -26,17 +26,25 @@ module DBus
     my_class_attribute :intfs
     self.intfs = {}
 
-    # The service that the object is exported by.
-    attr_writer :service
+    # @return [Connection] the connection the object is exported by
+    attr_reader :connection
 
     @@cur_intf = nil # Interface
     @@intfs_mutex = Mutex.new
 
     # Create a new object with a given _path_.
-    # Use Service#export to export it.
+    # Use ObjectServer#export to export it.
     def initialize(path)
       @path = path
-      @service = nil
+      @connection = nil
+    end
+
+    # @param connection [Connection] the connection the object is exported by
+    def connection=(connection)
+      @connection = connection
+      # compatibility API...
+      # TODO: what should be the prefered way?
+      @service = connection&.object_server
     end
 
     # Dispatch a message _msg_ to call exported methods
@@ -69,7 +77,7 @@ module DBus
           dbus_msg_exc = msg.annotate_exception(e)
           reply = ErrorMessage.from_exception(dbus_msg_exc).reply_to(msg)
         end
-        @service.bus.message_queue.push(reply)
+        @connection.message_queue.push(reply)
       end
     end
 
@@ -307,7 +315,7 @@ module DBus
     # @param sig [Signal]
     # @param args arguments for the signal
     def emit(intf, sig, *args)
-      @service.bus.emit(@service, self, intf, sig, *args)
+      @connection.emit(nil, self, intf, sig, *args)
     end
 
     # Defines a signal for the object with a given name _sym_ and _prototype_.

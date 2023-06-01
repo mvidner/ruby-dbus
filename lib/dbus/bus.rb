@@ -17,25 +17,58 @@ require "singleton"
 #
 # Module containing all the D-Bus modules and classes.
 module DBus
-  # This represents a remote service. It should not be instantiated directly
-  # Use {Connection#service}
-  class Service
-    # The service name.
-    attr_reader :name
-    # The bus the service is running on.
-    attr_reader :bus
-    # The service root (FIXME).
+  # Has a tree of {Node}s, refering to {Object}s or to {ProxyObject}s.
+  class TreeBase
+    # @return [Node]
     attr_reader :root
 
-    # Create a new service with a given _name_ on a given _bus_.
-    def initialize(name, bus)
-      @name = BusName.new(name)
-      @bus = bus
+    def initialize
       @root = Node.new("/")
+    end
+
+    # Get the object node corresponding to the given *path*.
+    # @param path [ObjectPath]
+    # @param create [Boolean] if true, the the {Node}s in the path are created
+    #   if they do not already exist.
+    # @return [Node,nil]
+    def get_node(path, create: false)
+      n = @root
+      path.sub(%r{^/}, "").split("/").each do |elem|
+        if !(n[elem])
+          return nil if !create
+
+          n[elem] = Node.new(elem)
+        end
+        n = n[elem]
+      end
+      n
+    end
+  end
+
+  # Used by clients to represent a named service on the other side of the bus.
+  #
+  # Formerly this class was intermixed with {ObjectServer} as Service.
+  #
+  # @example Usage
+  #   svc = DBus.system_bus["org.freedesktop.machine1"]
+  #   manager = svc["/org/freedesktop/machine1"]
+  #   p manager.ListImages
+  class ProxyService < TreeBase
+    # @return [BusName,nil] The service name.
+    # May be nil for peer connections
+    attr_reader :name
+    # @return [Connection] The connection we're using.
+    attr_reader :connection
+
+    def initialize(name, connection)
+      @name = BusName.new(name)
+      @connection = connection
+      super()
     end
 
     # Determine whether the service name already exists.
     def exists?
+      bus = connection # TODO: raise a better error if this is a peer connection
       bus.proxy.ListNames[0].member?(@name)
     end
 
@@ -64,18 +97,78 @@ module DBus
       node = get_node(path, create: true)
       if node.object.nil? || node.object.api != api
         node.object = ProxyObject.new(
-          @bus, @name, path,
+          @connection, @name, path,
           api: api
         )
       end
       node.object
     end
 
+    private
+
+    # Perform a recursive retrospection on the given current _node_
+    # on the given _path_.
+    def rec_introspect(node, path)
+      xml = bus.introspect_data(@name, path)
+      intfs, subnodes = IntrospectXMLParser.new(xml).parse
+      subnodes.each do |nodename|
+        subnode = node[nodename] = Node.new(nodename)
+        subpath = if path == "/"
+                    "/#{nodename}"
+                  else
+                    "#{path}/#{nodename}"
+                  end
+        rec_introspect(subnode, subpath)
+      end
+      return if intfs.empty?
+
+      node.object = ProxyObjectFactory.new(xml, @connection, @name, path).build
+    end
+  end
+
+  # The part of a {Connection} that can export {DBus::Object}s to provide
+  # services to clients.
+  #
+  # Note that an ObjectServer does not have a name. Typically a {Connection}
+  # has one well known name, but can have none or more.
+  #
+  # Formerly this class was intermixed with {ProxyService} as Service.
+  #
+  # @example Usage
+  #   bus = DBus.session_bus
+  #   svr = bus.object_server
+  #   obj = DBus::Object.new("/path") # a subclass more likely
+  #   svr.export(obj)
+  #   bus.request_service("org.example.Test") # FIXME request_name
+  #   # FIXME: convenience, combine exporting root object with a name
+  class ObjectServer < TreeBase
+    # @return [Connection] The connection we're using.
+    attr_reader :connection
+
+    def initialize(connection)
+      @connection = connection
+      super()
+    end
+
+    # Retrieves an object at the given _path_
+    # @param path [ObjectPath]
+    # @return [DBus::Object]
+    def object(path)
+      node = get_node(path, create: false)
+      node&.object
+    end
+    alias [] object
+
     # Export an object
     # @param obj [DBus::Object]
     def export(obj)
-      obj.service = self
-      get_node(obj.path, create: true).object = obj
+      node = get_node(obj.path, create: true)
+      # FIXME: only raise if we're object_server. if the user got us via request_service, don't raise
+      raise "SHOULD UNEXPORT FIRST?" if node.object
+
+      node.object = obj
+
+      obj.connection = @connection
       object_manager_for(obj)&.object_added(obj)
     end
 
@@ -84,7 +177,7 @@ module DBus
     # Returns the object, or false if _obj_ was not exported.
     # @param obj [DBus::Object]
     def unexport(obj)
-      raise ArgumentError, "DBus::Service#unexport() expects a DBus::Object argument" unless obj.is_a?(DBus::Object)
+      raise ArgumentError, "Expecting a DBus::Object argument" unless obj.is_a?(DBus::Object)
       return false unless obj.path
 
       last_path_separator_idx = obj.path.rindex("/")
@@ -95,26 +188,8 @@ module DBus
       return false unless parent_node
 
       object_manager_for(obj)&.object_removed(obj)
-      obj.service = nil
+      obj.connection = nil
       parent_node.delete(node_name).object
-    end
-
-    # Get the object node corresponding to the given *path*.
-    # @param path [ObjectPath]
-    # @param create [Boolean] if true, the the {Node}s in the path are created
-    #   if they do not already exist.
-    # @return [Node,nil]
-    def get_node(path, create: false)
-      n = @root
-      path.sub(%r{^/}, "").split("/").each do |elem|
-        if !(n[elem])
-          return nil if !create
-
-          n[elem] = Node.new(elem)
-        end
-        n = n[elem]
-      end
-      n
     end
 
     # Find the (closest) parent of *object*
@@ -157,25 +232,6 @@ module DBus
         result.push(n)
       end
       result
-    end
-
-    # Perform a recursive retrospection on the given current _node_
-    # on the given _path_.
-    def rec_introspect(node, path)
-      xml = bus.introspect_data(@name, path)
-      intfs, subnodes = IntrospectXMLParser.new(xml).parse
-      subnodes.each do |nodename|
-        subnode = node[nodename] = Node.new(nodename)
-        subpath = if path == "/"
-                    "/#{nodename}"
-                  else
-                    "#{path}/#{nodename}"
-                  end
-        rec_introspect(subnode, subpath)
-      end
-      return if intfs.empty?
-
-      node.object = ProxyObjectFactory.new(xml, @bus, @name, path).build
     end
   end
 
@@ -277,6 +333,10 @@ module DBus
       @method_call_msgs = {}
       @signal_matchrules = {}
       @proxy = nil
+    end
+
+    def object_server
+      @object_server ||= ObjectServer.new(self)
     end
 
     # Dispatch all messages that are available in the queue,
@@ -491,7 +551,7 @@ module DBus
     #
     # FIXME, NameRequestError cannot really be rescued as it will be raised
     # when dispatching a later call. Rework the API to better match the spec.
-    # @return [Service]
+    # @return [ObjectServer]
     def request_service(name)
       # Use RequestName, but asynchronously!
       # A synchronous call would not work with service activation, where
@@ -510,8 +570,7 @@ module DBus
                   end
         raise NameRequestError, "Could not request #{name}, #{details}" unless r == REQUEST_NAME_REPLY_PRIMARY_OWNER
       end
-      @service = Service.new(name, self)
-      @service
+      object_server
     end
 
     # Set up a ProxyObject for the bus itself, since the bus is introspectable.
@@ -631,7 +690,7 @@ module DBus
         if msg.path == "/org/freedesktop/DBus"
           DBus.logger.debug "Got method call on /org/freedesktop/DBus"
         end
-        node = @service.get_node(msg.path, create: false)
+        node = object_server.get_node(msg.path, create: false)
         # introspect a known path even if there is no object on it
         if node &&
            msg.interface == "org.freedesktop.DBus.Introspectable" &&
@@ -670,24 +729,23 @@ module DBus
     def service(name)
       # The service might not exist at this time so we cannot really check
       # anything
-      Service.new(name, self)
+      ProxyService.new(name, self)
     end
     alias [] service
 
     # @api private
     # Emit a signal event for the given _service_, object _obj_, interface
     # _intf_ and signal _sig_ with arguments _args_.
-    # @param service [Service]
+    # @param _service unused
     # @param obj [DBus::Object]
     # @param intf [Interface]
     # @param sig [Signal]
     # @param args arguments for the signal
-    def emit(service, obj, intf, sig, *args)
+    def emit(_service, obj, intf, sig, *args)
       m = Message.new(DBus::Message::SIGNAL)
       m.path = obj.path
       m.interface = intf.name
       m.member = sig.name
-      m.sender = service.name
       i = 0
       sig.params.each do |par|
         m.add_param(par.type, args[i])
@@ -710,7 +768,6 @@ module DBus
         @unique_name = rmsg.destination
         DBus.logger.debug "Got hello reply. Our unique_name is #{@unique_name}"
       end
-      @service = Service.new(@unique_name, self)
     end
   end
 

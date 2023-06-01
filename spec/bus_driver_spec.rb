@@ -4,7 +4,7 @@
 require_relative "spec_helper"
 require "dbus"
 
-describe DBus::Service do
+describe DBus::ProxyService do
   context "when a private bus is set up" do
     around(:each) do |example|
       with_private_bus do

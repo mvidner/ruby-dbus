@@ -177,15 +177,23 @@ class Test < DBus::Object
   dbus_interface "org.ruby.TestParent" do
     dbus_method :New, "in name:s, out opath:o" do |name|
       child = TestChild.new("#{path}/#{name}")
-      @service.export(child)
+      # FIXME: what is the recommended usage; check Agama
+      # @service.export(child)
+      connection.object_server.export(child)
       [child.path]
     end
 
     dbus_method :Delete, "in opath:o" do |opath|
       raise ArgumentError unless opath.start_with?(path)
 
-      obj = @service.get_node(opath)&.object
-      @service.unexport(obj)
+      # FIXME: what is the recommended usage; check Agama
+      # yup agama uses @service.get_node(path)&.object
+      # so we want svr.object
+      # obj = @service.get_node(opath)&.object
+      # @service.unexport(obj)
+      svr = connection.object_server
+      obj = svr.get_node(opath)&.object
+      svr.unexport(obj)
     end
   end
 

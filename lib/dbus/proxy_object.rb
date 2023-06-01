@@ -10,20 +10,20 @@
 # See the file "COPYING" for the exact licensing terms.
 
 module DBus
-  # D-Bus proxy object class
-  #
-  # Class representing a remote object in an external application.
+  # Represents a remote object in an external application.
   # Typically, calling a method on an instance of a ProxyObject sends a message
-  # over the bus so that the method is executed remotely on the correctponding
+  # over the bus so that the method is executed remotely on the corresponding
   # object.
   class ProxyObject
     # The names of direct subnodes of the object in the tree.
     attr_accessor :subnodes
     # Flag determining whether the object has been introspected.
+    # @return [Boolean]
     attr_accessor :introspected
     # The (remote) destination of the object.
     attr_reader :destination
     # The path to the object.
+    # @return [ObjectPath]
     attr_reader :path
     # The bus the object is reachable via.
     attr_reader :bus
