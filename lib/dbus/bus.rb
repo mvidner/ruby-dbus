@@ -163,8 +163,8 @@ module DBus
     # @param obj [DBus::Object]
     def export(obj)
       node = get_node(obj.path, create: true)
-      # FIXME: only raise if we're object_server. if the user got us via request_service, don't raise
-      raise "SHOULD UNEXPORT FIRST?" if node.object
+      # TODO: clarify that this is indeed the right thing, and document
+      # raise "At #{obj.path} there is already an object #{node.object.inspect}" if node.object
 
       node.object = obj
 
