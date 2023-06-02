@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.ruby.service
+# ... will replace the directory with the current one
+Exec=/usr/bin/spaghetti-monster.rb

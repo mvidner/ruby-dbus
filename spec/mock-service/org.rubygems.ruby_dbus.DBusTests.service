@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.rubygems.ruby_dbus.DBusTests
+# ... will replace the directory with the current one
+Exec=/usr/bin/cockpit-dbustests.rb

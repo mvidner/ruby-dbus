@@ -102,7 +102,7 @@ end
 
 def with_service_by_activation(&block)
   name = "org.ruby.service"
-  exec = "#{TOPDIR}/spec/service_newapi.rb"
+  exec = "#{TOPDIR}/spec/mock-service/spaghetti-monster.rb"
 
   service_dir = "#{ENV["XDG_DATA_DIRS"]}/dbus-1/services"
   FileUtils.mkdir_p service_dir
