@@ -1,7 +1,12 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "spec_helper"
+# This file was formerly named spec/service_newapi.rb, after the example
+# which it mutated from.
+# Spaghetti monster is a better name,
+# reflecting on its evolution and current nature :'-)
+
+require_relative "../spec_helper"
 SimpleCov.command_name "Service Tests" if Object.const_defined? "SimpleCov"
 # find the library without external help
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)

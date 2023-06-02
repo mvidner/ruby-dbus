@@ -16,10 +16,6 @@ class DBusTests < DBus::Object
       [format("Word! You said `%s'. I'm Skeleton, btw!", greeting)]
     end
   end
-
-  def initialize(opath)
-    super(opath)
-  end
 end
 
 bus = DBus::SessionBus.instance

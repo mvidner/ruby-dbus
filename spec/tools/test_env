@@ -2,13 +2,33 @@
 # test_env: set up the environment needed to run tests:
 # - set up a private bus
 # - run a test server on it
+set -o errexit
 
 #export DBUS_VERBOSE=1
 #export RUBYOPT="-d"
 export RUBYOPT="$RUBYOPT -w"
-DIR=$(dirname $0)
-$DIR/test_server \
-	$DIR/../service_newapi.rb \
-	-- \
-	$DIR/dbus-launch-simple \
+MYDIR=$(dirname $0)
+TOPDIR=$(realpath $MYDIR/../..)
+
+
+# Clean up at exit.
+trap "rm -rf \$RM_FILES" EXIT TERM INT
+
+export XDG_DATA_DIRS=`mktemp -d dbus.activation.XXXXXX`
+RM_FILES="$RM_FILES $XDG_DATA_DIRS"
+
+SVCDIR=$XDG_DATA_DIRS/dbus-1/services
+mkdir -p $SVCDIR
+for SVC in $TOPDIR/spec/mock-service/*.service; do
+  SVCBASE=${SVC##*/}
+  sed -e "s@\(Exec\)=/usr/bin/@\1=$TOPDIR/spec/mock-service/@" $SVC > $SVCDIR/$SVCBASE
+done
+
+
+# no command given -> run an interactive shell
+if [ $# = 0 ]; then
+  set -- env PS1="TEST_ENV \w> " bash
+fi
+
+$MYDIR/dbus-launch-simple \
 	"$@"
