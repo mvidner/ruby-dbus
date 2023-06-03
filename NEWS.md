@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+API:
+ * Remove Service, splitting it into ProxyService and ObjectServer
+
 ## Ruby D-Bus 0.22.1 - 2023-05-17
 
 Bug fixes:
