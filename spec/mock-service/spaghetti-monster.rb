@@ -7,7 +7,7 @@
 # reflecting on its evolution and current nature :'-)
 
 require_relative "../coverage_helper"
-SimpleCov.command_name "Service Tests" if Object.const_defined? "SimpleCov"
+SimpleCov.command_name "Service Tests (#{Process.pid})" if Object.const_defined? "SimpleCov"
 
 # find the library without external help
 $LOAD_PATH.unshift File.expand_path("../../lib", __dir__)
