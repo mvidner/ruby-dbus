@@ -11,17 +11,14 @@
 # See the file "COPYING" for the exact licensing terms.
 
 module DBus
-  # Byte signifying big endianness.
+  # Protocol character signifying big endianness.
   BIG_END = "B"
-  # Byte signifying little endianness.
+  # Protocol character signifying little endianness.
   LIL_END = "l"
 
-  # Byte signifying the host's endianness.
-  HOST_END = if [0x01020304].pack("L").unpack1("V") == 0x01020304
-               LIL_END
-             else
-               BIG_END
-             end
+  # Protocol character signifying the host's endianness.
+  # "S": unpack as uint16, native endian
+  HOST_END = { 1 => BIG_END, 256 => LIL_END }.fetch("\x00\x01".unpack1("S"))
 end
 # ^ That's because dbus/message needs HOST_END early
 
