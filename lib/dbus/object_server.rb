@@ -106,14 +106,13 @@ module DBus
 
     #########
 
-    # @raise ArgumentError if the *path* does not exist
+    # @param path [ObjectPath] a path that must exist
+    # @return [Array<Node>] nodes from the root to the leaf
     def get_node_chain(path)
       n = @root
       result = [n]
       path.sub(%r{^/}, "").split("/").each do |elem|
         n = n[elem]
-        raise ArgumentError, "Object path #{path} doesn't exist" if n.nil?
-
         result.push(n)
       end
       result
