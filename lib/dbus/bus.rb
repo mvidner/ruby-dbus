@@ -13,38 +13,12 @@
 require "socket"
 require "singleton"
 
+require_relative "node_tree"
+
 # = D-Bus main module
 #
 # Module containing all the D-Bus modules and classes.
 module DBus
-  # Has a tree of {Node}s, refering to {Object}s or to {ProxyObject}s.
-  class TreeBase
-    # @return [Node]
-    attr_reader :root
-
-    def initialize
-      @root = Node.new("/")
-    end
-
-    # Get the object node corresponding to the given *path*.
-    # @param path [ObjectPath]
-    # @param create [Boolean] if true, the the {Node}s in the path are created
-    #   if they do not already exist.
-    # @return [Node,nil]
-    def get_node(path, create: false)
-      n = @root
-      path.sub(%r{^/}, "").split("/").each do |elem|
-        if !(n[elem])
-          return nil if !create
-
-          n[elem] = Node.new(elem)
-        end
-        n = n[elem]
-      end
-      n
-    end
-  end
-
   # Used by clients to represent a named service on the other side of the bus.
   #
   # Formerly this class was intermixed with {ObjectServer} as Service.
@@ -53,7 +27,7 @@ module DBus
   #   svc = DBus.system_bus["org.freedesktop.machine1"]
   #   manager = svc["/org/freedesktop/machine1"]
   #   p manager.ListImages
-  class ProxyService < TreeBase
+  class ProxyService < NodeTree
     # @return [BusName,nil] The service name.
     # May be nil for peer connections
     attr_reader :name
@@ -141,7 +115,7 @@ module DBus
   #   svr.export(obj)
   #   bus.request_service("org.example.Test") # FIXME request_name
   #   # FIXME: convenience, combine exporting root object with a name
-  class ObjectServer < TreeBase
+  class ObjectServer < NodeTree
     # @return [Connection] The connection we're using.
     attr_reader :connection
 
@@ -231,71 +205,6 @@ module DBus
         result.push(n)
       end
       result
-    end
-  end
-
-  # = Object path node class
-  #
-  # Class representing a node on an object path.
-  class Node < Hash
-    # @return [DBus::Object,DBus::ProxyObject,nil]
-    #   The D-Bus object contained by the node.
-    attr_accessor :object
-
-    # The name of the node.
-    # @return [String] the last component of its object path, or "/"
-    attr_reader :name
-
-    # Create a new node with a given _name_.
-    def initialize(name)
-      super()
-      @name = name
-      @object = nil
-    end
-
-    # Return an XML string representation of the node.
-    # It is shallow, not recursing into subnodes
-    # @param node_opath [String]
-    def to_xml(node_opath)
-      xml = '<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
-"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
-'
-      xml += "<node name=\"#{node_opath}\">\n"
-      each_key do |k|
-        xml += "  <node name=\"#{k}\" />\n"
-      end
-      @object&.intfs&.each_value do |v|
-        xml += v.to_xml
-      end
-      xml += "</node>"
-      xml
-    end
-
-    # Return inspect information of the node.
-    def inspect
-      # Need something here
-      "<DBus::Node #{sub_inspect}>"
-    end
-
-    # Return instance inspect information, used by Node#inspect.
-    def sub_inspect
-      s = ""
-      if !@object.nil?
-        s += format("%x ", @object.object_id)
-      end
-      contents_sub_inspect = keys
-                             .map { |k| "#{k} => #{self[k].sub_inspect}" }
-                             .join(",")
-      "#{s}{#{contents_sub_inspect}}"
-    end
-
-    # All objects (not paths) under this path (except itself).
-    # @return [Array<DBus::Object>]
-    def descendant_objects
-      children_objects = values.map(&:object).compact
-      descendants = values.map(&:descendant_objects)
-      flat_descendants = descendants.reduce([], &:+)
-      children_objects + flat_descendants
     end
   end
 
