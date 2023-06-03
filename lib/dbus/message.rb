@@ -16,12 +16,6 @@ require_relative "raw_message"
 #
 # Module containing all the D-Bus modules and classes.
 module DBus
-  # = InvalidDestinationName class
-  # Thrown when you try to send a message to /org/freedesktop/DBus/Local, that
-  # is reserved.
-  class InvalidDestinationName < Exception
-  end
-
   # = D-Bus message class
   #
   # Class that holds any type of message that travels over the bus.
@@ -164,11 +158,15 @@ module DBus
     SENDER = 7
     SIGNATURE = 8
 
+    RESERVED_PATH = "/org/freedesktop/DBus/Local"
+
     # Marshall the message with its current set parameters and return
     # it in a packet form.
+    # @return [String]
     def marshall
-      if @path == "/org/freedesktop/DBus/Local"
-        raise InvalidDestinationName
+      if @path == RESERVED_PATH
+        # the bus would disconnect us, better explain why
+        raise "Cannot send a message with the reserved path #{RESERVED_PATH}: #{inspect}"
       end
 
       params_marshaller = PacketMarshaller.new(endianness: ENDIANNESS)
