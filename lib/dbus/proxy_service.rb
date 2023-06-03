@@ -22,11 +22,12 @@ module DBus
   #   p manager.ListImages
   class ProxyService < NodeTree
     # @return [BusName,nil] The service name.
-    # May be nil for peer connections
+    # Will be nil for a {PeerConnection}
     attr_reader :name
     # @return [Connection] The connection we're using.
     attr_reader :connection
 
+    # @param connection [Connection] The connection we're using.
     def initialize(name, connection)
       @name = BusName.new(name)
       @connection = connection
@@ -90,6 +91,17 @@ module DBus
       return if intfs.empty?
 
       node.object = ProxyObjectFactory.new(xml, @connection, @name, path).build
+    end
+  end
+
+  # A hack for pretending that a {PeerConnection} has a single unnamed {ProxyService}
+  # so that we can get {ProxyObject}s from it.
+  class ProxyPeerService < ProxyService
+    # @param connection [Connection] The peer connection we're using.
+    def initialize(connection)
+      # this way we disallow ProxyService taking a nil name by accident
+      super(":0.0", connection)
+      @name = nil
     end
   end
 end

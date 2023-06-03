@@ -446,8 +446,10 @@ module DBus
       raise msg.annotate_exception(e)
     end
 
-    # Retrieves the Service with the given _name_.
-    # @return [Service]
+    # Makes a {ProxyService} with the given *name*.
+    # Note that this succeeds even if the name does not exist and cannot be
+    # activated. It will only fail when calling a method.
+    # @return [ProxyService]
     def service(name)
       # The service might not exist at this time so we cannot really check
       # anything
@@ -509,6 +511,19 @@ module DBus
       name = BusName.new(name)
       r = proxy.RequestName(name, flags).first
       handle_return_of_request_name(r, name)
+    end
+  end
+
+  # A {Connection} that is talking directly to a peer, with no bus daemon in between.
+  # A prominent example is the PulseAudio connection,
+  # see https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/Clients/DBus/
+  # When starting, it still starts with authentication but omits the Hello message.
+  class PeerConnection < Connection
+    # Get a {ProxyPeerService}, a dummy helper to get {ProxyObject}s for
+    # a {PeerConnection}.
+    # @return [ProxyPeerService]
+    def peer_service
+      ProxyPeerService.new(self)
     end
   end
 

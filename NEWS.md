@@ -8,6 +8,7 @@ API:
  * ObjectServer#unexport now also accepts an object path
  * Connection#object_server can export objects even without requesting any
    service name ([#49][], in beta1 already).
+ * Add PeerConnection for connections without a bus, useful for PulseAudio.
 
 Bug fixes:
  * Fixed a refactoring crasher bug in ProxyService#introspect (oops).
