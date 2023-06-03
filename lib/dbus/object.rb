@@ -48,6 +48,8 @@ module DBus
     end
 
     # Dispatch a message _msg_ to call exported methods
+    # @param msg [Message] only METHOD_CALLS do something
+    # @api private
     def dispatch(msg)
       case msg.message_type
       when Message::METHOD_CALL

@@ -166,4 +166,13 @@ describe DBus::Object do
       end.to raise_error(RuntimeError, /assigned more than once/)
     end
   end
+
+  # coverage obsession
+  describe "#dispatch" do
+    it "survives being called with a non-METHOD_CALL, doing nothing" do
+      obj = ObjectTest.new("/test")
+      msg = DBus::MethodReturnMessage.new
+      expect { obj.dispatch(msg) }.to_not raise_error
+    end
+  end
 end
