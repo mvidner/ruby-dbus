@@ -6,14 +6,15 @@
 # Spaghetti monster is a better name,
 # reflecting on its evolution and current nature :'-)
 
-require_relative "../spec_helper"
+require_relative "../coverage_helper"
 SimpleCov.command_name "Service Tests" if Object.const_defined? "SimpleCov"
+
 # find the library without external help
 $LOAD_PATH.unshift File.expand_path("../../lib", __dir__)
 
 require "dbus"
 
-PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
+SERVICE_NAME = "org.ruby.service"
 
 class TestChild < DBus::Object
   def initialize(opath)
@@ -244,7 +245,7 @@ class Test2 < DBus::Object
 end
 
 bus = DBus::SessionBus.instance
-service = bus.request_service("org.ruby.service")
+service = bus.request_service(SERVICE_NAME)
 myobj = Test.new("/org/ruby/MyInstance")
 service.export(myobj)
 derived = Derived.new "/org/ruby/MyDerivedInstance"
@@ -267,12 +268,13 @@ bus.add_match(mr) do |msg|
   end
 end
 
-puts "listening, with ruby-#{RUBY_VERSION}"
+puts "Service #{SERVICE_NAME} listening, with ruby-#{RUBY_VERSION}"
 main = DBus::Main.new
 main << bus
 myobj.main_loop = main
 begin
   main.run
-rescue SystemCallError
+rescue SystemCallError, SignalException => e
+  puts "Service #{SERVICE_NAME} got #{e}, exiting"
   # the test driver will kill the bus, that's OK
 end

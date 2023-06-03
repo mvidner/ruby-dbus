@@ -1,6 +1,11 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require_relative "../coverage_helper"
+SimpleCov.command_name "Cockpit Tests" if Object.const_defined? "SimpleCov"
+
+# find the library without external help
+$LOAD_PATH.unshift File.expand_path("../../lib", __dir__)
 require "dbus"
 
 SERVICE_NAME = "org.rubygems.ruby_dbus.DBusTests"
