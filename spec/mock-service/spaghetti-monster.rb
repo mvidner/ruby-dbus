@@ -269,13 +269,13 @@ bus.add_match(mr) do |msg|
   end
 end
 
-puts "Service #{SERVICE_NAME} listening, with ruby-#{RUBY_VERSION}"
+DBus.logger.info "Service #{SERVICE_NAME} listening, with ruby-#{RUBY_VERSION}"
 main = DBus::Main.new
 main << bus
 myobj.main_loop = main
 begin
   main.run
 rescue SystemCallError, SignalException => e
-  puts "Service #{SERVICE_NAME} got #{e}, exiting"
+  DBus.logger.info "Service #{SERVICE_NAME} got #{e.inspect}, exiting"
   # the test driver will kill the bus, that's OK
 end
