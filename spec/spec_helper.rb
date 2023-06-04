@@ -80,7 +80,9 @@ def with_service_by_activation(&block)
 
   block.call
 
-  system "pkill -f #{exec}"
+  # This would kill also other instances,
+  # namely on the bus set up by test_env.
+  ## system "pkill -f #{exec}"
 end
 
 # Make a binary string from readable YAML pieces; see data/marshall.yaml
