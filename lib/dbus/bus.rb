@@ -264,11 +264,23 @@ module DBus
     class NameRequestError < Exception
     end
 
+    def handle_return_of_request_name(ret, name)
+      details = if ret == REQUEST_NAME_REPLY_IN_QUEUE
+                  other = proxy.GetNameOwner(name).first
+                  other_creds = proxy.GetConnectionCredentials(other).first
+                  "already owned by #{other}, #{other_creds.inspect}"
+                else
+                  "error code #{ret}"
+                end
+      raise NameRequestError, "Could not request #{name}, #{details}" unless ret == REQUEST_NAME_REPLY_PRIMARY_OWNER
+
+      ret
+    end
+
     # Attempt to request a service _name_.
-    #
-    # FIXME, NameRequestError cannot really be rescued as it will be raised
-    # when dispatching a later call. Rework the API to better match the spec.
+    # @raise NameRequestError which cannot really be rescued as it will be raised when dispatching a later call.
     # @return [ObjectServer]
+    # @deprecated Use {BusConnection#request_name}.
     def request_service(name)
       # Use RequestName, but asynchronously!
       # A synchronous call would not work with service activation, where
@@ -278,14 +290,7 @@ module DBus
         # check and report errors first
         raise rmsg if rmsg.is_a?(Error)
 
-        details = if r == REQUEST_NAME_REPLY_IN_QUEUE
-                    other = proxy.GetNameOwner(name).first
-                    other_creds = proxy.GetConnectionCredentials(other).first
-                    "already owned by #{other}, #{other_creds.inspect}"
-                  else
-                    "error code #{r}"
-                  end
-        raise NameRequestError, "Could not request #{name}, #{details}" unless r == REQUEST_NAME_REPLY_PRIMARY_OWNER
+        handle_return_of_request_name(r, name)
       end
       object_server
     end
@@ -488,13 +493,32 @@ module DBus
     end
   end
 
+  # A regular Bus {Connection}.
+  # As opposed to a peer connection to a single counterparty with no daemon in between.
+  # FIXME: move the remaining relevant methods from Connection here, but alias the constants
+  class BusConnection < Connection
+    # @param name [BusName] the requested name
+    # @param flags [Integer] TODO: explain and add a better non-numeric API for this
+    # @raise NameRequestError if we could not get the name
+    # @example Usage
+    #   bus = DBus.session_bus
+    #   bus.object_server.export(DBus::Object.new("/org/example/Test"))
+    #   bus.request_name("org.example.Test")
+    # @see https://dbus.freedesktop.org/doc/dbus-specification.html#bus-messages-request-name
+    def request_name(name, flags: 0)
+      name = BusName.new(name)
+      r = proxy.RequestName(name, flags).first
+      handle_return_of_request_name(r, name)
+    end
+  end
+
   # = D-Bus session bus class
   #
   # The session bus is a session specific bus (mostly for desktop use).
   #
   # Use SessionBus, the non-singleton ASessionBus is
   # for the test suite.
-  class ASessionBus < Connection
+  class ASessionBus < BusConnection
     # Get the the default session bus.
     def initialize
       super(self.class.session_bus_address)
@@ -545,7 +569,7 @@ module DBus
   #
   # Use SystemBus, the non-singleton ASystemBus is
   # for the test suite.
-  class ASystemBus < Connection
+  class ASystemBus < BusConnection
     # Get the default system bus.
     def initialize
       super(self.class.system_bus_address)
@@ -568,7 +592,8 @@ module DBus
   #
   # you'll need to take care about authentification then, more info here:
   # https://gitlab.com/pangdudu/ruby-dbus/-/blob/master/README.rdoc
-  class RemoteBus < Connection
+  # TODO: keep the name but update the docs
+  class RemoteBus < BusConnection
     # Get the remote bus.
     def initialize(socket_name)
       super(socket_name)

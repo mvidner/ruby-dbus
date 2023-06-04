@@ -6,8 +6,6 @@ require "dbus"
 
 describe DBus::ObjectServer do
   let(:bus) { DBus::ASessionBus.new }
-  # This is the client role, but the server role API is bad
-  # and for the one test there is no difference
   let(:server) { bus.object_server }
 
   describe "#descendants_for" do
@@ -83,12 +81,8 @@ describe DBus::ObjectServer do
 
   describe "#unexport", tag_bus: true do
     before(:each) do
-      @bus = DBus::ASessionBus.new
-      @svc = @bus.request_service "org.ruby.server-test"
-    end
-
-    after(:each) do
-      @bus.proxy.ReleaseName "org.ruby.server-test"
+      bus = DBus::ASessionBus.new
+      @svc = bus.object_server
     end
 
     it "returns the unexported object" do

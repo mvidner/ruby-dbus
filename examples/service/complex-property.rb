@@ -16,6 +16,6 @@ class Test < DBus::Object
 end
 
 bus = DBus::SessionBus.instance
-svc = bus.request_service("net.vidner.Scratch")
-svc.export(Test.new("/net/vidner/Scratch"))
+bus.object_server.export(Test.new("/net/vidner/Scratch"))
+bus.request_name("net.vidner.Scratch")
 DBus::Main.new.tap { |m| m << bus }.run

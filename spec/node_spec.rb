@@ -44,11 +44,7 @@ describe DBus::Node do
 
     context "on the bus" do
       let(:bus) { DBus::ASessionBus.new }
-      let(:service) do
-        # if we used org.ruby.service it would be a name collision
-        # ... which would not break the test for lucky reasons
-        bus.request_service("org.ruby.service.scratch")
-      end
+      let(:service) { bus.object_server }
 
       before do
         service.export(DBus::Object.new(manager_path))

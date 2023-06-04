@@ -340,8 +340,8 @@ for overriding this.
     obj = Note.new("/net/vidner/Example/Properties")
 
     bus = DBus::SessionBus.instance
-    service = bus.request_service("net.vidner.Example")
-    service.export(obj)
+    bus.object_server.export(obj)
+    bus.request_name("net.vidner.Example")
 
     main = DBus::Main.new
     main << bus

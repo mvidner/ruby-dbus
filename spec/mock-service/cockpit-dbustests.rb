@@ -24,6 +24,6 @@ class DBusTests < DBus::Object
 end
 
 bus = DBus::SessionBus.instance
-svc = bus.request_service(SERVICE_NAME)
-svc.export(DBusTests.new(ROOT_OPATH))
+bus.object_server.export(DBusTests.new(ROOT_OPATH))
+bus.request_name(SERVICE_NAME)
 DBus::Main.new.tap { |m| m << bus }.run

@@ -22,10 +22,9 @@ module DBus
   #
   # @example Usage
   #   bus = DBus.session_bus
-  #   svr = bus.object_server
   #   obj = DBus::Object.new("/path") # a subclass more likely
-  #   svr.export(obj)
-  #   bus.request_service("org.example.Test") # FIXME request_name
+  #   bus.object_server.export(obj)
+  #   bus.request_name("org.example.Test")
   #   # FIXME: convenience, combine exporting root object with a name
   class ObjectServer < NodeTree
     # @return [Connection] The connection we're using.
