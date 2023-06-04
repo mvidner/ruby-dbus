@@ -25,7 +25,6 @@ module DBus
   #   obj = DBus::Object.new("/path") # a subclass more likely
   #   bus.object_server.export(obj)
   #   bus.request_name("org.example.Test")
-  #   # FIXME: convenience, combine exporting root object with a name
   class ObjectServer < NodeTree
     # @return [Connection] The connection we're using.
     attr_reader :connection

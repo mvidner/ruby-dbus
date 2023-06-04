@@ -23,8 +23,6 @@ module DBus
     # @return [Hash{ObjectPath => Hash{String => Hash{String => Data::Base}}}]
     #   object -> interface -> property -> value
     def managed_objects
-      # FIXME: also fix the "service" concept
-      # FIXME: direct osvr?
       descendant_objects = connection.object_server.descendants_for(path)
       descendant_objects.each_with_object({}) do |obj, hash|
         hash[obj.path] = obj.interfaces_and_properties

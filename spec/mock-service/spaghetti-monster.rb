@@ -183,8 +183,6 @@ class Test < DBus::Object
   dbus_interface "org.ruby.TestParent" do
     dbus_method :New, "in name:s, out opath:o" do |name|
       child = TestChild.new("#{path}/#{name}")
-      # FIXME: what is the recommended usage; check Agama
-      # @service.export(child)
       connection.object_server.export(child)
       [child.path]
     end
@@ -192,11 +190,6 @@ class Test < DBus::Object
     dbus_method :Delete, "in opath:o" do |opath|
       raise ArgumentError unless opath.start_with?(path)
 
-      # FIXME: what is the recommended usage; check Agama
-      # yup agama uses @service.get_node(path)&.object
-      # so we want svr.object
-      # obj = @service.get_node(opath)&.object
-      # @service.unexport(obj)
       svr = connection.object_server
       obj = svr.get_node(opath)&.object
       svr.unexport(obj)
@@ -208,6 +201,9 @@ class Test < DBus::Object
       [0]
     end
     dbus_method :interfaces, "out answer:i" do
+      # 'Shadowed' from the Ruby side, meaning ProxyObject#interfaces
+      # will return the list of interfaces rather than calling this method.
+      # Calling it with busctl will work just fine.
       raise "This DBus method is currently shadowed by ProxyObject#interfaces"
     end
   end

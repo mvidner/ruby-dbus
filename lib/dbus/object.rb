@@ -42,8 +42,7 @@ module DBus
     # @param connection [Connection] the connection the object is exported by
     def connection=(connection)
       @connection = connection
-      # compatibility API...
-      # TODO: what should be the prefered way?
+      # deprecated, keeping @service for compatibility
       @service = connection&.object_server
     end
 
