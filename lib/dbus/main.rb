@@ -49,7 +49,8 @@ module DBus
           b = @buses[socket]
           begin
             b.message_queue.buffer_from_socket_nonblock
-          rescue EOFError, SystemCallError
+          rescue EOFError, SystemCallError => e
+            DBus.logger.debug "Got #{e.inspect} from #{socket.inspect}"
             @buses.delete socket # this bus died
             next
           end
@@ -58,6 +59,8 @@ module DBus
           end
         end
       end
+      DBus.logger.debug "Main loop quit" if @quitting
+      DBus.logger.debug "Main loop quit, no connections left" if @buses.empty?
     end
   end
 end
