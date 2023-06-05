@@ -24,7 +24,7 @@ is simply "dbus"
 
 1. {DBus.session_bus Connect to the session bus};
 2. {DBus::Connection#[] get the screensaver service}
-3. {DBus::Service#[] and its screensaver object}.
+3. {DBus::ProxyService#[] and its screensaver object}.
 4. Call one of its methods in a loop, solving [xkcd#196](http://xkcd.com/196).
 
 &nbsp;
@@ -58,7 +58,7 @@ a method proxy always returned an array of values. This was to
 accomodate the rare cases of a DBus method specifying more than one
 *out* parameter. For compatibility, the behavior is preserved if you
 construct a {DBus::ProxyObject} with {DBus::ApiOptions::A0},
-which is what {DBus::Service#object} does.
+which is what {DBus::ProxyService#object} does.
 
 For nearly all methods you used `Method[0]` or
 `Method.first`
@@ -340,8 +340,8 @@ for overriding this.
     obj = Note.new("/net/vidner/Example/Properties")
 
     bus = DBus::SessionBus.instance
-    service = bus.request_service("net.vidner.Example")
-    service.export(obj)
+    bus.object_server.export(obj)
+    bus.request_name("net.vidner.Example")
 
     main = DBus::Main.new
     main << bus

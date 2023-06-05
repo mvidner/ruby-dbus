@@ -12,7 +12,10 @@ my_dbus_launch () {
     AF=`mktemp dbus.addr.XXXXXX` || exit
     RM_FILES="$RM_FILES $PF $AF"
 
-    dbus-daemon --config-file=$(dirname $0)/dbus-limited-session.conf --print-address=3 3>$AF --print-pid=4 4>$PF &
+    # For debugging:
+    # DBUS_DAEMON=~/svn/dbus/bus/dbus-daemon DBUS_VERBOSE=1 ./spec/tools/test_env env PS1="TEST $PS1" bash
+    : ${DBUS_DAEMON=dbus-daemon}
+    $DBUS_DAEMON --config-file=$(dirname $0)/dbus-limited-session.conf --print-address=3 3>$AF --print-pid=4 4>$PF &
     # wait for the daemon to print the info
     TRIES=0
     while [ ! -s $AF -o ! -s $PF ]; do

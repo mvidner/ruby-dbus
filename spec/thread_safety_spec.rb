@@ -53,22 +53,20 @@ describe "thread safety" do
   end
 
   context "W/O: when the threads only send signals" do
-    it "it works with a shared separate bus connection" do
-      race_threads(5) do |j|
-        # shared connection
-        bus = DBus::SessionBus.instance
-        # hackish: we do not actually request the name
-        svc = DBus::Service.new("org.ruby.server-test#{j}", bus)
+    it "it works with a shared bus connection" do
+      # shared connection
+      bus = DBus::SessionBus.instance
+      svc = bus.object_server
+      obj = TestSignalRace.new "/org/ruby/Foo"
+      svc.export obj
 
-        obj = TestSignalRace.new "/org/ruby/Foo"
-        svc.export obj
-
+      race_threads(5) do |_j|
         repeat_with_jitter(10) do
           obj.signal_without_arguments
         end
-
-        svc.unexport(obj)
       end
+
+      svc.unexport(obj)
       puts
     end
   end

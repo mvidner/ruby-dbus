@@ -5,7 +5,7 @@
 # This file is part of the ruby-dbus project
 # Copyright (C) 2007 Arnaud Cornet and Paul van Tilburg
 #
-# This library is free software; you caan redistribute it and/or
+# This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License, version 2.1 as published by the Free Software Foundation.
 # See the file "COPYING" for the exact licensing terms.
@@ -17,233 +17,6 @@ require "singleton"
 #
 # Module containing all the D-Bus modules and classes.
 module DBus
-  # This represents a remote service. It should not be instantiated directly
-  # Use {Connection#service}
-  class Service
-    # The service name.
-    attr_reader :name
-    # The bus the service is running on.
-    attr_reader :bus
-    # The service root (FIXME).
-    attr_reader :root
-
-    # Create a new service with a given _name_ on a given _bus_.
-    def initialize(name, bus)
-      @name = BusName.new(name)
-      @bus = bus
-      @root = Node.new("/")
-    end
-
-    # Determine whether the service name already exists.
-    def exists?
-      bus.proxy.ListNames[0].member?(@name)
-    end
-
-    # Perform an introspection on all the objects on the service
-    # (starting recursively from the root).
-    def introspect
-      raise NotImplementedError if block_given?
-
-      rec_introspect(@root, "/")
-      self
-    end
-
-    # Retrieves an object at the given _path_.
-    # @param path [ObjectPath]
-    # @return [ProxyObject]
-    def [](path)
-      object(path, api: ApiOptions::A1)
-    end
-
-    # Retrieves an object at the given _path_
-    # whose methods always return an array.
-    # @param path [ObjectPath]
-    # @param api [ApiOptions]
-    # @return [ProxyObject]
-    def object(path, api: ApiOptions::A0)
-      node = get_node(path, create: true)
-      if node.object.nil? || node.object.api != api
-        node.object = ProxyObject.new(
-          @bus, @name, path,
-          api: api
-        )
-      end
-      node.object
-    end
-
-    # Export an object
-    # @param obj [DBus::Object]
-    def export(obj)
-      obj.service = self
-      get_node(obj.path, create: true).object = obj
-      object_manager_for(obj)&.object_added(obj)
-    end
-
-    # Undo exporting an object _obj_.
-    # Raises ArgumentError if it is not a DBus::Object.
-    # Returns the object, or false if _obj_ was not exported.
-    # @param obj [DBus::Object]
-    def unexport(obj)
-      raise ArgumentError, "DBus::Service#unexport() expects a DBus::Object argument" unless obj.is_a?(DBus::Object)
-      return false unless obj.path
-
-      last_path_separator_idx = obj.path.rindex("/")
-      parent_path = obj.path[1..last_path_separator_idx - 1]
-      node_name = obj.path[last_path_separator_idx + 1..-1]
-
-      parent_node = get_node(parent_path, create: false)
-      return false unless parent_node
-
-      object_manager_for(obj)&.object_removed(obj)
-      obj.service = nil
-      parent_node.delete(node_name).object
-    end
-
-    # Get the object node corresponding to the given *path*.
-    # @param path [ObjectPath]
-    # @param create [Boolean] if true, the the {Node}s in the path are created
-    #   if they do not already exist.
-    # @return [Node,nil]
-    def get_node(path, create: false)
-      n = @root
-      path.sub(%r{^/}, "").split("/").each do |elem|
-        if !(n[elem])
-          return nil if !create
-
-          n[elem] = Node.new(elem)
-        end
-        n = n[elem]
-      end
-      n
-    end
-
-    # Find the (closest) parent of *object*
-    # implementing the ObjectManager interface, or nil
-    # @return [DBus::Object,nil]
-    def object_manager_for(object)
-      path = object.path
-      node_chain = get_node_chain(path)
-      om_node = node_chain.reverse_each.find do |node|
-        node.object&.is_a? DBus::ObjectManager
-      end
-      om_node&.object
-    end
-
-    # All objects (not paths) under this path (except itself).
-    # @param path [ObjectPath]
-    # @return [Array<DBus::Object>]
-    # @raise ArgumentError if the *path* does not exist
-    def descendants_for(path)
-      node = get_node(path, create: false)
-      raise ArgumentError, "Object path #{path} doesn't exist" if node.nil?
-
-      node.descendant_objects
-    end
-
-    #########
-
-    private
-
-    #########
-
-    # @raise ArgumentError if the *path* does not exist
-    def get_node_chain(path)
-      n = @root
-      result = [n]
-      path.sub(%r{^/}, "").split("/").each do |elem|
-        n = n[elem]
-        raise ArgumentError, "Object path #{path} doesn't exist" if n.nil?
-
-        result.push(n)
-      end
-      result
-    end
-
-    # Perform a recursive retrospection on the given current _node_
-    # on the given _path_.
-    def rec_introspect(node, path)
-      xml = bus.introspect_data(@name, path)
-      intfs, subnodes = IntrospectXMLParser.new(xml).parse
-      subnodes.each do |nodename|
-        subnode = node[nodename] = Node.new(nodename)
-        subpath = if path == "/"
-                    "/#{nodename}"
-                  else
-                    "#{path}/#{nodename}"
-                  end
-        rec_introspect(subnode, subpath)
-      end
-      return if intfs.empty?
-
-      node.object = ProxyObjectFactory.new(xml, @bus, @name, path).build
-    end
-  end
-
-  # = Object path node class
-  #
-  # Class representing a node on an object path.
-  class Node < Hash
-    # @return [DBus::Object,DBus::ProxyObject,nil]
-    #   The D-Bus object contained by the node.
-    attr_accessor :object
-
-    # The name of the node.
-    # @return [String] the last component of its object path, or "/"
-    attr_reader :name
-
-    # Create a new node with a given _name_.
-    def initialize(name)
-      super()
-      @name = name
-      @object = nil
-    end
-
-    # Return an XML string representation of the node.
-    # It is shallow, not recursing into subnodes
-    # @param node_opath [String]
-    def to_xml(node_opath)
-      xml = '<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
-"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
-'
-      xml += "<node name=\"#{node_opath}\">\n"
-      each_key do |k|
-        xml += "  <node name=\"#{k}\" />\n"
-      end
-      @object&.intfs&.each_value do |v|
-        xml += v.to_xml
-      end
-      xml += "</node>"
-      xml
-    end
-
-    # Return inspect information of the node.
-    def inspect
-      # Need something here
-      "<DBus::Node #{sub_inspect}>"
-    end
-
-    # Return instance inspect information, used by Node#inspect.
-    def sub_inspect
-      s = ""
-      if !@object.nil?
-        s += format("%x ", @object.object_id)
-      end
-      contents_sub_inspect = keys
-                             .map { |k| "#{k} => #{self[k].sub_inspect}" }
-                             .join(",")
-      "#{s}{#{contents_sub_inspect}}"
-    end
-
-    # All objects (not paths) under this path (except itself).
-    # @return [Array<DBus::Object>]
-    def descendant_objects
-      children_objects = values.map(&:object).compact
-      descendants = values.map(&:descendant_objects)
-      flat_descendants = descendants.reduce([], &:+)
-      children_objects + flat_descendants
-    end
-  end
-
   # FIXME: rename Connection to Bus?
 
   # D-Bus main connection class
@@ -277,6 +50,10 @@ module DBus
       @method_call_msgs = {}
       @signal_matchrules = {}
       @proxy = nil
+    end
+
+    def object_server
+      @object_server ||= ObjectServer.new(self)
     end
 
     # Dispatch all messages that are available in the queue,
@@ -487,11 +264,23 @@ module DBus
     class NameRequestError < Exception
     end
 
+    def handle_return_of_request_name(ret, name)
+      details = if ret == REQUEST_NAME_REPLY_IN_QUEUE
+                  other = proxy.GetNameOwner(name).first
+                  other_creds = proxy.GetConnectionCredentials(other).first
+                  "already owned by #{other}, #{other_creds.inspect}"
+                else
+                  "error code #{ret}"
+                end
+      raise NameRequestError, "Could not request #{name}, #{details}" unless ret == REQUEST_NAME_REPLY_PRIMARY_OWNER
+
+      ret
+    end
+
     # Attempt to request a service _name_.
-    #
-    # FIXME, NameRequestError cannot really be rescued as it will be raised
-    # when dispatching a later call. Rework the API to better match the spec.
-    # @return [Service]
+    # @raise NameRequestError which cannot really be rescued as it will be raised when dispatching a later call.
+    # @return [ObjectServer]
+    # @deprecated Use {BusConnection#request_name}.
     def request_service(name)
       # Use RequestName, but asynchronously!
       # A synchronous call would not work with service activation, where
@@ -501,17 +290,9 @@ module DBus
         # check and report errors first
         raise rmsg if rmsg.is_a?(Error)
 
-        details = if r == REQUEST_NAME_REPLY_IN_QUEUE
-                    other = proxy.GetNameOwner(name).first
-                    other_creds = proxy.GetConnectionCredentials(other).first
-                    "already owned by #{other}, #{other_creds.inspect}"
-                  else
-                    "error code #{r}"
-                  end
-        raise NameRequestError, "Could not request #{name}, #{details}" unless r == REQUEST_NAME_REPLY_PRIMARY_OWNER
+        handle_return_of_request_name(r, name)
       end
-      @service = Service.new(name, self)
-      @service
+      object_server
     end
 
     # Set up a ProxyObject for the bus itself, since the bus is introspectable.
@@ -631,7 +412,7 @@ module DBus
         if msg.path == "/org/freedesktop/DBus"
           DBus.logger.debug "Got method call on /org/freedesktop/DBus"
         end
-        node = @service.get_node(msg.path, create: false)
+        node = object_server.get_node(msg.path, create: false)
         # introspect a known path even if there is no object on it
         if node &&
            msg.interface == "org.freedesktop.DBus.Introspectable" &&
@@ -670,24 +451,23 @@ module DBus
     def service(name)
       # The service might not exist at this time so we cannot really check
       # anything
-      Service.new(name, self)
+      ProxyService.new(name, self)
     end
     alias [] service
 
     # @api private
     # Emit a signal event for the given _service_, object _obj_, interface
     # _intf_ and signal _sig_ with arguments _args_.
-    # @param service [Service]
+    # @param _service unused
     # @param obj [DBus::Object]
     # @param intf [Interface]
     # @param sig [Signal]
     # @param args arguments for the signal
-    def emit(service, obj, intf, sig, *args)
+    def emit(_service, obj, intf, sig, *args)
       m = Message.new(DBus::Message::SIGNAL)
       m.path = obj.path
       m.interface = intf.name
       m.member = sig.name
-      m.sender = service.name
       i = 0
       sig.params.each do |par|
         m.add_param(par.type, args[i])
@@ -710,7 +490,25 @@ module DBus
         @unique_name = rmsg.destination
         DBus.logger.debug "Got hello reply. Our unique_name is #{@unique_name}"
       end
-      @service = Service.new(@unique_name, self)
+    end
+  end
+
+  # A regular Bus {Connection}.
+  # As opposed to a peer connection to a single counterparty with no daemon in between.
+  # FIXME: move the remaining relevant methods from Connection here, but alias the constants
+  class BusConnection < Connection
+    # @param name [BusName] the requested name
+    # @param flags [Integer] TODO: explain and add a better non-numeric API for this
+    # @raise NameRequestError if we could not get the name
+    # @example Usage
+    #   bus = DBus.session_bus
+    #   bus.object_server.export(DBus::Object.new("/org/example/Test"))
+    #   bus.request_name("org.example.Test")
+    # @see https://dbus.freedesktop.org/doc/dbus-specification.html#bus-messages-request-name
+    def request_name(name, flags: 0)
+      name = BusName.new(name)
+      r = proxy.RequestName(name, flags).first
+      handle_return_of_request_name(r, name)
     end
   end
 
@@ -720,7 +518,7 @@ module DBus
   #
   # Use SessionBus, the non-singleton ASessionBus is
   # for the test suite.
-  class ASessionBus < Connection
+  class ASessionBus < BusConnection
     # Get the the default session bus.
     def initialize
       super(self.class.session_bus_address)
@@ -771,7 +569,7 @@ module DBus
   #
   # Use SystemBus, the non-singleton ASystemBus is
   # for the test suite.
-  class ASystemBus < Connection
+  class ASystemBus < BusConnection
     # Get the default system bus.
     def initialize
       super(self.class.system_bus_address)
@@ -794,7 +592,8 @@ module DBus
   #
   # you'll need to take care about authentification then, more info here:
   # https://gitlab.com/pangdudu/ruby-dbus/-/blob/master/README.rdoc
-  class RemoteBus < Connection
+  # TODO: keep the name but update the docs
+  class RemoteBus < BusConnection
     # Get the remote bus.
     def initialize(socket_name)
       super(socket_name)
@@ -817,56 +616,5 @@ module DBus
   # @return [Connection]
   def self.session_bus
     SessionBus.instance
-  end
-
-  # = Main event loop class.
-  #
-  # Class that takes care of handling message and signal events
-  # asynchronously.  *Note:* This is a native implement and therefore does
-  # not integrate with a graphical widget set main loop.
-  class Main
-    # Create a new main event loop.
-    def initialize
-      @buses = {}
-      @quitting = false
-    end
-
-    # Add a _bus_ to the list of buses to watch for events.
-    def <<(bus)
-      @buses[bus.message_queue.socket] = bus
-    end
-
-    # Quit a running main loop, to be used eg. from a signal handler
-    def quit
-      @quitting = true
-    end
-
-    # Run the main loop. This is a blocking call!
-    def run
-      # before blocking, empty the buffers
-      # https://bugzilla.novell.com/show_bug.cgi?id=537401
-      @buses.each_value do |b|
-        while (m = b.message_queue.message_from_buffer_nonblock)
-          b.process(m)
-        end
-      end
-      while !@quitting && !@buses.empty?
-        ready = IO.select(@buses.keys, [], [], 5) # timeout 5 seconds
-        next unless ready # timeout exceeds so continue unless quitting
-
-        ready.first.each do |socket|
-          b = @buses[socket]
-          begin
-            b.message_queue.buffer_from_socket_nonblock
-          rescue EOFError, SystemCallError
-            @buses.delete socket # this bus died
-            next
-          end
-          while (m = b.message_queue.message_from_buffer_nonblock)
-            b.process(m)
-          end
-        end
-      end
-    end
   end
 end

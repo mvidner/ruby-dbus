@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+Bug fixes:
+* A service can now have more than one name ([#69][]).
+  Connection#request_service is deprecated in favor of Connection#object_server
+  and BusConnection#request_name
+
+[#69]: https://github.com/mvidner/ruby-dbus/issues/69
+
+API:
+ * Remove Service, splitting it into ProxyService and ObjectServer
+ * Split off BusConnection from Connection
+
 ## Ruby D-Bus 0.22.1 - 2023-05-17
 
 Bug fixes:

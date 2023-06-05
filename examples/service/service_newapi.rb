@@ -31,9 +31,9 @@ class Test < DBus::Object
 end
 
 bus = DBus::SessionBus.instance
-service = bus.request_service("org.ruby.service")
 myobj = Test.new("/org/ruby/MyInstance")
-service.export(myobj)
+bus.object_server.export(myobj)
+bus.request_name("org.ruby.service")
 
 Thread.new do
   i = 0

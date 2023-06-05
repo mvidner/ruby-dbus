@@ -118,6 +118,27 @@ describe DBus::Object do
     end
   end
 
+  describe ".dbus_signal" do
+    it "can only be used within a dbus_interface" do
+      expect do
+        ObjectTest.instance_exec do
+          dbus_signal :signal_without_interface
+        end
+      end.to raise_error(DBus::Object::UndefinedInterface)
+    end
+
+    it "cannot be named with a bang" do
+      expect do
+        ObjectTest.instance_exec do
+          dbus_interface "org.ruby.ServerTest" do
+            # a valid Ruby symbol but an invalid DBus name; Ticket#38
+            dbus_signal :signal_with_a_bang!
+          end
+        end
+      end.to raise_error(DBus::InvalidMethodName)
+    end
+  end
+
   describe ".emits_changed_signal" do
     it "raises UndefinedInterface when so" do
       expect { ObjectTest.emits_changed_signal = false }
@@ -143,6 +164,15 @@ describe DBus::Object do
           end
         end
       end.to raise_error(RuntimeError, /assigned more than once/)
+    end
+  end
+
+  # coverage obsession
+  describe "#dispatch" do
+    it "survives being called with a non-METHOD_CALL, doing nothing" do
+      obj = ObjectTest.new("/test")
+      msg = DBus::MethodReturnMessage.new
+      expect { obj.dispatch(msg) }.to_not raise_error
     end
   end
 end

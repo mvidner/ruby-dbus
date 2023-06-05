@@ -1,14 +1,20 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "spec_helper"
-SimpleCov.command_name "Service Tests" if Object.const_defined? "SimpleCov"
+# This file was formerly named spec/service_newapi.rb, after the example
+# which it mutated from.
+# Spaghetti monster is a better name,
+# reflecting on its evolution and current nature :'-)
+
+require_relative "../coverage_helper"
+SimpleCov.command_name "Service Tests (#{Process.pid})" if Object.const_defined? "SimpleCov"
+
 # find the library without external help
-$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+$LOAD_PATH.unshift File.expand_path("../../lib", __dir__)
 
 require "dbus"
 
-PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties"
+SERVICE_NAME = "org.ruby.service"
 
 class TestChild < DBus::Object
   def initialize(opath)
@@ -177,15 +183,16 @@ class Test < DBus::Object
   dbus_interface "org.ruby.TestParent" do
     dbus_method :New, "in name:s, out opath:o" do |name|
       child = TestChild.new("#{path}/#{name}")
-      @service.export(child)
+      connection.object_server.export(child)
       [child.path]
     end
 
     dbus_method :Delete, "in opath:o" do |opath|
       raise ArgumentError unless opath.start_with?(path)
 
-      obj = @service.get_node(opath)&.object
-      @service.unexport(obj)
+      svr = connection.object_server
+      obj = svr.get_node(opath)&.object
+      svr.unexport(obj)
     end
   end
 
@@ -194,6 +201,9 @@ class Test < DBus::Object
       [0]
     end
     dbus_method :interfaces, "out answer:i" do
+      # 'Shadowed' from the Ruby side, meaning ProxyObject#interfaces
+      # will return the list of interfaces rather than calling this method.
+      # Calling it with busctl will work just fine.
       raise "This DBus method is currently shadowed by ProxyObject#interfaces"
     end
   end
@@ -231,13 +241,14 @@ class Test2 < DBus::Object
 end
 
 bus = DBus::SessionBus.instance
-service = bus.request_service("org.ruby.service")
+service = bus.object_server
 myobj = Test.new("/org/ruby/MyInstance")
 service.export(myobj)
 derived = Derived.new "/org/ruby/MyDerivedInstance"
 service.export derived
 test2 = Test2.new "/org/ruby/MyInstance2"
 service.export test2
+bus.request_name(SERVICE_NAME)
 
 # introspect every other connection, Ticket #34
 #  (except the one that activates us - it has already emitted
@@ -254,12 +265,13 @@ bus.add_match(mr) do |msg|
   end
 end
 
-puts "listening, with ruby-#{RUBY_VERSION}"
+DBus.logger.info "Service #{SERVICE_NAME} listening, with ruby-#{RUBY_VERSION}"
 main = DBus::Main.new
 main << bus
 myobj.main_loop = main
 begin
   main.run
-rescue SystemCallError
+rescue SystemCallError, SignalException => e
+  DBus.logger.info "Service #{SERVICE_NAME} got #{e.inspect}, exiting"
   # the test driver will kill the bus, that's OK
 end

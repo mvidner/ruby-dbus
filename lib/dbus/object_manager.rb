@@ -14,7 +14,7 @@ module DBus
   # {https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-objectmanager
   # org.freedesktop.DBus.ObjectManager}.
   #
-  # {Service#export} and {Service#unexport} will look for an ObjectManager
+  # {ObjectServer#export} and {ObjectServer#unexport} will look for an ObjectManager
   # parent in the path hierarchy. If found, it will emit InterfacesAdded
   # or InterfacesRemoved, as appropriate.
   module ObjectManager
@@ -23,8 +23,7 @@ module DBus
     # @return [Hash{ObjectPath => Hash{String => Hash{String => Data::Base}}}]
     #   object -> interface -> property -> value
     def managed_objects
-      # FIXME: also fix the "service" concept
-      descendant_objects = @service.descendants_for(path)
+      descendant_objects = connection.object_server.descendants_for(path)
       descendant_objects.each_with_object({}) do |obj, hash|
         hash[obj.path] = obj.interfaces_and_properties
       end

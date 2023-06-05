@@ -5,6 +5,20 @@
 require_relative "spec_helper"
 require "dbus"
 
+describe "DBus.logger" do
+  it "will log debug messages if $DEBUG is true" do
+    logger_old = DBus.logger
+    DBus.logger = nil
+    debug_old = $DEBUG
+    $DEBUG = true
+
+    DBus.logger.debug "this debug message will always be shown"
+
+    $DEBUG = debug_old
+    DBus.logger = logger_old
+  end
+end
+
 describe "MainLoopTest" do
   before(:each) do
     @session_bus = DBus::ASessionBus.new
