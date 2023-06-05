@@ -36,10 +36,10 @@ describe DBus::BusConnection do
       end
     end
 
-    context "when we're not allowed to own the name", tag_system_bus: true do
-      let(:bus) { DBus::ASystemBus.new }
-      xit "raises an error... too late" do
-        name = "org.rubygems.ruby_dbus.NotAllowedToOwnThisNameAnyway"
+    # This only works with our special bus setup
+    context "when we're not allowed to own the name", tag_limited_bus: true do
+      it "raises an error... too late" do
+        name = "org.rubygems.ruby_dbus.NobodyCanOwnThisName"
         expect do
           bus.request_service(name)
           _unrelated_call = bus.proxy.GetId.first
@@ -68,10 +68,9 @@ describe DBus::BusConnection do
       end
     end
 
-    context "when we're not allowed to own the name", tag_system_bus: true do
-      let(:bus) { DBus::ASystemBus.new }
-      xit "raises an error... too late" do
-        name = "org.rubygems.ruby_dbus.NotAllowedToOwnThisNameAnyway"
+    context "when we're not allowed to own the name", tag_limited_bus: true do
+      it "raises an error" do
+        name = "org.rubygems.ruby_dbus.NobodyCanOwnThisName"
         expect do
           bus.request_name(name)
         end.to raise_error(DBus::Error, /not allowed to own the service/)
