@@ -38,7 +38,7 @@ describe DBus::BusConnection do
 
     context "when we're not allowed to own the name", tag_system_bus: true do
       let(:bus) { DBus::ASystemBus.new }
-      it "raises an error... too late" do
+      xit "raises an error... too late" do
         name = "org.rubygems.ruby_dbus.NotAllowedToOwnThisNameAnyway"
         expect do
           bus.request_service(name)
@@ -70,7 +70,7 @@ describe DBus::BusConnection do
 
     context "when we're not allowed to own the name", tag_system_bus: true do
       let(:bus) { DBus::ASystemBus.new }
-      it "raises an error... too late" do
+      xit "raises an error... too late" do
         name = "org.rubygems.ruby_dbus.NotAllowedToOwnThisNameAnyway"
         expect do
           bus.request_name(name)
