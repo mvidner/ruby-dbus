@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.23.0.beta1 - 2023-06-05
+
 Bug fixes:
 * A service can now have more than one name ([#69][]).
   Connection#request_service is deprecated in favor of Connection#object_server

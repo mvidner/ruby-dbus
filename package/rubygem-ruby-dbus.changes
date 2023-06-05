@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Mon Jun  5 12:09:41 UTC 2023 - Martin Vidner <mvidner@suse.com>
+
+- 0.23.0.beta1
+  Bug fixes:
+  * A service can now have more than one name (gh#mvidner/ruby-dbus#69).
+    Connection#request_service is deprecated in favor of Connection#object_server
+    and BusConnection#request_name
+  API:
+   * Remove Service, splitting it into ProxyService and ObjectServer
+   * Split off BusConnection from Connection
+
+-------------------------------------------------------------------
 Wed May 17 08:29:42 UTC 2023 - Martin Vidner <mvidner@suse.com>
 
 - 0.22.1
