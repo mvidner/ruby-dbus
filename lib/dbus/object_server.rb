@@ -36,7 +36,7 @@ module DBus
 
     # Retrieves an object at the given _path_
     # @param path [ObjectPath]
-    # @return [DBus::Object]
+    # @return [DBus::Object,nil]
     def object(path)
       node = get_node(path, create: false)
       node&.object
@@ -56,26 +56,27 @@ module DBus
       object_manager_for(obj)&.object_added(obj)
     end
 
-    # Undo exporting an object _obj_.
+    # Undo exporting an object *obj_or_path*.
     # Raises ArgumentError if it is not a DBus::Object.
     # Returns the object, or false if _obj_ was not exported.
-    # @param obj [DBus::Object]
-    def unexport(obj)
-      raise ArgumentError, "Expecting a DBus::Object argument" unless obj.is_a?(DBus::Object)
-
-      parent_path, _separator, node_name = obj.path.rpartition("/")
+    # @param obj_or_path [DBus::Object,ObjectPath,String] an object or a valid object path
+    def unexport(obj_or_path)
+      path = self.class.path_of(obj_or_path)
+      parent_path, _separator, node_name = path.rpartition("/")
 
       parent_node = get_node(parent_path, create: false)
       return false unless parent_node
-
-      object_manager_for(obj)&.object_removed(obj)
-      obj.connection = nil
 
       node = if node_name == "" # path == "/"
                parent_node
              else
                parent_node[node_name]
              end
+      obj = node&.object
+      raise ArgumentError, "Cannot unexport, no object at #{path}" unless obj
+
+      object_manager_for(obj)&.object_removed(obj)
+      obj.connection = nil
       node.object = nil
 
       # node can be deleted if
@@ -109,6 +110,22 @@ module DBus
       raise ArgumentError, "Object path #{path} doesn't exist" if node.nil?
 
       node.descendant_objects
+    end
+
+    # @param obj_or_path [DBus::Object,ObjectPath,String] an object or a valid object path
+    # @return [ObjectPath]
+    # @api private
+    def self.path_of(obj_or_path)
+      case obj_or_path
+      when ObjectPath
+        obj_or_path
+      when String
+        ObjectPath.new(obj_or_path)
+      when DBus::Object
+        obj_or_path.path
+      else
+        raise ArgumentError, "Expecting a DBus::Object argument or DBus::ObjectPath or String which parses as one"
+      end
     end
 
     #########

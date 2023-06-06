@@ -5,6 +5,9 @@
 Bug fixes:
  * Fix crash on #unexport of /child_of_root or even /
 
+API:
+ * ObjectServer#unexport now also accepts an object path
+
 ## Ruby D-Bus 0.23.0.beta1 - 2023-06-05
 
 Bug fixes:

@@ -91,14 +91,37 @@ describe DBus::ObjectServer do
       expect(@svc.unexport(obj)).to be_equal(obj)
     end
 
+    it "returns the unexported leaf object, if specified by its path" do
+      obj = DBus::Object.new "/org/ruby/Foo"
+      @svc.export obj
+      expect(@svc.unexport(obj.path)).to be_equal(obj)
+
+      obj = DBus::Object.new "/org/ruby/Foo"
+      @svc.export obj
+      expect(@svc.unexport(DBus::ObjectPath.new(obj.path))).to be_equal(obj)
+    end
+
     it "returns false if the object was never exported" do
       obj = DBus::Object.new "/org/ruby/Foo"
       expect(@svc.unexport(obj)).to be false
     end
 
-    it "raises when argument is not a DBus::Object" do
-      path = "/org/ruby/Foo"
-      expect { @svc.unexport(path) }.to raise_error(ArgumentError)
+    it "raises false if the path has no node" do
+      obj = DBus::Object.new "/org/ruby/Foo"
+      @svc.export obj
+      expect { @svc.unexport("/org/ruby/NotFoo") }.to raise_error(ArgumentError)
+      @svc.unexport obj
+    end
+
+    it "raises false if the path has no object" do
+      obj = DBus::Object.new "/org/ruby/Foo"
+      @svc.export obj
+      expect { @svc.unexport("/org/ruby") }.to raise_error(ArgumentError)
+      @svc.unexport obj
+    end
+
+    it "raises when argument is not usable" do
+      expect { @svc.unexport(:foo) }.to raise_error(ArgumentError)
     end
 
     context "/child_of_root" do
