@@ -76,7 +76,7 @@ module DBus
     # Perform a recursive retrospection on the given current _node_
     # on the given _path_.
     def rec_introspect(node, path)
-      xml = bus.introspect_data(@name, path)
+      xml = connection.introspect_data(@name, path)
       intfs, subnodes = IntrospectXMLParser.new(xml).parse
       subnodes.each do |nodename|
         subnode = node[nodename] = Node.new(nodename)
