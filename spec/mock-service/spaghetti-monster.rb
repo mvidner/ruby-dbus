@@ -198,6 +198,7 @@ class Test < DBus::Object
     dbus_method :the_answer, "out answer:i" do
       [0]
     end
+
     dbus_method :interfaces, "out answer:i" do
       # 'Shadowed' from the Ruby side, meaning ProxyObject#interfaces
       # will return the list of interfaces rather than calling this method.

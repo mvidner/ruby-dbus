@@ -20,6 +20,7 @@ module DBus
   module ObjectManager
     OBJECT_MANAGER_INTERFACE = "org.freedesktop.DBus.ObjectManager"
 
+    # Implements `the GetManagedObjects` method.
     # @return [Hash{ObjectPath => Hash{String => Hash{String => Data::Base}}}]
     #   object -> interface -> property -> value
     def managed_objects
@@ -29,18 +30,21 @@ module DBus
       end
     end
 
+    # {ObjectServer#export} will call this for you to emit the `InterfacesAdded` signal.
     # @param object [DBus::Object]
     # @return [void]
     def object_added(object)
       InterfacesAdded(object.path, object.interfaces_and_properties)
     end
 
+    # {ObjectServer#unexport} will call this for you to emit the `InterfacesRemoved` signal.
     # @param object [DBus::Object]
     # @return [void]
     def object_removed(object)
       InterfacesRemoved(object.path, object.intfs.keys)
     end
 
+    # Module#included, a hook for `include ObjectManager`, declares its dbus_interface.
     def self.included(base)
       base.class_eval do
         dbus_interface OBJECT_MANAGER_INTERFACE do
