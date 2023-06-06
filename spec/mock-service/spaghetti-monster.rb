@@ -191,8 +191,7 @@ class Test < DBus::Object
       raise ArgumentError unless opath.start_with?(path)
 
       svr = connection.object_server
-      obj = svr.get_node(opath)&.object
-      svr.unexport(obj)
+      svr.unexport(opath)
     end
   end
 
