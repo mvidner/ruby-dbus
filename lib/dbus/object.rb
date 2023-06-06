@@ -19,31 +19,37 @@ module DBus
   # Objects that are going to be exported by a D-Bus service
   # should inherit from this class. At the client side, use {ProxyObject}.
   class Object
-    # The path of the object.
+    # @return [ObjectPath] The path of the object.
     attr_reader :path
 
     # The interfaces that the object supports. Hash: String => Interface
     my_class_attribute :intfs
     self.intfs = {}
 
-    # @return [Connection] the connection the object is exported by
-    attr_reader :connection
-
     @@cur_intf = nil # Interface
     @@intfs_mutex = Mutex.new
 
     # Create a new object with a given _path_.
     # Use ObjectServer#export to export it.
+    # @param path [ObjectPath] The path of the object.
     def initialize(path)
       @path = path
-      @connection = nil
+      # TODO: what parts of our API are supposed to work before we're exported?
+      self.object_server = nil
     end
 
-    # @param connection [Connection] the connection the object is exported by
-    def connection=(connection)
-      @connection = connection
-      # deprecated, keeping @service for compatibility
-      @service = connection&.object_server
+    # @return [ObjectServer] the server the object is exported by
+    def object_server
+      # tests may mock the old ivar
+      @object_server || @service
+    end
+
+    # @param server [ObjectServer] the server the object is exported by
+    # @note only the server itself should call this in its #export/#unexport
+    def object_server=(server)
+      # until v0.22.1 there was attr_writer :service
+      # so subclasses only could use @service
+      @object_server = @service = server
     end
 
     # Dispatch a message _msg_ to call exported methods
@@ -78,7 +84,9 @@ module DBus
           dbus_msg_exc = msg.annotate_exception(e)
           reply = ErrorMessage.from_exception(dbus_msg_exc).reply_to(msg)
         end
-        @connection.message_queue.push(reply)
+        # TODO: this method chain is too long,
+        # we should probably just return reply [Message] like we get a [Message]
+        object_server.connection.message_queue.push(reply)
       end
     end
 
@@ -316,7 +324,9 @@ module DBus
     # @param sig [Signal]
     # @param args arguments for the signal
     def emit(intf, sig, *args)
-      @connection.emit(nil, self, intf, sig, *args)
+      raise "Cannot emit signal #{intf.name}.#{sig.name} before #{path} is exported" if object_server.nil?
+
+      object_server.connection.emit(nil, self, intf, sig, *args)
     end
 
     # Defines a signal for the object with a given name _sym_ and _prototype_.

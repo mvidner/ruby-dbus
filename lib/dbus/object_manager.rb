@@ -23,7 +23,7 @@ module DBus
     # @return [Hash{ObjectPath => Hash{String => Hash{String => Data::Base}}}]
     #   object -> interface -> property -> value
     def managed_objects
-      descendant_objects = connection.object_server.descendants_for(path)
+      descendant_objects = object_server.descendants_for(path)
       descendant_objects.each_with_object({}) do |obj, hash|
         hash[obj.path] = obj.interfaces_and_properties
       end

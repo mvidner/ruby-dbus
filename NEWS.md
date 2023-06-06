@@ -2,12 +2,14 @@
 
 ## Unreleased
 
+API:
+ * DBus::Object#object_server replaces @service (which still works) and the short-lived
+   @connection
+ * ObjectServer#unexport now also accepts an object path
+
 Bug fixes:
  * Fixed a refactoring crasher bug in ProxyService#introspect (oops).
  * Fix crash on #unexport of /child_of_root or even /
-
-API:
- * ObjectServer#unexport now also accepts an object path
 
 ## Ruby D-Bus 0.23.0.beta1 - 2023-06-05
 
@@ -21,6 +23,7 @@ Bug fixes:
 API:
  * Remove Service, splitting it into ProxyService and ObjectServer
  * Split off BusConnection from Connection
+ * DBus::Object @service replaced by @connection
 
 ## Ruby D-Bus 0.22.1 - 2023-05-17
 

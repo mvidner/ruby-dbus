@@ -52,7 +52,7 @@ module DBus
 
       node.object = obj
 
-      obj.connection = @connection
+      obj.object_server = self
       object_manager_for(obj)&.object_added(obj)
     end
 
@@ -76,7 +76,7 @@ module DBus
       raise ArgumentError, "Cannot unexport, no object at #{path}" unless obj
 
       object_manager_for(obj)&.object_removed(obj)
-      obj.connection = nil
+      obj.object_server = nil
       node.object = nil
 
       # node can be deleted if

@@ -175,4 +175,20 @@ describe DBus::Object do
       expect { obj.dispatch(msg) }.to_not raise_error
     end
   end
+
+  describe "#emit" do
+    context "before the object has been exported" do
+      it "raises an explanatory error" do
+        obj = ObjectTest.new("/test")
+
+        intf = DBus::Interface.new("org.example.Test")
+        signal = DBus::Signal.new("Ring")
+        expect { obj.emit(intf, signal) }
+          .to raise_error(
+            RuntimeError,
+            %r{Cannot emit signal org.example.Test.Ring before /test is exported}
+          )
+      end
+    end
+  end
 end

@@ -183,15 +183,14 @@ class Test < DBus::Object
   dbus_interface "org.ruby.TestParent" do
     dbus_method :New, "in name:s, out opath:o" do |name|
       child = TestChild.new("#{path}/#{name}")
-      connection.object_server.export(child)
+      object_server.export(child)
       [child.path]
     end
 
     dbus_method :Delete, "in opath:o" do |opath|
       raise ArgumentError unless opath.start_with?(path)
 
-      svr = connection.object_server
-      svr.unexport(opath)
+      object_server.unexport(opath)
     end
   end
 
