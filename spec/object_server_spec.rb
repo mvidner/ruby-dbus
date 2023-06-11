@@ -85,10 +85,10 @@ describe DBus::ObjectServer do
       @svc = bus.object_server
     end
 
-    it "returns the unexported object" do
+    it "returns the unexported leaf object" do
       obj = DBus::Object.new "/org/ruby/Foo"
       @svc.export obj
-      expect(@svc.unexport(obj)).to be_a DBus::Object
+      expect(@svc.unexport(obj)).to be_equal(obj)
     end
 
     it "returns false if the object was never exported" do
@@ -99,6 +99,34 @@ describe DBus::ObjectServer do
     it "raises when argument is not a DBus::Object" do
       path = "/org/ruby/Foo"
       expect { @svc.unexport(path) }.to raise_error(ArgumentError)
+    end
+
+    context "/child_of_root" do
+      it "returns the unexported object" do
+        obj = DBus::Object.new "/child_of_root"
+        @svc.export obj
+        expect(@svc.unexport(obj)).to be_equal(obj)
+      end
+    end
+
+    context "/ (root)" do
+      it "returns the unexported object" do
+        obj = DBus::Object.new "/"
+        @svc.export obj
+        expect(@svc.unexport(obj)).to be_equal(obj)
+      end
+    end
+
+    context "not a leaf object" do
+      it "maintains objects on child paths" do
+        obj = DBus::Object.new "/org/ruby"
+        @svc.export obj
+        obj2 = DBus::Object.new "/org/ruby/Foo"
+        @svc.export obj2
+
+        @svc.unexport(obj)
+        expect(@svc.object("/org/ruby/Foo")).to be_a DBus::Object
+      end
     end
   end
 end

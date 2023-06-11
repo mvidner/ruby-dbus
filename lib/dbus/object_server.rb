@@ -63,16 +63,29 @@ module DBus
     def unexport(obj)
       raise ArgumentError, "Expecting a DBus::Object argument" unless obj.is_a?(DBus::Object)
 
-      last_path_separator_idx = obj.path.rindex("/")
-      parent_path = obj.path[1..last_path_separator_idx - 1]
-      node_name = obj.path[last_path_separator_idx + 1..-1]
+      parent_path, _separator, node_name = obj.path.rpartition("/")
 
       parent_node = get_node(parent_path, create: false)
       return false unless parent_node
 
       object_manager_for(obj)&.object_removed(obj)
       obj.connection = nil
-      parent_node.delete(node_name).object
+
+      node = if node_name == "" # path == "/"
+               parent_node
+             else
+               parent_node[node_name]
+             end
+      node.object = nil
+
+      # node can be deleted if
+      # - it has no children
+      # - it is not root
+      if node.empty? && !node.equal?(parent_node)
+        parent_node.delete(node_name)
+      end
+
+      obj
     end
 
     # Find the (closest) parent of *object*

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+Bug fixes:
+ * Fix crash on #unexport of /child_of_root or even /
+
 ## Ruby D-Bus 0.23.0.beta1 - 2023-06-05
 
 Bug fixes:
