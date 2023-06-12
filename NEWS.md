@@ -6,10 +6,14 @@ API:
  * DBus::Object#object_server replaces @service (which still works) and the short-lived
    @connection
  * ObjectServer#unexport now also accepts an object path
+ * Connection#object_server can export objects even without requesting any
+   service name ([#49][], in beta1 already).
 
 Bug fixes:
  * Fixed a refactoring crasher bug in ProxyService#introspect (oops).
  * Fix crash on #unexport of /child_of_root or even /
+
+[#49]: https://github.com/mvidner/ruby-dbus/issues/49
 
 ## Ruby D-Bus 0.23.0.beta1 - 2023-06-05
 
