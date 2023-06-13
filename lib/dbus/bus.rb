@@ -17,16 +17,13 @@ require "singleton"
 #
 # Module containing all the D-Bus modules and classes.
 module DBus
-  # FIXME: rename Connection to Bus?
-
   # D-Bus main connection class
   #
   # Main class that maintains a connection to a bus and can handle incoming
   # and outgoing messages.
   class Connection
-    # The unique name (by specification) of the message.
-    attr_reader :unique_name
     # pop and push messages here
+    # @return [MessageQueue]
     attr_reader :message_queue
 
     # Create a new connection to the bus for a given connect _path_. _path_
@@ -37,7 +34,6 @@ module DBus
     # e.g. "unix:path=/tmp/dbus-test" or "tcp:host=localhost,port=2687"
     def initialize(path)
       @message_queue = MessageQueue.new(path)
-      @unique_name = nil
 
       # @return [Hash{Integer => Proc}]
       #   key: message serial
@@ -49,7 +45,6 @@ module DBus
       #   key == value.serial
       @method_call_msgs = {}
       @signal_matchrules = {}
-      @proxy = nil
     end
 
     def object_server
@@ -78,6 +73,9 @@ module DBus
         true
       end
     end
+
+    # NAME_FLAG_* and REQUEST_NAME_* belong to BusConnection
+    # but users will have referenced them in Connection so they need to stay here
 
     # FIXME: describe the following names, flags and constants.
     # See DBus spec for definition
@@ -195,26 +193,6 @@ module DBus
       object_server
     end
 
-    # Set up a ProxyObject for the bus itself, since the bus is introspectable.
-    # @return [ProxyObject] that always returns an array
-    #   ({DBus::ApiOptions#proxy_method_returns_array})
-    # Returns the object.
-    def proxy
-      if @proxy.nil?
-        xml_filename = File.expand_path("org.freedesktop.DBus.xml", __dir__)
-        xml = File.read(xml_filename)
-
-        path = "/org/freedesktop/DBus"
-        dest = "org.freedesktop.DBus"
-        pof = DBus::ProxyObjectFactory.new(
-          xml, self, dest, path,
-          api: ApiOptions::A0
-        )
-        @proxy = pof.build["org.freedesktop.DBus"]
-      end
-      @proxy
-    end
-
     # @api private
     # Wait for a message to arrive. Return it once it is available.
     def wait_for_message
@@ -265,28 +243,21 @@ module DBus
     # Asks bus to send us messages matching mr, and execute slot when
     # received
     # @param match_rule [MatchRule,#to_s]
+    # @return [void] actually return whether the rule existed, internal detail
     def add_match(match_rule, &slot)
       # check this is a signal.
       mrs = match_rule.to_s
       DBus.logger.debug "#{@signal_matchrules.size} rules, adding #{mrs.inspect}"
-      # don't ask for the same match if we override it
-      unless @signal_matchrules.key?(mrs)
-        DBus.logger.debug "Asked for a new match"
-        proxy.AddMatch(mrs) if @unique_name
-      end
+      rule_existed = @signal_matchrules.key?(mrs)
       @signal_matchrules[mrs] = slot
+      rule_existed
     end
 
     # @param match_rule [MatchRule,#to_s]
+    # @return [void] actually return whether the rule existed, internal detail
     def remove_match(match_rule)
       mrs = match_rule.to_s
-      rule_existed = @signal_matchrules.delete(mrs).nil?
-      # don't remove nonexisting matches.
-      return if rule_existed
-
-      # FIXME: if we do try, the Error.MatchRuleNotFound is *not* raised
-      # and instead is reported as "no return code for nil"
-      proxy.RemoveMatch(mrs) if @unique_name
+      @signal_matchrules.delete(mrs).nil?
     end
 
     # @api private
@@ -349,17 +320,6 @@ module DBus
       raise msg.annotate_exception(e)
     end
 
-    # Makes a {ProxyService} with the given *name*.
-    # Note that this succeeds even if the name does not exist and cannot be
-    # activated. It will only fail when calling a method.
-    # @return [ProxyService]
-    def service(name)
-      # The service might not exist at this time so we cannot really check
-      # anything
-      ProxyService.new(name, self)
-    end
-    alias [] service
-
     # @api private
     # Emit a signal event for the given _service_, object _obj_, interface
     # _intf_ and signal _sig_ with arguments _args_.
@@ -380,6 +340,93 @@ module DBus
       end
       @message_queue.push(m)
     end
+  end
+
+  # A regular Bus {Connection}.
+  # As opposed to a peer connection to a single counterparty with no daemon in between.
+  class BusConnection < Connection
+    # The unique name (by specification) of the message.
+    attr_reader :unique_name
+
+    # @param addresses [String]
+    # @see https://dbus.freedesktop.org/doc/dbus-specification.html#addresses
+    def initialize(addresses)
+      super
+      @unique_name = nil
+      @proxy = nil
+    end
+
+    # Set up a ProxyObject for the bus itself, since the bus is introspectable.
+    # @return [ProxyObject] that always returns an array
+    #   ({DBus::ApiOptions#proxy_method_returns_array})
+    # Returns the object.
+    def proxy
+      if @proxy.nil?
+        xml_filename = File.expand_path("org.freedesktop.DBus.xml", __dir__)
+        xml = File.read(xml_filename)
+
+        path = "/org/freedesktop/DBus"
+        dest = "org.freedesktop.DBus"
+        pof = DBus::ProxyObjectFactory.new(
+          xml, self, dest, path,
+          api: ApiOptions::A0
+        )
+        @proxy = pof.build["org.freedesktop.DBus"]
+      end
+      @proxy
+    end
+
+    # @param name [BusName] the requested name
+    # @param flags [Integer] TODO: explain and add a better non-numeric API for this
+    # @raise NameRequestError if we could not get the name
+    # @example Usage
+    #   bus = DBus.session_bus
+    #   bus.object_server.export(DBus::Object.new("/org/example/Test"))
+    #   bus.request_name("org.example.Test")
+    # @see https://dbus.freedesktop.org/doc/dbus-specification.html#bus-messages-request-name
+    def request_name(name, flags: 0)
+      name = BusName.new(name)
+      r = proxy.RequestName(name, flags).first
+      handle_return_of_request_name(r, name)
+    end
+
+    # Asks bus to send us messages matching mr, and execute slot when
+    # received
+    # @param match_rule [MatchRule,#to_s]
+    # @return [void]
+    def add_match(match_rule, &slot)
+      mrs = match_rule.to_s
+      rule_existed = super(mrs, &slot)
+      # don't ask for the same match if we override it
+      return if rule_existed
+
+      DBus.logger.debug "Asked for a new match"
+      proxy.AddMatch(mrs)
+    end
+
+    # @param match_rule [MatchRule,#to_s]
+    # @return [void]
+    def remove_match(match_rule)
+      mrs = match_rule.to_s
+      rule_existed = super(mrs)
+      # don't remove nonexisting matches.
+      return if rule_existed
+
+      # FIXME: if we do try, the Error.MatchRuleNotFound is *not* raised
+      # and instead is reported as "no return code for nil"
+      proxy.RemoveMatch(mrs)
+    end
+
+    # Makes a {ProxyService} with the given *name*.
+    # Note that this succeeds even if the name does not exist and cannot be
+    # activated. It will only fail when calling a method.
+    # @return [ProxyService]
+    def service(name)
+      # The service might not exist at this time so we cannot really check
+      # anything
+      ProxyService.new(name, self)
+    end
+    alias [] service
 
     ###########################################################################
     private
@@ -395,25 +442,6 @@ module DBus
         @unique_name = rmsg.destination
         DBus.logger.debug "Got hello reply. Our unique_name is #{@unique_name}"
       end
-    end
-  end
-
-  # A regular Bus {Connection}.
-  # As opposed to a peer connection to a single counterparty with no daemon in between.
-  # FIXME: move the remaining relevant methods from Connection here, but alias the constants
-  class BusConnection < Connection
-    # @param name [BusName] the requested name
-    # @param flags [Integer] TODO: explain and add a better non-numeric API for this
-    # @raise NameRequestError if we could not get the name
-    # @example Usage
-    #   bus = DBus.session_bus
-    #   bus.object_server.export(DBus::Object.new("/org/example/Test"))
-    #   bus.request_name("org.example.Test")
-    # @see https://dbus.freedesktop.org/doc/dbus-specification.html#bus-messages-request-name
-    def request_name(name, flags: 0)
-      name = BusName.new(name)
-      r = proxy.RequestName(name, flags).first
-      handle_return_of_request_name(r, name)
     end
   end
 

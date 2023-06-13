@@ -23,7 +23,7 @@ is simply "dbus"
 #### Calling Methods
 
 1. {DBus.session_bus Connect to the session bus};
-2. {DBus::Connection#[] get the screensaver service}
+2. {DBus::BusConnection#[] get the screensaver service}
 3. {DBus::ProxyService#[] and its screensaver object}.
 4. Call one of its methods in a loop, solving [xkcd#196](http://xkcd.com/196).
 
