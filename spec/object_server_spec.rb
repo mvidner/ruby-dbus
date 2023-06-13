@@ -55,26 +55,9 @@ describe DBus::ObjectServer do
         o
       end
 
-      # which is right?
-      # current behavior
-      it "a) silently uses the new object" do
+      it "raises an error" do
         server.export(obj1)
-        server.export(obj2)
-
-        expect(server).to_not receive(:unexport).with(obj1)
-        expect(server[path].which).to eq 2
-      end
-
-      xit "b) unexports the other object first" do
-        server.export(obj1)
-
-        expect(server).to receive(:unexport).with(obj1)
-        server.export(obj2)
-      end
-
-      xit "c) raises an error" do
-        server.export(obj1)
-        expect { server.export(obj2) }.to raise_error(RuntimeError)
+        expect { server.export(obj2) }.to raise_error(RuntimeError, /there is already an object/)
       end
     end
   end

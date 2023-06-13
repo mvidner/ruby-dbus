@@ -45,10 +45,10 @@ module DBus
 
     # Export an object
     # @param obj [DBus::Object]
+    # @raise RuntimeError if there's already an exported object at the same path
     def export(obj)
       node = get_node(obj.path, create: true)
-      # TODO: clarify that this is indeed the right thing, and document
-      # raise "At #{obj.path} there is already an object #{node.object.inspect}" if node.object
+      raise "At #{obj.path} there is already an object #{node.object.inspect}" if node.object
 
       node.object = obj
 
