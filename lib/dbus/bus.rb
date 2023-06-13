@@ -348,12 +348,14 @@ module DBus
     # The unique name (by specification) of the message.
     attr_reader :unique_name
 
+    # Connect, authenticate, and send Hello.
     # @param addresses [String]
     # @see https://dbus.freedesktop.org/doc/dbus-specification.html#addresses
     def initialize(addresses)
       super
       @unique_name = nil
       @proxy = nil
+      send_hello
     end
 
     # Set up a ProxyObject for the bus itself, since the bus is introspectable.
@@ -468,7 +470,6 @@ module DBus
     # Get the the default session bus.
     def initialize
       super(self.class.session_bus_address)
-      send_hello
     end
 
     def self.session_bus_address
@@ -519,7 +520,6 @@ module DBus
     # Get the default system bus.
     def initialize
       super(self.class.system_bus_address)
-      send_hello
     end
 
     def self.system_bus_address
@@ -539,12 +539,8 @@ module DBus
   # you'll need to take care about authentification then, more info here:
   # https://gitlab.com/pangdudu/ruby-dbus/-/blob/master/README.rdoc
   # TODO: keep the name but update the docs
+  # @deprecated just use BusConnection
   class RemoteBus < BusConnection
-    # Get the remote bus.
-    def initialize(socket_name)
-      super(socket_name)
-      send_hello
-    end
   end
 
   # See ASystemBus
@@ -553,13 +549,13 @@ module DBus
   end
 
   # Shortcut for the {SystemBus} instance
-  # @return [Connection]
+  # @return [BusConnection]
   def self.system_bus
     SystemBus.instance
   end
 
   # Shortcut for the {SessionBus} instance
-  # @return [Connection]
+  # @return [BusConnection]
   def self.session_bus
     SessionBus.instance
   end

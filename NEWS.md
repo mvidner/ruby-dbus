@@ -11,7 +11,8 @@ API:
  * Add PeerConnection for connections without a bus, useful for PulseAudio.
    Fix listening for signals there ([#44][]).
  * Moved from Connection to BusConnection: #unique_name, #proxy, #service.
-   
+   Call send_hello in BusConnection#initialize already.
+
 Bug fixes:
  * Fixed a refactoring crasher bug in ProxyService#introspect (oops).
  * Fix crash on #unexport of /child_of_root or even /
