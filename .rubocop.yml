@@ -47,7 +47,7 @@ Lint/InheritException:
   Exclude:
     - 'lib/dbus.rb'
     - 'lib/dbus/auth.rb'
-    - 'lib/dbus/bus.rb'
+    - 'lib/dbus/connection.rb'
     - 'lib/dbus/introspect.rb'
     - 'lib/dbus/marshall.rb'
     - 'lib/dbus/matchrule.rb'
@@ -67,7 +67,7 @@ Lint/SuppressedException:
 Lint/RescueException:
   Exclude:
     - 'examples/no-introspect/nm-test.rb'
-    - 'lib/dbus/bus.rb'
+    - 'lib/dbus/connection.rb'
     - 'lib/dbus/message_queue.rb'
 
 Naming/PredicateName:
