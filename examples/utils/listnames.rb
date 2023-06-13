@@ -8,4 +8,12 @@ d = if ARGV.member?("--system")
     else
       DBus::SessionBus.instance
     end
-d.proxy.ListNames[0].each { |n| puts "\t#{n}" }
+d.proxy.ListNames[0].each do |n|
+  puts "\t#{n}"
+  qns = d.proxy.ListQueuedOwners(n)[0]
+  next if qns.size == 1 && qns.first == n
+
+  qns.each do |qn|
+    puts "\t\t#{qn}"
+  end
+end
