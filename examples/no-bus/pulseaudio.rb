@@ -28,3 +28,23 @@ no_svc = conn.peer_service
 obj = no_svc["/org/pulseaudio/core1"]
 ifc = obj["org.PulseAudio.Core1"]
 puts "PA version: #{ifc["Version"]}"
+
+puts "Waiting for volume changes, try adjusting it. Ctrl-C to exit."
+
+vol_ifc = "org.PulseAudio.Core1.Device"
+vol_member = "VolumeUpdated"
+# PA needs explicit enabling of signals
+ifc.ListenForSignal("#{vol_ifc}.#{vol_member}", [])
+
+match_rule = DBus::MatchRule.new
+match_rule.interface = vol_ifc
+match_rule.member = vol_member
+conn.add_match(match_rule) do |msg|
+  # a single argument that is an array
+  volumes = msg.params[0]
+  puts "VolumeUpdated: #{volumes.join(", ")}"
+end
+
+loop = DBus::Main.new
+loop << conn
+loop.run
