@@ -50,10 +50,12 @@ describe DBus::BusConnection do
 
   describe "#request_name", tag_bus: true do
     context "when the name request succeeds" do
-      it "returns something which can export objects" do
+      it "returns a success code" do
         name = "org.rubygems.ruby_dbus.RequestNameTest"
-        expect { bus.request_name(name) }.to_not raise_error
-        bus.proxy.ReleaseName(name)
+        expect(bus.request_name(name)).to eq DBus::Connection::REQUEST_NAME_REPLY_PRIMARY_OWNER
+        # second time, considered also a success
+        expect(bus.request_name(name)).to eq DBus::Connection::REQUEST_NAME_REPLY_ALREADY_OWNER
+        bus.release_name(name)
       end
     end
 

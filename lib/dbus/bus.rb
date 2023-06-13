@@ -55,18 +55,105 @@ module DBus
       @proxy
     end
 
+    # Request a well-known name so that clients can find us.
+    # @note Parameters other than *name* are advanced, you probably don't need them.
+    #
+    # With no boolean flags, running a second instance of a program that calls `request_name`
+    # will result in the second one failing, which this library translates to an exception.
+    # If you want the second instance to take over, you need both
+    # `allow_replacement: true` and `replace_existing: true.`
+    #
     # @param name [BusName] the requested name
-    # @param flags [Integer] TODO: explain and add a better non-numeric API for this
-    # @raise NameRequestError if we could not get the name
-    # @example Usage
+    # @param replace_existing [Boolean]
+    #   Replace an existing owner of the name, if that owner set *allow_replacement*.
+    # @param allow_replacement [Boolean]
+    #   Other connections that specify *replace_existing* will be able to take
+    #   the name from us. We will get {#on_name_lost NameLost}. If we specified *queue*
+    #   we may get the name again, with {#on_name_acquired NameAcquired}.
+    # @param queue [Boolean]
+    #   Affects the behavior when the bus denies the name (sooner or later).
+    #   - If `false` (default), it is recommended to let the `NameRequestError` fall through and end your program.
+    #   - If `true`, you should `rescue` the `NameRequestError` and set up
+    #     {#on_name_acquired NameAcquired} and {#on_name_lost NameLost} handlers.
+    #     Meanwhile, the bus will put us in a queue waiting for *name* (this is the "sooner" case).
+    #     Also, if we had `allow_replacement: true`, another connection can cause us
+    #     to lose the name. We will be moved back to the queue, waiting for when the other owners give up
+    #     (the "later" case).
+    # @param flags [Integer,nil]
+    #    If specified, overrides the boolean parameters.
+    #    Use a bitwise sum `|` of:
+    #    -  NAME_FLAG_ALLOW_REPLACEMENT
+    #    -  NAME_FLAG_REPLACE_EXISTING
+    #    -  NAME_FLAG_DO_NOT_QUEUE
+    #    Note that `0` implies `queue: true`.
+    #
+    # @return [REQUEST_NAME_REPLY_PRIMARY_OWNER,REQUEST_NAME_REPLY_ALREADY_OWNER] on success
+    # @raise [NameRequestError] with #error_code REQUEST_NAME_REPLY_EXISTS or REQUEST_NAME_REPLY_IN_QUEUE, on failure
+    # @raise DBus::Error another way to fail is being prohibited to own the name
+    #   which is the default on the system bus
+    #
+    # @see https://dbus.freedesktop.org/doc/dbus-specification.html#bus-messages-request-name
+    #
+    # @example Simple usage
     #   bus = DBus.session_bus
     #   bus.object_server.export(DBus::Object.new("/org/example/Test"))
     #   bus.request_name("org.example.Test")
-    # @see https://dbus.freedesktop.org/doc/dbus-specification.html#bus-messages-request-name
-    def request_name(name, flags: 0)
+    #   # main loop
+    #
+    # @example Second instance taking over
+    #   bus = DBus.session_bus
+    #   bus.object_server.export(DBus::Object.new("/org/example/Test"))
+    #   bus.on_name_lost { exit }
+    #   bus.request_name("org.example.Test", allow_replacement: true, replace_existing: true)
+    #   # main loop
+    #
+    # @example Second instance waiting for its turn
+    #   bus = DBus.session_bus
+    #   bus.object_server.export(DBus::Object.new("/org/example/Test"))
+    #   bus.on_name_acquired { @owner = true }
+    #   begin
+    #     bus.request_name("org.example.Test", queue: true)
+    #   rescue DBus::Connection::NameRequestError => e
+    #     @owner = false
+    #   end
+    #   # main loop
+    def request_name(name,
+                     allow_replacement: false,
+                     replace_existing: false,
+                     queue: false,
+                     flags: nil)
+      if flags.nil?
+        flags = (allow_replacement ? NAME_FLAG_ALLOW_REPLACEMENT : 0) |
+                (replace_existing ? NAME_FLAG_REPLACE_EXISTING : 0) |
+                (queue ? 0 : NAME_FLAG_DO_NOT_QUEUE)
+      end
       name = BusName.new(name)
       r = proxy.RequestName(name, flags).first
       handle_return_of_request_name(r, name)
+    end
+
+    # The caller has released his claim on the given name.
+    # Either the caller was the primary owner of the name, and the name is now unused
+    #   or taken by somebody waiting in the queue for the name,
+    # or the caller was waiting in the queue for the name and has now been removed from the queue.
+    RELEASE_NAME_REPLY_RELEASED = 1
+    # The given name does not exist on this bus.
+    RELEASE_NAME_REPLY_NON_EXISTENT = 2
+    # The caller was not the primary owner of this name, and was also not waiting in the queue to own this name.
+    RELEASE_NAME_REPLY_NOT_OWNER = 3
+
+    # @param name [BusName] the name to release
+    def release_name(name)
+      name = BusName.new(name)
+      proxy.ReleaseName(name).first
+    end
+
+    def on_name_acquired(&handler)
+      proxy.on_signal("NameAcquired", &handler)
+    end
+
+    def on_name_lost(&handler)
+      proxy.on_signal("NameLost", &handler)
     end
 
     # Asks bus to send us messages matching mr, and execute slot when
