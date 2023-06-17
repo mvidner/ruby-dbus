@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+License:
+ * clarified to be LGPL-2.1-or-later
+
 API:
  * DBus::Object#object_server replaces @service (which still works) and the short-lived
    @connection

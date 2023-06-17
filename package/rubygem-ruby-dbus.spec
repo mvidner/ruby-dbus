@@ -44,7 +44,7 @@ Url:            https://github.com/mvidner/ruby-dbus
 Source:         https://rubygems.org/gems/%{mod_full_name}.gem
 Source1:        gem2rpm.yml
 Summary:        Ruby module for interaction with D-Bus
-License:        LGPL-2.1
+License:        LGPL-2.1-or-later
 Group:          Development/Languages/Ruby
 
 %description
