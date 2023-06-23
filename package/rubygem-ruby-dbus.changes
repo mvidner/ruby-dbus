@@ -1,4 +1,25 @@
 -------------------------------------------------------------------
+Fri Jun 23 08:01:16 UTC 2023 - Martin Vidner <mvidner@suse.com>
+
+- 0.23.0.beta2
+ License:
+ * clarified to be LGPL-2.1-or-later
+ API:
+ * DBus::Object#object_server replaces @service (which still works) and the short-lived
+   @connection
+ * ObjectServer#export will raise if the path is already taken by an object
+ * ObjectServer#unexport now also accepts an object path
+ * Connection#object_server can export objects even without requesting any
+   service name (gh#mvidner/ruby-dbus#49, in beta1 already).
+ * Add PeerConnection for connections without a bus, useful for PulseAudio.
+   Fix listening for signals there (gh#mvidner/ruby-dbus##44).
+ * Moved from Connection to BusConnection: #unique_name, #proxy, #service.
+   Call send_hello in BusConnection#initialize already.
+ Bug fixes:
+ * Fixed a refactoring crasher bug in ProxyService#introspect (oops).
+ * Fix crash on #unexport of /child_of_root or even /
+
+-------------------------------------------------------------------
 Mon Jun  5 12:09:41 UTC 2023 - Martin Vidner <mvidner@suse.com>
 
 - 0.23.0.beta1
