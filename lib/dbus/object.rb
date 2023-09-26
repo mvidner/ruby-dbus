@@ -177,11 +177,11 @@ module DBus
     # you should emit the `PropertiesChanged` signal by calling
     # {#dbus_properties_changed}.
     #
-    #   dbus_properties_changed(interface_name, {dbus_name.to_s => value}, [])
+    #     dbus_properties_changed(interface_name, {dbus_name.to_s => value}, [])
     #
     # or, omitting the value in the signal,
     #
-    #   dbus_properties_changed(interface_name, {}, [dbus_name.to_s])
+    #     dbus_properties_changed(interface_name, {}, [dbus_name.to_s])
     #
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)

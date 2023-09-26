@@ -1,3 +1,4 @@
+--markup markdown
 lib/**/*.rb
 -
 README.md
