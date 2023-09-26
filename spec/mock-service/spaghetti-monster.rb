@@ -23,7 +23,7 @@ class TestChild < DBus::Object
   end
 
   dbus_interface "org.ruby.TestChild" do
-    dbus_attr_reader :name, "s"
+    dbus_reader_attr_accessor :name, "s"
   end
 end
 
