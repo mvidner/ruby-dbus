@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+API:
+ * Add DBus::Object.dbus_reader_attr_accessor to declare a common use case
+   with a single call.
+
 ## Ruby D-Bus 0.23.0.beta2 - 2023-06-23
 
 License:

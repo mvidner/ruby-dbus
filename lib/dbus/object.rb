@@ -156,18 +156,32 @@ module DBus
       dbus_accessor(ruby_name, type, dbus_name: dbus_name, emits_changed_signal: emits_changed_signal)
     end
 
+    # A read-only property accessing a read-write instance variable.
+    # A combination of `attr_accessor` and {.dbus_reader}.
+    #
+    # @param  (see .dbus_attr_accessor)
+    # @return (see .dbus_attr_accessor)
+    def self.dbus_reader_attr_accessor(ruby_name, type, dbus_name: nil, emits_changed_signal: nil)
+      attr_accessor(ruby_name)
+
+      dbus_reader(ruby_name, type, dbus_name: dbus_name, emits_changed_signal: emits_changed_signal)
+    end
+
     # A read-only property accessing an instance variable.
     # A combination of `attr_reader` and {.dbus_reader}.
+    #
+    # You may be instead looking for a variant which is read-write from the Ruby side:
+    # {.dbus_reader_attr_accessor}.
     #
     # Whenever the property value gets changed from "inside" the object,
     # you should emit the `PropertiesChanged` signal by calling
     # {#dbus_properties_changed}.
     #
-    #   dbus_properties_changed(interface_name, {dbus_name.to_s => value}, [])
+    #     dbus_properties_changed(interface_name, {dbus_name.to_s => value}, [])
     #
     # or, omitting the value in the signal,
     #
-    #   dbus_properties_changed(interface_name, {}, [dbus_name.to_s])
+    #     dbus_properties_changed(interface_name, {}, [dbus_name.to_s])
     #
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
@@ -213,18 +227,22 @@ module DBus
     # implement it with a read-write attr_accessor. In that case this method
     # uses {.dbus_watcher} to set up the PropertiesChanged signal.
     #
-    #   attr_accessor :foo_bar
-    #   dbus_reader :foo_bar, "s"
+    #     attr_accessor :foo_bar
+    #     dbus_reader :foo_bar, "s"
+    #
+    # The above two declarations have a shorthand:
+    #
+    #     dbus_reader_attr_accessor :foo_bar, "s"
     #
     # If the property value should change by other means than its attr_writer,
     # you should emit the `PropertiesChanged` signal by calling
     # {#dbus_properties_changed}.
     #
-    #   dbus_properties_changed(interface_name, {dbus_name.to_s => value}, [])
+    #     dbus_properties_changed(interface_name, {dbus_name.to_s => value}, [])
     #
     # or, omitting the value in the signal,
     #
-    #   dbus_properties_changed(interface_name, {}, [dbus_name.to_s])
+    #     dbus_properties_changed(interface_name, {}, [dbus_name.to_s])
     #
     # @param  (see .dbus_attr_accessor)
     # @return (see .dbus_attr_accessor)
