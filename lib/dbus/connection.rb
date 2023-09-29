@@ -153,17 +153,30 @@ module DBus
 
     # Exception raised when a service name is requested that is not available.
     class NameRequestError < Exception
+      # @return [Integer] one of
+      #   REQUEST_NAME_REPLY_IN_QUEUE
+      #   REQUEST_NAME_REPLY_EXISTS
+      attr_reader :error_code
+
+      def initialize(error_code)
+        @error_code = error_code
+        super()
+      end
     end
 
+    # In case RequestName did not succeed, raise an exception but first ask the bus who owns the name instead of us
+    # @param ret [Integer] what RequestName returned
+    # @param name Name that was requested
+    # @return [REQUEST_NAME_REPLY_PRIMARY_OWNER,REQUEST_NAME_REPLY_ALREADY_OWNER] on success
+    # @raise [NameRequestError] with #error_code REQUEST_NAME_REPLY_EXISTS or REQUEST_NAME_REPLY_IN_QUEUE, on failure
+    # @api private
     def handle_return_of_request_name(ret, name)
-      details = if ret == REQUEST_NAME_REPLY_IN_QUEUE
-                  other = proxy.GetNameOwner(name).first
-                  other_creds = proxy.GetConnectionCredentials(other).first
-                  "already owned by #{other}, #{other_creds.inspect}"
-                else
-                  "error code #{ret}"
-                end
-      raise NameRequestError, "Could not request #{name}, #{details}" unless ret == REQUEST_NAME_REPLY_PRIMARY_OWNER
+      if [REQUEST_NAME_REPLY_EXISTS, REQUEST_NAME_REPLY_IN_QUEUE].include?(ret)
+        other = proxy.GetNameOwner(name).first
+        other_creds = proxy.GetConnectionCredentials(other).first
+        message = "Could not request #{name}, already owned by #{other}, #{other_creds.inspect}"
+        raise NameRequestError.new(ret), message
+      end
 
       ret
     end
