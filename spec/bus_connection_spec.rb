@@ -21,7 +21,6 @@ describe DBus::BusConnection do
     end
 
     context "when the name is taken already", tag_service: true do
-      # formerly it returned Service, now ObjectServer takes its role
       it "raises NameRequestError... too late" do
         name = "org.ruby.service"
         expect do
@@ -60,13 +59,25 @@ describe DBus::BusConnection do
     end
 
     context "when the name is taken already", tag_service: true do
-      # formerly it returned Service, now ObjectServer takes its role
       it "raises NameRequestError" do
         name = "org.ruby.service"
         expect do
-          # flags: avoid getting the name sometime later, unexpectedly
-          bus.request_name(name, flags: DBus::Connection::NAME_FLAG_DO_NOT_QUEUE)
+          bus.request_name(name)
         end.to raise_error(DBus::Connection::NameRequestError)
+      end
+    end
+
+    context "when the name is taken already but we request queuing", tag_service: true do
+      it "raises NameRequestError but we are queued" do
+        name = "org.ruby.service"
+        owning = nil
+        # TODO: we do not expect the handlers to run
+        bus.on_name_acquired { owning = true }
+        bus.on_name_lost { owning = false }
+        expect do
+          bus.request_name(name, queue: true)
+        end.to raise_error(DBus::Connection::NameRequestError)
+        expect(bus.release_name(name)).to eq DBus::BusConnection::RELEASE_NAME_REPLY_RELEASED
       end
     end
 
