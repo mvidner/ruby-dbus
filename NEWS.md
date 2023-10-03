@@ -2,11 +2,15 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.23.1 - 2023-10-03
+
 API:
  * Add DBus::Object.dbus_reader_attr_accessor to declare a common use case
-   with a single call.
+   with a single call ([#140][]).
  * BusConnection#request_name defaults to the simple use case: single owner
    without queuing, failing fast; documented the complex use cases.
+
+[#140]: https://github.com/mvidner/ruby-dbus/pull/140
 
 ## Ruby D-Bus 0.23.0.beta2 - 2023-06-23
 

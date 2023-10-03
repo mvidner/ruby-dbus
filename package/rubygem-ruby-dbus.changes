@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Tue Oct  3 07:29:07 UTC 2023 - Martin Vidner <mvidner@suse.com>
+
+- 0.23.1
+ API:
+ * Add DBus::Object.dbus_reader_attr_accessor to declare a common use case
+   with a single call (gh#mvidner/ruby-dbus#140).
+ * BusConnection#request_name defaults to the simple use case: single owner
+   without queuing, failing fast; documented the complex use cases.
+
+-------------------------------------------------------------------
 Fri Jun 23 08:01:16 UTC 2023 - Martin Vidner <mvidner@suse.com>
 
 - 0.23.0.beta2
