@@ -33,6 +33,8 @@ module DBus
     # @return [ApiOptions]
     attr_reader :api
 
+    OPEN_QUOTE = RUBY_VERSION >= "3.4" ? "'" : "`"
+
     # Creates a new proxy object living on the given _bus_ at destination _dest_
     # on the given _path_.
     def initialize(bus, dest, path, api: ApiOptions::CURRENT)
@@ -58,7 +60,7 @@ module DBus
     def [](intfname)
       introspect unless introspected
       ifc = @interfaces[intfname]
-      raise DBus::Error, "no such interface `#{intfname}' on object `#{@path}'" unless ifc
+      raise DBus::Error, "no such interface #{OPEN_QUOTE}#{intfname}' on object #{OPEN_QUOTE}#{@path}'" unless ifc
 
       ifc
     end
@@ -127,7 +129,8 @@ module DBus
     # @return [void]
     def on_signal(name, &block)
       unless @default_iface && has_iface?(@default_iface)
-        raise NoMethodError, "undefined signal `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
+        raise NoMethodError, "undefined signal #{OPEN_QUOTE}#{name}' for DBus interface "\
+                             "#{OPEN_QUOTE}#{@default_iface}' on object #{OPEN_QUOTE}#{@path}'"
       end
 
       @interfaces[@default_iface].on_signal(name, &block)
@@ -151,7 +154,8 @@ module DBus
         # - di not specified
         # TODO
         # - di is specified but not found in introspection data
-        raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
+        raise NoMethodError, "undefined method #{OPEN_QUOTE}#{name}' for DBus interface "\
+                             "#{OPEN_QUOTE}#{@default_iface}' on object #{OPEN_QUOTE}#{@path}'"
       end
 
       begin
@@ -159,10 +163,11 @@ module DBus
       rescue NameError => e
         # interesting, foo.method("unknown")
         # raises NameError, not NoMethodError
-        raise unless e.to_s =~ /undefined method `#{name}'/
+        raise unless e.to_s =~ /undefined method #{OPEN_QUOTE}#{name}'/
 
         # BTW e.exception("...") would preserve the class.
-        raise NoMethodError, "undefined method `#{name}' for DBus interface `#{@default_iface}' on object `#{@path}'"
+        raise NoMethodError, "undefined method #{OPEN_QUOTE}#{name}' for DBus interface "\
+                             "#{OPEN_QUOTE}#{@default_iface}' on object #{OPEN_QUOTE}#{@path}'"
       end
     end
     # rubocop:enable Lint/MissingSuper
