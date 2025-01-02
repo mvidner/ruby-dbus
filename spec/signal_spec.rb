@@ -107,9 +107,10 @@ describe "SignalHandlerTest" do
   describe DBus::ProxyObject do
     describe "#on_signal" do
       it "raises a descriptive error when the default_iface is wrong" do
+        open_quote = RUBY_VERSION >= "3.4" ? "'" : "`"
         @obj.default_iface = "org.ruby.NoSuchInterface"
         expect { @obj.on_signal("Foo") {} }
-          .to raise_error(NoMethodError, /undefined signal.*interface `org.ruby.NoSuchInterface'/)
+          .to raise_error(NoMethodError, /undefined signal.*interface #{open_quote}org.ruby.NoSuchInterface'/)
       end
     end
   end
