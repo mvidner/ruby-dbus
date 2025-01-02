@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.24.0 - 2025-01-02
+
+Bug fixes:
+ * Adapted for Ruby 3.4, which uses a single quote instead of a backtick
+   in exceptions ([#145][], by Mamoru TASAKA).
+
+[#145]: https://github.com/mvidner/ruby-dbus/pull/145
+
 ## Ruby D-Bus 0.23.1 - 2023-10-03
 
 API:
