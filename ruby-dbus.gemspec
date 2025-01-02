@@ -28,6 +28,8 @@ GEMSPEC = Gem::Specification.new do |s|
   s.add_runtime_dependency "rexml"
   # s.add_runtime_dependency "nokogiri"
 
+  # workaround: rubocop-1.0 needs base64 which is no longer in stdlib in newer rubies
+  s.add_development_dependency "base64"
   s.add_development_dependency "packaging_rake_tasks"
   s.add_development_dependency "rake"
   s.add_development_dependency "rspec", "~> 3"

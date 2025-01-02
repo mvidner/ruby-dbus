@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Jan  2 13:45:21 UTC 2025 - Martin Vidner <mvidner@suse.com>
+
+- 0.24.0
+ Bug fixes:
+ * Adapted for Ruby 3.4, which uses a single quote instead of a backtick
+   in exceptions (gh#mvidner/ruby-dbus#145, by Mamoru TASAKA).
+
+-------------------------------------------------------------------
 Tue Oct  3 07:29:07 UTC 2023 - Martin Vidner <mvidner@suse.com>
 
 - 0.23.1
