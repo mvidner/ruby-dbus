@@ -116,7 +116,7 @@ module DBus
 
     # Forgetting to declare the interface for a method/signal/property
     # is a ScriptError.
-    class UndefinedInterface < ScriptError # rubocop:disable Lint/InheritException
+    class UndefinedInterface < ScriptError
       def initialize(sym)
         super "No interface specified for #{sym}. Enclose it in dbus_interface."
       end
@@ -253,7 +253,7 @@ module DBus
       property = Property.new(dbus_name, type, :read, ruby_name: ruby_name)
       @@cur_intf.define(property)
 
-      ruby_name_eq = "#{ruby_name}=".to_sym
+      ruby_name_eq = :"#{ruby_name}="
       return unless method_defined?(ruby_name_eq)
 
       dbus_watcher(ruby_name, dbus_name: dbus_name, emits_changed_signal: emits_changed_signal)
@@ -294,7 +294,7 @@ module DBus
       interface_name = @@cur_intf.name
 
       ruby_name = ruby_name.to_s.sub(/=$/, "").to_sym
-      ruby_name_eq = "#{ruby_name}=".to_sym
+      ruby_name_eq = :"#{ruby_name}="
       original_ruby_name_eq = "_original_#{ruby_name_eq}"
 
       dbus_name = make_dbus_name(ruby_name, dbus_name: dbus_name)
@@ -455,11 +455,16 @@ module DBus
         property = dbus_lookup_property(interface_name, property_name)
 
         if property.readable?
-          ruby_name = property.ruby_name
-          value = public_send(ruby_name)
-          # may raise, DBus.error or https://ruby-doc.com/core-3.1.0/TypeError.html
-          typed_value = Data.make_typed(property.type, value)
-          [typed_value]
+          begin
+            ruby_name = property.ruby_name
+            value = public_send(ruby_name)
+            # may raise, DBus.error or https://ruby-doc.com/core-3.1.0/TypeError.html
+            typed_value = Data.make_typed(property.type, value)
+            [typed_value]
+          rescue StandardError => e
+            msg = "When getting '#{interface_name}.#{property_name}': " + e.message
+            raise e.exception(msg)
+          end
         else
           raise DBus.error("org.freedesktop.DBus.Error.PropertyWriteOnly"),
                 "Property '#{interface_name}.#{property_name}' (on object '#{@path}') is not readable"
@@ -470,11 +475,16 @@ module DBus
         property = dbus_lookup_property(interface_name, property_name)
 
         if property.writable?
-          ruby_name_eq = "#{property.ruby_name}="
-          # TODO: declare dbus_method :Set to take :exact argument
-          # and type check it here before passing its :plain value
-          # to the implementation
-          public_send(ruby_name_eq, value)
+          begin
+            ruby_name_eq = "#{property.ruby_name}="
+            # TODO: declare dbus_method :Set to take :exact argument
+            # and type check it here before passing its :plain value
+            # to the implementation
+            public_send(ruby_name_eq, value)
+          rescue StandardError => e
+            msg = "When setting '#{interface_name}.#{property_name}': " + e.message
+            raise e.exception(msg)
+          end
         else
           raise DBus.error("org.freedesktop.DBus.Error.PropertyReadOnly"),
                 "Property '#{interface_name}.#{property_name}' (on object '#{@path}') is not writable"
@@ -507,8 +517,8 @@ module DBus
             typed_value = Data.make_typed(property.type, value)
             p_hash[p_name.to_s] = typed_value
           rescue StandardError
-            DBus.logger.debug "Property '#{interface_name}.#{p_name}' (on object '#{@path}')" \
-                              " has raised during GetAll, omitting it"
+            DBus.logger.debug "Property '#{interface_name}.#{p_name}' (on object '#{@path}') " \
+                              "has raised during GetAll, omitting it"
           end
         end
 

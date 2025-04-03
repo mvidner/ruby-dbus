@@ -29,11 +29,16 @@ jobs:
         bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
     - name: Run tests
-      run: bundle exec rake
+      run: bundle exec rake spec
       # enable code coverage reporting
       env:
         COVERAGE: 'true'
         COVERAGE_LCOV: 'true'
+
+    - name: Run RuboCop
+      # only for latest version, it is dropping Ruby support fster than us
+      if: ${{ matrix.ruby-version == '3.4' }}
+      run: bundle exec rake rubocop
 
     - name: Coveralls Report
       # send it only for the latest version to avoid duplicate submits

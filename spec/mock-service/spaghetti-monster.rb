@@ -122,6 +122,8 @@ class Test < DBus::Object
     dbus_attr_reader :read_me, "s"
 
     def write_me=(value)
+      raise "We don't talk about Bruno" if value =~ /Bruno/
+
       @read_me = value
     end
     dbus_writer :write_me, "s"

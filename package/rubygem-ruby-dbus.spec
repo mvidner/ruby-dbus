@@ -24,12 +24,14 @@
 #
 
 Name:           rubygem-ruby-dbus
-Version:        0.24.0
+Version:        0.25.0
 Release:        0
 %define mod_name ruby-dbus
 %define mod_full_name %{mod_name}-%{version}
 # MANUAL
+BuildRequires:  %{rubygem logger}
 BuildRequires:  %{rubygem nokogiri >= 1.12}
+BuildRequires:  %{rubygem ostruct}
 BuildRequires:  %{rubygem packaging_rake_tasks}
 BuildRequires:  %{rubygem rake}
 BuildRequires:  %{rubygem rspec >= 3.9}

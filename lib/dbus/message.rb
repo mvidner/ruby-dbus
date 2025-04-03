@@ -103,9 +103,9 @@ module DBus
 
     def to_s
       "#{message_type} sender=#{sender} -> dest=#{destination} " \
-      "serial=#{serial} reply_serial=#{reply_serial} " \
-      "path=#{path}; interface=#{interface}; member=#{member} " \
-      "error_name=#{error_name}"
+        "serial=#{serial} reply_serial=#{reply_serial} " \
+        "path=#{path}; interface=#{interface}; member=#{member} " \
+        "error_name=#{error_name}"
     end
 
     # @return [String] name of message type, as used in match rules:

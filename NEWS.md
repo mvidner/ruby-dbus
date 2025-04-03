@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## Ruby D-Bus 0.25.0 - 2025-04-03
+
+Bug fixes:
+ * Mention qualified property name in Get or Set errors ([#147][]).
+ * Fix declaring logger and ostruct gems for Ruby 3.5
+
+[#147]: https://github.com/mvidner/ruby-dbus/pull/147
+
 ## Ruby D-Bus 0.24.0 - 2025-01-02
 
 Bug fixes:

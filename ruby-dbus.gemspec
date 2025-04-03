@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 # -*- ruby -*-
-require "rubygems"
 
 GEMSPEC = Gem::Specification.new do |s|
   s.name = "ruby-dbus"
@@ -22,6 +21,7 @@ GEMSPEC = Gem::Specification.new do |s|
 
   s.required_ruby_version = ">= 2.4.0"
 
+  s.add_runtime_dependency "logger"
   # Either of rexml and nokogiri is required
   # but AFAIK gemspec cannot express that.
   # Nokogiri is recommended as rexml is dead slow.
@@ -30,10 +30,10 @@ GEMSPEC = Gem::Specification.new do |s|
 
   # workaround: rubocop-1.0 needs base64 which is no longer in stdlib in newer rubies
   s.add_development_dependency "base64"
+  s.add_development_dependency "ostruct"
   s.add_development_dependency "packaging_rake_tasks"
   s.add_development_dependency "rake"
   s.add_development_dependency "rspec", "~> 3"
-  s.add_development_dependency "rubocop", "= 1.0"
   s.add_development_dependency "simplecov"
   s.add_development_dependency "simplecov-lcov"
 end
