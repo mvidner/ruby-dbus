@@ -31,17 +31,36 @@ describe "PropertyTest" do
     expect(iface["ReadMe"]).to eq("READ ME")
   end
 
-  it "gets an error when reading a property whose implementation raises" do
-    expect { @iface["Explosive"] }.to raise_error(DBus::Error, /Something failed/)
+  context "when reading a property fails" do
+    it "gets an error, mentioning the qualified property name" do
+      expect { @iface["Explosive"] } \
+        .to raise_error(DBus::Error, /getting.*SampleInterface.Explosive.*Something failed/)
+    end
   end
 
   it "tests property nonreading" do
     expect { @iface["WriteMe"] }.to raise_error(DBus::Error, /not readable/)
   end
 
-  it "tests property writing" do
-    @iface["ReadOrWriteMe"] = "VALUE"
-    expect(@iface["ReadOrWriteMe"]).to eq("VALUE")
+  context "writing properties" do
+    it "tests property writing" do
+      @iface["ReadOrWriteMe"] = "VALUE"
+      expect(@iface["ReadOrWriteMe"]).to eq("VALUE")
+    end
+
+    context "when writing a read-only property" do
+      it "gets an error, mentioning the qualified property name" do
+        expect { @iface["ReadMe"] = "WROTE" }  \
+          .to raise_error(DBus::Error, /SampleInterface.ReadMe.*not writable/)
+      end
+    end
+
+    context "when writing a property fails" do
+      it "gets an error, mentioning the qualified property name" do
+        expect { @iface["WriteMe"] = "Bruno is a city in Czechia" } \
+          .to raise_error(DBus::Error, /setting.*SampleInterface.WriteMe/)
+      end
+    end
   end
 
   # https://github.com/mvidner/ruby-dbus/pull/19
@@ -52,10 +71,6 @@ describe "PropertyTest" do
     sleep 6
     # fail:  "Property value changed; perhaps the service died and got restarted"
     expect(@iface["ReadOrWriteMe"]).to eq("VALUE")
-  end
-
-  it "tests property nonwriting" do
-    expect { @iface["ReadMe"] = "WROTE" }.to raise_error(DBus::Error, /not writable/)
   end
 
   it "tests get all" do

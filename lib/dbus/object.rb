@@ -455,11 +455,16 @@ module DBus
         property = dbus_lookup_property(interface_name, property_name)
 
         if property.readable?
-          ruby_name = property.ruby_name
-          value = public_send(ruby_name)
-          # may raise, DBus.error or https://ruby-doc.com/core-3.1.0/TypeError.html
-          typed_value = Data.make_typed(property.type, value)
-          [typed_value]
+          begin
+            ruby_name = property.ruby_name
+            value = public_send(ruby_name)
+            # may raise, DBus.error or https://ruby-doc.com/core-3.1.0/TypeError.html
+            typed_value = Data.make_typed(property.type, value)
+            [typed_value]
+          rescue StandardError => e
+            msg = "When getting '#{interface_name}.#{property_name}': " + e.message
+            raise e.exception(msg)
+          end
         else
           raise DBus.error("org.freedesktop.DBus.Error.PropertyWriteOnly"),
                 "Property '#{interface_name}.#{property_name}' (on object '#{@path}') is not readable"
@@ -470,11 +475,16 @@ module DBus
         property = dbus_lookup_property(interface_name, property_name)
 
         if property.writable?
-          ruby_name_eq = "#{property.ruby_name}="
-          # TODO: declare dbus_method :Set to take :exact argument
-          # and type check it here before passing its :plain value
-          # to the implementation
-          public_send(ruby_name_eq, value)
+          begin
+            ruby_name_eq = "#{property.ruby_name}="
+            # TODO: declare dbus_method :Set to take :exact argument
+            # and type check it here before passing its :plain value
+            # to the implementation
+            public_send(ruby_name_eq, value)
+          rescue StandardError => e
+            msg = "When setting '#{interface_name}.#{property_name}': " + e.message
+            raise e.exception(msg)
+          end
         else
           raise DBus.error("org.freedesktop.DBus.Error.PropertyReadOnly"),
                 "Property '#{interface_name}.#{property_name}' (on object '#{@path}') is not writable"
