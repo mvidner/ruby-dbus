@@ -33,7 +33,7 @@ describe "PropertyTest" do
 
   context "when reading a property fails" do
     it "gets an error, mentioning the qualified property name" do
-      expect { @iface["Explosive"] } \
+      expect { @iface["Explosive"] }
         .to raise_error(DBus::Error, /getting.*SampleInterface.Explosive.*Something failed/)
     end
   end
@@ -50,14 +50,14 @@ describe "PropertyTest" do
 
     context "when writing a read-only property" do
       it "gets an error, mentioning the qualified property name" do
-        expect { @iface["ReadMe"] = "WROTE" }  \
+        expect { @iface["ReadMe"] = "WROTE" }
           .to raise_error(DBus::Error, /SampleInterface.ReadMe.*not writable/)
       end
     end
 
     context "when writing a property fails" do
       it "gets an error, mentioning the qualified property name" do
-        expect { @iface["WriteMe"] = "Bruno is a city in Czechia" } \
+        expect { @iface["WriteMe"] = "Bruno is a city in Czechia" }
           .to raise_error(DBus::Error, /setting.*SampleInterface.WriteMe/)
       end
     end

@@ -180,7 +180,7 @@ module DBus
       case alignment
       when 1, 2, 4, 8
         bits = alignment - 1
-        num + bits & ~bits
+        (num + bits) & ~bits
       else
         raise ArgumentError, "Unsupported alignment #{alignment}"
       end

@@ -223,43 +223,43 @@ describe DBus::Data do
 
   describe DBus::Data::Byte do
     include_examples "#== and #eql? work for basic types"
-    include_examples "constructor accepts numeric range", 0, 2**8 - 1
+    include_examples "constructor accepts numeric range", 0, (2**8) - 1
     include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::Int16 do
     include_examples "#== and #eql? work for basic types"
-    include_examples "constructor accepts numeric range", -2**15, 2**15 - 1
+    include_examples "constructor accepts numeric range", -2**15, (2**15) - 1
     include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::UInt16 do
     include_examples "#== and #eql? work for basic types"
-    include_examples "constructor accepts numeric range", 0, 2**16 - 1
+    include_examples "constructor accepts numeric range", 0, (2**16) - 1
     include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::Int32 do
     include_examples "#== and #eql? work for basic types"
-    include_examples "constructor accepts numeric range", -2**31, 2**31 - 1
+    include_examples "constructor accepts numeric range", -2**31, (2**31) - 1
     include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::UInt32 do
     include_examples "#== and #eql? work for basic types"
-    include_examples "constructor accepts numeric range", 0, 2**32 - 1
+    include_examples "constructor accepts numeric range", 0, (2**32) - 1
     include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::Int64 do
     include_examples "#== and #eql? work for basic types"
-    include_examples "constructor accepts numeric range", -2**63, 2**63 - 1
+    include_examples "constructor accepts numeric range", -2**63, (2**63) - 1
     include_examples "constructor accepts plain or typed values", 42
   end
 
   describe DBus::Data::UInt64 do
     include_examples "#== and #eql? work for basic types"
-    include_examples "constructor accepts numeric range", 0, 2**64 - 1
+    include_examples "constructor accepts numeric range", 0, (2**64) - 1
     include_examples "constructor accepts plain or typed values", 42
   end
 

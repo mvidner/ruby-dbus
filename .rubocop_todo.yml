@@ -30,39 +30,6 @@ Gemspec/RequireMFA:
   Exclude:
     - 'ruby-dbus.gemspec'
 
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: leading, trailing
-Layout/LineContinuationLeadingSpace:
-  Exclude:
-    - 'lib/dbus/object.rb'
-
-# Offense count: 4
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: space, no_space
-Layout/LineContinuationSpacing:
-  Exclude:
-    - 'lib/dbus/proxy_object.rb'
-    - 'spec/property_spec.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: aligned, indented
-Layout/LineEndStringConcatenationIndentation:
-  Exclude:
-    - 'lib/dbus/message.rb'
-
-# Offense count: 9
-# This cop supports safe autocorrection (--autocorrect).
-Lint/AmbiguousOperatorPrecedence:
-  Exclude:
-    - 'lib/dbus/marshall.rb'
-    - 'lib/dbus/proxy_object.rb'
-    - 'spec/data_spec.rb'
-
 # Offense count: 3
 # Configuration parameters: AllowComments, AllowEmptyLambdas.
 Lint/EmptyBlock:
@@ -76,29 +43,6 @@ Lint/EmptyBlock:
 Lint/IncompatibleIoSelectWithFiberScheduler:
   Exclude:
     - 'lib/dbus/message_queue.rb'
-
-# Offense count: 2
-# This cop supports safe autocorrection (--autocorrect).
-Lint/RedundantCopDisableDirective:
-  Exclude:
-    - 'lib/dbus/object.rb'
-    - 'lib/dbus/proxy_object.rb'
-
-# Offense count: 2
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: strict, consistent
-Lint/SymbolConversion:
-  Exclude:
-    - 'lib/dbus/object.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: Keywords, RequireColon.
-# Keywords: TODO, FIXME, OPTIMIZE, HACK, REVIEW, NOTE
-Style/CommentAnnotation:
-  Exclude:
-    - 'spec/node_spec.rb'
 
 # Offense count: 3
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -174,13 +118,6 @@ Style/RedundantConstantBase:
 Style/RedundantEach:
   Exclude:
     - 'spec/type_spec.rb'
-
-# Offense count: 4
-# This cop supports safe autocorrection (--autocorrect).
-Style/RedundantLineContinuation:
-  Exclude:
-    - 'lib/dbus/type.rb'
-    - 'spec/property_spec.rb'
 
 # Offense count: 3
 # This cop supports safe autocorrection (--autocorrect).

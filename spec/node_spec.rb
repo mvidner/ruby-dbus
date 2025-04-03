@@ -25,7 +25,7 @@ describe DBus::Node do
     let(:manager_path) { "/org/example/FooManager" }
     let(:child_paths) do
       [
-        # note that "/org/example/FooManager/good"
+        # NOTE: "/org/example/FooManager/good"
         # is a path under a managed object but there is no object there
         "/org/example/FooManager/good/1",
         "/org/example/FooManager/good/2",

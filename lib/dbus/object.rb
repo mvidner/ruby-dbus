@@ -116,7 +116,7 @@ module DBus
 
     # Forgetting to declare the interface for a method/signal/property
     # is a ScriptError.
-    class UndefinedInterface < ScriptError # rubocop:disable Lint/InheritException
+    class UndefinedInterface < ScriptError
       def initialize(sym)
         super "No interface specified for #{sym}. Enclose it in dbus_interface."
       end
@@ -253,7 +253,7 @@ module DBus
       property = Property.new(dbus_name, type, :read, ruby_name: ruby_name)
       @@cur_intf.define(property)
 
-      ruby_name_eq = "#{ruby_name}=".to_sym
+      ruby_name_eq = :"#{ruby_name}="
       return unless method_defined?(ruby_name_eq)
 
       dbus_watcher(ruby_name, dbus_name: dbus_name, emits_changed_signal: emits_changed_signal)
@@ -294,7 +294,7 @@ module DBus
       interface_name = @@cur_intf.name
 
       ruby_name = ruby_name.to_s.sub(/=$/, "").to_sym
-      ruby_name_eq = "#{ruby_name}=".to_sym
+      ruby_name_eq = :"#{ruby_name}="
       original_ruby_name_eq = "_original_#{ruby_name_eq}"
 
       dbus_name = make_dbus_name(ruby_name, dbus_name: dbus_name)
@@ -517,8 +517,8 @@ module DBus
             typed_value = Data.make_typed(property.type, value)
             p_hash[p_name.to_s] = typed_value
           rescue StandardError
-            DBus.logger.debug "Property '#{interface_name}.#{p_name}' (on object '#{@path}')" \
-                              " has raised during GetAll, omitting it"
+            DBus.logger.debug "Property '#{interface_name}.#{p_name}' (on object '#{@path}') " \
+                              "has raised during GetAll, omitting it"
           end
         end
 

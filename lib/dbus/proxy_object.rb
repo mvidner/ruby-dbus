@@ -129,7 +129,7 @@ module DBus
     # @return [void]
     def on_signal(name, &block)
       unless @default_iface && has_iface?(@default_iface)
-        raise NoMethodError, "undefined signal #{OPEN_QUOTE}#{name}' for DBus interface "\
+        raise NoMethodError, "undefined signal #{OPEN_QUOTE}#{name}' for DBus interface " \
                              "#{OPEN_QUOTE}#{@default_iface}' on object #{OPEN_QUOTE}#{@path}'"
       end
 
@@ -139,13 +139,6 @@ module DBus
     ####################################################
     private
 
-    # rubocop:disable Lint/MissingSuper
-    # as this should forward everything
-    #
-    # https://github.com/rubocop-hq/ruby-style-guide#no-method-missing
-    # and http://blog.marc-andre.ca/2010/11/15/methodmissing-politely/
-    # have a point to be investigated
-
     # Handles all unkown methods, mostly to route method calls to the
     # default interface.
     def method_missing(name, *args, &reply_handler)
@@ -154,7 +147,7 @@ module DBus
         # - di not specified
         # TODO
         # - di is specified but not found in introspection data
-        raise NoMethodError, "undefined method #{OPEN_QUOTE}#{name}' for DBus interface "\
+        raise NoMethodError, "undefined method #{OPEN_QUOTE}#{name}' for DBus interface " \
                              "#{OPEN_QUOTE}#{@default_iface}' on object #{OPEN_QUOTE}#{@path}'"
       end
 
@@ -166,16 +159,15 @@ module DBus
         raise unless e.to_s =~ /undefined method #{OPEN_QUOTE}#{name}'/
 
         # BTW e.exception("...") would preserve the class.
-        raise NoMethodError, "undefined method #{OPEN_QUOTE}#{name}' for DBus interface "\
+        raise NoMethodError, "undefined method #{OPEN_QUOTE}#{name}' for DBus interface " \
                              "#{OPEN_QUOTE}#{@default_iface}' on object #{OPEN_QUOTE}#{@path}'"
       end
     end
-    # rubocop:enable Lint/MissingSuper
 
     def respond_to_missing?(name, _include_private = false)
-      @default_iface &&
+      (@default_iface &&
         has_iface?(@default_iface) &&
-        @interfaces[@default_iface].methods.key?(name) or super
+        @interfaces[@default_iface].methods.key?(name)) or super
     end
   end
 end
