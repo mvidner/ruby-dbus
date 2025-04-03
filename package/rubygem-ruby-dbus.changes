@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Thu Apr  3 12:35:53 UTC 2025 - Martin Vidner <mvidner@suse.com>
+
+- 0.25.0
+ Bug fixes:
+ * Mention qualified property name in Get or Set errors
+   (gh#mvidner/ruby-dbus#147).
+ * Fix declaring logger and ostruct gems for Ruby 3.5
+
+-------------------------------------------------------------------
 Thu Jan  2 13:45:21 UTC 2025 - Martin Vidner <mvidner@suse.com>
 
 - 0.24.0
