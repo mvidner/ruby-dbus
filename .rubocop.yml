@@ -2,6 +2,7 @@ inherit_from: .rubocop_todo.yml
 
 AllCops:
   TargetRubyVersion: 2.4
+  SuggestExtensions: false
   NewCops: enable
   Exclude:
     # Do not check code borrowed from ActiveSupport
@@ -76,6 +77,11 @@ Lint/RescueException:
 Naming/PredicateName:
   NamePrefix:
     # has_ and have_ are allowed
+    - does_
+    - is_
+  ForbiddenPrefixes:
+    # has_ and have_ are allowed
+    - does_
     - is_
 
 # Offense count: 1

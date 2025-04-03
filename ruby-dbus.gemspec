@@ -34,7 +34,9 @@ GEMSPEC = Gem::Specification.new do |s|
   s.add_development_dependency "packaging_rake_tasks"
   s.add_development_dependency "rake"
   s.add_development_dependency "rspec", "~> 3"
-  s.add_development_dependency "rubocop", "= 1.30"
+  s.add_development_dependency "rubocop", "~> 1.68.0"
+  # newer versions have a noise deprecation warning
+  s.add_development_dependency "rubocop-ast", "~> 1.36.0"
   s.add_development_dependency "simplecov"
   s.add_development_dependency "simplecov-lcov"
 end
