@@ -17,7 +17,7 @@ module DBus
   # The default one logs to STDERR,
   # with DEBUG if $DEBUG is set, otherwise INFO.
   def logger
-    if @logger.nil?
+    if !defined?(@logger) || @logger.nil?
       debug = $DEBUG || ENV["RUBY_DBUS_DEBUG"]
       @logger = Logger.new($stderr)
       @logger.level = debug ? Logger::DEBUG : Logger::INFO

@@ -163,7 +163,8 @@ module DBus
       if @sigtype == DICT_ENTRY
         case @members.size
         when 2
-          raise SignatureException, "DICT_ENTRY must have 2 subtypes, found 3 or more in #{@signature}"
+          raise SignatureException, \
+                "DICT_ENTRY must have 2 subtypes, found 3 or more: #{@members.inspect} << #{item.inspect}"
         when 0
           if [STRUCT, ARRAY, DICT_ENTRY, VARIANT].member?(item.sigtype)
             raise SignatureException, "DICT_ENTRY key must be basic (non-container)"
