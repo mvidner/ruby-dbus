@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 # -*- ruby -*-
-require "rubygems"
 
 GEMSPEC = Gem::Specification.new do |s|
   s.name = "ruby-dbus"
