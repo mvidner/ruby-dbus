@@ -4,7 +4,7 @@
 require "rake"
 require "fileutils"
 require "tmpdir"
-require "rspec/core/rake_task"
+require "shellwords"
 begin
   require "rubocop/rake_task"
 rescue LoadError
@@ -34,13 +34,18 @@ desc "Default: run specs in the proper environment"
 task default: [:spec, :rubocop]
 task test: :spec
 
-RSpec::Core::RakeTask.new("bare:spec")
+desc "Run RSpec code examples"
+task "bare:spec", [:options] do |_t, args|
+  args.with_defaults(options: "")
+  sh "rspec #{args[:options]}"
+end
 
 ["spec"].each do |tname|
   desc "Run bare:#{tname} in the proper environment"
-  task tname do |_t|
+  task tname, [:options] do |_t, args|
+    args.with_defaults(options: "")
     cd "spec/tools" do
-      sh "./test_env rake bare:#{tname}"
+      sh "./test_env rake bare:#{tname}[#{args[:options].shellescape}]"
     end
   end
 end
