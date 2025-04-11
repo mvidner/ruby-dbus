@@ -363,7 +363,7 @@ module DBus
     end
 
     # @example
-    #   t = Type::Hash[Type::INT16]
+    #   t = Type::Hash[Type::STRING, Type::VARIANT]
     Hash = HashFactory
 
     # Syntactic helper for constructing a struct Type.

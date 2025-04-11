@@ -179,6 +179,20 @@ describe "PropertyTest" do
       val = @iface["MyArray"]
       expect(val).to eq([42, 43])
     end
+
+    it "a wrongly typed property provides a helpful message" do
+      # Now we get:
+      #   When getting 'org.ruby.SampleInterface.ArrayOfHashes':
+      #     When making ARRAY: [DICT_ENTRY: [STRING, VARIANT]] from an instance of Array:
+      #       When making DICT_ENTRY: [STRING, VARIANT] from an instance of Hash:
+      #         Specified type has 2 members but value has 3 members;
+      #           caused by 1 sender=:1.70...
+      # But we should really say
+      #    When making HASH: [STRING, VARIANT] from an instance of Array
+      # and document better this pitfall.
+      # Do we want to quote the entire data?
+      expect { @iface["ArrayOfHashes"] }.to raise_error(/DWIM/)
+    end
   end
 
   context "a dict-typed property" do
