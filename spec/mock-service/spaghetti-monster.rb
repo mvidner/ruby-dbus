@@ -46,6 +46,10 @@ class Test < DBus::Object
       "two" => "dva",
       "three" => [3, 3, 3]
     }
+    # reproduce bug:
+    # type mismatch (user means to declare array_of_hashes as aa{sv})
+    # should produce informative error
+    @array_of_hashes = [@my_dict.dup]
     @my_variant = @my_array.dup
     # 201 is a RET instruction for ZX Spectrum which has turned 40 recently
     @my_byte = 201
@@ -140,6 +144,8 @@ class Test < DBus::Object
     dbus_attr_accessor :my_array, "aq"
     dbus_attr_accessor :my_dict, "a{sv}"
     dbus_attr_accessor :my_variant, "v"
+    # intentional bug to test reporting it: declaring an array of dict-entries instead
+    dbus_attr_reader :array_of_hashes, "a{sv}"
 
     dbus_attr_accessor :my_byte, "y"
 

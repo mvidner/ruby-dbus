@@ -44,6 +44,9 @@ module DBus
       # not nil because DBus.type validates
 
       data_class.from_typed(value, type: type)
+    rescue StandardError => e
+      msg = "When making #{type.inspect} from an instance of #{value.class}: " + e.message
+      raise e.exception(msg)
     end
     module_function :make_typed
 
