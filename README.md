@@ -6,20 +6,14 @@ Ruby D-Bus is a pure Ruby library for writing clients and services for D-Bus.
 
 [![Gem Version][GV img]][Gem Version]
 [![Build Status][BS img]][Build Status]
-[![Dependency Status][DS img]][Dependency Status]
-[![Code Climate][CC img]][Code Climate]
 [![Coverage Status][CS img]][Coverage Status]
 
 [Gem Version]: https://rubygems.org/gems/ruby-dbus
-[Build Status]: https://github.com/mvidner/ruby-dbus/actions?query=branch%3Amaster
-[Dependency Status]: https://gemnasium.com/mvidner/ruby-dbus
-[Code Climate]: https://codeclimate.com/github/mvidner/ruby-dbus
+[Build Status]: https://github.com/mvidner/ruby-dbus/actions/workflows/ruby.yml?query=branch%3Amaster
 [Coverage Status]: https://coveralls.io/r/mvidner/ruby-dbus
 
 [GV img]: https://badge.fury.io/rb/ruby-dbus.png
-[BS img]: https://github.com/mvidner/ruby-dbus/workflows/CI/badge.svg?branch=master
-[DS img]: https://gemnasium.com/mvidner/ruby-dbus.png
-[CC img]: https://codeclimate.com/github/mvidner/ruby-dbus.png
+[BS img]: https://github.com/mvidner/ruby-dbus/actions/workflows/ruby.yml/badge.svg?branch=master
 [CS img]: https://coveralls.io/repos/mvidner/ruby-dbus/badge.png?branch=master
 
 ## Example
