@@ -65,6 +65,13 @@ Ruby D-Bus currently supports the following features:
  or view it online on
  <https://github.com/mvidner/ruby-dbus/blob/master/doc/Tutorial.md> .
 
+ ## Development
+
+Install the dependencies with `bundle install`.
+
+To run the tests, use `bundle exec rake spec`. Plain `rspec` is not enough
+because many tests rely on a common testing bus (see `spec/tools`).
+
 ## License
 
  Ruby D-Bus is free software; you can redistribute it and/or modify it
