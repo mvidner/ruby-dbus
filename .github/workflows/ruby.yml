@@ -18,7 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         # Adding a new one? Change it in Coveralls below!
-        ruby-version: ['2.5', '2.6', '2.7', '3.0', '3.1', '3.2', '3.3', '3.4', 'head']
+        # Why 2.5: in SLE-15
+        ruby-version: ['2.5', '2.6', '2.7', '3.0', '3.1', '3.2', '3.3', '3.4', '4.0', 'head']
 
     steps:
     - uses: actions/checkout@v2
@@ -37,12 +38,12 @@ jobs:
 
     - name: Run RuboCop
       # only for latest version, it is dropping Ruby support fster than us
-      if: ${{ matrix.ruby-version == '3.4' }}
+      if: ${{ matrix.ruby-version == '4.0' }}
       run: bundle exec rake rubocop
 
     - name: Coveralls Report
       # send it only for the latest version to avoid duplicate submits
-      if: ${{ matrix.ruby-version == '3.4' }}
+      if: ${{ matrix.ruby-version == '4.0' }}
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
